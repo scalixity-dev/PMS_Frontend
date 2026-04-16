@@ -146,6 +146,8 @@ export interface ListingStatistics {
   leads: number;
   premiumLeads: number;
   listingViews: number;
+  leadsBySource?: Array<{ source: string; label: string; count: number }>;
+  viewsByDay?: Array<{ date: string; count: number }>;
 }
 
 class ListingService {

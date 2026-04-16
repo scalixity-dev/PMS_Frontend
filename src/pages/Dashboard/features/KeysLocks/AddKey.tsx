@@ -4,7 +4,8 @@ import { ChevronLeft, Upload, Edit, Trash2, Loader2 } from 'lucide-react';
 import CustomDropdown from '../../components/CustomDropdown';
 import UnsavedChangesModal from '../../components/UnsavedChangesModal';
 import { useGetKey, useCreateKey, useUpdateKey } from '../../../../hooks/useKeysQueries';
-import { useGetAllPropertiesIdName } from '../../../../hooks/usePropertyQueries';
+import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
+import { useGetUnitsByProperty } from '../../../../hooks/useUnitQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import type { KeyType } from '../../../../services/keys.service';
 
@@ -42,13 +43,14 @@ const AddKey = () => {
 
     // Fetch key data if in edit mode
     const { data: keyData, isLoading: isLoadingKey } = useGetKey(id || null, isEditMode);
-    const { data: properties = [], isLoading: isLoadingProperties } = useGetAllPropertiesIdName();
+    const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
     const createKeyMutation = useCreateKey();
     const updateKeyMutation = useUpdateKey();
 
     const [keyName, setKeyName] = useState('');
     const [keyType, setKeyType] = useState('');
     const [propertyId, setPropertyId] = useState('');
+    const [unitId, setUnitId] = useState('');
     const [details, setDetails] = useState('');
     const [image, setImage] = useState<string | null>(null);
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
@@ -69,11 +71,34 @@ const AddKey = () => {
             setKeyName(keyData.keyName);
             setKeyType(mapKeyTypeToDisplay(keyData.keyType));
             setPropertyId(keyData.propertyId);
+            setUnitId((keyData as any).unitId || '');
             setDetails(keyData.description || '');
             setImage(keyData.keyPhotoUrl || null);
             setUploadedImageUrl(keyData.keyPhotoUrl || null);
         }
     }, [isEditMode, keyData]);
+
+    // Fetch units for the selected property (only used when MULTI).
+    const { data: units = [], isLoading: isLoadingUnits } = useGetUnitsByProperty(
+        propertyId || null,
+        !!propertyId,
+    );
+
+    // Find selected property type so we know whether to show the Unit dropdown.
+    const selectedProperty = (properties as any[]).find(
+        (p: any) => (p?.id || p?.propertyId) === propertyId,
+    );
+    const isMultiUnit = selectedProperty?.propertyType === 'MULTI';
+
+    // Whenever the user picks a different property, clear the unit selection
+    // so we never send a stale unitId tied to the previous property.
+    const handlePropertyChange = (newPropertyId: string) => {
+        setPropertyId(newPropertyId);
+        if (newPropertyId !== propertyId) {
+            setUnitId('');
+        }
+        if (!isInitializingRef.current) setIsDirty(true);
+    };
 
     // Handle initialization complete
     useEffect(() => {
@@ -167,9 +192,14 @@ const AddKey = () => {
         { value: 'Other', label: 'Other' },
     ];
 
-    const propertyOptions = properties.map((prop: any) => ({
+    const propertyOptions = (properties as any[]).map((prop: any) => ({
         value: prop.propertyId || prop.id,
         label: prop.propertyName,
+    }));
+
+    const unitOptions = (units as any[]).map((u: any) => ({
+        value: u.id,
+        label: u.unitName || 'Unit',
     }));
 
     const handleSubmit = async () => {
@@ -178,9 +208,15 @@ const AddKey = () => {
             return;
         }
 
+        if (isMultiUnit && !unitId) {
+            alert('This is a multi-unit property — please select a unit');
+            return;
+        }
+
         try {
             const keyData = {
                 propertyId,
+                unitId: isMultiUnit && unitId ? unitId : undefined,
                 keyName,
                 keyType: mapKeyTypeToBackend(keyType),
                 description: details || undefined,
@@ -380,17 +416,9 @@ const AddKey = () => {
                     </div>
                 </div>
 
-                {/* Property Dropdown */}
-                <div className="w-full mb-8">
-                    {/* Using a grid to limit width to 50% roughly to match screenshot logic if needed, but 
-                             screenshot shows Key Name and Key Type sharing a row, and Property sharing a row?
-                             Actually wait, Key Name and Key Type are on one row. Property is on the NEXT row.
-                             The Property dropdown spans the full width or large width.
-                             Let's look at the screenshot again carefully.
-                             [Key Name] [Key Type]
-                             [Property Type] (Looks like it's taking up about 50% width, aligned with Key Name column)
-                         */}
-                    <div className="w-full md:w-[calc(50%-1.5rem)]">
+                {/* Property + Unit (Unit only shown when MULTI property selected) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-8">
+                    <div className="w-full">
                         {isLoadingProperties ? (
                             <div className="flex items-center gap-2">
                                 <Loader2 className="w-4 h-4 animate-spin text-[#3A6D6C]" />
@@ -400,10 +428,7 @@ const AddKey = () => {
                             <CustomDropdown
                                 label="Property"
                                 value={propertyId}
-                                onChange={(val) => {
-                                    setPropertyId(val);
-                                    if (!isInitializingRef.current) setIsDirty(true);
-                                }}
+                                onChange={handlePropertyChange}
                                 options={propertyOptions}
                                 placeholder="Select Property"
                                 buttonClassName="bg-white border-none rounded-lg py-3 px-4 h-[46px] shadow-sm"
@@ -412,6 +437,38 @@ const AddKey = () => {
                             />
                         )}
                     </div>
+
+                    {isMultiUnit && (
+                        <div className="w-full">
+                            {isLoadingUnits ? (
+                                <div className="flex items-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin text-[#3A6D6C]" />
+                                    <span className="text-sm text-gray-500">Loading units...</span>
+                                </div>
+                            ) : unitOptions.length === 0 ? (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-2">Unit*</label>
+                                    <div className="bg-white rounded-lg py-3 px-4 h-[46px] shadow-sm flex items-center text-sm text-gray-400">
+                                        No units found for this property
+                                    </div>
+                                </div>
+                            ) : (
+                                <CustomDropdown
+                                    label="Unit"
+                                    value={unitId}
+                                    onChange={(val) => {
+                                        setUnitId(val);
+                                        if (!isInitializingRef.current) setIsDirty(true);
+                                    }}
+                                    options={unitOptions}
+                                    placeholder="Select Unit"
+                                    buttonClassName="bg-white border-none rounded-lg py-3 px-4 h-[46px] shadow-sm"
+                                    required={true}
+                                    textClassName="font-medium text-sm text-gray-700"
+                                />
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Details Textarea */}

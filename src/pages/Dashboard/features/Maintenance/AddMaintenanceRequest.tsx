@@ -104,6 +104,7 @@ const AddMaintenanceRequest: React.FC = () => {
     const [showAIChat, setShowAIChat] = useState(false);
     const [aiPrefillData, setAiPrefillData] = useState<any>(null); // To pass AI data to form
     const [createdRequestId, setCreatedRequestId] = useState<string>('');
+    const [submitError, setSubmitError] = useState<string>('');
 
     // Seed form store from existing request when editing
     useEffect(() => {
@@ -160,6 +161,21 @@ const AddMaintenanceRequest: React.FC = () => {
     ];
 
     const handleSubmitRequest = async () => {
+        setSubmitError('');
+
+        const missing: string[] = [];
+        if (!property.propertyId || !property.propertyId.trim()) missing.push('Property');
+        if (!advanced.category) missing.push('Category');
+        if (!advanced.subCategory || !advanced.subCategory.trim()) missing.push('Subcategory');
+        if (!advanced.title || !advanced.title.trim()) missing.push('Title');
+
+        if (missing.length > 0) {
+            setSubmitError(`Please fill required field(s): ${missing.join(', ')}`);
+            if (!property.propertyId || !property.propertyId.trim()) setMainStep(2);
+            else if (!advanced.category || !advanced.subCategory || !advanced.title) setMainStep(1);
+            return;
+        }
+
         try {
             const payload: CreateMaintenanceRequestInput = {
                 propertyId: property.propertyId,
@@ -207,7 +223,8 @@ const AddMaintenanceRequest: React.FC = () => {
             setShowSuccessModal(true);
             reset();
         } catch (error) {
-            // Error is already exposed via createError; just log here
+            const msg = error instanceof Error ? error.message : 'Failed to create maintenance request';
+            setSubmitError(msg);
             // eslint-disable-next-line no-console
             console.error('Failed to create maintenance request', error);
         }
@@ -321,6 +338,19 @@ const AddMaintenanceRequest: React.FC = () => {
                             currentStep={getStepperStep()}
                             steps={advancedSteps}
                         />
+                        {submitError && (
+                            <div className="mt-4 mx-auto max-w-2xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm flex items-start justify-between gap-3">
+                                <span>{submitError}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setSubmitError('')}
+                                    className="text-red-500 hover:text-red-700 font-bold"
+                                    aria-label="Dismiss"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Step 1: General Details */}

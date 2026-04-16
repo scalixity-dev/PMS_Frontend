@@ -12,6 +12,7 @@ import {
 } from '../store/maintenanceRequestStore';
 import { useGetAllLeases } from '../../../../../hooks/useLeaseQueries';
 import type { BackendLease } from '../../../../../services/lease.service';
+import { useGetAllPropertiesIdName } from '../../../../../hooks/usePropertyQueries';
 import { useGetEquipmentByProperty } from '../../../../../hooks/useEquipmentQueries';
 import type { BackendEquipment } from '../../../../../services/equipment.service';
 
@@ -63,10 +64,10 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
 
     const setProperty = useMaintenanceRequestFormStore((state) => state.setProperty);
 
-    // Load all leases and derive properties that have active/pending leases
-    const {
-        data: allLeases = [],
-    } = useGetAllLeases(undefined, undefined, true);
+    // Primary source: properties owned by the current manager (always scoped server-side).
+    // Fallback: properties derived from leases — kept for tenant/legacy flows.
+    const { data: ownedProperties = [] } = useGetAllPropertiesIdName(true);
+    const { data: allLeases = [] } = useGetAllLeases(undefined, undefined, true);
 
     const activeLeases = useMemo(
         () =>
@@ -78,18 +79,23 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
 
     const derivedPropertyOptions = useMemo(() => {
         const map = new Map<string, { value: string; label: string }>();
-        activeLeases.forEach((lease) => {
-            const prop = lease.property;
-            if (!prop) return;
-            if (!map.has(prop.id)) {
-                map.set(prop.id, {
-                    value: prop.id,
-                    label: prop.propertyName,
-                });
-            }
+
+        (ownedProperties as Array<{ id?: string; propertyId?: string; propertyName?: string; name?: string }>).forEach((p) => {
+            const id = p?.id || p?.propertyId;
+            if (!id) return;
+            map.set(id, { value: id, label: p.propertyName || p.name || 'Property' });
         });
 
-        // Fallback to props-based properties if no leases found
+        if (map.size === 0) {
+            activeLeases.forEach((lease) => {
+                const prop = lease.property;
+                if (!prop) return;
+                if (!map.has(prop.id)) {
+                    map.set(prop.id, { value: prop.id, label: prop.propertyName });
+                }
+            });
+        }
+
         if (map.size === 0 && properties && properties.length > 0) {
             properties.forEach((p) => {
                 if (!map.has(p.id)) {
@@ -99,7 +105,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
         }
 
         return Array.from(map.values());
-    }, [activeLeases, properties]);
+    }, [ownedProperties, activeLeases, properties]);
 
     // Load equipment for the selected property
     const {

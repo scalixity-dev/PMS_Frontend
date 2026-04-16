@@ -103,24 +103,37 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
         setIsMenuOpen(false);
     };
 
+    // Forward-only state machine. Mirrors backend ALLOWED_TRANSITIONS.
+    //   DRAFT/SUBMITTED -> Approve, In Review, Decline
+    //   REVIEWING       -> Approve, Decline (no going back)
+    //   APPROVED        -> Move in (terminal)
+    //   REJECTED/CANCELLED -> nothing (terminal)
+    const allowApprove =
+        backendStatus === 'DRAFT' || backendStatus === 'SUBMITTED' || backendStatus === 'REVIEWING';
+    const allowReview =
+        backendStatus === 'DRAFT' || backendStatus === 'SUBMITTED';
+    const allowDecline =
+        backendStatus === 'DRAFT' || backendStatus === 'SUBMITTED' || backendStatus === 'REVIEWING';
+    const allowMoveIn = backendStatus === 'APPROVED' && !!propertyId;
+
     const menuItems = [
-        ...(backendStatus !== 'APPROVED' ? [{ 
-            label: 'Approve', 
+        ...(allowApprove ? [{
+            label: 'Approve',
             action: () => setConfirmModal({ type: 'approve', isOpen: true }),
             color: 'text-green-600'
         }] : []),
-        ...(backendStatus !== 'REVIEWING' ? [{ 
-            label: 'In Review', 
+        ...(allowReview ? [{
+            label: 'In Review',
             action: () => setConfirmModal({ type: 'review', isOpen: true }),
             color: 'text-blue-600'
         }] : []),
-        ...(backendStatus !== 'REJECTED' ? [{ 
-            label: 'Decline', 
+        ...(allowDecline ? [{
+            label: 'Decline',
             action: () => setConfirmModal({ type: 'decline', isOpen: true }),
             isDestructive: true
         }] : []),
-        ...(backendStatus === 'APPROVED' && propertyId ? [{ 
-            label: 'Move in', 
+        ...(allowMoveIn ? [{
+            label: 'Move in',
             action: handleMoveIn,
             color: 'text-[#3A6D6C]'
         }] : []),
@@ -141,16 +154,18 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
 
     return (
         <div className="bg-[#F6F6F8] rounded-[2rem] p-3 flex gap-4 relative items-center shadow-sm h-full">
-            {/* Context Menu */}
+            {/* Context Menu (hidden when no actions are available — terminal status) */}
             <div className="absolute top-3 right-3 z-10" ref={menuRef}>
-                <div
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="bg-white/30 backdrop-blur-md border border-white/40 shadow-sm w-10 h-6 rounded-full hover:bg-white/40 transition-all cursor-pointer flex items-center justify-center"
-                >
-                    <MoreHorizontal className="w-6 h-6 text-gray-700" />
-                </div>
+                {menuItems.length > 0 && (
+                    <div
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        className="bg-white/30 backdrop-blur-md border border-white/40 shadow-sm w-10 h-6 rounded-full hover:bg-white/40 transition-all cursor-pointer flex items-center justify-center"
+                    >
+                        <MoreHorizontal className="w-6 h-6 text-gray-700" />
+                    </div>
+                )}
 
-                {isMenuOpen && (
+                {isMenuOpen && menuItems.length > 0 && (
                     <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-20">
                         {menuItems.map((item, index) => (
                             <button

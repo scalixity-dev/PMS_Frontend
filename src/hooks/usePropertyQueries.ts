@@ -156,6 +156,15 @@ export const useUpdateProperty = () => {
       queryClient.invalidateQueries({ queryKey: propertyQueryKeys.lists() });
       // Update the cached property
       queryClient.setQueryData(propertyQueryKeys.detail(variables.propertyId), data);
+      // Listings and units embed the property (and its amenities/photos/contact) — invalidate
+      // every dependent cache so nested reads refresh immediately. `refetchType: 'active'`
+      // forces active queries to re-fetch instead of just marking them stale.
+      queryClient.invalidateQueries({ queryKey: ['listings'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['units'], refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: propertyQueryKeys.detail(variables.propertyId),
+        refetchType: 'active',
+      });
     },
   });
 };
