@@ -7,6 +7,7 @@ export interface TenantFormData {
     lastName: string;
     email: string;
     phone: string;
+    dateOfBirth: string;
   };
   forwardingAddress: {
     address: string;
@@ -93,6 +94,7 @@ const initialFormData: TenantFormData = {
     lastName: '',
     email: '',
     phone: '',
+    dateOfBirth: '',
   },
   forwardingAddress: {
     address: '',

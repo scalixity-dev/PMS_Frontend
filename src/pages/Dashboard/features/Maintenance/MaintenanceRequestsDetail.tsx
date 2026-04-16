@@ -156,13 +156,24 @@ const MaintenanceRequestsDetail: React.FC = () => {
         }
 
         // Map UI label → backend MaintenanceStatus enum
+        // (NEW | IN_REVIEW | ASSIGNED | IN_PROGRESS | COMPLETED | CANCELLED | ON_HOLD)
         const labelToBackend: Record<string, string> = {
             'New': 'NEW',
             'In Process': 'IN_PROGRESS',
             'In Progress': 'IN_PROGRESS',
+            'In progress': 'IN_PROGRESS',
+            'In Review': 'IN_REVIEW',
+            'In review': 'IN_REVIEW',
             'Completed': 'COMPLETED',
+            // Modal labels that don't match the enum one-to-one — map to the
+            // closest valid backend status so validation passes.
+            'Resolved': 'COMPLETED',
+            'Canceled': 'CANCELLED',
             'Cancelled': 'CANCELLED',
+            'Archived': 'ON_HOLD',
             'Pending': 'NEW',
+            'On Hold': 'ON_HOLD',
+            'Assigned': 'ASSIGNED',
         };
         const backendStatus = labelToBackend[newStatus] || newStatus.toUpperCase().replace(/ /g, '_');
 
@@ -303,16 +314,21 @@ const MaintenanceRequestsDetail: React.FC = () => {
     }, [request]);
 
     const mediaUrls = useMemo(() => {
+        // maintenancePhotos rows have photoUrl for IMAGE and videoUrl for VIDEO
+        // (see backend upload controller). Old code read p.fileUrl which does
+        // not exist on the photos table, so previews never rendered.
         const anyRequest = request as unknown as {
-            photos?: Array<{ fileUrl: string }>;
-            maintenancePhotos?: Array<{ fileUrl: string }>;
+            photos?: Array<{ photoUrl?: string | null; videoUrl?: string | null; fileUrl?: string }>;
+            maintenancePhotos?: Array<{ photoUrl?: string | null; videoUrl?: string | null; fileUrl?: string }>;
             attachments?: Array<{ fileUrl: string; fileType?: string | null }>;
         } | null;
 
         if (!anyRequest) return [];
 
         const rawPhotos = anyRequest.photos ?? anyRequest.maintenancePhotos ?? [];
-        const fromPhotos = rawPhotos.map((p) => p.fileUrl);
+        const fromPhotos = rawPhotos
+            .map((p) => p.photoUrl || p.videoUrl || p.fileUrl || '')
+            .filter(Boolean);
 
         const fromImageAttachments =
             anyRequest.attachments
@@ -696,6 +712,14 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                     <span className="text-gray-500 text-xs font-medium">Date due</span>
                                     <span className="text-gray-800 text-xs font-bold">
                                         {request?.dueDate ? new Date(request.dueDate).toLocaleDateString() : '-'}
+                                    </span>
+                                </div>
+                                <div className="bg-white rounded-full px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
+                                    <span className="text-gray-500 text-xs font-medium">Estimated amount</span>
+                                    <span className="text-gray-800 text-xs font-bold">
+                                        {(request as any)?.managerEstimatedAmount
+                                            ? `${(request as any)?.managerEstimatedCurrency ?? 'USD'} ${(request as any).managerEstimatedAmount}`
+                                            : '-'}
                                     </span>
                                 </div>
                             </div>

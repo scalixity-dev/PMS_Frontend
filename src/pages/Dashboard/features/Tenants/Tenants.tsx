@@ -29,11 +29,11 @@ const Tenants = () => {
     }, [location.state]);
     const itemsPerPage = 9;
 
-    // Server-side filtering: pass search + status to API
-    const statusFilter = (filters.tenantType || []).filter((v: string) => v !== '__no_items__')[0];
+    // Server-side search only. Tenant-type filter is now resolved client-side
+    // after transform because our UI labels ("Current"/"Past"/"Pending") don't
+    // map 1:1 to ContactStatus enum values the backend expects.
     const { data: backendTenants = [], isLoading, error, refetch } = useGetAllTenants({
         search: searchQuery || undefined,
-        status: statusFilter || undefined,
     });
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
 
@@ -52,36 +52,29 @@ const Tenants = () => {
         setCurrentPage(1); // Reset to first page on filter change
     };
 
-    // Build filter options dynamically from tenant data
+    // Build filter options dynamically from transformed tenants (which now
+    // carry tenantType / propertyNames / leaseStatuses).
     const filterOptions: Record<string, FilterOption[]> = useMemo(() => {
         const propertySet = new Set<string>();
         const tenantTypeSet = new Set<string>();
         const leaseStatusSet = new Set<string>();
 
-        tenants.forEach((t: any) => {
-            // Property names
-            if (Array.isArray(t.leases)) {
-                t.leases.forEach((l: any) => {
-                    if (l?.property?.propertyName) propertySet.add(l.property.propertyName);
-                    if (l?.status) leaseStatusSet.add(l.status);
-                });
-            }
-            if (t.propertyName) propertySet.add(t.propertyName);
-            // Tenant type from contact book status or user role
+        tenants.forEach((t) => {
             if (t.tenantType) tenantTypeSet.add(t.tenantType);
-            else if (t.status) tenantTypeSet.add(t.status);
+            (t.propertyNames ?? []).forEach((n) => propertySet.add(n));
+            (t.leaseStatuses ?? []).forEach((s) => leaseStatusSet.add(s));
         });
 
         return {
             tenantType: tenantTypeSet.size > 0
                 ? Array.from(tenantTypeSet).map(v => ({ value: v, label: v }))
-                : [{ value: 'CURRENT', label: 'Current' }, { value: 'PAST', label: 'Past' }, { value: 'PENDING', label: 'Pending' }],
+                : [{ value: 'Current', label: 'Current' }, { value: 'Past', label: 'Past' }, { value: 'Pending', label: 'Pending' }],
             propertyUnits: propertySet.size > 0
                 ? Array.from(propertySet).map(v => ({ value: v, label: v }))
                 : [{ value: '__no_items__', label: 'No properties available' }],
             lease: leaseStatusSet.size > 0
                 ? Array.from(leaseStatusSet).map(v => ({ value: v, label: v }))
-                : [{ value: 'ACTIVE', label: 'Active' }, { value: 'EXPIRED', label: 'Expired' }, { value: 'TERMINATED', label: 'Terminated' }],
+                : [{ value: '__no_items__', label: 'No lease data available' }],
         };
     }, [tenants]);
 
@@ -106,22 +99,20 @@ const Tenants = () => {
                 tenant.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 tenant.phone.toLowerCase().includes(searchQuery.toLowerCase());
 
-            // Tenant type filter
+            // Tenant type filter — match against the derived tenantType.
             const tenantTypeFilters = (filters.tenantType || []).filter(v => v !== '__no_items__');
             const matchesTenantType = tenantTypeFilters.length === 0 ||
-                tenantTypeFilters.includes((tenant as any).tenantType) ||
-                tenantTypeFilters.includes((tenant as any).status);
+                (tenant.tenantType && tenantTypeFilters.includes(tenant.tenantType));
 
-            // Property/Units filter
+            // Property/Units filter — match against propertyNames on the tenant.
             const propertyFilters = (filters.propertyUnits || []).filter(v => v !== '__no_items__');
             const matchesPropertyUnits = propertyFilters.length === 0 ||
-                ((tenant as any).leases || []).some((l: any) => propertyFilters.includes(l?.property?.propertyName)) ||
-                propertyFilters.includes((tenant as any).propertyName);
+                (tenant.propertyNames ?? []).some((n) => propertyFilters.includes(n));
 
-            // Lease status filter
+            // Lease status filter — match against leaseStatuses on the tenant.
             const leaseFilters = (filters.lease || []).filter(v => v !== '__no_items__');
             const matchesLease = leaseFilters.length === 0 ||
-                ((tenant as any).leases || []).some((l: any) => leaseFilters.includes(l?.status));
+                (tenant.leaseStatuses ?? []).some((s) => leaseFilters.includes(s));
 
             return matchesSearch && matchesTenantType && matchesPropertyUnits && matchesLease;
         });

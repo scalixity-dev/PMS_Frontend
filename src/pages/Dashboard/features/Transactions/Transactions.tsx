@@ -789,6 +789,15 @@ const Transactions: React.FC = () => {
                                                                 e.stopPropagation();
                                                                 setMoreMenuOpenId(null);
                                                                 setSelectedTransactionId(item.id);
+                                                                // Prefill modal with transaction data (must match other Edit menu)
+                                                                setEditingTransactionData({
+                                                                    id: String(item.id),
+                                                                    category: item.category || '',
+                                                                    amount: String(item.total ?? item.balance ?? ''),
+                                                                    date: item.dueDateRaw || item.dueDate || '',
+                                                                    details: (item as any).details || (item as any).notes || '',
+                                                                    tags: Array.isArray((item as any).tags) ? (item as any).tags.join(', ') : ((item as any).tags || ''),
+                                                                });
                                                                 setEditInvoiceOpen(true);
                                                             }}
                                                             className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"

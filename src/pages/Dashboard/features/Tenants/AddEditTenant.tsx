@@ -125,6 +125,9 @@ const AddEditTenant = () => {
                     lastName: tenantData.lastName,
                     email: tenantData.user?.email || tenantData.contactBookEntry?.email || '',
                     phone: tenantData.phoneNumber || '',
+                    dateOfBirth: tenantData.user?.dateOfBirth
+                        ? String(tenantData.user.dateOfBirth).split('T')[0]
+                        : '',
                 },
                 forwardingAddress: (() => {
                     // Try to parse forwarding address if it exists
@@ -364,8 +367,17 @@ const AddEditTenant = () => {
         const newErrors: Record<string, string> = {};
         if (!formData.personalInfo.firstName) newErrors.firstName = 'First Name is required';
         if (!formData.personalInfo.lastName) newErrors.lastName = 'Last Name is required';
-        if (!formData.personalInfo.phone) newErrors.phone = 'Phone is required';
         if (!formData.personalInfo.email) newErrors.email = 'Email is required';
+        if (!formData.personalInfo.dateOfBirth) newErrors.dateOfBirth = 'Date of Birth is required';
+        if (formData.personalInfo.dateOfBirth) {
+            const dob = new Date(formData.personalInfo.dateOfBirth);
+            const now = new Date();
+            const age = (now.getTime() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+            if (isNaN(dob.getTime()) || age < 18 || age > 120) {
+                newErrors.dateOfBirth = 'Must be a valid date, 18+ years old';
+            }
+        }
+        if (!formData.personalInfo.phone) newErrors.phone = 'Phone is required';
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
@@ -416,6 +428,9 @@ const AddEditTenant = () => {
                 lastName: formData.personalInfo.lastName,
                 phoneCountryCode,
                 phoneNumber,
+                dateOfBirth: formData.personalInfo.dateOfBirth
+                    ? new Date(formData.personalInfo.dateOfBirth).toISOString()
+                    : undefined,
                 forwardingAddress,
                 emergencyContacts: formData.emergencyContacts
                     .filter(contact => contact.name && contact.phone)
@@ -608,6 +623,7 @@ const AddEditTenant = () => {
                         <InputField label="Middle Name" name="middleName" value={formData.personalInfo.middleName} onChange={handlePersonalInfoChange} placeholder="Middle Name (optional)" />
                         <InputField label="Last Name" name="lastName" value={formData.personalInfo.lastName} onChange={handlePersonalInfoChange} placeholder="Last Name" error={errors.lastName} required />
                         <InputField label="Email" name="email" value={formData.personalInfo.email} onChange={handlePersonalInfoChange} placeholder="Email Address" type="email" error={errors.email} required />
+                        <InputField label="Date of Birth" name="dateOfBirth" type="date" value={formData.personalInfo.dateOfBirth} onChange={handlePersonalInfoChange} placeholder="YYYY-MM-DD" error={errors.dateOfBirth} required />
                         <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" error={errors.phone} required />
                     </div>
                 </div>

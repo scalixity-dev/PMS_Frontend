@@ -66,6 +66,11 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
     : options;
 
   useEffect(() => {
+    // Only attach listener when dropdown is open. Prevents race condition where
+    // sibling closed dropdowns fire onToggle(false) and overwrite the active one
+    // via shared parent state (see AddUtilityProviderModal with 3 dropdowns).
+    if (!isOpen) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         if (!isControlled) setInternalIsOpen(false);
@@ -78,7 +83,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [isOpen, isControlled, onToggle]);
 
   // Focus search input when dropdown opens
   useEffect(() => {

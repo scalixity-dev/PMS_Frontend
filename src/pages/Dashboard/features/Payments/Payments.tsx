@@ -51,6 +51,8 @@ const Payments: React.FC = () => {
         datePaid: typeof payment.datePaid === 'string' ? payment.datePaid : payment.datePaid.toISOString(),
         category: payment.category,
         amount: payment.amount,
+        contact: payment.contact,
+        property: payment.property,
     });
 
     useEffect(() => {
@@ -562,8 +564,8 @@ const Payments: React.FC = () => {
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setMoreMenuOpenId(null);
-                                                        setSelectedTransactionId(item.id);
-                                                        setDeleteTransactionOpen(true);
+                                                        setSelectedPayment(convertPaymentToPaymentData(item));
+                                                        setDeleteModalOpen(true);
                                                     }}
                                                     className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
                                                     role="menuitem"
@@ -659,8 +661,8 @@ const Payments: React.FC = () => {
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setMoreMenuOpenId(null);
-                                                setSelectedTransactionId(item.id);
-                                                setDeleteTransactionOpen(true);
+                                                setSelectedPayment(convertPaymentToPaymentData(item));
+                                                setDeleteModalOpen(true);
                                             }}
                                             className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
                                             role="menuitem"

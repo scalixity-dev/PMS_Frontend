@@ -16,12 +16,23 @@ import type { BackendTenantProfile } from '../../../../services/tenant.service';
 // Transform backend tenant profile to detail page format
 const transformTenantForDetail = (backendTenant: BackendTenantProfile) => {
     const email = backendTenant.user?.email || backendTenant.contactBookEntry?.email || 'N/A';
-    // Phone format: "+91 9876543210" — space separator
+    // Phone format: "+91 9876543210" — space separator.
+    // Guard against legacy data where phoneCountryCode was mistakenly written
+    // with the full phone number (resulting in "9876543210 9876543210" or a
+    // doubled string shown in the UI where the country code should be). Only
+    // prepend the country code when it is actually different from, and not a
+    // substring of, the phone number.
     const phone = backendTenant.phoneNumber
-        ? `${backendTenant.phoneCountryCode ? backendTenant.phoneCountryCode + ' ' : ''}${backendTenant.phoneNumber}`.trim()
+        ? (() => {
+              const cc = backendTenant.phoneCountryCode?.trim();
+              const num = backendTenant.phoneNumber!;
+              const duplicated = cc && (cc === num || cc.includes(num) || num.includes(cc));
+              return cc && !duplicated ? `${cc} ${num}` : num;
+          })()
         : 'N/A';
-    // Date of birth from user record (was "Not in backend model" — now wired)
-    const dobRaw = (backendTenant.user as any)?.dateOfBirth;
+    // Date of birth: prefer the dedicated column on the tenant profile
+    // (always persisted), fall back to the linked user's value.
+    const dobRaw = backendTenant.dateOfBirth ?? (backendTenant.user as any)?.dateOfBirth;
     const dateOfBirth = dobRaw
         ? new Date(dobRaw).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
         : '-';

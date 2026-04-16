@@ -1,9 +1,11 @@
 import { API_ENDPOINTS } from '../config/api.config';
 
-interface DashboardStats {
+export interface DashboardStats {
   overview: {
     propertiesCount: number;
     unitsCount: number;
+    unitsOccupied: number;
+    unitsVacant: number;
     tenantsCount: number;
     openMaintenanceCount: number;
   };
@@ -11,6 +13,11 @@ interface DashboardStats {
     thisMonthIncome: number;
     thisMonthExpenses: number;
     thisMonthNOI: number;
+    lastMonthIncome: number;
+    lastMonthExpenses: number;
+    incomeGrowthPct: number;
+    expensesGrowthPct: number;
+    depositsHeld: number;
     overdueInvoicesCount: number;
     overdueInvoicesAmount: number;
   };
@@ -24,6 +31,16 @@ interface DashboardStats {
     pending: number;
     approved: number;
     rejected: number;
+  };
+  leases: {
+    expiringCount: number;
+    expiringSoon: Array<{
+      id: string;
+      endDate: string;
+      propertyName: string;
+      tenantName: string;
+      daysUntilExpiry: number;
+    }>;
   };
   recentActivity: Array<{
     type: string;

@@ -372,29 +372,21 @@ const AddMaintenanceRequest: React.FC = () => {
                                 handleNext();
                             }}
                             onBack={handleBack}
-                            initialData={
-                                isEditMode && existingRequest
-                                    ? {
-                                        selectedProperty: existingRequest.property?.id ?? '',
-                                        linkEquipment: Boolean(
-                                            existingRequest.equipmentLinked && existingRequest.equipmentId,
-                                        ),
-                                        selectedEquipment: existingRequest.equipmentId ?? '',
-                                        tenantAuthorization:
-                                            existingRequest.tenantMeta?.tenantAuthorization ?? false,
-                                        dateOptions:
-                                            existingRequest.tenantMeta?.dateOptions?.map((option, index) => ({
-                                                id: `${index}`,
-                                                date: option.date ? new Date(option.date) : undefined,
-                                                timeSlots: option.timeSlots ?? [],
-                                            })) ?? [],
-                                        tenantList: [],
-                                        accessCode: existingRequest.tenantMeta?.accessCode ?? '',
-                                        petsInResidence: existingRequest.tenantMeta?.petsInResidence ?? '',
-                                        selectedPets: existingRequest.tenantMeta?.selectedPets ?? [],
-                                    }
-                                    : undefined
-                            }
+                            // Always hydrate from the store so stepping back and forward
+                            // keeps selections, dates, pets, etc. Edit-mode seeds the
+                            // store via the useEffect above, so reading the store is
+                            // correct for both flows.
+                            initialData={{
+                                selectedProperty: property.propertyId,
+                                linkEquipment: property.linkEquipment,
+                                selectedEquipment: property.selectedEquipment,
+                                tenantAuthorization: property.tenantAuthorization,
+                                dateOptions: property.dateOptions,
+                                tenantList: property.tenantList,
+                                accessCode: property.accessCode,
+                                petsInResidence: property.petsInResidence,
+                                selectedPets: property.selectedPets,
+                            }}
                         />
                     )}
 
@@ -405,25 +397,15 @@ const AddMaintenanceRequest: React.FC = () => {
                                 await handleSubmitRequest();
                             }}
                             onBack={handleBack}
-                            initialData={
-                                isEditMode && existingRequest
-                                    ? {
-                                        dateInitiated: existingRequest.requestedAt
-                                            ? new Date(existingRequest.requestedAt)
-                                            : undefined,
-                                        dateDue: existingRequest.dueDate
-                                            ? new Date(existingRequest.dueDate)
-                                            : undefined,
-                                        priority: mapBackendPriorityToUi(existingRequest.priority),
-                                        materials:
-                                            existingRequest.materials?.map((material, index) => ({
-                                                id: `${index}`,
-                                                name: material.materialName,
-                                                quantity: material.quantity ?? 1,
-                                            })) ?? [],
-                                    }
-                                    : undefined
-                            }
+                            // Hydrate from the store so stepping back/forward retains
+                            // date, priority, materials, and chargeTo selections.
+                            initialData={{
+                                dateInitiated: due.dateInitiated,
+                                dateDue: due.dateDue,
+                                priority: due.priority,
+                                materials: due.materials,
+                                chargeTo: due.chargeTo,
+                            }}
                         />
                     )}
 

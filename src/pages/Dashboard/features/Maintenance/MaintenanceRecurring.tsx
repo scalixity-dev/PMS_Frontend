@@ -3,13 +3,14 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Plus, Check, Trash2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
-import MakeRecurringModal from './components/MakeRecurringModal';
+import AddRecurringRequestModal, { type RecurringRequestFormData } from './components/AddRecurringRequestModal';
 import {
     useGetAllMaintenanceRecurring,
     useCreateMaintenanceRecurring,
     useDeleteMaintenanceRecurring,
     type RecurringMaintenance,
 } from '../../../../hooks/useMaintenanceRecurringQueries';
+import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
 
 
 const MaintenanceRecurring: React.FC = () => {
@@ -24,6 +25,12 @@ const MaintenanceRecurring: React.FC = () => {
     const { data: recurringRequests = [] } = useGetAllMaintenanceRecurring();
     const createMutation = useCreateMaintenanceRecurring();
     const deleteMutation = useDeleteMaintenanceRecurring();
+    const { data: properties = [] } = useGetAllProperties();
+
+    const propertyDropdownOptions = useMemo(
+        () => properties.map((p: any) => ({ value: p.id, label: p.propertyName })),
+        [properties],
+    );
 
     const [filters, setFilters] = useState<{
         display: string[];
@@ -55,10 +62,22 @@ const MaintenanceRecurring: React.FC = () => {
         }
     };
 
-    const handleCreateRecurring = (data: any) => {
-        createMutation.mutate(data, {
-            onSuccess: () => setShowAddModal(false),
-        });
+    const handleCreateRecurring = (data: RecurringRequestFormData) => {
+        if (!data.startDate) return;
+        createMutation.mutate(
+            {
+                propertyId: data.property,
+                title: `${data.category} - ${data.subCategory}`.trim() || 'Recurring Request',
+                description: data.description,
+                category: data.category,
+                frequency: data.frequency,
+                startDate: data.startDate.toISOString(),
+                endDate: data.endDate ? data.endDate.toISOString() : undefined,
+            },
+            {
+                onSuccess: () => setShowAddModal(false),
+            },
+        );
     };
 
     const filterOptions: Record<string, FilterOption[]> = {
@@ -287,18 +306,12 @@ const MaintenanceRecurring: React.FC = () => {
                 </div>
             </div>
 
-            {/* Make Recurring Modal */}
-            <MakeRecurringModal
+            {/* Add Recurring Request Modal — editable dropdowns for a new request */}
+            <AddRecurringRequestModal
                 isOpen={showAddModal}
                 onClose={() => setShowAddModal(false)}
-                requestDetails={{
-                    category: 'Select Category',
-                    subCategory: 'Select Sub-Category',
-                    issue: 'Select Issue',
-                    subIssue: 'Select Sub-Issue',
-                    title: 'Enter Title',
-                }}
-                onSave={handleCreateRecurring}
+                onSubmit={handleCreateRecurring}
+                propertyOptions={propertyDropdownOptions}
             />
 
             <DeleteConfirmationModal

@@ -9,6 +9,7 @@ export interface BackendTenantProfile {
   lastName: string;
   phoneCountryCode?: string | null;
   phoneNumber?: string | null;
+  dateOfBirth?: string | null;
   forwardingAddress?: string | null;
   profilePhotoUrl?: string | null;
   createdAt: string;
@@ -19,6 +20,7 @@ export interface BackendTenantProfile {
     fullName: string;
     role: string;
     isActive: boolean;
+    dateOfBirth?: string | null;
   } | null;
   contactBookEntry?: {
     id: string;
@@ -81,6 +83,11 @@ export interface Tenant {
   phone: string;
   email: string;
   image?: string;
+  // Fields used by the Tenants list filters / search; optional because they
+  // can be absent for contact-book-only tenants.
+  tenantType?: string;
+  propertyNames?: string[];
+  leaseStatuses?: string[];
 }
 
 // DTOs for creating/updating
@@ -92,6 +99,7 @@ export interface CreateTenantProfileDto {
   lastName: string;
   phoneCountryCode?: string;
   phoneNumber?: string;
+  dateOfBirth?: string;
   forwardingAddress?: string;
   profilePhotoUrl?: string;
   emergencyContacts?: {
@@ -493,11 +501,36 @@ class TenantService {
   transformTenant(backendTenant: BackendTenantProfile): Tenant {
     // Get email from user if available, otherwise from contactBookEntry
     const email = backendTenant.user?.email || backendTenant.contactBookEntry?.email || 'N/A';
-    
+
     // Get phone number with country code if available
-    const phone = backendTenant.phoneNumber 
-      ? `${backendTenant.phoneCountryCode || ''}${backendTenant.phoneNumber}`.trim() 
+    const phone = backendTenant.phoneNumber
+      ? `${backendTenant.phoneCountryCode || ''}${backendTenant.phoneNumber}`.trim()
       : 'N/A';
+
+    // Tenant type is derived from contact-book status / user linkage so the
+    // list filter has something to match. PENDING → Pending; ACCEPTED or a
+    // linked user with active leases → Current; DECLINED → Past.
+    const contactStatus = backendTenant.contactBookEntry?.status;
+    const hasUser = !!backendTenant.user?.id;
+    const leases = ((backendTenant.user as any)?.leases ?? []) as Array<{
+      status?: string;
+      property?: { propertyName?: string };
+    }>;
+    let tenantType: string | undefined;
+    if (contactStatus === 'PENDING') tenantType = 'Pending';
+    else if (contactStatus === 'DECLINED') tenantType = 'Past';
+    else if (contactStatus === 'ACCEPTED' || hasUser) tenantType = 'Current';
+
+    const propertyNames = Array.from(
+      new Set(
+        leases
+          .map((l) => l.property?.propertyName)
+          .filter((n): n is string => !!n),
+      ),
+    );
+    const leaseStatuses = Array.from(
+      new Set(leases.map((l) => l.status).filter((s): s is string => !!s)),
+    );
 
     return {
       id: backendTenant.id,
@@ -507,6 +540,9 @@ class TenantService {
       phone: phone,
       email: email,
       image: backendTenant.profilePhotoUrl || undefined,
+      tenantType,
+      propertyNames,
+      leaseStatuses,
     };
   }
   /**

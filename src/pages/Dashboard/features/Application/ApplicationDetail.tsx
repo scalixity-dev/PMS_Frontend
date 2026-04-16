@@ -293,6 +293,13 @@ const ApplicationDetail = () => {
                 return;
             }
 
+            // Validate file size (5MB max)
+            const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+            if (file.size > MAX_IMAGE_SIZE) {
+                alert(`Image too large. Max size is 5MB (your file is ${(file.size / 1024 / 1024).toFixed(2)}MB).`);
+                return;
+            }
+
             setIsUploadingProfileImage(true);
             try {
                 const formData = new FormData();

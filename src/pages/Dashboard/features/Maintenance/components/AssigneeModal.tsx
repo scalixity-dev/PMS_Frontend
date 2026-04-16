@@ -47,12 +47,17 @@ const AssigneeModal: React.FC<AssigneeModalProps> = ({
         isOpen,
     );
 
-    const filteredProviders = requestCategory
+    // Service provider `category` is stored as free text and doesn't always
+    // match the maintenance request category enum (e.g. "Electrical" vs
+    // "HOUSEHOLD"). Do a best-effort filter: if the strict match yields nothing,
+    // fall back to showing every active service pro so the user can still pick.
+    const categoryMatched = requestCategory
         ? serviceProviders.filter(
               (sp: BackendServiceProvider) =>
                   sp.category?.toUpperCase() === requestCategory.toUpperCase(),
           )
         : serviceProviders;
+    const filteredProviders = categoryMatched.length > 0 ? categoryMatched : serviceProviders;
 
     const options: AssigneeOption[] = [
         ...(currentUser
