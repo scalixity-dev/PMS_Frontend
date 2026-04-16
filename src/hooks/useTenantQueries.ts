@@ -213,6 +213,19 @@ export const useDeleteTenantDocument = () => {
 };
 
 /**
+ * Hook to get tenant dashboard summary (single-call home page)
+ */
+export const useGetMyTenantDashboard = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['tenants', 'my-dashboard'] as const,
+    queryFn: () => tenantService.getMyDashboard(),
+    enabled,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+};
+
+/**
  * Hook to get tenant preferences (public renter profile)
  */
 export const useGetTenantPreferences = (enabled: boolean = true) => {

@@ -682,6 +682,47 @@ class TenantService {
   }
 
   /**
+   * Get tenant dashboard summary (single-call home page data)
+   */
+  async getMyDashboard(): Promise<{
+    leases: Array<{
+      id: string;
+      status: string;
+      startDate: string;
+      endDate: string | null;
+      propertyName: string;
+      propertyId: string;
+      unitName: string | null;
+      monthlyRent: string | null;
+      securityDeposit: string | null;
+    }>;
+    nextRentDue: {
+      id: string;
+      amount: string;
+      currency: string;
+      dueDate: string;
+      leaseId: string;
+      status: string;
+    } | null;
+    recentTransactions: Array<any>;
+    applications: { pending: number; approved: number; rejected: number };
+    maintenanceRequests: { open: number; inProgress: number; completed: number };
+    unreadNotifications: number;
+  }> {
+    const response = await fetch(API_ENDPOINTS.TENANT.MY_DASHBOARD, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch tenant dashboard: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Get tenant preferences (public renter profile)
    */
   async getPreferences(): Promise<any> {

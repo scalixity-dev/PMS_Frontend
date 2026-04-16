@@ -1,12 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { MoreHorizontal, Check, X, FileText } from 'lucide-react';
+import { MoreHorizontal, Check, X, FileText, UploadCloud, FolderPlus, Folder, ChevronLeft, Loader2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import Pagination from '../../components/Pagination';
 import EditNameModal from './components/EditNameModal';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
-import { useGetFiles, useRenameFile, useDeleteFile } from '../../../../hooks/useFilesQueries';
+import {
+    useGetFiles, useRenameFile, useDeleteFile, useUploadFile,
+    useGetFolders, useCreateFolder, useRenameFolder, useDeleteFolder,
+} from '../../../../hooks/useFilesQueries';
+import { API_ENDPOINTS } from '../../../../config/api.config';
 
 // File data structure
 interface FileData {
@@ -163,10 +167,118 @@ const FileManager: React.FC = () => {
     const [activeActionMenu, setActiveActionMenu] = useState<string | null>(null);
     const [downloadError, setDownloadError] = useState<string | null>(null);
 
-    // Backend data
-    const { data: rawFiles = [] } = useGetFiles();
+    // Folder navigation state
+    const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
+    const [folderPath, setFolderPath] = useState<{ id: string | undefined; name: string }[]>([{ id: undefined, name: 'Root' }]);
+    const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
+    const [editingFolder, setEditingFolder] = useState<{ id: string; name: string } | null>(null);
+    const [deletingFolder, setDeletingFolder] = useState<{ id: string; name: string } | null>(null);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Backend data - scoped to current folder
+    const { data: rawFiles = [] } = useGetFiles(currentFolderId);
+    const { data: rawFolders = [] } = useGetFolders(currentFolderId);
     const renameFileMutation = useRenameFile();
     const deleteFileMutation = useDeleteFile();
+    const uploadFileMutation = useUploadFile();
+    const createFolderMutation = useCreateFolder();
+    const renameFolderMutation = useRenameFolder();
+    const deleteFolderMutation = useDeleteFolder();
+
+    // Upload handler: 2-step (multipart /upload/file → save metadata to /files/upload)
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadError(null);
+        setIsUploading(true);
+
+        try {
+            // Step 1: multipart upload to cloud via /upload/file
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('category', 'DOCUMENT');
+
+            const uploadRes = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+                method: 'POST',
+                credentials: 'include',
+                body: formData,
+            });
+
+            if (!uploadRes.ok) {
+                const err = await uploadRes.json().catch(() => ({}));
+                throw new Error(err?.message || `Upload failed: ${uploadRes.statusText}`);
+            }
+
+            const uploadData = await uploadRes.json();
+            const fileUrl = uploadData.url || uploadData.fileUrl;
+            if (!fileUrl) throw new Error('Upload succeeded but no URL returned');
+
+            // Step 2: save file metadata record
+            await uploadFileMutation.mutateAsync({
+                url: fileUrl,
+                name: file.name,
+                originalName: file.name,
+                mimeType: file.type || undefined,
+                sizeBytes: file.size,
+                folderId: currentFolderId,
+            });
+        } catch (err: any) {
+            setUploadError(err?.message || 'Upload failed');
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handleCreateFolder = async () => {
+        if (!newFolderName.trim()) return;
+        try {
+            await createFolderMutation.mutateAsync({
+                name: newFolderName.trim(),
+                parentId: currentFolderId,
+            });
+            setNewFolderName('');
+            setIsCreateFolderOpen(false);
+        } catch (err: any) {
+            setUploadError(err?.message || 'Failed to create folder');
+        }
+    };
+
+    const handleEnterFolder = (folder: { id: string; name: string }) => {
+        setCurrentFolderId(folder.id);
+        setFolderPath((prev) => [...prev, { id: folder.id, name: folder.name }]);
+        setCurrentPage(1);
+    };
+
+    const handleFolderBreadcrumbClick = (index: number) => {
+        const target = folderPath[index];
+        setCurrentFolderId(target.id);
+        setFolderPath(folderPath.slice(0, index + 1));
+        setCurrentPage(1);
+    };
+
+    const handleRenameFolderSubmit = async (newName: string) => {
+        if (!editingFolder) return;
+        try {
+            await renameFolderMutation.mutateAsync({ id: editingFolder.id, name: newName });
+            setEditingFolder(null);
+        } catch (err: any) {
+            setUploadError(err?.message || 'Failed to rename folder');
+        }
+    };
+
+    const handleDeleteFolderConfirm = async () => {
+        if (!deletingFolder) return;
+        try {
+            await deleteFolderMutation.mutateAsync(deletingFolder.id);
+            setDeletingFolder(null);
+        } catch (err: any) {
+            setUploadError(err?.message || 'Failed to delete folder');
+        }
+    };
 
     // Map backend records to local FileData shape
     const files: FileData[] = rawFiles.map((f) => {
@@ -371,7 +483,134 @@ const FileManager: React.FC = () => {
             </div>
 
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
-                <h1 className="text-2xl font-bold text-gray-800 mb-6">File manager</h1>
+                <h1 className="text-2xl font-bold text-gray-800 mb-4">File manager</h1>
+
+                {/* Folder breadcrumb + actions */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 bg-white rounded-2xl p-3 shadow-sm">
+                    <div className="flex items-center gap-1 text-sm text-gray-700 flex-wrap">
+                        {folderPath.length > 1 && (
+                            <button
+                                onClick={() => handleFolderBreadcrumbClick(folderPath.length - 2)}
+                                className="p-1 hover:bg-gray-100 rounded-full"
+                                title="Back"
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                        )}
+                        {folderPath.map((seg, idx) => (
+                            <React.Fragment key={idx}>
+                                {idx > 0 && <span className="text-gray-400">/</span>}
+                                <button
+                                    onClick={() => handleFolderBreadcrumbClick(idx)}
+                                    className={`px-2 py-1 rounded hover:bg-gray-100 ${idx === folderPath.length - 1 ? 'font-bold text-[#3A6D6C]' : 'text-gray-600'}`}
+                                >
+                                    {seg.name}
+                                </button>
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setIsCreateFolderOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <FolderPlus size={16} />
+                            New Folder
+                        </button>
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm disabled:opacity-50"
+                        >
+                            {isUploading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                            {isUploading ? 'Uploading...' : 'Upload File'}
+                        </button>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                        />
+                    </div>
+                </div>
+
+                {/* Upload error banner */}
+                {uploadError && (
+                    <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700 flex items-center justify-between">
+                        <span>{uploadError}</span>
+                        <button onClick={() => setUploadError(null)} className="text-red-700 hover:text-red-900 text-xs font-bold">×</button>
+                    </div>
+                )}
+
+                {/* Create folder inline form */}
+                {isCreateFolderOpen && (
+                    <div className="mb-4 bg-white rounded-2xl p-4 shadow-sm flex gap-2 items-center">
+                        <input
+                            type="text"
+                            value={newFolderName}
+                            onChange={(e) => setNewFolderName(e.target.value)}
+                            placeholder="Folder name"
+                            autoFocus
+                            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleCreateFolder(); }}
+                        />
+                        <button
+                            onClick={handleCreateFolder}
+                            disabled={!newFolderName.trim() || createFolderMutation.isPending}
+                            className="px-4 py-2 bg-[#82D64D] text-white rounded-lg text-sm font-medium hover:bg-[#6EC132] disabled:opacity-50"
+                        >
+                            Create
+                        </button>
+                        <button
+                            onClick={() => { setIsCreateFolderOpen(false); setNewFolderName(''); }}
+                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
+
+                {/* Folders grid */}
+                {rawFolders.length > 0 && (
+                    <div className="mb-6">
+                        <h2 className="text-sm font-semibold text-gray-600 mb-2">Folders</h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                            {rawFolders.map((folder) => (
+                                <div
+                                    key={folder.id}
+                                    className="group relative bg-white rounded-xl p-3 hover:shadow-md transition-shadow cursor-pointer"
+                                    onDoubleClick={() => handleEnterFolder(folder)}
+                                >
+                                    <div
+                                        onClick={() => handleEnterFolder(folder)}
+                                        className="flex flex-col items-center gap-2"
+                                    >
+                                        <Folder size={40} className="text-[#F59E0B] fill-[#FDE68A]" />
+                                        <span className="text-xs font-medium text-gray-700 text-center truncate w-full" title={folder.name}>
+                                            {folder.name}
+                                        </span>
+                                    </div>
+                                    <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 flex gap-1">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setEditingFolder({ id: folder.id, name: folder.name }); }}
+                                            className="p-1 bg-white rounded hover:bg-gray-100 shadow-sm"
+                                            title="Rename"
+                                        >
+                                            <MoreHorizontal size={12} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setDeletingFolder({ id: folder.id, name: folder.name }); }}
+                                            className="p-1 bg-white rounded hover:bg-red-50 text-red-500 shadow-sm"
+                                            title="Delete"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Stats Header */}
                 <div className="bg-[#F0F0F6] p-4 lg:p-2 grid grid-cols-1 sm:grid-cols-2 lg:flex lg:overflow-x-auto gap-4 rounded-3xl lg:rounded-full shadow-md mb-8 items-stretch lg:items-center scrollbar-hide">
@@ -737,6 +976,20 @@ const FileManager: React.FC = () => {
                     }
                     setDeletingFile(null);
                 }}
+            />
+
+            <EditNameModal
+                isOpen={!!editingFolder}
+                currentName={editingFolder?.name || ''}
+                onClose={() => setEditingFolder(null)}
+                onSave={handleRenameFolderSubmit}
+            />
+
+            <DeleteConfirmationModal
+                isOpen={!!deletingFolder}
+                itemName={deletingFolder?.name}
+                onClose={() => setDeletingFolder(null)}
+                onConfirm={handleDeleteFolderConfirm}
             />
         </div>
     );
