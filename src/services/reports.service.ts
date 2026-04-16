@@ -183,4 +183,37 @@ export const reportsService = {
   getContacts(): Promise<ContactItem[]> {
     return getJson<ContactItem[]>(API_ENDPOINTS.REPORTS.CONTACTS);
   },
+
+  getRentability(params: { startDate?: string; endDate?: string }): Promise<RentabilityReport> {
+    return getJson<RentabilityReport>(API_ENDPOINTS.REPORTS.RENTABILITY(buildQuery(params)));
+  },
 };
+
+export interface RentabilityRow {
+  propertyId: string;
+  propertyName: string;
+  propertyType: string;
+  monthlyRent: number;
+  expectedRent: number;
+  income: number;
+  expenses: number;
+  noi: number;
+  paidRent: number;
+  collectionRate: number;
+  occupancyStatus: string;
+  status: string;
+}
+
+export interface RentabilityReport {
+  data: RentabilityRow[];
+  summary: {
+    propertyCount: number;
+    totalIncome: number;
+    totalExpenses: number;
+    totalNOI: number;
+    portfolioCollectionRate: number;
+    rangeStart: string;
+    rangeEnd: string;
+    months: number;
+  };
+}

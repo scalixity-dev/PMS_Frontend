@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronLeft, Plus, X, UploadCloud } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Plus, X, UploadCloud, Loader2 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import ReviewSuccessModal from '../landlordforms/components/ReviewSuccessModal';
 import DocumentPreviewModal from '../components/DocumentPreviewModal';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
 import Breadcrumb from '../../../../../components/ui/Breadcrumb';
 import UseTemplateModal from './components/UseTemplateModal';
+import { useGetTemplate, useGetTemplates } from '../../../../../hooks/useDocumentsQueries';
 
 interface MyLocationState {
     showSuccessPopup?: boolean;
@@ -55,7 +56,21 @@ const MyTemplateDetail: React.FC = () => {
         fileInputRef.current?.click();
     };
 
-    const [template, setTemplate] = useState<{ id: number; title: string; subtitle: string; content?: string } | null>(null);
+    // Fetch template from API by id (works on direct URL / refresh)
+    const { data: apiTemplate, isLoading: isTemplateLoading, isError: isTemplateError } = useGetTemplate(id ?? '');
+    // Fetch all user templates for sidebar dropdown
+    const { data: allApiTemplates = [] } = useGetTemplates({ includeSystem: false });
+
+    // Map API template shape to UI-friendly shape
+    const template = useMemo(() => {
+        if (!apiTemplate) return null;
+        return {
+            id: apiTemplate.id,
+            title: apiTemplate.title,
+            subtitle: apiTemplate.category || 'Template',
+            content: apiTemplate.content,
+        };
+    }, [apiTemplate]);
 
     useEffect(() => {
         if (state?.showSuccessPopup) {
@@ -84,26 +99,11 @@ const MyTemplateDetail: React.FC = () => {
 
     useEffect(() => {
         if (!id) {
-            setTemplate(null);
             setAttachments([]);
             return;
         }
 
-        const saved = localStorage.getItem('myTemplates');
-        let found: { id: number; title: string; subtitle: string; content?: string } | null = null;
-        if (saved) {
-            const templates = JSON.parse(saved);
-            found = templates.find((t: any) => t.id.toString() === id);
-        }
-
-        // Fallback for demo if not found in local storage
-        if (!found && id === '1') {
-            found = { id: 1, title: 'Best Deals', subtitle: 'Tenants Agreements' };
-        }
-
-        setTemplate(found || null);
-
-        // Load saved attachments metadata
+        // Load saved attachments metadata (kept in localStorage until backend-backed)
         const attachmentKey = `template_attachments_${id}`;
         const savedAttachments = localStorage.getItem(attachmentKey);
         if (savedAttachments) {
@@ -122,16 +122,11 @@ const MyTemplateDetail: React.FC = () => {
     const templateSubtitle = template?.subtitle || "Tenants Agreements";
 
     const allTemplates = (() => {
-        const saved = localStorage.getItem('myTemplates');
-        if (saved) {
-            return JSON.parse(saved);
-        }
-        // Fallback mocks same as MyTemplates.tsx
-        return [
-            { id: 1, title: 'Best Deals', subtitle: 'Tenants Agreements' },
-            { id: 2, title: 'Title', subtitle: 'Tenants Agreements' },
-            { id: 3, title: 'Title', subtitle: 'Tenants Agreements' },
-        ];
+        return allApiTemplates.map((t) => ({
+            id: t.id,
+            title: t.title,
+            subtitle: t.category || 'Template',
+        }));
     })();
 
     const sanitizedHtml = useMemo(
@@ -172,6 +167,26 @@ const MyTemplateDetail: React.FC = () => {
         localStorage.setItem(attachmentKey, JSON.stringify(finalAttachments));
         setIsAttachmentModalOpen(false);
     };
+
+    if (isTemplateLoading) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                <span className="ml-3 text-gray-600">Loading template...</span>
+            </div>
+        );
+    }
+
+    if (isTemplateError || !template) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen p-8">
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Documents Template', path: '/dashboard/documents/my-templates' }, { label: 'Not found' }]} />
+                <div className="mt-6 bg-red-50 border border-red-200 rounded-2xl p-6 text-red-700">
+                    Template not found or failed to load. <button onClick={() => navigate('/dashboard/documents/my-templates')} className="underline font-semibold ml-2">Go back</button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">

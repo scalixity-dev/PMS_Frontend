@@ -19,6 +19,8 @@ export const reportQueryKeys = {
   maintenanceRequests: (params: { status?: string; startDate?: string; endDate?: string }) =>
     [...reportQueryKeys.all, 'maintenance-requests', params] as const,
   contacts: () => [...reportQueryKeys.all, 'contacts'] as const,
+  rentability: (params: { startDate?: string; endDate?: string }) =>
+    [...reportQueryKeys.all, 'rentability', params] as const,
 };
 
 export function useRentRollReport() {
@@ -106,6 +108,15 @@ export function useContactsReport() {
   return useQuery({
     queryKey: reportQueryKeys.contacts(),
     queryFn: () => reportsService.getContacts(),
+    staleTime: 2 * 60 * 1000,
+    retry: 1,
+  });
+}
+
+export function useRentabilityReport(params: { startDate?: string; endDate?: string } = {}) {
+  return useQuery({
+    queryKey: reportQueryKeys.rentability(params),
+    queryFn: () => reportsService.getRentability(params),
     staleTime: 2 * 60 * 1000,
     retry: 1,
   });

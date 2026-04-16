@@ -148,6 +148,7 @@ export const API_ENDPOINTS = {
     DELETE_DOCUMENT: (documentId: string) => `${API_BASE_URL}/tenant/documents/${documentId}`,
     SAVE_PREFERENCES: `${API_BASE_URL}/tenant/preferences`,
     GET_PREFERENCES: `${API_BASE_URL}/tenant/preferences`,
+    MY_DASHBOARD: `${API_BASE_URL}/tenant/me/dashboard`,
     IMPORT_EXCEL: `${API_BASE_URL}/tenant/import-excel`,
     VALIDATE_EXCEL: `${API_BASE_URL}/tenant/validate-excel`,
     GET_IMPORT_FIELDS: `${API_BASE_URL}/tenant/import-fields`,
@@ -428,5 +429,6 @@ export const API_ENDPOINTS = {
     RENTERS_INSURANCE: `${API_BASE_URL}/api/v1/reports/renters-insurance`,
     MAINTENANCE_REQUESTS: (params: string) => `${API_BASE_URL}/api/v1/reports/maintenance-requests${params}`,
     CONTACTS: `${API_BASE_URL}/api/v1/reports/contacts`,
+    RENTABILITY: (params: string) => `${API_BASE_URL}/api/v1/reports/rentability${params}`,
   },
 };
