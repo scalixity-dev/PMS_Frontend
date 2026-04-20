@@ -112,22 +112,18 @@ const ListingDetail: React.FC = () => {
             }
         }
 
-        // Map UI lease duration to backend enum
-        // monthToMonth=Yes => both min/max = MONTHLY
-        // leaseDuration 'Monthly' => MONTHLY, 'Annually' => TWELVE_MONTHS
-        let minLeaseDuration: string | undefined;
-        let maxLeaseDuration: string | undefined;
+        // Map UI lease duration to backend enum (single field, no min/max range)
+        // monthToMonth=Yes => MONTHLY
+        // leaseDuration 'Monthly' => ONE_MONTH, 'Annually' => TWELVE_MONTHS
+        let leaseDuration: string | undefined;
         if (leaseTerms.monthToMonth === 'Yes') {
-            minLeaseDuration = 'MONTHLY';
-            maxLeaseDuration = 'MONTHLY';
+            leaseDuration = 'MONTHLY';
         } else if (leaseTerms.leaseDuration) {
             const durationMap: Record<string, string> = {
                 'Monthly': 'ONE_MONTH',
                 'Annually': 'TWELVE_MONTHS',
             };
-            const mapped = durationMap[leaseTerms.leaseDuration] || leaseTerms.leaseDuration;
-            minLeaseDuration = mapped;
-            maxLeaseDuration = mapped;
+            leaseDuration = durationMap[leaseTerms.leaseDuration] || leaseTerms.leaseDuration;
         }
 
         updateListing.mutate({
@@ -138,8 +134,7 @@ const ListingDetail: React.FC = () => {
                 amountRefundable: leaseTerms.amountRefundable,
                 availableFrom: availableFromISO,
                 description: leaseTerms.details ?? undefined,
-                ...(minLeaseDuration && { minLeaseDuration }),
-                ...(maxLeaseDuration && { maxLeaseDuration }),
+                ...(leaseDuration && { minLeaseDuration: leaseDuration }),
             },
         });
     };
@@ -418,6 +413,21 @@ const ListingDetail: React.FC = () => {
                 monthToMonth,
                 details: backendListing.description || property.description || property.leasing?.description || '-'
             },
+            petPolicy: (() => {
+                const leasing = (property.leasing as any) || {};
+                const catsFromListing = Array.isArray(backendListing.petCategory) ? backendListing.petCategory : [];
+                const catsFromLeasing = Array.isArray(leasing.petCategory) ? leasing.petCategory : [];
+                const cats = catsFromListing.length > 0 ? catsFromListing : catsFromLeasing;
+                const toNum = (v: any) =>
+                    v == null ? 0 : typeof v === 'string' ? parseFloat(v) || 0 : Number(v) || 0;
+                return {
+                    petsAllowed: !!backendListing.petsAllowed,
+                    petCategory: cats as string[],
+                    petFee: toNum(leasing.petFee),
+                    petDeposit: toNum(leasing.petDeposit),
+                    petDescription: leasing.petDescription || '',
+                };
+            })(),
             media: {
                 gallery,
                 video
@@ -1046,6 +1056,59 @@ const ListingDetail: React.FC = () => {
                                         )}
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Pet Policy */}
+                        <div className="mb-8">
+                            <div className="flex items-center gap-2 mb-4">
+                                <h3 className="text-lg font-bold text-gray-800">Pet Policy</h3>
+                                <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
+                            </div>
+
+                            <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
+                                {!listing.petPolicy.petsAllowed ? (
+                                    <p className="text-sm font-medium text-gray-600">Pets not allowed</p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {/* Pet categories chips */}
+                                        {listing.petPolicy.petCategory.length > 0 && (
+                                            <div className="bg-[#DFF3C6] rounded-full px-4 py-2 flex flex-wrap gap-2 items-center">
+                                                {listing.petPolicy.petCategory.map((cat: string) => (
+                                                    <span
+                                                        key={cat}
+                                                        className="bg-white border border-[#82D64D] text-gray-800 text-sm font-medium px-3 py-1 rounded-full"
+                                                    >
+                                                        {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <div className="bg-[#E5EAE0] rounded-xl px-4 py-3 flex items-center justify-between">
+                                            <span className="text-sm font-bold text-gray-800">Pet Fees</span>
+                                            <span className="text-sm font-medium text-gray-700">
+                                                {getCurrencySymbol(listing.country)}{listing.petPolicy.petFee.toLocaleString()}
+                                            </span>
+                                        </div>
+
+                                        <div className="bg-[#E5EAE0] rounded-xl px-4 py-3 flex items-center justify-between">
+                                            <span className="text-sm font-bold text-gray-800">Pet Deposit</span>
+                                            <span className="text-sm font-medium text-gray-700">
+                                                {getCurrencySymbol(listing.country)}{listing.petPolicy.petDeposit.toLocaleString()}
+                                            </span>
+                                        </div>
+
+                                        {listing.petPolicy.petDescription && (
+                                            <div className="bg-[#E5EAE0] rounded-xl px-4 py-3 flex items-start justify-between gap-4">
+                                                <span className="text-sm font-bold text-gray-800 flex-shrink-0">Details</span>
+                                                <span className="text-sm font-medium text-gray-700 text-right">
+                                                    {listing.petPolicy.petDescription}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
