@@ -114,6 +114,7 @@ export const API_ENDPOINTS = {
     TOGGLE_FAVORITE: (id: string) => `${API_BASE_URL}/listing/${id}/favorite`,
     IS_FAVORITED: (id: string) => `${API_BASE_URL}/listing/${id}/favorite`,
     MY_FAVORITES: `${API_BASE_URL}/listing/favorites/mine`,
+    GET_PUBLIC: (id: string) => `${API_BASE_URL}/public-listing/${id}`,
   },
   KEYS: {
     GET_ALL: `${API_BASE_URL}/keys-and-locks`,

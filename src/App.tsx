@@ -44,6 +44,7 @@ import ResourcePage from './pages/basewebsite/resources';
 import TenantPage from './pages/basewebsite/usecases/tenant';
 import ServiceProsPage from './pages/basewebsite/usecases/servicepros';
 import BecomeServiceProvider from './pages/basewebsite/features/BecomeServiceProvider';
+import ListingPreview from './pages/Preview/ListingPreview';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ListUnit from './pages/Dashboard/features/ListUnit';
 import AddProperty from './pages/Dashboard/features/Properties/AddProperty';
@@ -161,12 +162,10 @@ import NotificationSettings from './pages/Dashboard/settings/accountsetting/Noti
 import MyPlanSettings from './pages/Dashboard/settings/subscription/MyPlanSettings';
 import MyCardSettings from './pages/Dashboard/settings/subscription/MyCardSettings';
 import InvoiceSettings from './pages/Dashboard/settings/accounting/invoice';
-import QuickBookSettings from './pages/Dashboard/settings/accounting/quickbook';
 import TagsSettings from './pages/Dashboard/settings/accounting/tags';
 import OnlinePaymentsConfigurations from './pages/Dashboard/settings/online-payments/configurations';
 import OnlineApplication from './pages/Dashboard/settings/rental-application/OnlineApplication';
 import FormConfiguration from './pages/Dashboard/settings/rental-application/FormConfiguration';
-import TermsSignature from './pages/Dashboard/settings/rental-application/TermsSignature';
 import BackgroundQuestions from './pages/Dashboard/settings/rental-application/BackgroundQuestions';
 import RolesPermissions from './pages/Dashboard/settings/team-management/RolesPermissions';
 import PropertyPermissions from './pages/Dashboard/settings/team-management/PropertyPermissions';
@@ -186,7 +185,6 @@ import FindJob from './pages/ServiceDashboard/pages/Dashboard/FindJob/FindJob';
 import JobDetail from './pages/ServiceDashboard/pages/Dashboard/FindJob/JobDetail';
 import ServiceNotification from './pages/ServiceDashboard/pages/Dashboard/Notification/ServiceNotification';
 import ServiceOnlinePayment from './pages/ServiceDashboard/pages/Dashboard/Settings/OnlinePayment/ServiceOnlinePayment';
-import GeneralReports from './pages/Dashboard/settings/report/general';
 import Reports from './pages/Dashboard/features/Reports/Reports';
 import Rentability from './pages/Dashboard/features/Reports/Rentability';
 import Contacts from './pages/Dashboard/features/Reports/Contacts';
@@ -265,6 +263,8 @@ const App: React.FC = () => {
               <Route path="/service-dashboard/find-job/:id" element={<ServiceProtectedRoute><JobDetail /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/notifications" element={<ServiceProtectedRoute><ServiceNotification /></ServiceProtectedRoute>} />
             </Route>
+
+            <Route path="/preview/:id" element={<ListingPreview />} />
 
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomePage />} />
@@ -506,14 +506,6 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/dashboard/settings/accounting/quickbook"
-                element={
-                  <ProtectedRoute>
-                    <QuickBookSettings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/dashboard/settings/accounting/tags"
                 element={
                   <ProtectedRoute>
@@ -540,7 +532,6 @@ const App: React.FC = () => {
               }>
                 <Route path="online-application" element={<OnlineApplication />} />
                 <Route path="form-configuration" element={<FormConfiguration />} />
-                <Route path="terms-signature" element={<TermsSignature />} />
               </Route>
 
               <Route path="/dashboard/settings/rental-application/background-questions" element={
@@ -581,16 +572,6 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <AutomationSettings />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Reports Settings */}
-              <Route
-                path="/dashboard/settings/report/general"
-                element={
-                  <ProtectedRoute>
-                    <GeneralReports />
                   </ProtectedRoute>
                 }
               />

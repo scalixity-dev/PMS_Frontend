@@ -25,6 +25,7 @@ import DetailTabs from '../../components/DetailTabs';
 import { useGetListing, useUpdateListing, useGetListingStatistics, listingQueryKeys } from '../../../../hooks/useListingQueries';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUpdateProperty } from '../../../../hooks/usePropertyQueries';
+import { leasingService } from '../../../../services/leasing.service';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
@@ -44,6 +45,9 @@ const ListingDetail: React.FC = () => {
     const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
     const [isRibbonEditing, setIsRibbonEditing] = useState(false);
     const [isLeaseTermsEditing, setIsLeaseTermsEditing] = useState(false);
+    const [isPetPolicyEditing, setIsPetPolicyEditing] = useState(false);
+    const [petPolicyEdit, setPetPolicyEdit] = useState<{ petsAllowed: boolean; petCategory: string[]; petFee: number; petDeposit: number; petDescription: string } | null>(null);
+    const [isSavingPetPolicy, setIsSavingPetPolicy] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const [activeModal, setActiveModal] = useState<'features' | 'amenities' | null>(null);
     const [isContactEditing, setIsContactEditing] = useState(false);
@@ -96,10 +100,9 @@ const ListingDetail: React.FC = () => {
         }
     };
 
-    const handleSaveLeaseTerms = () => {
+    const handleSaveLeaseTerms = async () => {
         if (!backendListing?.id || !leaseTerms) return;
 
-        // Convert 'dd MMM, yyyy' format to ISO string for backend
         let availableFromISO: string | undefined;
         if (leaseTerms.dateAvailable) {
             try {
@@ -112,31 +115,49 @@ const ListingDetail: React.FC = () => {
             }
         }
 
-        // Map UI lease duration to backend enum (single field, no min/max range)
-        // monthToMonth=Yes => MONTHLY
-        // leaseDuration 'Monthly' => ONE_MONTH, 'Annually' => TWELVE_MONTHS
-        let leaseDuration: string | undefined;
+        const monthsToEnum: Record<string, string> = {
+            '1': 'ONE_MONTH', '2': 'TWO_MONTHS', '3': 'THREE_MONTHS', '4': 'FOUR_MONTHS',
+            '5': 'FIVE_MONTHS', '6': 'SIX_MONTHS', '7': 'SEVEN_MONTHS', '8': 'EIGHT_MONTHS',
+            '9': 'NINE_MONTHS', '10': 'TEN_MONTHS', '11': 'ELEVEN_MONTHS', '12': 'TWELVE_MONTHS',
+            '18': 'EIGHTEEN_MONTHS', '24': 'TWENTY_FOUR_MONTHS', '36': 'THIRTY_SIX_PLUS_MONTHS',
+        };
+
+        let minEnum = leaseTerms.minLeaseDuration ? monthsToEnum[String(leaseTerms.minLeaseDuration)] : undefined;
+        let maxEnum = leaseTerms.maxLeaseDuration ? monthsToEnum[String(leaseTerms.maxLeaseDuration)] : undefined;
         if (leaseTerms.monthToMonth === 'Yes') {
-            leaseDuration = 'MONTHLY';
-        } else if (leaseTerms.leaseDuration) {
-            const durationMap: Record<string, string> = {
-                'Monthly': 'ONE_MONTH',
-                'Annually': 'TWELVE_MONTHS',
-            };
-            leaseDuration = durationMap[leaseTerms.leaseDuration] || leaseTerms.leaseDuration;
+            minEnum = 'ONE_MONTH';
+            maxEnum = 'ONE_MONTH';
         }
 
-        updateListing.mutate({
-            id: backendListing.id,
-            data: {
-                monthlyRent: leaseTerms.monthlyRent,
-                securityDeposit: leaseTerms.securityDeposit,
-                amountRefundable: leaseTerms.amountRefundable,
-                availableFrom: availableFromISO,
-                description: leaseTerms.details ?? undefined,
-                ...(leaseDuration && { minLeaseDuration: leaseDuration }),
-            },
-        });
+        const leasingId = (backendListing as any)?.property?.leasing?.id as string | undefined;
+        try {
+            await updateListing.mutateAsync({
+                id: backendListing.id,
+                data: {
+                    monthlyRent: leaseTerms.monthlyRent,
+                    securityDeposit: leaseTerms.securityDeposit,
+                    amountRefundable: leaseTerms.amountRefundable,
+                    availableFrom: availableFromISO,
+                    description: leaseTerms.details ?? undefined,
+                    ...(minEnum && { minLeaseDuration: minEnum }),
+                    ...(maxEnum && { maxLeaseDuration: maxEnum }),
+                },
+            });
+            if (leasingId) {
+                await leasingService.update(leasingId, {
+                    monthlyRent: leaseTerms.monthlyRent,
+                    securityDeposit: leaseTerms.securityDeposit,
+                    amountRefundable: leaseTerms.amountRefundable,
+                    ...(availableFromISO && { dateAvailable: availableFromISO }),
+                    ...(minEnum && { minLeaseDuration: minEnum as any }),
+                    ...(maxEnum && { maxLeaseDuration: maxEnum as any }),
+                    description: leaseTerms.details ?? undefined,
+                });
+            }
+            queryClient.invalidateQueries({ queryKey: listingQueryKeys.detail(backendListing.id) });
+        } catch (err: any) {
+            alert(err?.message || 'Failed to update lease terms');
+        }
     };
 
     const handleSaveVideo = () => {
@@ -239,6 +260,36 @@ const ListingDetail: React.FC = () => {
                 listingEmail: contactDetails.email || '',
             },
         });
+    };
+
+    const handleSavePetPolicy = async () => {
+        if (!backendListing?.id || !petPolicyEdit) return;
+        const leasingId = (backendListing as any)?.property?.leasing?.id as string | undefined;
+        try {
+            setIsSavingPetPolicy(true);
+            await updateListing.mutateAsync({
+                id: backendListing.id,
+                data: {
+                    petsAllowed: petPolicyEdit.petsAllowed,
+                    petCategory: petPolicyEdit.petCategory,
+                },
+            });
+            if (leasingId) {
+                await leasingService.update(leasingId, {
+                    petsAllowed: petPolicyEdit.petsAllowed,
+                    petCategory: petPolicyEdit.petCategory,
+                    petFee: petPolicyEdit.petFee,
+                    petDeposit: petPolicyEdit.petDeposit,
+                    petDescription: petPolicyEdit.petDescription,
+                });
+            }
+            queryClient.invalidateQueries({ queryKey: listingQueryKeys.detail(backendListing.id) });
+            setIsPetPolicyEditing(false);
+        } catch (err: any) {
+            alert(err?.message || 'Failed to update pet policy');
+        } finally {
+            setIsSavingPetPolicy(false);
+        }
     };
 
     const handleSaveGallery = () => {
@@ -371,11 +422,16 @@ const ListingDetail: React.FC = () => {
             ? format(new Date(backendListing.availableFrom), 'dd MMM, yyyy')
             : '';
 
-        // Get lease duration (from min/max)
-        const leaseDuration = backendListing.minLeaseDuration || backendListing.maxLeaseDuration || 'Monthly';
+        const ENUM_TO_MONTHS: Record<string, string> = {
+            'ONE_MONTH': '1', 'TWO_MONTHS': '2', 'THREE_MONTHS': '3', 'FOUR_MONTHS': '4',
+            'FIVE_MONTHS': '5', 'SIX_MONTHS': '6', 'SEVEN_MONTHS': '7', 'EIGHT_MONTHS': '8',
+            'NINE_MONTHS': '9', 'TEN_MONTHS': '10', 'ELEVEN_MONTHS': '11', 'TWELVE_MONTHS': '12',
+            'EIGHTEEN_MONTHS': '18', 'TWENTY_FOUR_MONTHS': '24', 'THIRTY_SIX_PLUS_MONTHS': '36',
+        };
+        const minLeaseDuration = backendListing.minLeaseDuration ? (ENUM_TO_MONTHS[backendListing.minLeaseDuration] || '') : '';
+        const maxLeaseDuration = backendListing.maxLeaseDuration ? (ENUM_TO_MONTHS[backendListing.maxLeaseDuration] || '') : '';
 
-        // Get month-to-month (if min and max are both monthly or similar)
-        const monthToMonth = backendListing.minLeaseDuration === 'MONTHLY' && backendListing.maxLeaseDuration === 'MONTHLY' ? 'Yes' : 'No';
+        const monthToMonth = backendListing.minLeaseDuration === 'ONE_MONTH' && backendListing.maxLeaseDuration === 'ONE_MONTH' ? 'Yes' : 'No';
 
         return {
             id: backendListing.id,
@@ -409,7 +465,8 @@ const ListingDetail: React.FC = () => {
                         ? parseFloat(backendListing.amountRefundable) || 0
                         : Number(backendListing.amountRefundable) || 0
                     : 0,
-                leaseDuration,
+                minLeaseDuration,
+                maxLeaseDuration,
                 monthToMonth,
                 details: backendListing.description || property.description || property.leasing?.description || '-'
             },
@@ -502,6 +559,13 @@ const ListingDetail: React.FC = () => {
             setContactDetails(listing.contact);
             setOnlineApplicationStatus(listing.onlineApplicationStatus);
             setApplicationFee(listing.applicationFee);
+            setPetPolicyEdit({
+                petsAllowed: listing.petPolicy.petsAllowed,
+                petCategory: [...listing.petPolicy.petCategory],
+                petFee: listing.petPolicy.petFee,
+                petDeposit: listing.petPolicy.petDeposit,
+                petDescription: listing.petPolicy.petDescription || '',
+            });
         }
     }, [listing]);
 
@@ -737,7 +801,8 @@ const ListingDetail: React.FC = () => {
                                         <div className="p-1">
                                             <button
                                                 onClick={() => {
-                                                    navigator.clipboard.writeText(window.location.href);
+                                                    const previewUrl = `${window.location.origin}/preview/${backendListing?.id || id}`;
+                                                    navigator.clipboard.writeText(previewUrl);
                                                     setIsCopied(true);
                                                     setTimeout(() => {
                                                         setIsCopied(false);
@@ -753,7 +818,8 @@ const ListingDetail: React.FC = () => {
                                             </button>
                                             <button
                                                 onClick={() => {
-                                                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
+                                                    const previewUrl = `${window.location.origin}/preview/${backendListing?.id || id}`;
+                                                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(previewUrl)}`, '_blank');
                                                     setIsShareDropdownOpen(false);
                                                 }}
                                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
@@ -765,8 +831,9 @@ const ListingDetail: React.FC = () => {
                                             </button>
                                             <button
                                                 onClick={() => {
+                                                    const previewUrl = `${window.location.origin}/preview/${backendListing?.id || id}`;
                                                     const text = `Check out ${listing?.name || 'this property'}!`;
-                                                    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
+                                                    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(previewUrl)}&text=${encodeURIComponent(text)}`, '_blank');
                                                     setIsShareDropdownOpen(false);
                                                 }}
                                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
@@ -779,7 +846,8 @@ const ListingDetail: React.FC = () => {
                                             <button
                                                 onClick={() => {
                                                     const subject = `Check out ${listing?.name || 'this property'}`;
-                                                    const body = `Hi,\n\nI found this property and thought you might be interested:\n${window.location.href}`;
+                                                    const previewUrl = `${window.location.origin}/preview/${backendListing?.id || id}`;
+                                                    const body = `Hi,\n\nI found this property and thought you might be interested:\n${previewUrl}`;
                                                     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
                                                     setIsShareDropdownOpen(false);
                                                 }}
@@ -922,11 +990,11 @@ const ListingDetail: React.FC = () => {
                     <>
 
                         <div className="mb-8">
-                            <div className="flex items-center gap-2 mb-4">
-                                <h3 className="text-lg font-bold text-gray-800">Lease terms</h3>
-                                <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
-                            </div>
-                            <div className="bg-[#F0F0F6] rounded-[2rem] p-6 relative">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-bold text-gray-800">Lease terms</h3>
+                                    <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
+                                </div>
                                 <button
                                     onClick={() => {
                                         if (isLeaseTermsEditing) {
@@ -935,14 +1003,12 @@ const ListingDetail: React.FC = () => {
                                         setIsLeaseTermsEditing(!isLeaseTermsEditing);
                                     }}
                                     disabled={updateListing.isPending}
-                                    className={`absolute top-6 right-6 ${isLeaseTermsEditing ? 'bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 z-10 disabled:opacity-50' : 'text-gray-500 hover:text-gray-700'}`}
+                                    className={`${isLeaseTermsEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50`}
                                 >
-                                    {isLeaseTermsEditing ? (
-                                        <>{updateListing.isPending ? 'Saving...' : 'Done'} <Check className="w-4 h-4" /></>
-                                    ) : (
-                                        <SquarePen className="w-5 h-5" />
-                                    )}
+                                    {isLeaseTermsEditing ? (updateListing.isPending ? 'Saving...' : 'Done') : 'Edit'} <SquarePen className="w-3 h-3" />
                                 </button>
+                            </div>
+                            <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center bg-[#E3EBDE] p-3 rounded-full shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
@@ -975,15 +1041,17 @@ const ListingDetail: React.FC = () => {
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center bg-[#E3EBDE] p-3 rounded-full shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
-                                            <span className="text-xs font-medium text-gray-600 ml-2">Lease duration</span>
+                                            <span className="text-xs font-medium text-gray-600 ml-2">Min lease duration</span>
                                             {isLeaseTermsEditing ? (
                                                 <div className="w-1/2">
                                                     <CustomDropdown
-                                                        value={leaseTerms?.leaseDuration || 'Monthly'}
-                                                        onChange={(value) => setLeaseTerms({ ...leaseTerms, leaseDuration: value })}
+                                                        value={leaseTerms?.minLeaseDuration || ''}
+                                                        onChange={(value) => setLeaseTerms({ ...leaseTerms, minLeaseDuration: value })}
                                                         options={[
-                                                            { value: 'Monthly', label: 'Monthly' },
-                                                            { value: 'Annually', label: 'Annually' }
+                                                            { value: '6', label: '6 Months' },
+                                                            { value: '12', label: '12 Months' },
+                                                            { value: '18', label: '18 Months' },
+                                                            { value: '24', label: '24 Months' },
                                                         ]}
                                                         placeholder="Select"
                                                         buttonClassName="!py-1 !px-2 !border-0 !bg-transparent !text-right justify-end"
@@ -991,7 +1059,28 @@ const ListingDetail: React.FC = () => {
                                                     />
                                                 </div>
                                             ) : (
-                                                <span className="text-xs font-bold text-gray-800 mr-2">{leaseTerms?.leaseDuration || 'N/A'}</span>
+                                                <span className="text-xs font-bold text-gray-800 mr-2">{leaseTerms?.minLeaseDuration ? `${leaseTerms.minLeaseDuration} Months` : 'N/A'}</span>
+                                            )}
+                                        </div>
+                                        <div className="flex justify-between items-center bg-[#E3EBDE] p-3 rounded-full shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
+                                            <span className="text-xs font-medium text-gray-600 ml-2">Max lease duration</span>
+                                            {isLeaseTermsEditing ? (
+                                                <div className="w-1/2">
+                                                    <CustomDropdown
+                                                        value={leaseTerms?.maxLeaseDuration || ''}
+                                                        onChange={(value) => setLeaseTerms({ ...leaseTerms, maxLeaseDuration: value })}
+                                                        options={[
+                                                            { value: '12', label: '12 Months' },
+                                                            { value: '24', label: '24 Months' },
+                                                            { value: '36', label: '36 Months' },
+                                                        ]}
+                                                        placeholder="Select"
+                                                        buttonClassName="!py-1 !px-2 !border-0 !bg-transparent !text-right justify-end"
+                                                        textClassName="!text-xs !font-bold !text-gray-800"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs font-bold text-gray-800 mr-2">{leaseTerms?.maxLeaseDuration ? `${leaseTerms.maxLeaseDuration} Months` : 'N/A'}</span>
                                             )}
                                         </div>
                                     </div>
@@ -1061,13 +1150,105 @@ const ListingDetail: React.FC = () => {
 
                         {/* Pet Policy */}
                         <div className="mb-8">
-                            <div className="flex items-center gap-2 mb-4">
-                                <h3 className="text-lg font-bold text-gray-800">Pet Policy</h3>
-                                <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-bold text-gray-800">Pet Policy</h3>
+                                    <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        if (isPetPolicyEditing) {
+                                            handleSavePetPolicy();
+                                        } else {
+                                            setIsPetPolicyEditing(true);
+                                        }
+                                    }}
+                                    disabled={isSavingPetPolicy}
+                                    className={`${isPetPolicyEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50`}
+                                >
+                                    {isPetPolicyEditing ? (isSavingPetPolicy ? 'Saving...' : 'Done') : 'Edit'} <SquarePen className="w-3 h-3" />
+                                </button>
                             </div>
 
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
-                                {!listing.petPolicy.petsAllowed ? (
+                                {isPetPolicyEditing && petPolicyEdit ? (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-bold text-gray-800">Pets allowed</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setPetPolicyEdit({ ...petPolicyEdit, petsAllowed: !petPolicyEdit.petsAllowed })}
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${petPolicyEdit.petsAllowed ? 'bg-[#82D64D]' : 'bg-gray-300'}`}
+                                            >
+                                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${petPolicyEdit.petsAllowed ? 'translate-x-6' : 'translate-x-1'}`} />
+                                            </button>
+                                        </div>
+
+                                        {petPolicyEdit.petsAllowed && (
+                                            <>
+                                                <div>
+                                                    <span className="text-xs font-bold text-gray-700 block mb-2">Pet categories</span>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {['Cat', 'Dog', 'Horse', 'Rabbit', 'Other'].map((cat) => {
+                                                            const isSel = petPolicyEdit.petCategory.includes(cat);
+                                                            return (
+                                                                <button
+                                                                    key={cat}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const next = isSel
+                                                                            ? petPolicyEdit.petCategory.filter((c) => c !== cat)
+                                                                            : [...petPolicyEdit.petCategory, cat];
+                                                                        setPetPolicyEdit({ ...petPolicyEdit, petCategory: next });
+                                                                    }}
+                                                                    className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${isSel ? 'bg-[#82D64D] text-white border-[#82D64D]' : 'bg-white text-gray-700 border-gray-300'}`}
+                                                                >
+                                                                    {cat}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-[#E5EAE0] rounded-xl px-4 py-3 flex items-center justify-between">
+                                                    <span className="text-sm font-bold text-gray-800">Pet Fees</span>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-sm text-gray-700">{getCurrencySymbol(listing.country)}</span>
+                                                        <input
+                                                            type="number"
+                                                            value={petPolicyEdit.petFee}
+                                                            onChange={(e) => setPetPolicyEdit({ ...petPolicyEdit, petFee: parseFloat(e.target.value) || 0 })}
+                                                            className="text-sm font-medium text-gray-800 bg-transparent text-right focus:outline-none border-b border-gray-400 w-28"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-[#E5EAE0] rounded-xl px-4 py-3 flex items-center justify-between">
+                                                    <span className="text-sm font-bold text-gray-800">Pet Deposit</span>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-sm text-gray-700">{getCurrencySymbol(listing.country)}</span>
+                                                        <input
+                                                            type="number"
+                                                            value={petPolicyEdit.petDeposit}
+                                                            onChange={(e) => setPetPolicyEdit({ ...petPolicyEdit, petDeposit: parseFloat(e.target.value) || 0 })}
+                                                            className="text-sm font-medium text-gray-800 bg-transparent text-right focus:outline-none border-b border-gray-400 w-28"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-[#E5EAE0] rounded-xl px-4 py-3">
+                                                    <span className="text-sm font-bold text-gray-800 block mb-2">Details</span>
+                                                    <textarea
+                                                        value={petPolicyEdit.petDescription}
+                                                        onChange={(e) => setPetPolicyEdit({ ...petPolicyEdit, petDescription: e.target.value })}
+                                                        className="w-full text-sm text-gray-800 bg-transparent focus:outline-none border-b border-gray-400 min-h-[60px] resize-y"
+                                                        placeholder="Pet policy details"
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                ) : !listing.petPolicy.petsAllowed ? (
                                     <p className="text-sm font-medium text-gray-600">Pets not allowed</p>
                                 ) : (
                                     <div className="space-y-4">
@@ -1361,9 +1542,24 @@ const ListingDetail: React.FC = () => {
 
                         {/* Listing Contact */}
                         <div className="mb-8">
-                            <div className="flex items-center gap-2 mb-4">
-                                <h3 className="text-lg font-bold text-gray-800">Listing contact</h3>
-                                <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-bold text-gray-800">Listing contact</h3>
+                                    <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        if (isContactEditing) {
+                                            handleSaveContact();
+                                        } else {
+                                            setIsContactEditing(true);
+                                        }
+                                    }}
+                                    disabled={updateProperty.isPending}
+                                    className={`${isContactEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50`}
+                                >
+                                    {isContactEditing ? (updateProperty.isPending ? 'Saving...' : 'Done') : 'Edit'} <SquarePen className="w-3 h-3" />
+                                </button>
                             </div>
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
                                 <div className="flex items-center gap-4">
@@ -1415,23 +1611,6 @@ const ListingDetail: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => {
-                                            if (isContactEditing) {
-                                                handleSaveContact();
-                                            } else {
-                                                setIsContactEditing(true);
-                                            }
-                                        }}
-                                        disabled={updateProperty.isPending}
-                                        className={`${isContactEditing ? 'bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 disabled:opacity-50' : 'text-gray-500 hover:text-gray-700'}`}
-                                    >
-                                        {isContactEditing ? (
-                                            <>{updateProperty.isPending ? 'Saving...' : 'Done'} <Check className="w-4 h-4" /></>
-                                        ) : (
-                                            <SquarePen className="w-5 h-5" />
-                                        )}
-                                    </button>
                                 </div>
                             </div>
                         </div>

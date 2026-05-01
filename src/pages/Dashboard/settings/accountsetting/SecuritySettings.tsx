@@ -4,6 +4,7 @@ import { AccountSettingsLayout } from "../../../../components/common/AccountSett
 import { useGetSecuritySessions, useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
 import TwoFactorModal from "../../../../components/common/TwoFactorModal";
 import { twoFactorService } from "../../../../services/two-factor.service";
+import { exportUserData } from "../../../../utils/export-user-data";
 
 interface LoginSession {
   id: string;
@@ -14,7 +15,6 @@ interface LoginSession {
 }
 
 interface AccountSecuritySettingsValues {
-  idVerificationStatus: "IN_PROGRESS" | "VERIFIED" | "REJECTED";
   twoStepAuthenticationEnabled: boolean;
   exportDataRequestedAt: string | null;
 }
@@ -25,15 +25,15 @@ export default function SecuritySettings() {
   const updateSecurity = useUpdateSettingsSection<AccountSecuritySettingsValues>("account_security");
 
   const [localValues, setLocalValues] = useState<AccountSecuritySettingsValues>({
-    idVerificationStatus: "IN_PROGRESS",
     twoStepAuthenticationEnabled: false,
     exportDataRequestedAt: null,
   });
 
+  const [isExporting, setIsExporting] = useState(false);
+
   useEffect(() => {
     if (securityData?.values) {
       setLocalValues({
-        idVerificationStatus: (securityData.values.idVerificationStatus ?? "IN_PROGRESS") as AccountSecuritySettingsValues["idVerificationStatus"],
         twoStepAuthenticationEnabled: Boolean(securityData.values.twoStepAuthenticationEnabled),
         exportDataRequestedAt: (securityData.values.exportDataRequestedAt as string | null) ?? null,
       });
@@ -67,52 +67,34 @@ export default function SecuritySettings() {
     setIsModalOpen(true);
   };
 
-  const handleExportData = () => {
-    const nextValues = {
-      ...localValues,
-      exportDataRequestedAt: new Date().toISOString(),
-    };
-    setLocalValues(nextValues);
-    updateSecurity.mutate(nextValues);
+  const handleExportData = async () => {
+    try {
+      setIsExporting(true);
+      await exportUserData();
+      const nextValues = { ...localValues, exportDataRequestedAt: new Date().toISOString() };
+      setLocalValues(nextValues);
+      updateSecurity.mutate(nextValues);
+    } catch (err: any) {
+      alert(err?.message || "Failed to export data");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
-  const isBusy = isLoadingSecurity || updateSecurity.isPending;
+  const isBusy = isLoadingSecurity || updateSecurity.isPending || isExporting;
 
   return (
     <AccountSettingsLayout activeTab="security">
       <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-4 sm:px-6 py-5">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-semibold text-gray-900">ID Verification</h2>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold text-[#7CD947] bg-[#F0FAE8] border border-[#D7F0C2]">
-                {localValues.idVerificationStatus.replace("_", " ")}
-              </span>
-            </div>
-            <p className="text-xs text-gray-600">
-              Identity verification is required to prevent fraud and increase security. TenantCloud works with Stripe
-              to conduct identity verification online.
-            </p>
-            <a href="#" className="text-xs font-medium text-[#1E88E5] hover:underline inline-block">
-              Learn more
-            </a>
-          </div>
-          <Button type="button" variant="primary" className="w-full sm:w-auto whitespace-nowrap bg-[#3D7475] border-none">
-            Continue
-          </Button>
-        </div>
-      </section>
-
-      <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-4 sm:px-6 py-5">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div className="flex-1 space-y-2">
             <h2 className="text-lg font-semibold text-gray-900">Export Data</h2>
             <p className="text-xs text-gray-600">
-              Export your account data from all settings sections. Last export request is saved in your account settings.
+              Download your account data as an Excel file (one sheet per section). Images are excluded.
             </p>
             {localValues.exportDataRequestedAt ? (
               <p className="text-xs text-gray-500">
-                Last requested: {new Date(localValues.exportDataRequestedAt).toLocaleString()}
+                Last exported: {new Date(localValues.exportDataRequestedAt).toLocaleString()}
               </p>
             ) : null}
           </div>
@@ -123,7 +105,7 @@ export default function SecuritySettings() {
             onClick={handleExportData}
             disabled={isBusy}
           >
-            Export
+            {isExporting ? "Exporting..." : "Export"}
           </Button>
         </div>
       </section>

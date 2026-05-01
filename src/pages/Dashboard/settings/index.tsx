@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import {
-  BarChart2,
   ChevronDown,
   CreditCard,
   DollarSign,
@@ -9,7 +8,6 @@ import {
   Home,
   PaintRoller,
   Settings as Cog,
-  Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -56,7 +54,6 @@ const SETTING_CARDS: SettingCardData[] = [
     icon: Cog,
     links: [
       { label: "Invoice", path: "/dashboard/settings/accounting/invoice" },
-      { label: "QuickBooks", path: "/dashboard/settings/accounting/quickbook" },
       { label: "Tags", path: "/dashboard/settings/accounting/tags" },
     ],
   },
@@ -75,18 +72,8 @@ const SETTING_CARDS: SettingCardData[] = [
     links: [
       { label: "Online Application", path: "/dashboard/settings/rental-application/online-application" },
       { label: "Form Configuration", path: "/dashboard/settings/rental-application/form-configuration" },
-      { label: "Terms & Signature", path: "/dashboard/settings/rental-application/terms-signature" },
     ],
   },
-  // {
-  //   title: "Team Management",
-  //   description: "Lets you control and update account information and enable other products.",
-  //   icon: Users,
-  //   links: [
-  //     { label: "Roles & Permissions", path: "/dashboard/settings/team-management/roles-permissions" },
-  //     { label: "Property Permissions", path: "/dashboard/settings/team-management/property-permissions" },
-  //   ],
-  // },
   {
     title: "Request Settings",
     description: "Lets you control and update account information and enable other products.",
@@ -94,14 +81,6 @@ const SETTING_CARDS: SettingCardData[] = [
     links: [
       { label: "Request Settings", path: "/dashboard/settings/request-settings/request-settings" },
       { label: "Automation Settings", path: "/dashboard/settings/request-settings/automation-settings" },
-    ],
-  },
-  {
-    title: "Reports",
-    description: "Lets you control and update account information and enable other products.",
-    icon: BarChart2,
-    links: [
-      { label: "General Reports", path: "/dashboard/settings/report/general" },
     ],
   },
 ];

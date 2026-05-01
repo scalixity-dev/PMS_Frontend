@@ -16,58 +16,12 @@ interface ProfileUser {
 interface ProfileDetails {
   firstName: string;
   lastName: string;
-  dateOfBirth: string;
   phoneNumber: string;
-  country: string;
-  city: string;
-  postalCode: string;
 }
-
-const formatDateForDisplay = (raw?: string): string => {
-  if (!raw) return "";
-  const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) return "";
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = String(date.getFullYear());
-  return `${day}/${month}/${year}`;
-};
-
-const normalizeDateForApi = (raw: string): string | undefined => {
-  const trimmed = raw.trim();
-  if (!trimmed) return undefined;
-
-  // DD/MM/YYYY or DD-MM-YYYY -> YYYY-MM-DD
-  const parts = trimmed.split(/[/-]/);
-  if (parts.length === 3) {
-    const [dayStr, monthStr, yearStr] = parts;
-    if (
-      /^\d{1,2}$/.test(dayStr) &&
-      /^\d{1,2}$/.test(monthStr) &&
-      /^\d{4}$/.test(yearStr)
-    ) {
-      const day = dayStr.padStart(2, "0");
-      const month = monthStr.padStart(2, "0");
-      return `${yearStr}-${month}-${day}`;
-    }
-  }
-
-  // already ISO-ish date
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    return trimmed;
-  }
-
-  return undefined;
-};
 
 const isValidPhoneNumber = (raw: string): boolean => {
   const digits = (raw || "").replace(/\D/g, "");
   return !digits || (digits.length >= 4 && digits.length <= 15);
-};
-
-const isValidPostalCode = (raw: string): boolean => {
-  const trimmed = (raw || "").trim();
-  return !trimmed || /^\d{4,10}$/.test(trimmed);
 };
 
 interface EditPersonalInfoModalProps {
@@ -75,34 +29,14 @@ interface EditPersonalInfoModalProps {
   initialValues: {
     firstName: string;
     lastName: string;
-    dateOfBirth: string;
     phoneNumber: string;
   };
   onClose: () => void;
   onSave: (values: {
     firstName: string;
     lastName: string;
-    dateOfBirth: string;
     phoneNumber: string;
   }) => Promise<boolean> | boolean;
-}
-
-interface EditAddressModalProps {
-  isOpen: boolean;
-  initialValues: {
-    country: string;
-    city: string;
-    postalCode: string;
-  };
-  onClose: () => void;
-  onSave: (values: { country: string; city: string; postalCode: string }) => Promise<boolean> | boolean;
-}
-
-interface ChangeEmailModalProps {
-  isOpen: boolean;
-  currentEmail: string;
-  onClose: () => void;
-  onSave: (newEmail: string, currentPassword: string) => Promise<void> | void;
 }
 
 interface ChangePasswordModalProps {
@@ -119,7 +53,6 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
   const [formValues, setFormValues] = useState({
     firstName: initialValues.firstName,
     lastName: initialValues.lastName,
-    dateOfBirth: initialValues.dateOfBirth,
     phoneNumber: initialValues.phoneNumber,
   });
 
@@ -128,7 +61,6 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
       setFormValues({
         firstName: initialValues.firstName,
         lastName: initialValues.lastName,
-        dateOfBirth: initialValues.dateOfBirth,
         phoneNumber: initialValues.phoneNumber,
       });
       // Focus the first input when modal opens
@@ -177,7 +109,7 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
     }
   };
 
-  const handleChange = (field: "firstName" | "lastName" | "dateOfBirth" | "phoneNumber", value: string) => {
+  const handleChange = (field: "firstName" | "lastName" | "phoneNumber", value: string) => {
     setFormValues((prev) => ({
       ...prev,
       [field]: value,
@@ -244,18 +176,6 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
           </div>
 
           <div>
-            <label htmlFor="dateOfBirth" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Date of birth</label>
-            <input
-              id="dateOfBirth"
-              type="text"
-              value={formValues.dateOfBirth}
-              onChange={(event) => handleChange("dateOfBirth", event.target.value)}
-              className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
-              placeholder="DD-MM-YYYY"
-            />
-          </div>
-
-          <div>
             <label htmlFor="phoneNumber" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Phone number</label>
             <input
               id="phoneNumber"
@@ -284,364 +204,6 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
             className="flex-1 rounded-xl shadow-lg hover:bg-[#2c5556]"
           >
             Save changes
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EditAddressModal(props: EditAddressModalProps) {
-  const { isOpen, onClose, onSave, initialValues } = props;
-  const firstInputRef = useRef<HTMLInputElement>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  const [formValues, setFormValues] = useState({
-    country: initialValues.country,
-    city: initialValues.city,
-    postalCode: initialValues.postalCode,
-  });
-
-  useEffect(() => {
-    if (isOpen) {
-      setFormValues({
-        country: initialValues.country,
-        city: initialValues.city,
-        postalCode: initialValues.postalCode,
-      });
-      // Focus the first input when modal opens
-      const timer = setTimeout(() => {
-        firstInputRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [initialValues, isOpen]);
-
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    if (isOpen) {
-      window.addEventListener("keydown", handleEscape);
-    }
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) {
-    return null;
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Tab") {
-      const focusableElements = modalRef.current?.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      if (!focusableElements || focusableElements.length === 0) return;
-
-      const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstElement) {
-          lastElement.focus();
-          e.preventDefault();
-        }
-      } else {
-        if (document.activeElement === lastElement) {
-          firstElement.focus();
-          e.preventDefault();
-        }
-      }
-    }
-  };
-
-  const handleChange = (field: "country" | "city" | "postalCode", value: string) => {
-    setFormValues((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleSaveClick = async () => {
-    const didSave = await onSave(formValues);
-    if (didSave) onClose();
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200"
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="edit-address-title"
-        onKeyDown={handleKeyDown}
-        className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="bg-[#3D7475] p-6 flex items-center justify-between">
-          <div className="bg-[#84CC16] text-white px-4 py-2 rounded-full flex items-center gap-2">
-            <span id="edit-address-title" className="text-sm font-semibold">Edit address</span>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-white hover:bg-white/10 p-1 rounded-full transition-colors"
-            aria-label="Close"
-          >
-            <X size={22} />
-          </button>
-        </div>
-
-        <div className="p-8 space-y-5">
-          <div>
-            <label htmlFor="country" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Country</label>
-            <input
-              id="country"
-              ref={firstInputRef}
-              type="text"
-              value={formValues.country}
-              onChange={(event) => handleChange("country", event.target.value)}
-              className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
-              placeholder="Country"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="city" className="block text-xs font-bold text-gray-800 mb-2 ml-1">City</label>
-            <input
-              id="city"
-              type="text"
-              value={formValues.city}
-              onChange={(event) => handleChange("city", event.target.value)}
-              className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
-              placeholder="City"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="postalCode" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Pincode</label>
-            <input
-              id="postalCode"
-              type="text"
-              value={formValues.postalCode}
-              onChange={(event) => handleChange("postalCode", event.target.value)}
-              className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
-              placeholder="452001"
-            />
-          </div>
-        </div>
-
-        <div className="p-6 pt-0 flex gap-4">
-          <Button
-            type="button"
-            onClick={onClose}
-            variant="secondary"
-            className="flex-1 rounded-xl shadow-lg bg-[#4B5563] hover:bg-[#374151]"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSaveClick}
-            variant="primary"
-            className="flex-1 rounded-xl shadow-lg hover:bg-[#2c5556]"
-          >
-            Save changes
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ChangeEmailModal(props: ChangeEmailModalProps) {
-  const { isOpen, onClose, onSave, currentEmail } = props;
-  const [newEmail, setNewEmail] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const firstInputRef = useRef<HTMLInputElement>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      setNewEmail("");
-      setCurrentPassword("");
-      setError("");
-      // Focus the first input when modal opens
-      const timer = setTimeout(() => {
-        firstInputRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    if (isOpen) {
-      window.addEventListener("keydown", handleEscape);
-    }
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) {
-    return null;
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Tab") {
-      const focusableElements = modalRef.current?.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      if (!focusableElements || focusableElements.length === 0) return;
-
-      const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstElement) {
-          lastElement.focus();
-          e.preventDefault();
-        }
-      } else {
-        if (document.activeElement === lastElement) {
-          firstElement.focus();
-          e.preventDefault();
-        }
-      }
-    }
-  };
-
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-      setError("Email is required");
-      return false;
-    }
-    if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address");
-      return false;
-    }
-    if (email === currentEmail) {
-      setError("New email must be different from current email");
-      return false;
-    }
-    setError("");
-    return true;
-  };
-
-  const handleSaveClick = async () => {
-    if (!validateEmail(newEmail)) return;
-    if (!currentPassword) {
-      setError('Current password is required');
-      return;
-    }
-    try {
-      setIsSaving(true);
-      await onSave(newEmail, currentPassword);
-      onClose();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to update email');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200"
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="change-email-title"
-        onKeyDown={handleKeyDown}
-        className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="bg-[#3D7475] p-6 flex items-center justify-between">
-          <div className="bg-[#84CC16] text-white px-4 py-2 rounded-full flex items-center gap-2">
-            <span id="change-email-title" className="text-sm font-semibold">Change email address</span>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-white hover:bg-white/10 p-1 rounded-full transition-colors"
-            aria-label="Close"
-          >
-            <X size={22} />
-          </button>
-        </div>
-
-        <div className="p-8 space-y-5">
-          <div>
-            <label htmlFor="currentEmail" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Current email</label>
-            <input
-              id="currentEmail"
-              type="email"
-              disabled
-              value={currentEmail}
-              className="w-full bg-gray-100 text-gray-600 px-6 py-3 rounded-full outline-none cursor-not-allowed"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="newEmail" className="block text-xs font-bold text-gray-800 mb-2 ml-1">New email address</label>
-            <input
-              id="newEmail"
-              ref={firstInputRef}
-              type="email"
-              value={newEmail}
-              onChange={(e) => {
-                setNewEmail(e.target.value);
-                setError("");
-              }}
-              className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
-              placeholder="Enter new email address"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="currentPassword" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Current password</label>
-            <input
-              id="currentPassword"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => {
-                setCurrentPassword(e.target.value);
-                setError("");
-              }}
-              className="w-full bg-white text-gray-800 px-6 py-3 rounded-full outline-none border border-gray-200 focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
-              placeholder="Enter current password"
-            />
-            {error && <p className="text-xs text-red-500 mt-1 ml-1">{error}</p>}
-          </div>
-        </div>
-
-        <div className="p-6 pt-0 flex gap-4">
-          <Button
-            type="button"
-            onClick={onClose}
-            variant="secondary"
-            className="flex-1 rounded-xl shadow-lg bg-[#4B5563] hover:bg-[#374151]"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSaveClick}
-            disabled={isSaving}
-            variant="primary"
-            className="flex-1 rounded-xl shadow-lg hover:bg-[#2c5556] disabled:opacity-50"
-          >
-            {isSaving ? 'Saving...' : 'Save changes'}
           </Button>
         </div>
       </div>
@@ -894,16 +456,10 @@ export default function ProfileSettings() {
   const [profileDetails, setProfileDetails] = useState<ProfileDetails>({
     firstName: "",
     lastName: "",
-    dateOfBirth: "",
     phoneNumber: "",
-    country: "",
-    city: "",
-    postalCode: "",
   });
 
   const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false);
-  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const profileFileRef = useRef<HTMLInputElement>(null);
@@ -944,11 +500,7 @@ export default function ProfileSettings() {
           ...previous,
           firstName: firstNameFromUser,
           lastName: lastNameFromUser,
-          dateOfBirth: formatDateForDisplay(currentUser.dateOfBirth),
           phoneNumber: currentUser.phoneNumber || previous.phoneNumber,
-          country: currentUser.country || previous.country,
-          city: currentUser.state || previous.city,
-          postalCode: currentUser.pincode || previous.postalCode,
         }));
       } catch (error) {
         // Log error for debugging while keeping defaults
@@ -963,15 +515,10 @@ export default function ProfileSettings() {
   const handleSavePersonalInfo = async (values: {
     firstName: string;
     lastName: string;
-    dateOfBirth: string;
     phoneNumber: string;
   }): Promise<boolean> => {
     if (!isValidPhoneNumber(values.phoneNumber)) {
       alert("Phone number must be between 4 and 15 digits.");
-      return false;
-    }
-    if (values.dateOfBirth && !normalizeDateForApi(values.dateOfBirth)) {
-      alert("Enter a valid date of birth in DD-MM-YYYY or YYYY-MM-DD format.");
       return false;
     }
 
@@ -979,7 +526,6 @@ export default function ProfileSettings() {
       ...previous,
       firstName: values.firstName,
       lastName: values.lastName,
-      dateOfBirth: values.dateOfBirth,
       phoneNumber: values.phoneNumber,
     }));
 
@@ -992,54 +538,12 @@ export default function ProfileSettings() {
     try {
       await updateProfile.mutateAsync({
         fullName: fullName,
-        dateOfBirth: normalizeDateForApi(values.dateOfBirth),
         phoneNumber: values.phoneNumber,
       });
       return true;
     } catch (err: any) {
       alert(err?.message || "Failed to update personal information");
       return false;
-    }
-  };
-
-  const handleSaveAddress = async (values: { country: string; city: string; postalCode: string }): Promise<boolean> => {
-    if (!isValidPostalCode(values.postalCode)) {
-      alert("Pincode must contain 4 to 10 digits.");
-      return false;
-    }
-
-    setProfileDetails((previous) => ({
-      ...previous,
-      country: values.country,
-      city: values.city,
-      postalCode: values.postalCode,
-    }));
-
-    try {
-      await updateProfile.mutateAsync({
-        country: values.country,
-        state: values.city, // Note: API uses 'state' field, not 'city'
-        pincode: values.postalCode,
-      });
-      return true;
-    } catch (err: any) {
-      alert(err?.message || "Failed to update address");
-      return false;
-    }
-  };
-
-  const handleSaveEmail = async (newEmail: string, currentPassword?: string) => {
-    if (!currentPassword) {
-      alert('Current password is required to change email');
-      return;
-    }
-    try {
-      const result = await authService.changeEmail(newEmail, currentPassword);
-      setUser((previous) => ({ ...previous, email: result.email }));
-      alert('Email updated. Please verify your new email address.');
-    } catch (err: any) {
-      alert(err?.message || 'Failed to update email');
-      throw err;
     }
   };
 
@@ -1167,14 +671,6 @@ export default function ProfileSettings() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-600">Date of Birth</label>
-            <input
-              disabled
-              value={profileDetails.dateOfBirth}
-              className="w-full h-10 rounded-md border border-[#E4E4E4] bg-[#F7F7F7] px-3 text-sm text-gray-800"
-            />
-          </div>
-          <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Email Address</label>
             <input
               disabled
@@ -1215,13 +711,6 @@ export default function ProfileSettings() {
               Your email is <span className="font-medium text-gray-700">{user.email}</span>
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsEmailModalOpen(true)}
-            className="text-sm font-semibold text-[#1E88E5] hover:underline"
-          >
-            Change
-          </button>
         </div>
 
         <div className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -1236,46 +725,6 @@ export default function ProfileSettings() {
           >
             Change
           </button>
-        </div>
-      </section>
-
-      <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5 space-y-5">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Address</h2>
-          <Button
-            type="button"
-            onClick={() => setIsAddressModalOpen(true)}
-            className="rounded-full !bg-[#6BC53B] text-white shadow-[0_6px_12px_rgba(124,217,71,0.4)] border-none px-6 py-1.5 h-auto text-sm hover:!bg-[#5ab030]"
-          >
-            Edit
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-600">Country</label>
-            <input
-              disabled
-              value={profileDetails.country}
-              className="w-full h-10 rounded-md border border-[#E4E4E4] bg-[#F7F7F7] px-3 text-sm text-gray-800"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-600">City</label>
-            <input
-              disabled
-              value={profileDetails.city}
-              className="w-full h-10 rounded-md border border-[#E4E4E4] bg-[#F7F7F7] px-3 text-sm text-gray-800"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-600">Pincode</label>
-            <input
-              disabled
-              value={profileDetails.postalCode}
-              className="w-full h-10 rounded-md border border-[#E4E4E4] bg-[#F7F7F7] px-3 text-sm text-gray-800"
-            />
-          </div>
         </div>
       </section>
 
@@ -1297,28 +746,9 @@ export default function ProfileSettings() {
         initialValues={{
           firstName: profileDetails.firstName,
           lastName: profileDetails.lastName,
-          dateOfBirth: profileDetails.dateOfBirth,
           phoneNumber: profileDetails.phoneNumber,
         }}
         onSave={handleSavePersonalInfo}
-      />
-
-      <EditAddressModal
-        isOpen={isAddressModalOpen}
-        onClose={() => setIsAddressModalOpen(false)}
-        initialValues={{
-          country: profileDetails.country,
-          city: profileDetails.city,
-          postalCode: profileDetails.postalCode,
-        }}
-        onSave={handleSaveAddress}
-      />
-
-      <ChangeEmailModal
-        isOpen={isEmailModalOpen}
-        onClose={() => setIsEmailModalOpen(false)}
-        currentEmail={user.email}
-        onSave={handleSaveEmail}
       />
 
       <ChangePasswordModal
