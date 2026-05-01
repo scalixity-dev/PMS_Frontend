@@ -52,10 +52,17 @@ export interface LoginResponse {
     role: string;
     isEmailVerified: boolean;
     isActive: boolean;
+    subscription?: {
+      planId: string;
+      status: string;
+      startDate: string | Date;
+      endDate: string | Date;
+    } | null;
   };
   message?: string;
   requiresDeviceVerification?: boolean;
   requiresEmailVerification?: boolean;
+  requiresPlanSelection?: boolean;
   token?: string;
 }
 

@@ -82,8 +82,14 @@ const LoginForm: React.FC = () => {
                 user: response.user
             });
 
+            // Check if user must pick a plan first (property manager with no subscription).
+            // Force pricing — do NOT show OTP screen.
+            if (response.requiresPlanSelection) {
+                console.log('Plan selection required, redirecting to pricing');
+                navigate(`/pricing?userId=${response.user.id}&email=${encodeURIComponent(response.user.email)}&newAccount=true`, { replace: true });
+            }
             // Check if email verification is required
-            if (response.requiresEmailVerification) {
+            else if (response.requiresEmailVerification) {
                 // Redirect to OTP page for email verification
                 console.log('Email verification required, redirecting to OTP');
                 navigate(`/otp?userId=${response.user.id}&email=${encodeURIComponent(response.user.email)}&type=email&role=${response.user.role?.toUpperCase() || 'TENANT'}`, { replace: true });

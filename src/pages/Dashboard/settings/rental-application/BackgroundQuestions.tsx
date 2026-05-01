@@ -62,7 +62,7 @@ export default function BackgroundQuestions() {
                     {" / "}
                     <Link to="/dashboard/settings" className="hover:underline" style={{ color: primaryColor }}>Settings</Link>
                     {" / "}
-                    <Link to="/dashboard/settings/rental-application/terms-signature" className="hover:underline" style={{ color: primaryColor }}>Rental Application</Link>
+                    <Link to="/dashboard/settings/rental-application/online-application" className="hover:underline" style={{ color: primaryColor }}>Rental Application</Link>
                     {" / "}
                     <span className="text-[#273F3B]">Background Questions</span>
                 </div>

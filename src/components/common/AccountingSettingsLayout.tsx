@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 
-type AccountingSettingsTab = "invoice" | "quickbook" | "tags";
+type AccountingSettingsTab = "invoice" | "tags";
 
 interface AccountingSettingsLayoutProps {
   activeTab: AccountingSettingsTab;
@@ -20,19 +20,12 @@ export function AccountingSettingsLayout(props: AccountingSettingsLayoutProps) {
     if (tab === "invoice") {
       return "Invoices & Late Fee";
     }
-    if (tab === "quickbook") {
-      return "QuickBooks Sync";
-    }
     return "Tags";
   };
 
   const handleTabClick = (tab: AccountingSettingsTab) => {
     if (tab === "invoice") {
       navigate("/dashboard/settings/accounting/invoice");
-      return;
-    }
-    if (tab === "quickbook") {
-      navigate("/dashboard/settings/accounting/quickbook");
       return;
     }
     navigate("/dashboard/settings/accounting/tags");
@@ -69,7 +62,7 @@ export function AccountingSettingsLayout(props: AccountingSettingsLayoutProps) {
 
             <div className="flex overflow-x-auto pb-2 sm:pb-0 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
               <div className="flex gap-2 bg-[#F5F7FB] rounded-full p-1.5 w-fit min-w-max">
-                {(["invoice", "quickbook", "tags"] as AccountingSettingsTab[]).map((tab) => {
+                {(["invoice", "tags"] as AccountingSettingsTab[]).map((tab) => {
                   const isActive = activeTab === tab;
 
                   return (

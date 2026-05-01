@@ -3,8 +3,7 @@ import { useNavigate, useOutletContext, useLocation, Outlet } from "react-router
 
 type RentalApplicationSettingsTab =
     | "online-application"
-    | "form-configuration"
-    | "terms-signature";
+    | "form-configuration";
 
 interface RentalApplicationSettingsLayoutProps {
     headerActions?: ReactNode;
@@ -20,11 +19,9 @@ export function RentalApplicationSettingsLayout(
     const location = useLocation();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
 
-    // Determine active tab from current path
     const getActiveTab = (): RentalApplicationSettingsTab => {
-        if (location.pathname.includes("online-application")) return "online-application";
         if (location.pathname.includes("form-configuration")) return "form-configuration";
-        return "terms-signature";
+        return "online-application";
     };
 
     const activeTab = getActiveTab();
@@ -33,10 +30,7 @@ export function RentalApplicationSettingsLayout(
         if (tab === "online-application") {
             return "Online Application";
         }
-        if (tab === "form-configuration") {
-            return "Form Configuration";
-        }
-        return "Terms & Signature";
+        return "Form Configuration";
     };
 
     const handleTabClick = (tab: RentalApplicationSettingsTab) => {
@@ -44,11 +38,7 @@ export function RentalApplicationSettingsLayout(
             navigate("/dashboard/settings/rental-application/online-application");
             return;
         }
-        if (tab === "form-configuration") {
-            navigate("/dashboard/settings/rental-application/form-configuration");
-            return;
-        }
-        navigate("/dashboard/settings/rental-application/terms-signature");
+        navigate("/dashboard/settings/rental-application/form-configuration");
     };
 
     return (
@@ -88,7 +78,6 @@ export function RentalApplicationSettingsLayout(
                                     [
                                         "online-application",
                                         "form-configuration",
-                                        "terms-signature",
                                     ] as RentalApplicationSettingsTab[]
                                 ).map((tab) => {
                                     const isActive = activeTab === tab;
