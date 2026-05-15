@@ -163,7 +163,7 @@ const ListingPreview: React.FC = () => {
                 <p className="text-gray-600 text-sm mb-4">{listing.addressStr}</p>
               </div>
               <div className="bg-gradient-to-r from-[#3A4E33] to-[#85B474] text-white px-6 py-3 rounded-2xl w-fit">
-                <span className="text-xl font-bold">{currency}{listing.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                <span className="text-xl font-bold">{currency}{listing.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 <span className="text-sm ml-2 opacity-80">/ month</span>
               </div>
               <div className="flex flex-wrap gap-2 mt-4">
@@ -181,9 +181,9 @@ const ListingPreview: React.FC = () => {
         <Section title="Lease terms">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Row label="Date available" value={listing.leaseTerms.dateAvailable || 'N/A'} />
-            <Row label="Monthly rent" value={`${currency}${listing.leaseTerms.monthlyRent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
-            <Row label="Security deposit" value={`${currency}${listing.leaseTerms.securityDeposit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
-            <Row label="Amount refundable" value={`${currency}${listing.leaseTerms.amountRefundable.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
+            <Row label="Monthly rent" value={`${currency}${listing.leaseTerms.monthlyRent.toLocaleString('en-US', { minimumFractionDigits: 2 })}`} />
+            <Row label="Security deposit" value={`${currency}${listing.leaseTerms.securityDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`} />
+            <Row label="Amount refundable" value={`${currency}${listing.leaseTerms.amountRefundable.toLocaleString('en-US', { minimumFractionDigits: 2 })}`} />
             <Row label="Min lease duration" value={listing.leaseTerms.minLeaseDuration ? `${listing.leaseTerms.minLeaseDuration} Months` : 'N/A'} />
             <Row label="Max lease duration" value={listing.leaseTerms.maxLeaseDuration ? `${listing.leaseTerms.maxLeaseDuration} Months` : 'N/A'} />
             <Row label="Month-to-Month" value={listing.leaseTerms.monthToMonth ? 'Yes' : 'No'} />

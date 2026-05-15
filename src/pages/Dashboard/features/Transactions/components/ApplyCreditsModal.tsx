@@ -22,7 +22,7 @@ interface ApplyCreditsFormData {
 
 const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
     onConfirm,
-    amountOwed = '₹45,000.00'
+    amountOwed = '$45,000.00'
 }) => {
     const { isApplyCreditsOpen, setApplyCreditsOpen } = useTransactionStore();
     const isOpen = isApplyCreditsOpen;

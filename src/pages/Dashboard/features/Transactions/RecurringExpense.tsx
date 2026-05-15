@@ -25,7 +25,7 @@ const RecurringExpense: React.FC = () => {
     const [amount, setAmount] = useState<string>('');
     const [details, setDetails] = useState<string>('');
     const [frequency, setFrequency] = useState<string>('');
-    const [currency, setCurrency] = useState<string>('');
+    const [currency, setCurrency] = useState<string>('USD');
     const [payerId, setPayerId] = useState<string>('');
     const [tags, setTags] = useState<string[]>([]);
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);

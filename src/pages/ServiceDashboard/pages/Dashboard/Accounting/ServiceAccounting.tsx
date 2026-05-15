@@ -72,7 +72,7 @@ const ServiceAccounting = () => {
     });
 
 
-    const outstanding = summary.outstanding.toLocaleString('en-IN', {
+    const outstanding = summary.outstanding.toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
@@ -97,7 +97,7 @@ const ServiceAccounting = () => {
 
                 <div>
                     <h2 className="text-gray-500 text-sm font-medium mb-1">Outstanding</h2>
-                    <div className="text-xl font-bold text-gray-800">{outstanding} INR</div>
+                    <div className="text-xl font-bold text-gray-800">${outstanding} USD</div>
                 </div>
             </div>
 

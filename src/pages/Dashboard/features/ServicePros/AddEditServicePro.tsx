@@ -100,7 +100,7 @@ const AddEditServicePro = () => {
             companyName: '',
             companyWebsite: '',
             email: '',
-            phoneCountryCode: '',
+            phoneCountryCode: 'US|1',
             phone: '',
             faxCountryCode: '',
             fax: '',
@@ -116,7 +116,7 @@ const AddEditServicePro = () => {
             city: '',
             state: '',
             zip: '',
-            country: ''
+            country: 'US'
         }
     });
 

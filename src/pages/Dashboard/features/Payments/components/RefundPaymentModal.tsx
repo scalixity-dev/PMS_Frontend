@@ -48,7 +48,7 @@ const RefundPaymentModal: React.FC<RefundPaymentModalProps> = ({ onConfirm }) =>
             
             setAmount(
                 Number.isFinite(amountValue)
-                    ? `₹${amountValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                    ? `$${amountValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                     : ''
             );
             

@@ -58,7 +58,7 @@ const AddDiscountModal: React.FC<AddDiscountModalProps> = ({
     }>({});
     
     // Calculate amount owed from transaction amount or use provided amountOwed
-    const calculatedAmountOwed = amountOwed || (propTransactionAmount ? formatMoney(propTransactionAmount, propCurrency) : '₹0.00');
+    const calculatedAmountOwed = amountOwed || (propTransactionAmount ? formatMoney(propTransactionAmount, propCurrency) : '$0.00');
 
     useEffect(() => {
         if (isOpen) {

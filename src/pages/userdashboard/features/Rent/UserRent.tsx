@@ -100,7 +100,7 @@ const Rent: React.FC = () => {
         },
         amount,
         paidAmount: paidAmount > 0 ? paidAmount : undefined,
-        currency: tx.currency || 'INR',
+        currency: tx.currency || 'USD',
         schedule
       };
     });

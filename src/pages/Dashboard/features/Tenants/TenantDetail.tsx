@@ -298,21 +298,21 @@ const TenantDetail = () => {
                                     <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Outstanding</span>
                                         <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
-                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.outstanding.toLocaleString()}.00</div>
+                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">${tenant.outstanding.toLocaleString()}.00</div>
                                             <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Received</button>
                                         </div>
                                     </div>
                                     <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Deposits</span>
                                         <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
-                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.deposits.toLocaleString()}.00</div>
+                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">${tenant.deposits.toLocaleString()}.00</div>
                                             <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
                                         </div>
                                     </div>
                                     <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Credits</span>
                                         <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
-                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.credits.toLocaleString()}.00</div>
+                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">${tenant.credits.toLocaleString()}.00</div>
                                             <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
                                         </div>
                                     </div>

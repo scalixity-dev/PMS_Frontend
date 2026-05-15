@@ -68,7 +68,7 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
                 className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
                 value={formData.rent || ''}
                 onChange={(e) => updateFormData('rent', e.target.value)}
-                placeholder={`${currencySymbol || '₹'} 50,000`}
+                placeholder={`${currencySymbol || '$'} 50,000`}
               />
             </div>
           </div>
@@ -87,7 +87,7 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
                 className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
                 value={formData.deposit || ''}
                 onChange={(e) => updateFormData('deposit', e.target.value)}
-                placeholder={`${currencySymbol || '₹'} 0.00`}
+                placeholder={`${currencySymbol || '$'} 0.00`}
               />
             </div>
           </div>
@@ -106,7 +106,7 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
                 className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
                 value={formData.refundable || ''}
                 onChange={(e) => updateFormData('refundable', e.target.value)}
-                placeholder={`${currencySymbol || '₹'} 0.00`}
+                placeholder={`${currencySymbol || '$'} 0.00`}
               />
             </div>
           </div>

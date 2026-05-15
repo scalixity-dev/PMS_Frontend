@@ -62,10 +62,10 @@ const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, 
     const [agentName, setAgentName] = useState('');
     const [agentEmail, setAgentEmail] = useState('');
     const [agentPhone, setAgentPhone] = useState('');
-    const [phoneCountryCode, setPhoneCountryCode] = useState('');
+    const [phoneCountryCode, setPhoneCountryCode] = useState('US|1');
     const [policyNumber, setPolicyNumber] = useState('');
     const [price, setPrice] = useState('');
-    const [currency, setCurrency] = useState('INR');
+    const [currency, setCurrency] = useState('USD');
     const [effectiveDate, setEffectiveDate] = useState<Date>();
     const [expirationDate, setExpirationDate] = useState<Date>();
     const [details, setDetails] = useState('');
@@ -81,7 +81,7 @@ const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, 
 
             // Simple split logic for demo
             const phoneParts = (initialData.agentPhone || '').split(' ');
-            let code = '+91';
+            let code = '+1';
             let number = '';
 
             if (phoneParts.length > 1 && phoneParts[0].startsWith('+')) {
@@ -93,7 +93,7 @@ const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, 
 
             // Find matching value
             const matching = phoneCountryCodes.find(c => c.phonecode === code);
-            setPhoneCountryCode(matching ? matching.value : (phoneCountryCodes.find(c => c.phonecode === '+91')?.value || ''));
+            setPhoneCountryCode(matching ? matching.value : (phoneCountryCodes.find(c => c.phonecode === '+1')?.value || ''));
             setAgentPhone(number);
 
             setPolicyNumber(initialData.policyNumber || '');
@@ -118,12 +118,12 @@ const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, 
             setAgentName('');
             setAgentEmail('');
             setAgentPhone('');
-            // Default to IN|91
-            const defaultCode = phoneCountryCodes.find(c => c.phonecode === '+91')?.value || '';
+            // Default to US|1
+            const defaultCode = phoneCountryCodes.find(c => c.phonecode === '+1')?.value || '';
             setPhoneCountryCode(defaultCode);
             setPolicyNumber('');
             setPrice('');
-            setCurrency('INR');
+            setCurrency('USD');
             setEffectiveDate(undefined);
             setExpirationDate(undefined);
             setDetails('');

@@ -334,7 +334,7 @@ const TransactionDetail: React.FC = () => {
                             transactionId: id,
                             paymentId: selectedPayment.paymentId,
                             updateData: {
-                                amount: data.amountPaid ? parseFloat(String(data.amountPaid).replace(/[₹$,]/g, '')) : undefined,
+                                amount: data.amountPaid ? parseFloat(String(data.amountPaid).replace(/[$,]/g, '')) : undefined,
                                 paymentDate: data.datePaid ? (data.datePaid instanceof Date ? data.datePaid.toISOString() : data.datePaid) : undefined,
                                 method: data.method || undefined,
                                 paymentDetails: data.details || undefined,
@@ -576,7 +576,7 @@ const TransactionDetail: React.FC = () => {
                         {/* Overlapping Category Pill - Half Outside */}
                         <div className="absolute -top-5 left-4 sm:left-8 bg-[#3A6D6C] text-white px-4 sm:px-6 py-2 rounded-full flex items-center gap-2 max-w-[90%] sm:max-w-none">
                             <div className="w-5 h-5 rounded-full border border-white flex items-center justify-center flex-shrink-0">
-                                <span className="text-white text-xs font-bold">{currency === 'INR' ? '₹' : '$'}</span>
+                                <span className="text-white text-xs font-bold">$</span>
                             </div>
                             <span className="font-semibold text-xs sm:text-sm truncate">
                                 {transaction.subcategory || transaction.category || 'Transaction'} for {formatMoney(parseFloat(transaction.amount), currency)}

@@ -58,7 +58,7 @@ const AddIncomeInvoice: React.FC = () => {
 	const [category, setCategory] = useState<string>('');
 	const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
 	const [amount, setAmount] = useState<string>('');
-	const [currency, setCurrency] = useState<string>('');
+	const [currency, setCurrency] = useState<string>('USD');
 	const [isPaid, setIsPaid] = useState<boolean>(false);
 	const [payerPayee, setPayerPayee] = useState<string>('');
 	const [payerId, setPayerId] = useState<string>('');

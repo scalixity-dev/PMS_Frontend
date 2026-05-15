@@ -36,7 +36,7 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
         lastName: '',
         email: '',
         phoneNumber: '',
-        phoneCountryCode: undefined,
+        phoneCountryCode: 'US|1',
         dob: undefined,
         relationship: ''
     });
@@ -113,7 +113,7 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                 lastName: '',
                 email: '',
                 phoneNumber: '',
-                phoneCountryCode: undefined,
+                phoneCountryCode: 'US|1',
                 dob: undefined,
                 relationship: ''
             });

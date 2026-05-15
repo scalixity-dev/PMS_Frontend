@@ -148,7 +148,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
                   navigate('/dashboard', { replace: true });
                 } else {
                   // Regular signup - redirect to OTP page for email verification
-                  navigate(`/otp?userId=${userId}&email=${encodeURIComponent(userEmail)}&activated=true`);
+                  navigate(`/otp?userId=${userId}&email=${encodeURIComponent(userEmail)}&role=PROPERTY_MANAGER&activated=true`);
                 }
               } catch (error) {
                 console.error('Failed to activate account:', error);

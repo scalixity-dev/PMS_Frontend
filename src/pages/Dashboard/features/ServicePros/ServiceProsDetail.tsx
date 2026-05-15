@@ -349,7 +349,7 @@ const ServiceProsDetail = () => {
                                 <div className="bg-[#7BD747] rounded-[2rem] px-6 py-3 flex flex-col items-center justify-center gap-2 shadow-md">
                                     <span className="text-sm font-bold text-white">Outstanding</span>
                                     <div className="bg-[#E8F5E9] px-6 py-2 rounded-full text-sm font-bold text-gray-700 shadow-inner w-full text-center">
-                                        ₹{displayServicePro.outstanding.toLocaleString()}.00
+                                        ${displayServicePro.outstanding.toLocaleString()}.00
                                     </div>
                                 </div>
                             </div>

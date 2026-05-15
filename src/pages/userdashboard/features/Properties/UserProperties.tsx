@@ -341,11 +341,7 @@ const Properties: React.FC = () => {
           const uniqueId = item.listing?.id ? `${item.id}-${item.listing.id}` : `${item.id}-${index}`;
 
           // Get currency from backend response, fallback to property country or default
-          const currencyInfo = item.currency || (address?.country ? {
-            code: address.country === 'India' || address.country === 'IN' ? 'INR' : 'USD',
-            symbol: address.country === 'India' || address.country === 'IN' ? '₹' : '$',
-            name: address.country === 'India' || address.country === 'IN' ? 'Indian Rupee' : 'US Dollar'
-          } : { code: 'USD', symbol: '$', name: 'US Dollar' });
+          const currencyInfo = item.currency || { code: 'USD', symbol: '$', name: 'US Dollar' };
 
           // Format price with currency
           const formattedPrice = formatMoney(price, currencyInfo.code);

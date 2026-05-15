@@ -53,7 +53,7 @@ const Leases: React.FC = () => {
             if (!amount) return '-------';
             const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
             if (isNaN(numAmount)) return '-------';
-            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(numAmount);
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(numAmount);
         };
 
         const startDate = lease.startDate ? new Date(lease.startDate) : null;

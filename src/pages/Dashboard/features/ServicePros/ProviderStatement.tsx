@@ -220,7 +220,7 @@ const ProviderStatement = () => {
         switch (columnId) {
             case 'amountDue':
             case 'amountPaid':
-                return `₹${item[columnId].toLocaleString()}`;
+                return `$${item[columnId].toLocaleString()}`;
             case 'details':
                 return <span className="text-blue-600 hover:underline cursor-pointer">{item[columnId]}</span>;
             case 'unit':

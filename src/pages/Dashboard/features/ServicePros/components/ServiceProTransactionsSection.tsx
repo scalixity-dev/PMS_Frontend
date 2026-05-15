@@ -123,9 +123,9 @@ const ServiceProTransactionsSection = ({ servicePro }: ServiceProTransactionsSec
                             <div className="flex justify-between items-center">
                                 <span className="text-xs text-gray-500">Total</span>
                                 <div className="flex flex-col items-end">
-                                    <span className="text-sm font-bold text-gray-900">₹{transaction.total.toLocaleString()}</span>
+                                    <span className="text-sm font-bold text-gray-900">${transaction.total.toLocaleString()}</span>
                                     {transaction.balance > 0 && (
-                                        <span className="text-xs text-red-500">Bal: ₹{transaction.balance.toLocaleString()}</span>
+                                        <span className="text-xs text-red-500">Bal: ${transaction.balance.toLocaleString()}</span>
                                     )}
                                 </div>
                             </div>
@@ -162,9 +162,9 @@ const ServiceProTransactionsSection = ({ servicePro }: ServiceProTransactionsSec
                         </div>
 
                         <div className="hidden md:flex flex-col">
-                            <span className="text-sm font-bold text-gray-900">₹{transaction.total.toLocaleString()}</span>
+                            <span className="text-sm font-bold text-gray-900">${transaction.total.toLocaleString()}</span>
                             {transaction.balance > 0 && (
-                                <span className="text-xs text-red-500">Bal: ₹{transaction.balance.toLocaleString()}</span>
+                                <span className="text-xs text-red-500">Bal: ${transaction.balance.toLocaleString()}</span>
                             )}
                         </div>
 

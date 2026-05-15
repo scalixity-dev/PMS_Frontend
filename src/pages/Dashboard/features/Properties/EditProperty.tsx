@@ -44,7 +44,7 @@ const EditProperty: React.FC = () => {
     city: '',
     stateRegion: '',
     zip: '',
-    country: '',
+    country: 'US',
     propertyType: 'single', // 'single' | 'multi'
     isManufactured: false,
     beds: '',

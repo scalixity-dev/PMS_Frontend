@@ -28,6 +28,7 @@ const initialFormData: UserApplicationFormData = {
   lastName: '',
   email: '',
   phoneNumber: '',
+  phoneCountryCode: 'US|1',
   dob: undefined,
   shortBio: '',
   moveInDate: undefined,

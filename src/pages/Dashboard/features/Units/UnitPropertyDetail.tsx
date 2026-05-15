@@ -403,7 +403,7 @@ const UnitPropertyDetail: React.FC = () => {
                         {/* Financials Chart Section */}
                         <div className="bg-white rounded-[2rem] p-8 mb-8 shadow-sm">
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-bold text-gray-800">Financials, {unit?.financials?.currency || 'INR'}</h3>
+                                <h3 className="text-lg font-bold text-gray-800">Financials, {unit?.financials?.currency || 'USD'}</h3>
                                 <button className="border border-gray-200 px-4 py-1.5 rounded-lg text-xs font-medium text-gray-600 flex items-center gap-2">
                                     See All <ChevronLeft className="w-3 h-3 rotate-180" />
                                 </button>

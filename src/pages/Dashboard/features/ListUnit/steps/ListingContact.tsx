@@ -42,10 +42,10 @@ const ListingContact: React.FC<ListingContactProps> = ({ onSubmit }) => {
                     </label>
                     <div className="relative flex items-center bg-[#84CC16] rounded-full">
                         <div className="relative z-10">
-                            <Listbox value={formData.countryCode || '+91'} onChange={(val) => updateFormData('countryCode', val)}>
+                            <Listbox value={formData.countryCode || '+1'} onChange={(val) => updateFormData('countryCode', val)}>
                                 <div className="relative">
                                     <Listbox.Button className="relative w-full cursor-pointer pl-4 pr-8 py-3 text-left focus:outline-none sm:text-sm">
-                                        <span className="block truncate text-white font-medium text-lg">{formData.countryCode || '+91'}</span>
+                                        <span className="block truncate text-white font-medium text-lg">{formData.countryCode || '+1'}</span>
                                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                                             <ChevronDown
                                                 className="h-4 w-4 text-white"

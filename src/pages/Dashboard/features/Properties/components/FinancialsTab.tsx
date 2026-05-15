@@ -192,15 +192,15 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white/20 rounded-2xl p-4 backdrop-blur">
                         <p className="text-sm font-medium opacity-90">Total Income</p>
-                        <p className="text-2xl font-bold">₹{summary.totalIncome.toLocaleString('en-IN')}</p>
+                        <p className="text-2xl font-bold">${summary.totalIncome.toLocaleString('en-US')}</p>
                     </div>
                     <div className="bg-white/20 rounded-2xl p-4 backdrop-blur">
                         <p className="text-sm font-medium opacity-90">Total Expenses</p>
-                        <p className="text-2xl font-bold">₹{summary.totalExpenses.toLocaleString('en-IN')}</p>
+                        <p className="text-2xl font-bold">${summary.totalExpenses.toLocaleString('en-US')}</p>
                     </div>
                     <div className="bg-white/20 rounded-2xl p-4 backdrop-blur">
                         <p className="text-sm font-medium opacity-90">Net Operating Income</p>
-                        <p className="text-2xl font-bold">₹{summary.noi.toLocaleString('en-IN')}</p>
+                        <p className="text-2xl font-bold">${summary.noi.toLocaleString('en-US')}</p>
                     </div>
                 </div>
             </div>
@@ -228,7 +228,7 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 text-sm">
-                                    {insurance.premium && <div><span className="text-gray-600">Premium:</span> <span className="font-bold">₹{insurance.premium}</span></div>}
+                                    {insurance.premium && <div><span className="text-gray-600">Premium:</span> <span className="font-bold">${insurance.premium}</span></div>}
                                     {insurance.coverageType && <div><span className="text-gray-600">Type:</span> <span className="font-bold">{insurance.coverageType}</span></div>}
                                 </div>
                             </div>
@@ -262,10 +262,10 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 text-sm">
-                                    {loan.principalAmount && <div><span className="text-gray-600">Principal:</span> <span className="font-bold">₹{loan.principalAmount}</span></div>}
-                                    {loan.monthlyPayment && <div><span className="text-gray-600">Monthly:</span> <span className="font-bold">₹{loan.monthlyPayment}</span></div>}
+                                    {loan.principalAmount && <div><span className="text-gray-600">Principal:</span> <span className="font-bold">${loan.principalAmount}</span></div>}
+                                    {loan.monthlyPayment && <div><span className="text-gray-600">Monthly:</span> <span className="font-bold">${loan.monthlyPayment}</span></div>}
                                     {loan.interestRate && <div><span className="text-gray-600">Rate:</span> <span className="font-bold">{loan.interestRate}%</span></div>}
-                                    {loan.currentBalance && <div><span className="text-gray-600">Balance:</span> <span className="font-bold">₹{loan.currentBalance}</span></div>}
+                                    {loan.currentBalance && <div><span className="text-gray-600">Balance:</span> <span className="font-bold">${loan.currentBalance}</span></div>}
                                 </div>
                             </div>
                         ))

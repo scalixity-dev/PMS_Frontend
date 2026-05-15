@@ -104,7 +104,7 @@ const ListUnit: React.FC = () => {
   useEffect(() => {
     if (propertyData) {
       updateFormData('contactName', propertyData.listingContactName || '');
-      updateFormData('countryCode', propertyData.listingPhoneCountryCode || '+91');
+      updateFormData('countryCode', propertyData.listingPhoneCountryCode || '+1');
       updateFormData('phoneNumber', propertyData.listingPhoneNumber || '');
       updateFormData('email', propertyData.listingEmail || '');
       updateFormData('displayPhonePublicly', propertyData.displayPhonePublicly ?? false);
@@ -412,7 +412,7 @@ const ListUnit: React.FC = () => {
       // Step 1: Update property with listing contact information
       const updateData: any = {
         listingContactName: formData.contactName,
-        listingPhoneCountryCode: formData.countryCode || '+91',
+        listingPhoneCountryCode: formData.countryCode || '+1',
         listingPhoneNumber: formData.phoneNumber,
         listingEmail: formData.email,
         displayPhonePublicly: formData.displayPhonePublicly || false,
