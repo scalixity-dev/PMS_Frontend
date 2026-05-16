@@ -57,6 +57,8 @@ const UserAddFileModal: React.FC<UserAddFileModalProps> = ({ isOpen, onClose, on
             });
             onClose();
             setFile(null);
+        } else {
+            setError('Please select a file to upload');
         }
     };
 
@@ -91,7 +93,7 @@ const UserAddFileModal: React.FC<UserAddFileModalProps> = ({ isOpen, onClose, on
                 {
                     label: 'Upload',
                     onClick: handleSave,
-                    disabled: !file,
+                    disabled: false,
                     variant: 'primary',
                     className: "bg-[#7ED957] hover:bg-[#6BC847] border-none text-white",
                     icon: <Check size={16} strokeWidth={3} />

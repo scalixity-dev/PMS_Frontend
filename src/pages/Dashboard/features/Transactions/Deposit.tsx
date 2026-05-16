@@ -13,6 +13,7 @@ import { serviceProviderService } from '../../../../services/service-provider.se
 import { useQuery } from '@tanstack/react-query';
 import { useGetLeasesByTenant } from '../../../../hooks/useLeaseQueries';
 import { validateFile } from '../../../../utils/fileValidation';
+import { CURRENCY_OPTIONS } from '../../../../utils/currency.utils';
 
 const DEPOSIT_CATEGORIES = [
     { value: 'security_deposit', label: 'Security Deposit' },
@@ -399,9 +400,7 @@ const Deposit: React.FC = () => {
                                 <CustomDropdown
                                     value={currency}
                                     onChange={setCurrency}
-                                    options={[
-                                        { value: 'USD', label: 'In Dollars' },
-                                    ]}
+                                    options={CURRENCY_OPTIONS}
                                     placeholder="Select Currency"
                                     buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                                 />

@@ -14,6 +14,7 @@ import { serviceProviderService, type BackendServiceProvider } from '../../../..
 import { useQuery } from '@tanstack/react-query';
 import { validateFile } from '../../../../utils/fileValidation';
 import { useGetLeasesByTenant, useGetLeasesByProperty } from '../../../../hooks/useLeaseQueries';
+import { CURRENCY_OPTIONS } from '../../../../utils/currency.utils';
 
 // Income Categories
 const INCOME_CATEGORIES = [
@@ -408,9 +409,7 @@ const AddIncomeInvoice: React.FC = () => {
 								<CustomDropdown
 									value={currency}
 									onChange={setCurrency}
-									options={[
-										{ value: 'USD', label: 'USD' },
-									]}
+									options={CURRENCY_OPTIONS}
 									placeholder="Select Currency"
 									buttonClassName="!rounded-md"
 								/>

@@ -12,6 +12,7 @@ import { useGetAllApplications } from '../../../../hooks/useApplicationQueries';
 import { serviceProviderService, type BackendServiceProvider } from '../../../../services/service-provider.service';
 import { useQuery } from '@tanstack/react-query';
 import { useGetLeasesByTenant, useGetLeasesByProperty } from '../../../../hooks/useLeaseQueries';
+import { CURRENCY_OPTIONS } from '../../../../utils/currency.utils';
 
 // Define recurring frequencies - mapping to backend enum values
 const RECURRING_FREQUENCIES = [
@@ -424,9 +425,7 @@ const RecurringIncome: React.FC = () => {
                                 <CustomDropdown
                                     value={currency}
                                     onChange={setCurrency}
-                                    options={[
-                                        { value: 'USD', label: 'USD' },
-                                    ]}
+                                    options={CURRENCY_OPTIONS}
                                     placeholder="Select Currency"
                                     buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                                 />
