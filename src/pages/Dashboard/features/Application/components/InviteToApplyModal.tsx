@@ -60,15 +60,15 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
 
         try {
             const exists = await authService.checkTenantEmailExists(email.trim());
-            setEmails(prev => prev.map((e, idx) => 
-                idx === emailIndex 
-                    ? { ...e, checking: false, exists, error: exists ? '' : 'This user is not registered as a tenant in the system' }
+            setEmails(prev => prev.map((e, idx) =>
+                idx === emailIndex
+                    ? { ...e, checking: false, exists, error: '' }
                     : e
             ));
-        } catch (error) {
-            setEmails(prev => prev.map((e, idx) => 
-                idx === emailIndex 
-                    ? { ...e, checking: false, error: 'Failed to check email. Please try again.' }
+        } catch {
+            setEmails(prev => prev.map((e, idx) =>
+                idx === emailIndex
+                    ? { ...e, checking: false, exists: null }
                     : e
             ));
         }
@@ -142,19 +142,6 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
             return;
         }
 
-        // Check if any emails don't exist as tenants
-        const nonExistingEmails = emails.filter(e => 
-            e.value.trim() && 
-            validateEmail(e.value.trim()) && 
-            e.exists === false
-        );
-
-        if (nonExistingEmails.length > 0) {
-            const nonExistingList = nonExistingEmails.map(e => e.value).join(', ');
-            setGeneralError(`The following emails are not registered as tenants: ${nonExistingList}. Please ensure users are registered as tenants.`);
-            return;
-        }
-
         // Check if we're still checking any emails
         const stillChecking = emails.some(e => e.checking);
         if (stillChecking) {
@@ -167,19 +154,13 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
         try {
             // Call the backend API to save and send invitations
             // This will save the invitation data to the database so only invited users see the invitations
-            const result = await applicationService.inviteToApply(validEmails, selectedPropertyId);
+            await applicationService.inviteToApply(validEmails, selectedPropertyId);
             
-            // Show success message with details
-            if (result.nonExistingEmails.length > 0) {
-                setGeneralError(`Warning: Some emails (${result.nonExistingEmails.join(', ')}) are not registered as tenants. Invitations were only sent to registered tenants.`);
-                // Don't close modal if there were non-existing emails, so user can see the warning
-            } else {
-                // Success - reset form and close modal
-                setEmails([{ id: '1', value: '', error: '', checking: false, exists: null }]);
-                setSelectedPropertyId('');
-                setGeneralError('');
-                onClose();
-            }
+            // Success - reset form and close modal
+            setEmails([{ id: '1', value: '', error: '', checking: false, exists: null }]);
+            setSelectedPropertyId('');
+            setGeneralError('');
+            onClose();
             
             // If parent component provided onSend callback, call it for backward compatibility
             // This allows parent components to handle additional logic (like showing toasts, refreshing data, etc.)
@@ -283,7 +264,7 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
                                             onChange={(e) => updateEmail(emailInput.id, e.target.value)}
                                             placeholder={`Enter applicant email ${index + 1}`}
                                             className={`flex-1 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 transition-all font-medium ${
-                                                emailInput.error || (emailInput.exists === false)
+                                                emailInput.error
                                                     ? 'bg-red-50 text-red-900 placeholder:text-red-400 border-2 border-red-500 focus:ring-red-500/50'
                                                     : emailInput.exists === true
                                                     ? 'bg-green-50 text-green-900 border-2 border-green-500 focus:ring-green-500/50'
@@ -305,7 +286,7 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
                                         <p className="text-xs text-gray-500 italic">Checking if user exists...</p>
                                     )}
                                     {emailInput.exists === true && !emailInput.error && (
-                                        <p className="text-xs text-green-600 font-medium">✓ Tenant user exists</p>
+                                        <p className="text-xs text-blue-600 font-medium">ℹ This user already has an account in the system</p>
                                     )}
                                     {emailInput.error && (
                                         <p className="text-xs text-red-600 font-medium">{emailInput.error}</p>

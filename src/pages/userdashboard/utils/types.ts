@@ -72,10 +72,10 @@ export interface Property {
     address: string;
     availabilityDate?: string;
     rent?: number;
-    price?: string; // Formatted price with currency (e.g., "₹50,000" or "$1,500")
+    price?: string; // Formatted price with currency (e.g., "$5,000" or "$1,500")
     type: string;
-    currency?: string; // Currency symbol (e.g., "$", "₹", "€")
-    currencyCode?: string; // ISO currency code (e.g., "USD", "INR", "EUR")
+    currency?: string; // Currency symbol (e.g., "$", "€")
+    currencyCode?: string; // ISO currency code (e.g., "USD", "EUR")
     images?: string[];
     image?: string; // Support both for now
     description?: string;

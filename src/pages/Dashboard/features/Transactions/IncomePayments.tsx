@@ -410,11 +410,6 @@ const IncomePayments: React.FC = () => {
                                     onChange={setCurrency}
                                     options={[
                                         { value: 'USD', label: 'USD' },
-                                        { value: 'EUR', label: 'EUR' },
-                                        { value: 'GBP', label: 'GBP' },
-                                        { value: 'INR', label: 'INR' },
-                                        { value: 'CAD', label: 'CAD' },
-                                        { value: 'AUD', label: 'AUD' },
                                     ]}
                                     placeholder="Select Currency"
                                     buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"

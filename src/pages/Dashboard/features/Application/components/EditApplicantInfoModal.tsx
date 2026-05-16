@@ -52,7 +52,7 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
         switch (name) {
             case 'monthlyRent':
             case 'householdIncome':
-                if (value === undefined || value === null || value < 0) {
+                if (value === undefined || value === null || value <= 0) {
                     return 'Must be a positive number';
                 }
                 break;

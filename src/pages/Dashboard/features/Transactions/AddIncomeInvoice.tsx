@@ -229,7 +229,7 @@ const AddIncomeInvoice: React.FC = () => {
 		
 		// Validate required fields
 		if (!amount || parseFloat(amount) <= 0) {
-			setError('Amount is required and must be greater than 0');
+			setError('Amount is required and must be a positive value');
 			return;
 		}
 
@@ -410,8 +410,6 @@ const AddIncomeInvoice: React.FC = () => {
 									onChange={setCurrency}
 									options={[
 										{ value: 'USD', label: 'USD' },
-										{ value: 'EUR', label: 'EUR' },
-										{ value: 'GBP', label: 'GBP' },
 									]}
 									placeholder="Select Currency"
 									buttonClassName="!rounded-md"

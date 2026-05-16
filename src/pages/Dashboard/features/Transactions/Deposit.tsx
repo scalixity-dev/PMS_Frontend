@@ -210,7 +210,7 @@ const Deposit: React.FC = () => {
             return;
         }
         if (!amount || parseFloat(amount) <= 0) {
-            setError('Please enter a valid amount');
+            setError('Please enter a valid positive amount');
             return;
         }
         if (!payerPayee) {
@@ -400,10 +400,7 @@ const Deposit: React.FC = () => {
                                     value={currency}
                                     onChange={setCurrency}
                                     options={[
-                                        { value: 'INR', label: 'In Rupees' },
                                         { value: 'USD', label: 'In Dollars' },
-                                        { value: 'EUR', label: 'In Euros' },
-                                        { value: 'GBP', label: 'In Pounds' },
                                     ]}
                                     placeholder="Select Currency"
                                     buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"

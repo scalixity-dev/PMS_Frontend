@@ -21,9 +21,9 @@ const FinancialCard = ({ title, amount, currency, action }: { title: string; amo
                 </button>
             )}
         </div>
-        <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-medium text-[var(--dashboard-text-main)]">{amount}</span>
+        <div className="flex items-baseline gap-1">
             <span className="text-2xl font-medium text-[var(--dashboard-text-main)]">{currency}</span>
+            <span className="text-2xl font-medium text-[var(--dashboard-text-main)]">{amount}</span>
         </div>
     </div>
 );
@@ -74,9 +74,9 @@ export const Sidebar = () => {
             {/* Info Cards Container */}
             {dashboardStage !== 'no_lease' && (
                 <div className="bg-[var(--dashboard-bg-light)] rounded-[1rem] p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:flex lg:flex-col gap-4 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-50">
-                    <FinancialCard title="Outstanding" amount={outstanding} currency="INR" action="Pay online" />
-                    <FinancialCard title="Deposits" amount={deposits} currency="INR" />
-                    <FinancialCard title="Credits" amount={credits} currency="INR" />
+                    <FinancialCard title="Outstanding" amount={outstanding} currency="$" action="Pay online" />
+                    <FinancialCard title="Deposits" amount={deposits} currency="$" />
+                    <FinancialCard title="Credits" amount={credits} currency="$" />
 
                     {/* Roommates Card */}
                     {roommates.length > 0 && (

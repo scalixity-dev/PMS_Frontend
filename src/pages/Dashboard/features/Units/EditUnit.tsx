@@ -316,6 +316,35 @@ const EditUnit: React.FC = () => {
   };
 
   // Form validation
+  const isFormValid = useMemo(() => {
+    if (!formData.unitName.trim()) return false;
+    if (!formData.beds || formData.beds.trim() === '') return false;
+    if (!formData.baths || formData.baths.trim() === '') return false;
+
+    const bedsValue = parseInt(formData.beds);
+    if (isNaN(bedsValue) || bedsValue < 0) return false;
+
+    const bathsValue = parseFloat(formData.baths);
+    if (isNaN(bathsValue) || bathsValue < 0) return false;
+
+    if (formData.size && formData.size.trim() !== '') {
+      const sizeValue = parseFloat(formData.size);
+      if (isNaN(sizeValue) || sizeValue <= 0) return false;
+    }
+
+    if (formData.rent && formData.rent.trim() !== '') {
+      const rentValue = parseFloat(formData.rent);
+      if (isNaN(rentValue) || rentValue < 0) return false;
+    }
+
+    if (formData.deposit && formData.deposit.trim() !== '') {
+      const depositValue = parseFloat(formData.deposit);
+      if (isNaN(depositValue) || depositValue < 0) return false;
+    }
+
+    return true;
+  }, [formData]);
+
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
@@ -325,8 +354,12 @@ const EditUnit: React.FC = () => {
 
     if (!formData.beds || formData.beds.trim() === '') {
       errors.beds = 'Beds is required';
+    } else {
+        const bedsValue = parseInt(formData.beds);
+        if (isNaN(bedsValue) || bedsValue < 0) {
+            errors.beds = 'Beds must be a positive number';
+        }
     }
-
 
     if (!formData.baths || formData.baths.trim() === '') {
       errors.baths = 'Baths is required';
@@ -919,7 +952,7 @@ const EditUnit: React.FC = () => {
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !isFormValid}
             className="px-8 py-2 bg-[#376F7E] text-white rounded-lg font-medium hover:bg-[#2c5a66] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Updating...' : 'Update Unit'}

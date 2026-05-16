@@ -26,6 +26,7 @@ interface CustomDropdownProps {
   className?: string;
   onToggle?: (isOpen: boolean) => void;
   isOpen?: boolean;
+  id?: string;
 }
 
 const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -47,6 +48,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   className,
   onToggle,
   isOpen: controlledIsOpen,
+  id,
 }) => {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isControlled = controlledIsOpen !== undefined;
@@ -111,7 +113,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   };
 
   return (
-    <div className={cn("w-full relative", className)} ref={dropdownRef}>
+    <div id={id} className={cn("w-full relative", className)} ref={dropdownRef}>
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-2">
           {label}{required && '*'}

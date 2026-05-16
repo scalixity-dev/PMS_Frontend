@@ -228,7 +228,7 @@ const ExpensePayments: React.FC = () => {
         
         // Validate required fields
         if (!amount || parseFloat(amount) <= 0) {
-            setError('Amount is required and must be greater than 0');
+            setError('Amount is required and must be a positive value');
             return;
         }
 
@@ -399,10 +399,6 @@ const ExpensePayments: React.FC = () => {
                                     onChange={setCurrency}
                                     options={[
                                         { value: 'USD', label: 'USD' },
-                                        { value: 'EUR', label: 'EUR' },
-                                        { value: 'GBP', label: 'GBP' },
-                                        { value: 'CAD', label: 'CAD' },
-                                        { value: 'AUD', label: 'AUD' },
                                     ]}
                                     placeholder="Select Currency"
                                     buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"

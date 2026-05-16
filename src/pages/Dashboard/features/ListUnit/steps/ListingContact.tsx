@@ -123,7 +123,8 @@ const ListingContact: React.FC<ListingContactProps> = ({ onSubmit }) => {
             <div className="w-full max-w-xs flex justify-center">
                 <button
                     onClick={onSubmit}
-                    className="bg-[#3D7475] text-white text-lg md:text-xl font-bold py-3 px-8 md:px-12 rounded-xl shadow-lg hover:bg-[#2c5556] transition-colors w-full"
+                    disabled={!(formData.contactName && formData.phoneNumber && formData.email)}
+                    className="bg-[#3D7475] text-white text-lg md:text-xl font-bold py-3 px-8 md:px-12 rounded-xl shadow-lg hover:bg-[#2c5556] transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Submit Listing
                 </button>

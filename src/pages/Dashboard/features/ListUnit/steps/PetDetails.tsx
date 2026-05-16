@@ -12,6 +12,16 @@ interface PetDetailsProps {
 const PetDetails: React.FC<PetDetailsProps> = ({ propertyId }) => {
     const { formData, updateFormData } = useListUnitStore();
     const [showOtherDropdown, setShowOtherDropdown] = useState(false);
+    const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
+
+    const validateField = (key: string, value: string) => {
+        let error = '';
+        const numValue = parseFloat(value);
+        if (value && (isNaN(numValue) || numValue < 0)) {
+            error = 'Value must be a positive number';
+        }
+        setValidationErrors(prev => ({ ...prev, [key]: error }));
+    };
 
     // Use React Query to fetch property data
     const { data: property } = useGetProperty(propertyId || null, !!propertyId);
@@ -122,11 +132,15 @@ const PetDetails: React.FC<PetDetailsProps> = ({ propertyId }) => {
                         )}
                         <input
                             type="number"
-                            className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
+                            className={`${inputClass} ${currencySymbol ? 'pl-8' : ''} ${validationErrors.petDeposit ? 'ring-2 ring-red-500' : ''}`}
                             value={formData.petDeposit || ''}
-                            onChange={(e) => updateFormData('petDeposit', e.target.value)}
+                            onChange={(e) => {
+                                updateFormData('petDeposit', e.target.value);
+                                validateField('petDeposit', e.target.value);
+                            }}
                             placeholder={`${currencySymbol || '$'} 0.00`}
                         />
+                        {validationErrors.petDeposit && <p className="text-red-500 text-xs mt-1 ml-1 text-center">{validationErrors.petDeposit}</p>}
                     </div>
                 </div>
                 <div>
@@ -139,11 +153,15 @@ const PetDetails: React.FC<PetDetailsProps> = ({ propertyId }) => {
                         )}
                         <input
                             type="number"
-                            className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
+                            className={`${inputClass} ${currencySymbol ? 'pl-8' : ''} ${validationErrors.petRent ? 'ring-2 ring-red-500' : ''}`}
                             value={formData.petRent || ''}
-                            onChange={(e) => updateFormData('petRent', e.target.value)}
+                            onChange={(e) => {
+                                updateFormData('petRent', e.target.value);
+                                validateField('petRent', e.target.value);
+                            }}
                             placeholder={`${currencySymbol || '$'} 0.00`}
                         />
+                        {validationErrors.petRent && <p className="text-red-500 text-xs mt-1 ml-1 text-center">{validationErrors.petRent}</p>}
                     </div>
                 </div>
             </div>

@@ -24,11 +24,6 @@ const CREDIT_CATEGORIES = [
 
 const CURRENCY_OPTIONS = [
     { value: 'USD', label: 'USD' },
-    { value: 'EUR', label: 'EUR' },
-    { value: 'GBP', label: 'GBP' },
-    { value: 'INR', label: 'INR' },
-    { value: 'CAD', label: 'CAD' },
-    { value: 'AUD', label: 'AUD' },
 ];
 
 const PAYMENT_METHOD_OPTIONS = [

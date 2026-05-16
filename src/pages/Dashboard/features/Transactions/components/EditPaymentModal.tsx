@@ -39,7 +39,7 @@ const EditPaymentModal: React.FC<EditPaymentModalProps> = ({ onConfirm }) => {
                 }
 
                 if (selectedPayment.amount) {
-                    // Clean currency symbols if mock data has them "₹53,200.00"
+                    // Clean currency symbols if mock data has them "$53,200.00"
                     const amountStr = String(selectedPayment.amount).replace(/[^0-9.]/g, '');
                     setAmountPaid(amountStr);
                 }

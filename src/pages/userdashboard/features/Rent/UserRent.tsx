@@ -268,7 +268,7 @@ const Rent: React.FC = () => {
           {/* Outstanding Section */}
           <div className="px-6 py-5">
             <p className="text-gray-600 text-sm mb-1">Outstanding</p>
-            <p className="text-lg font-medium text-gray-900">{outstandingAmountValue.toFixed(2)} INR</p>
+            <p className="text-lg font-medium text-gray-900">${outstandingAmountValue.toFixed(2)}</p>
           </div>
         </div>
 

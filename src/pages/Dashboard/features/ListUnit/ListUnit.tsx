@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -557,6 +557,49 @@ const ListUnit: React.FC = () => {
     }
   };
 
+  const isStepValid = useMemo(() => {
+    if (currentStep === 1) {
+      return !!formData.property;
+    }
+    if (currentStep === 2) {
+      if (leasingStep === 1) {
+        const isValid = !!(
+          formData.rent && parseFloat(formData.rent) > 0 &&
+          formData.deposit && parseFloat(formData.deposit) >= 0 &&
+          formData.refundable && parseFloat(formData.refundable) >= 0 &&
+          formData.availableDate &&
+          formData.minLeaseDuration &&
+          formData.maxLeaseDuration
+        );
+        return isValid;
+      }
+      if (leasingStep === 2) {
+        return formData.petsAllowed !== null && formData.petsAllowed !== undefined;
+      }
+      if (leasingStep === 3) {
+        // Pet details (optional fields, but if filled must be positive)
+        if (formData.petDeposit && parseFloat(formData.petDeposit) < 0) return false;
+        if (formData.petRent && parseFloat(formData.petRent) < 0) return false;
+        return true;
+      }
+    }
+    if (currentStep === 3) {
+      if (applicationStep === 1) {
+        return formData.receiveApplicationsOnline !== null && formData.receiveApplicationsOnline !== undefined;
+      }
+      if (applicationStep === 2) {
+        return formData.applicationFee !== null && formData.applicationFee !== undefined;
+      }
+      if (applicationStep === 3) {
+        return !!(formData.applicationFeeAmount && parseFloat(formData.applicationFeeAmount) >= 0);
+      }
+      if (applicationStep === 4) {
+        return !!(formData.contactName && formData.phoneNumber && formData.email);
+      }
+    }
+    return true;
+  }, [currentStep, leasingStep, applicationStep, formData]);
+
   const handleBack = () => {
     if (showCreateProperty) {
       setShowCreateProperty(false);
@@ -739,7 +782,7 @@ const ListUnit: React.FC = () => {
                           </div>
                         )}
                         <div className="w-full max-w-md mt-8 flex justify-center">
-                          <NextStepButton onClick={handleNext} disabled={isSubmitting}>
+                          <NextStepButton onClick={handleNext} disabled={isSubmitting || !isStepValid}>
                             {isSubmitting ? 'Saving...' : 'Next'}
                           </NextStepButton>
                         </div>
@@ -767,7 +810,7 @@ const ListUnit: React.FC = () => {
                           </div>
                         )}
                         <div className="w-full max-w-md mt-8 flex justify-center">
-                          <NextStepButton onClick={handleNext} disabled={isSubmitting}>
+                          <NextStepButton onClick={handleNext} disabled={isSubmitting || !isStepValid}>
                             {isSubmitting ? 'Saving...' : 'Next'}
                           </NextStepButton>
                         </div>
@@ -787,7 +830,7 @@ const ListUnit: React.FC = () => {
                           </div>
                         )}
                         <div className="w-full max-w-md mt-8 flex justify-center">
-                          <NextStepButton onClick={handleNext} disabled={isSubmitting}>
+                          <NextStepButton onClick={handleNext} disabled={isSubmitting || !isStepValid}>
                             {isSubmitting ? 'Saving...' : 'Next'}
                           </NextStepButton>
                         </div>
@@ -801,7 +844,7 @@ const ListUnit: React.FC = () => {
                           </div>
                         )}
                         <div className="w-full max-w-md mt-8 flex justify-center">
-                          <NextStepButton onClick={handleNext} disabled={isSubmitting}>
+                          <NextStepButton onClick={handleNext} disabled={isSubmitting || !isStepValid}>
                             {isSubmitting ? 'Saving...' : 'Next'}
                           </NextStepButton>
                         </div>
@@ -815,7 +858,7 @@ const ListUnit: React.FC = () => {
                           </div>
                         )}
                         <div className="w-full max-w-md mt-8 flex justify-center">
-                          <NextStepButton onClick={handleNext} disabled={isSubmitting}>
+                          <NextStepButton onClick={handleNext} disabled={isSubmitting || !isStepValid}>
                             {isSubmitting ? 'Saving...' : 'Next'}
                           </NextStepButton>
                         </div>
