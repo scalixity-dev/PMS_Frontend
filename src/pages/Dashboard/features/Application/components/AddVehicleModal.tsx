@@ -79,6 +79,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
         if (requiredFields.includes(key) && (!value || value.trim() === '')) {
             const displayNames: Record<string, string> = {
                 type: 'Type',
+                make: 'Make',
                 model: 'Model',
                 year: 'Year',
                 color: 'Color',
@@ -265,7 +266,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                             )}
                         </div>
                         <div>
-                            <label className={labelClasses}>Company name</label>
+                            <label className={labelClasses}>Make</label>
                             <input
                                 type="text"
                                 placeholder="Type here"
