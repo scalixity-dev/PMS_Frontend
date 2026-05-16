@@ -75,16 +75,14 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
 
     const validateField = (key: keyof VehicleFormData, value: string): string => {
         // Check if required field is empty
-        if (!value || value.trim() === '') {
-            // Map field names to display names
+        const requiredFields = ['type', 'model', 'year', 'color', 'licensePlate'];
+        if (requiredFields.includes(key) && (!value || value.trim() === '')) {
             const displayNames: Record<string, string> = {
                 type: 'Type',
-                make: 'Company name',
                 model: 'Model',
                 year: 'Year',
                 color: 'Color',
                 licensePlate: 'License Plate',
-                registeredIn: 'Registered In'
             };
             const displayName = displayNames[key] || key;
             return `${displayName} is required`;
@@ -126,7 +124,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
 
         // All fields are required
         const requiredFields: Array<keyof VehicleFormData> = [
-            'type', 'make', 'model', 'year', 'color', 'licensePlate', 'registeredIn'
+            'type', 'model', 'year', 'color', 'licensePlate'
         ];
 
         requiredFields.forEach(key => {
@@ -168,12 +166,10 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
     const handleSubmit = async () => {
         const allTouched: Record<string, boolean> = {
             type: true,
-            make: true,
             model: true,
             year: true,
             color: true,
-            licensePlate: true,
-            registeredIn: true
+            licensePlate: true
         };
         const allErrors: Record<string, string> = {};
 
@@ -216,7 +212,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
     // Check if form is valid for button state
     const isFormValid = () => {
         const requiredFields: Array<keyof VehicleFormData> = [
-            'type', 'make', 'model', 'year', 'color', 'licensePlate', 'registeredIn'
+            'type', 'model', 'year', 'color', 'licensePlate'
         ];
 
         return requiredFields.every(key => {
@@ -269,7 +265,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                             )}
                         </div>
                         <div>
-                            <label className={labelClasses}>Company name *</label>
+                            <label className={labelClasses}>Company name</label>
                             <input
                                 type="text"
                                 placeholder="Type here"
@@ -356,7 +352,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                     {/* Row 3 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                            <label className={labelClasses}>Registered in*</label>
+                            <label className={labelClasses}>Registered in</label>
                             <input
                                 type="text"
                                 placeholder="Type Here"

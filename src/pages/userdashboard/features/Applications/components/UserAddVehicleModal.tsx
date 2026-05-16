@@ -60,15 +60,14 @@ const UserAddVehicleModal: React.FC<UserAddVehicleModalProps> = ({ isOpen, onClo
     }, [isOpen, initialData]);
 
     const validateField = (key: keyof VehicleFormData, value: string): string => {
-        if (!value || value.trim() === '') {
+        const requiredFields = ['type', 'model', 'year', 'color', 'licensePlate'];
+        if (requiredFields.includes(key) && (!value || value.trim() === '')) {
             const displayNames: Record<string, string> = {
                 type: 'Type',
-                make: 'Company name',
                 model: 'Model',
                 year: 'Year',
                 color: 'Color',
-                licensePlate: 'License Plate',
-                registeredIn: 'Registered In'
+                licensePlate: 'License Plate'
             };
             const displayName = displayNames[key] || key;
             return `${displayName} is required`;
@@ -92,7 +91,7 @@ const UserAddVehicleModal: React.FC<UserAddVehicleModalProps> = ({ isOpen, onClo
         const newErrors: Record<string, string> = {};
         let isValid = true;
         const requiredFields: Array<keyof VehicleFormData> = [
-            'type', 'make', 'model', 'year', 'color', 'licensePlate', 'registeredIn'
+            'type', 'model', 'year', 'color', 'licensePlate'
         ];
 
         requiredFields.forEach(key => {
@@ -109,7 +108,7 @@ const UserAddVehicleModal: React.FC<UserAddVehicleModalProps> = ({ isOpen, onClo
 
     const isFormValid = () => {
         const requiredFields: Array<keyof VehicleFormData> = [
-            'type', 'make', 'model', 'year', 'color', 'licensePlate', 'registeredIn'
+            'type', 'model', 'year', 'color', 'licensePlate'
         ];
         return requiredFields.every(key => !validateField(key, formData[key]));
     };
@@ -131,7 +130,7 @@ const UserAddVehicleModal: React.FC<UserAddVehicleModalProps> = ({ isOpen, onClo
 
     const handleSubmit = () => {
         const requiredFields: Array<keyof VehicleFormData> = [
-            'type', 'make', 'model', 'year', 'color', 'licensePlate', 'registeredIn'
+            'type', 'model', 'year', 'color', 'licensePlate'
         ];
         const allTouched: Record<string, boolean> = {};
         const allErrors: Record<string, string> = {};
@@ -181,7 +180,7 @@ const UserAddVehicleModal: React.FC<UserAddVehicleModalProps> = ({ isOpen, onClo
                 {/* Row 1 */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                        <label className={labelClasses}>Type</label>
+                        <label className={labelClasses}>Type *</label>
                         <CustomDropdown
                             value={formData.type}
                             onChange={(val: string) => {
@@ -207,7 +206,7 @@ const UserAddVehicleModal: React.FC<UserAddVehicleModalProps> = ({ isOpen, onClo
                         {touched.make && errors.make && <p className={errorClasses}>{errors.make}</p>}
                     </div>
                     <div>
-                        <label className={labelClasses}>Model</label>
+                        <label className={labelClasses}>Model *</label>
                         <input
                             type="text"
                             placeholder="Type here"
@@ -223,7 +222,7 @@ const UserAddVehicleModal: React.FC<UserAddVehicleModalProps> = ({ isOpen, onClo
                 {/* Row 2 */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                        <label className={labelClasses}>Year</label>
+                        <label className={labelClasses}>Year *</label>
                         <input
                             type="text"
                             placeholder="Type Here"
@@ -238,7 +237,7 @@ const UserAddVehicleModal: React.FC<UserAddVehicleModalProps> = ({ isOpen, onClo
                         {touched.year && errors.year && <p className={errorClasses}>{errors.year}</p>}
                     </div>
                     <div>
-                        <label className={labelClasses}>Color</label>
+                        <label className={labelClasses}>Color *</label>
                         <input
                             type="text"
                             placeholder="Type Here"
@@ -250,7 +249,7 @@ const UserAddVehicleModal: React.FC<UserAddVehicleModalProps> = ({ isOpen, onClo
                         {touched.color && errors.color && <p className={errorClasses}>{errors.color}</p>}
                     </div>
                     <div>
-                        <label className={labelClasses}>License Plate</label>
+                        <label className={labelClasses}>License Plate *</label>
                         <input
                             type="text"
                             placeholder="Type Here"
