@@ -228,11 +228,10 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                 if (value && String(value).trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value))) return 'Invalid email';
                 break;
             case 'supervisorPhone':
-                if (!formData.supervisorPhoneCountryCode) {
-                    return 'Please select a country code first';
-                }
-                if (!value || String(value).trim() === '') return 'Supervisor Phone is required';
-                {
+                if (value && String(value).trim() !== '') {
+                    if (!formData.supervisorPhoneCountryCode) {
+                        return 'Please select a country code first';
+                    }
                     const digitsOnly = value.replace(/\D/g, '');
                     if (digitsOnly.length < 4 || digitsOnly.length > 15) {
                         return 'Phone number must be between 4 and 15 digits';
@@ -245,7 +244,7 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
 
     const isFormValid = () => {
         const requiredFields: Array<keyof IncomeFormData> = [
-            'startDate', 'company', 'position', 'monthlyAmount', 'address', 'office', 'companyPhone', 'supervisorName', 'supervisorPhone'
+            'startDate', 'company', 'position', 'monthlyAmount', 'address', 'office', 'companyPhone', 'supervisorName'
         ];
 
         let isValid = requiredFields.every(key => !validateField(key, formData[key]));
@@ -653,7 +652,7 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
 
                             {/* Supervisor Phone */}
                             <div>
-                                <label className={labelClasses}>Supervisor Phone *</label>
+                                <label className={labelClasses}>Supervisor Phone</label>
                                 <div className={`flex border rounded-md transition-all ${(touched.supervisorPhone && errors.supervisorPhone) || (!formData.supervisorPhoneCountryCode && touched.supervisorPhone)
                                     ? 'border-red-500'
                                     : 'border-gray-300 focus-within:border-[#7CD947] focus-within:ring-1 focus-within:ring-[#7CD947]'

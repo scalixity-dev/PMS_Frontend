@@ -246,9 +246,8 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                 if (value && value.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email';
                 break;
             case 'supervisorPhone':
-                if (!formData.supervisorPhoneCountryCode) return 'Please select a country code first';
-                if (!value || value.trim() === '') return 'Supervisor Phone is required';
-                {
+                if (value && value.trim() !== '') {
+                    if (!formData.supervisorPhoneCountryCode) return 'Please select a country code first';
                     const digitsOnly = value.replace(/\D/g, '');
                     if (digitsOnly.length < 4 || digitsOnly.length > 15) {
                         return 'Phone number must be between 4 and 15 digits';
@@ -662,7 +661,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
 
                         {/* Supervisor Phone */}
                         <div className="md:col-span-1">
-                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Supervisor Phone Number *</label>
+                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Supervisor Phone Number</label>
                             <div className={`flex border rounded-xl transition-all ${touched.supervisorPhone && errors.supervisorPhone
                                 ? 'border-red-500 border-2'
                                 : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
