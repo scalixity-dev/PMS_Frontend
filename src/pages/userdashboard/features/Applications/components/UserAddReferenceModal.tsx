@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Check, Mail, Phone, User } from 'lucide-react';
 import BaseModal from '@/components/common/modals/BaseModal';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+
 
 export interface ReferenceFormData {
     fullName: string;
@@ -71,12 +73,17 @@ const UserAddReferenceModal: React.FC<UserAddReferenceModalProps> = ({ isOpen, o
     };
 
     const handleChange = (key: keyof ReferenceFormData, value: string) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'phoneNumber') {
+            finalValue = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
         if (touched[key]) {
-            const error = validateField(key, value);
+            const error = validateField(key, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
+
 
     const handleBlur = (key: keyof ReferenceFormData) => {
         setTouched(prev => ({ ...prev, [key]: true }));

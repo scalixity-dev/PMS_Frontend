@@ -9,6 +9,8 @@ import {
     useRevokeTeamMember,
 } from "../../../../hooks/useTeamQueries";
 import { useToast } from "../../../../components/common/Toast";
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 import type { TeamRole } from "../../../../services/team.service";
 
 const INPUT_CLASS = "w-full px-4 py-3 border-b border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors";
@@ -101,10 +103,11 @@ const InviteModal = memo(({
                         type="tel"
                         placeholder="Phone Number (optional)"
                         value={data.phoneNumber}
-                        onChange={(e) => setData({ ...data, phoneNumber: e.target.value })}
+                        onChange={(e) => setData({ ...data, phoneNumber: formatPhoneNumber(e.target.value) })}
                         className={INPUT_CLASS}
                         disabled={isSubmitting}
                     />
+
 
                     <div>
                         <label className="block text-xs font-semibold text-gray-600 mb-2">Role</label>
@@ -300,8 +303,9 @@ export default function RolesPermissions() {
                                             <h4 className="text-base font-semibold text-gray-900 truncate">{member.name}</h4>
                                             <p className="text-xs text-gray-500 truncate mb-1">{member.email}</p>
                                             {member.phoneNumber && (
-                                                <p className="text-xs text-gray-400 truncate">{member.phoneNumber}</p>
+                                                <p className="text-xs text-gray-400 truncate">{formatPhoneNumber(member.phoneNumber)}</p>
                                             )}
+
                                         </div>
                                     </div>
 

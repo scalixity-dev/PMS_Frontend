@@ -1,4 +1,6 @@
 import { API_ENDPOINTS } from '../config/api.config';
+import { formatPhoneNumber } from '../utils/phone.utils';
+
 
 // Backend Tenant Profile Types
 export interface BackendTenantProfile {
@@ -503,9 +505,11 @@ class TenantService {
     const email = backendTenant.user?.email || backendTenant.contactBookEntry?.email || 'N/A';
 
     // Get phone number with country code if available
-    const phone = backendTenant.phoneNumber
+    const rawPhone = backendTenant.phoneNumber
       ? `${backendTenant.phoneCountryCode || ''}${backendTenant.phoneNumber}`.trim()
       : 'N/A';
+    const phone = rawPhone === 'N/A' ? 'N/A' : formatPhoneNumber(rawPhone);
+
 
     // Tenant type is derived from contact-book status / user linkage so the
     // list filter has something to match. PENDING → Pending; ACCEPTED or a

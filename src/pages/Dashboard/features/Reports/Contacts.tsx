@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 import { useNavigate } from 'react-router-dom';
 import { ChevronUp, Download, LayoutTemplate, X, Check, ChevronLeft } from 'lucide-react';
 import DashboardFilter from '../../components/DashboardFilter';
@@ -87,8 +89,10 @@ const Contacts: React.FC = () => {
             case 'company': return <span className="text-[#65a30d] font-bold">{contact.company}</span>;
             case 'lastName': return <span className="text-gray-900 font-bold">{contact.lastName}</span>;
             case 'email':
-            case 'phone':
                 return <span className="text-gray-700">{contact[columnId]}</span>;
+            case 'phone':
+                return <span className="text-gray-700">{formatPhoneNumber(contact[columnId])}</span>;
+
             case 'address': return <span className="text-gray-600">{contact.address}</span>;
             default: return String(contact[columnId as keyof ContactItem] ?? '');
         }

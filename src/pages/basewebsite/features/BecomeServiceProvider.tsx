@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { serviceProviderService, type CreateServiceProviderDto } from '../../../services/service-provider.service';
+import { formatPhoneNumber } from '@/utils/phone.utils';
 
 const SUB_CATEGORIES: Record<string, string[]> = {
   Cleaning: ['House Cleaning', 'Commercial Cleaning', 'Window Cleaning'],
@@ -32,7 +33,13 @@ const BecomeServiceProvider: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let finalValue = value;
+
+    if (name === 'phoneNumber') {
+      finalValue = formatPhoneNumber(value);
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
     setError(null);
   };
 

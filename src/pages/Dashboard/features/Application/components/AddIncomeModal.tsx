@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '@/components/ui/DatePicker';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 
 export interface IncomeFormData {
     currentEmployment: boolean;
@@ -226,13 +228,18 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
     };
 
     const handleChange = (key: keyof IncomeFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'companyPhone' || key === 'supervisorPhone') {
+            finalValue = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
 
         if (touched[key]) {
-            const error = validateField(key, value);
+            const error = validateField(key, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
+
 
     const handleBlur = (key: keyof IncomeFormData, currentValue?: any) => {
         setTouched(prev => ({ ...prev, [key]: true }));

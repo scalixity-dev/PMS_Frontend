@@ -3,6 +3,8 @@ import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 
 export interface OccupantFormData {
     firstName: string;
@@ -215,14 +217,20 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
             }
         }
 
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'phoneNumber') {
+            finalValue = formatPhoneNumber(value);
+        }
+
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
 
         // Clear error for this field when user starts typing
         if (touched[key]) {
-            const error = validateField(key, value);
+            const error = validateField(key, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
+
 
     const handleBlur = (key: keyof OccupantFormData, currentValue?: any) => {
         setTouched(prev => ({ ...prev, [key]: true }));

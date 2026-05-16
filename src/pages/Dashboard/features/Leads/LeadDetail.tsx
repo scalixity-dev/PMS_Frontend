@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, MoreHorizontal, Clock, Plus, Edit2, Trash2, User, FileText, CheckSquare, LogIn } from 'lucide-react';
 import AddNoteModal from './components/AddNoteModal';
@@ -155,13 +157,14 @@ const LeadDetail = () => {
 
     const leadInfo = lead ? {
         fullName: lead.name,
-        phone: lead.phoneNumber,
+        phone: formatPhoneNumber(lead.phoneNumber),
         email: lead.email
     } : {
         fullName: '',
         phone: '',
         email: ''
     };
+
 
     // Transform backend data to frontend format
     const transformedActivities = useMemo(() => {

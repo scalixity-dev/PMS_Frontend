@@ -5,6 +5,8 @@ import type { ICountry, IState, ICity } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
 import { cn } from '@/lib/utils';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 
 export interface ResidenceFormData {
     isCurrent: boolean;
@@ -323,13 +325,19 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
     };
 
     const handleChange = (key: keyof ResidenceFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'landlordPhone') {
+            finalValue = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
 
         // Clear error for this field when user starts typing/selecting
         if (touched[key]) {
-            const error = validateField(key, value);
+            const error = validateField(key, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
+
+
 
         // Special case: when residencyType changes, revalidate conditional fields
         if (key === 'residencyType') {

@@ -6,6 +6,7 @@ import CustomDropdown from '../../../components/CustomDropdown';
 import CurrencySelector from '../../../../../components/ui/CurrencySelector';
 import { useQuery } from '@tanstack/react-query';
 import { serviceProviderService } from '../../../../../services/service-provider.service';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
 
 interface AddUtilityProviderModalProps {
     isOpen: boolean;
@@ -220,7 +221,7 @@ const AddUtilityProviderModal: React.FC<AddUtilityProviderModalProps> = ({ isOpe
                             <input
                                 type="tel"
                                 value={contactPhone}
-                                onChange={(e) => setContactPhone(e.target.value)}
+                                onChange={(e) => setContactPhone(formatPhoneNumber(e.target.value))}
                                 className="w-full p-3 rounded-lg border border-gray-200 outline-none text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#3A6D6C]/20"
                                 placeholder="e.g. +1 555-123-4567"
                             />

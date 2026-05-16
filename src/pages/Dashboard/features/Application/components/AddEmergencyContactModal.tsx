@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
 import type { EmergencyContactFormData } from '../store/applicationStore';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+
 
 interface AddEmergencyContactModalProps {
     isOpen: boolean;
@@ -159,13 +161,18 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
     };
 
     const handleChange = (key: keyof EmergencyContactFormData | 'phoneCountryCode', value: any) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'phoneNumber') {
+            finalValue = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
 
         if (key !== 'phoneCountryCode' && touched[key]) {
-            const error = validateField(key as keyof EmergencyContactFormData, value);
+            const error = validateField(key as keyof EmergencyContactFormData, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
+
 
     const handleBlur = (key: keyof EmergencyContactFormData) => {
         setTouched(prev => ({ ...prev, [key]: true }));

@@ -1,4 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
@@ -532,8 +534,9 @@ const ListingDetail: React.FC = () => {
             contact: {
                 name: property.listingContactName || 'N/A',
                 phone: property.listingPhoneNumber
-                    ? `${property.listingPhoneCountryCode || ''} ${property.listingPhoneNumber}`.trim()
+                    ? `${property.listingPhoneCountryCode || ''} ${formatPhoneNumber(property.listingPhoneNumber)}`.trim()
                     : 'N/A',
+
                 email: property.listingEmail || 'N/A',
                 avatar: '' // No avatar in backend
             },
@@ -1590,11 +1593,11 @@ const ListingDetail: React.FC = () => {
                                                 <input
                                                     type="text"
                                                     value={contactDetails?.phone || ''}
-                                                    onChange={(e) => setContactDetails({ ...contactDetails, phone: e.target.value })}
+                                                    onChange={(e) => setContactDetails({ ...contactDetails, phone: formatPhoneNumber(e.target.value) })}
                                                     className="text-sm font-bold text-gray-800 bg-transparent focus:outline-none border-b border-gray-400 w-full"
                                                 />
                                             ) : (
-                                                <span className="text-sm font-bold text-gray-800">{contactDetails?.phone || 'N/A'}</span>
+                                                <span className="text-sm font-bold text-gray-800">{contactDetails?.phone ? formatPhoneNumber(contactDetails.phone) : 'N/A'}</span>
                                             )}
                                         </div>
                                         <div className="bg-[#E8E8EA] px-4 py-2 rounded-full flex items-center gap-3">

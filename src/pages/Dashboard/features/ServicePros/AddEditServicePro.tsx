@@ -4,7 +4,9 @@ import { ChevronLeft, Plus, Trash2, Upload, FileText, X, Search, ChevronDown } f
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from '../../components/CustomDropdown';
+import { formatPhoneNumber } from '@/utils/phone.utils';
 import ImageCropModal from '../Tenants/components/ImageCropModal';
+
 import { serviceProviderService, type CreateServiceProviderDto } from '../../../../services/service-provider.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 
@@ -327,11 +329,16 @@ const AddEditServicePro = () => {
 
     const handleGeneralChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
+        let finalValue = value;
+        if (name === 'phone' || name === 'fax') {
+            finalValue = formatPhoneNumber(value);
+        }
         setFormData(prev => ({
             ...prev,
-            general: { ...prev.general, [name]: value }
+            general: { ...prev.general, [name]: finalValue }
         }));
     };
+
 
     const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -379,13 +386,14 @@ const AddEditServicePro = () => {
     const updateDynamicField = (field: 'additionalEmails' | 'additionalPhones', index: number, value: string) => {
         setFormData(prev => {
             const newArray = [...prev.general[field]];
-            newArray[index] = value;
+            newArray[index] = field === 'additionalPhones' ? formatPhoneNumber(value) : value;
             return {
                 ...prev,
                 general: { ...prev.general, [field]: newArray }
             };
         });
     };
+
 
     const removeDynamicField = (field: 'additionalEmails' | 'additionalPhones', index: number) => {
         setFormData(prev => ({

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
+import { formatPhoneNumber } from '@/utils/phone.utils';
 
 export interface ReferenceFormData {
     contactName: string;
@@ -161,7 +162,12 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
             }
         }
 
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'contactNumber') {
+            finalValue = formatPhoneNumber(value);
+        }
+
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
 
         if (key !== 'phoneCountryCode' && touched[key]) {
             const error = validateField(key as keyof ReferenceFormData, value);

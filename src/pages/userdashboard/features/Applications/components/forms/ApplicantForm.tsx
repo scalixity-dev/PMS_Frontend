@@ -1,10 +1,10 @@
 import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
-import { Upload, Search, ChevronDown, Check, Loader2 } from 'lucide-react';
+import { Search, ChevronDown, Check } from 'lucide-react';
 import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
-import ImageCropModal from '../../../../../Dashboard/features/Tenants/components/ImageCropModal';
-import { API_ENDPOINTS } from '@/config/api.config';
+import { formatPhoneNumber } from '../../../../../../utils/phone.utils';
+
 
 export interface FormData {
     firstName: string;
@@ -26,6 +26,7 @@ interface ApplicantFormProps {
     title: string;
     subTitle: string;
     submitLabel?: string;
+    disabledFields?: Partial<Record<keyof FormData, boolean>>;
 }
 
 const ApplicantForm: React.FC<ApplicantFormProps> = ({
@@ -35,18 +36,13 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     title,
     subTitle,
     submitLabel = 'Next',
+    disabledFields = {},
 }) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const phoneCodeRef = useRef<HTMLDivElement>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
-    const [isCropModalOpen, setIsCropModalOpen] = useState(false);
-    const [imageToCrop, setImageToCrop] = useState<string | null>(null);
     const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
     const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
-    const [uploadingPhoto, setUploadingPhoto] = useState(false);
-    const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
     // Phone country codes
     const phoneCountryCodes = useMemo(() => {
@@ -86,106 +82,6 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    useEffect(() => {
-        // Check if data.photo is a File or Blob object
-        const photo = data.photo;
-        if (photo !== null && photo !== undefined) {
-            // Type guard: check if it's a File or Blob using type assertion
-            const photoObj = photo as any;
-            if (photoObj instanceof File || photoObj instanceof Blob) {
-                const url = URL.createObjectURL(photoObj);
-                setPreviewUrl(url);
-                return () => URL.revokeObjectURL(url);
-            } else if (typeof photo === 'string') {
-                // If photo is already a URL string, use it directly
-                setPreviewUrl(photo);
-            }
-        } else if (photoUrl) {
-            setPreviewUrl(photoUrl);
-        } else {
-            setPreviewUrl(null);
-        }
-    }, [data.photo, photoUrl]);
-
-    const uploadPhotoToBackend = async (file: File): Promise<string> => {
-        setUploadingPhoto(true);
-        try {
-            const formDataToSend = new FormData();
-            formDataToSend.append('file', file);
-
-            const response = await fetch(API_ENDPOINTS.UPLOAD.IMAGE, {
-                method: 'POST',
-                credentials: 'include',
-                body: formDataToSend,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: 'Failed to upload photo' }));
-                throw new Error(errorData.message || 'Failed to upload photo');
-            }
-
-            const data = await response.json();
-            const uploadedUrl = data.url;
-            setPhotoUrl(uploadedUrl);
-            return uploadedUrl;
-        } catch (error) {
-            console.error('Photo upload error:', error);
-            throw error;
-        } finally {
-            setUploadingPhoto(false);
-        }
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-
-            // Validation: File Type
-            const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-            if (!ALLOWED_TYPES.includes(file.type)) {
-                setErrors(prev => ({ ...prev, photo: "Please select a valid image file (JPEG, PNG, or WebP)." }));
-                return;
-            }
-
-            // Validation: File Size (5MB limit)
-            const MAX_SIZE = 5 * 1024 * 1024;
-            if (file.size > MAX_SIZE) {
-                setErrors(prev => ({ ...prev, photo: "File is too large. Please select an image smaller than 5MB." }));
-                return;
-            }
-
-            setErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors.photo;
-                return newErrors;
-            });
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                setImageToCrop(event.target?.result as string);
-                setIsCropModalOpen(true);
-            };
-            reader.onerror = () => {
-                setErrors(prev => ({ ...prev, photo: "Failed to read the file. Please try again." }));
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleCropComplete = async (croppedImageUrl: string, croppedFile: File) => {
-        onChange('photo', croppedFile);
-        setPreviewUrl(croppedImageUrl);
-        setImageToCrop(null);
-
-        // Upload photo to backend asynchronously
-        try {
-            await uploadPhotoToBackend(croppedFile);
-        } catch (error) {
-            console.error('Failed to upload photo:', error);
-            // Don't block user from continuing, photo upload is optional
-        }
-    };
-
     const validateField = useCallback((key: keyof FormData, value: FormData[keyof FormData]): string => {
         if (['firstName', 'lastName', 'email', 'phoneNumber', 'shortBio'].includes(key)) {
             if (!value || (typeof value === 'string' && value.trim() === '')) {
@@ -224,11 +120,16 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     };
 
     const handleFieldChange = (key: keyof FormData, value: FormData[keyof FormData]) => {
-        onChange(key, value);
+        let finalValue = value;
+        if (key === 'phoneNumber' && typeof value === 'string') {
+            finalValue = formatPhoneNumber(value);
+        }
+        onChange(key, finalValue);
         if (touched[key]) {
-            setErrors(prev => ({ ...prev, [key]: validateField(key, value) }));
+            setErrors(prev => ({ ...prev, [key]: validateField(key, finalValue) }));
         }
     };
+
 
     const isFormValid = useMemo((): boolean => {
         const requiredFields: Array<keyof FormData> = [
@@ -242,7 +143,8 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         ${touched[fieldName] && errors[fieldName]
             ? 'border-red-500 ring-1 ring-red-200'
             : 'border-[#E5E7EB] focus:border-[#7ED957] focus:ring-1 focus:ring-[#7ED957]/20'}
-        text-[#1A1A1A] placeholder:text-[#ADADAD]
+        ${disabledFields[fieldName as keyof FormData] ? 'bg-[#F3F4F6] text-[#9CA3AF] cursor-not-allowed' : 'text-[#1A1A1A]'}
+        placeholder:text-[#ADADAD]
     `;
 
     return (
@@ -252,36 +154,9 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                 <p className="text-gray-400 text-sm">{subTitle}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 mb-8">
-                {/* Profile Photo Section */}
-                <div className="md:col-span-3 flex flex-col items-center mb-6 md:mb-0">
-                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-                    <div
-                        onClick={() => !uploadingPhoto && fileInputRef.current?.click()}
-                        className={`w-32 h-32 rounded-full border-2 border-dashed border-[#E5E7EB] flex items-center justify-center transition-all overflow-hidden relative group bg-gray-50 ${uploadingPhoto ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:border-[#7ED957]'}`}
-                    >
-                        {uploadingPhoto ? (
-                            <Loader2 className="w-6 h-6 text-[#7ED957] animate-spin" />
-                        ) : previewUrl ? (
-                            <img src={previewUrl} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="flex flex-col items-center text-[#ADADAD]">
-                                <Upload size={24} />
-                                <span className="text-[10px] mt-2 font-medium">Upload Photo</span>
-                            </div>
-                        )}
-                        {!uploadingPhoto && (
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Upload size={20} className="text-white" />
-                            </div>
-                        )}
-                    </div>
-                    {errors.photo && <span className="text-red-500 text-[10px] font-medium mt-2 text-center">{errors.photo}</span>}
-                    {uploadingPhoto && <span className="text-[#7ED957] text-[10px] font-medium mt-2 text-center">Uploading...</span>}
-                </div>
-
+            <div className="grid grid-cols-1 mb-8">
                 {/* Form Fields Section */}
-                <div className="md:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     <div className="space-y-1.5">
                         <label className="text-[13px] font-semibold text-[#1A1A1A]">First Name *</label>
                         <input
@@ -291,6 +166,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                             value={data.firstName}
                             onChange={(e) => handleFieldChange('firstName', e.target.value)}
                             onBlur={() => handleBlur('firstName')}
+                            disabled={!!disabledFields.firstName}
                         />
                         {touched.firstName && errors.firstName && <span className="text-red-500 text-[11px] font-medium">{errors.firstName}</span>}
                     </div>
@@ -304,6 +180,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                             value={data.lastName}
                             onChange={(e) => handleFieldChange('lastName', e.target.value)}
                             onBlur={() => handleBlur('lastName')}
+                            disabled={!!disabledFields.lastName}
                         />
                         {touched.lastName && errors.lastName && <span className="text-red-500 text-[11px] font-medium">{errors.lastName}</span>}
                     </div>
@@ -318,6 +195,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                 value={data.email}
                                 onChange={(e) => handleFieldChange('email', e.target.value)}
                                 onBlur={() => handleBlur('email')}
+                                disabled={!!disabledFields.email}
                             />
                             {!errors.email && data.email && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 bg-[#7ED957] rounded-full flex items-center justify-center"><Check size={10} className="text-white" strokeWidth={4} /></div>}
                         </div>
@@ -330,11 +208,12 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                             <div className="relative w-28" ref={phoneCodeRef}>
                                 <button
                                     type="button"
-                                    onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                    className={`w-full h-full px-3 py-3 bg-white border rounded-[10px] text-sm font-medium flex items-center justify-between ${touched.phoneNumber && !data.phoneCountryCode
+                                    onClick={() => !disabledFields.phoneCountryCode && setIsPhoneCodeOpen(!isPhoneCodeOpen)}
+                                    className={`w-full h-full px-3 py-3 border rounded-[10px] text-sm font-medium flex items-center justify-between ${touched.phoneNumber && !data.phoneCountryCode
                                         ? 'border-red-500 ring-1 ring-red-200'
                                         : 'border-[#E5E7EB]'
-                                        }`}
+                                        } ${disabledFields.phoneCountryCode ? 'bg-[#F3F4F6] text-[#9CA3AF] cursor-not-allowed' : 'bg-white'}`}
+                                    disabled={!!disabledFields.phoneCountryCode}
                                 >
                                     <span className="truncate">{selectedPhoneCode ? selectedPhoneCode.phonecode : 'Code'}</span>
                                     <ChevronDown size={14} className="text-gray-400" />
@@ -382,15 +261,15 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                             <input
                                 type="tel"
                                 placeholder="Number"
-                                className={`${inputClass('phoneNumber')} flex-1 ${!data.phoneCountryCode ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                className={`${inputClass('phoneNumber')} flex-1 ${!data.phoneCountryCode && !disabledFields.phoneNumber ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 value={data.phoneNumber}
                                 onChange={(e) => {
-                                    if (!data.phoneCountryCode) return;
+                                    if (!data.phoneCountryCode || disabledFields.phoneNumber) return;
                                     const value = e.target.value.replace(/[^\d\s+()-]/g, '');
                                     handleFieldChange('phoneNumber', value);
                                 }}
                                 onBlur={() => handleBlur('phoneNumber')}
-                                disabled={!data.phoneCountryCode}
+                                disabled={!!disabledFields.phoneNumber || !data.phoneCountryCode}
                             />
                         </div>
                         {(touched.phoneNumber && errors.phoneNumber) || (!data.phoneCountryCode && touched.phoneNumber) ? (
@@ -447,15 +326,6 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                 />
             </div>
 
-            {isCropModalOpen && imageToCrop && (
-                <ImageCropModal
-                    image={imageToCrop}
-                    onClose={() => { setIsCropModalOpen(false); setImageToCrop(null); }}
-                    onCropComplete={handleCropComplete}
-                    aspectRatio={1}
-                    circularCrop={false}
-                />
-            )}
         </div>
     );
 };

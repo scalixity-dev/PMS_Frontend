@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, CheckCircle, RefreshCw, XCircle, Edit, FileText, ChevronDown, SquarePen, Upload, Pencil, Clock, Plus, Trash2, Loader2 } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
@@ -33,7 +35,8 @@ const LeaseDetail: React.FC = () => {
             details: [
                 { label: 'Company name', value: data.companyName },
                 { label: 'Email notification due to expiration', value: data.emailNotification ? 'Yes' : 'No' },
-                { label: 'Phone number', value: data.agentPhone || '-' },
+                { label: 'Phone number', value: data.agentPhone ? formatPhoneNumber(data.agentPhone) : '-' },
+
                 { label: 'Website', value: data.companyWebsite },
                 { label: 'Policy', value: data.policyNumber || '-' },
                 { label: 'Details', value: data.details || '-' },
@@ -212,7 +215,8 @@ const LeaseDetail: React.FC = () => {
                 email: lease.tenant?.email || '',
                 image: tenantImage,
                 initials: tenantInitials,
-                description: `Tenant ID: ${lease.tenantId}${lease.tenant?.phoneNumber ? ` | Phone: ${lease.tenant.phoneNumber}` : ''}`
+                description: `Tenant ID: ${lease.tenantId}${lease.tenant?.phoneNumber ? ` | Phone: ${formatPhoneNumber(lease.tenant.phoneNumber)}` : ''}`
+
             },
             extraFees,
             recurringRent: recurringRentArray,
@@ -874,7 +878,7 @@ const LeaseDetail: React.FC = () => {
                                                     />
                                                     <CustomTextBox
                                                         label="Phone"
-                                                        value={tenantProfile?.phoneNumber || lease.tenant?.description?.split('| Phone: ')[1] || 'N/A'}
+                                                        value={formatPhoneNumber(tenantProfile?.phoneNumber || lease.tenant?.description?.split('| Phone: ')[1]) || 'N/A'}
                                                         onChange={() => { }}
                                                     />
                                                     <CustomTextBox

@@ -5,6 +5,8 @@ import type { ICountry, IState, ICity } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import CustomDropdown from '../../../../Dashboard/components/CustomDropdown';
 import BaseModal from '@/components/common/modals/BaseModal';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+
 
 export interface ResidenceFormData {
     isCurrent: boolean;
@@ -53,7 +55,7 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
         landlordName: '',
         landlordPhone: '',
         landlordEmail: '',
-        landlordPhoneCountryCode: undefined,
+        landlordPhoneCountryCode: 'US|1',
         rentAmount: ''
     });
 
@@ -113,7 +115,7 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
                 landlordName: '',
                 landlordPhone: '',
                 landlordEmail: '',
-                landlordPhoneCountryCode: undefined,
+                landlordPhoneCountryCode: 'US|1',
                 rentAmount: '',
                 otherResidencyType: ''
             });
@@ -217,11 +219,16 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
     };
 
     const handleChange = (key: keyof ResidenceFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'landlordPhone') {
+            finalValue = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
         if (touched[key]) {
-            const error = validateField(key, value);
+            const error = validateField(key, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
+
         if (key === 'residencyType') {
             // Reset validation for conditional fields
             setErrors(prev => {

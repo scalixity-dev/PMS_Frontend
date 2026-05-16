@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+
 import { createPortal } from 'react-dom';
 import { X, Lightbulb } from 'lucide-react';
 import DatePicker from '../../../../../components/ui/DatePicker';
@@ -370,7 +372,8 @@ const AddLoanModal: React.FC<AddLoanModalProps> = ({ isOpen, onClose, onAdd, ini
                                 <input
                                     type="tel"
                                     value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
+                                    onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
+
                                     className={inputClasses}
                                     placeholder="Enter phone number"
                                 />

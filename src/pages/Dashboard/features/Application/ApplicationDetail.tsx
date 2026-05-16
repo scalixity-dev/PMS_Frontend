@@ -34,6 +34,9 @@ import EditApplicantInfoModal from './components/EditApplicantInfoModal';
 
 import CustomTextBox from '../../components/CustomTextBox';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useToast } from '../../../../components/common/Toast';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 
 // ... existing imports ...
 
@@ -102,6 +105,7 @@ const ApplicationDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() || {};
+    const toast = useToast();
 
     // Modals State
     const [isOccupantModalOpen, setIsOccupantModalOpen] = useState(false);
@@ -415,23 +419,27 @@ const ApplicationDetail = () => {
 
         switch (statusModal.type) {
             case 'approve':
-                status = 'Approved';
+                status = 'APPROVED';
                 break;
             case 'review':
-                status = 'In Review';
+                status = 'REVIEWING';
                 break;
             case 'decline':
-                status = 'Declined';
+                status = 'REJECTED';
                 updateData.rejectionReason = data?.rejectionReason;
                 break;
         }
 
         updateData.status = status;
 
-        await updateApplication.mutateAsync({
-            id: application.id,
-            updateData
-        });
+        try {
+            await updateApplication.mutateAsync({
+                id: application.id,
+                updateData
+            });
+        } catch (error: any) {
+            toast.error(error?.message ?? 'Failed to update application status');
+        }
     };
 
     const removeAttachment = (index: number) => {
@@ -1327,10 +1335,16 @@ const ApplicationDetail = () => {
                                         className="w-full max-w-sm"
                                     />
                                     <CustomTextBox
+                                        label="Phone number"
+                                        value={formatPhoneNumber(primaryApplicant?.phoneNumber) || '--'}
+                                        className="w-full max-w-sm"
+                                    />
+                                    <CustomTextBox
                                         label="Short bio"
                                         value={application.bio || '--'}
                                         className="w-full max-w-sm"
                                     />
+
                                 </div>
 
                                 {/* Right Column (Rent-Income Percentage) */}
@@ -1414,9 +1428,10 @@ const ApplicationDetail = () => {
                                         />
                                         <CustomTextBox
                                             label="Phone"
-                                            value={occ.phoneNumber || '--'}
+                                            value={formatPhoneNumber(occ.phoneNumber) || '--'}
                                             className="w-full"
                                         />
+
                                     </div>
                                 </div>
                             ))}
@@ -1676,9 +1691,10 @@ const ApplicationDetail = () => {
                                             />
                                             <CustomTextBox
                                                 label="Landlord Phone"
-                                                value={res.landlordPhone || '-'}
+                                                value={formatPhoneNumber(res.landlordPhone) || '-'}
                                                 className="w-full"
                                             />
+
                                         </div>
                                     </div>
                                 </div>
@@ -1750,6 +1766,22 @@ const ApplicationDetail = () => {
                                             value={inc.currentEmployment ? 'Yes' : 'No'}
                                             className="w-full"
                                         />
+                                        <CustomTextBox
+                                            label="Company Phone"
+                                            value={formatPhoneNumber(inc.companyPhone) || '--'}
+                                            className="w-full"
+                                        />
+                                        <CustomTextBox
+                                            label="Supervisor Name"
+                                            value={inc.supervisorName || '--'}
+                                            className="w-full"
+                                        />
+                                        <CustomTextBox
+                                            label="Supervisor Phone"
+                                            value={formatPhoneNumber(inc.supervisorPhone) || '--'}
+                                            className="w-full"
+                                        />
+
                                     </div>
                                 </div>
                             ))}
@@ -1817,7 +1849,8 @@ const ApplicationDetail = () => {
                                             <span className="font-bold text-gray-700 truncate">{contact.contactName}</span>
                                             <span className="text-gray-400 text-sm font-normal shrink-0">({contact.relationship})</span>
                                         </div>
-                                        <a href={`tel:${contact.phoneNumber}`} className="text-[#3A6D6C] font-bold text-sm tracking-wide text-center hover:underline">{contact.phoneNumber}</a>
+                                        <a href={`tel:${contact.phoneNumber.replace(/\D/g, '')}`} className="text-[#3A6D6C] font-bold text-sm tracking-wide text-center hover:underline">{formatPhoneNumber(contact.phoneNumber)}</a>
+
                                         <a href={`mailto:${contact.email}`} className="text-xs text-gray-500 font-medium text-right truncate hover:text-[#3A6D6C] hover:underline">{contact.email}</a>
                                     </div>
                                 </div>

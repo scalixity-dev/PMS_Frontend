@@ -3,6 +3,8 @@ import { Check, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
 import BaseModal from '@/components/common/modals/BaseModal';
 import type { EmergencyContactFormData } from '../store/userApplicationStore';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+
 
 interface UserAddEmergencyContactModalProps {
     isOpen: boolean;
@@ -144,12 +146,17 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
     };
 
     const handleChange = (key: keyof EmergencyContactFormData | 'phoneCountryCode', value: any) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'phoneNumber') {
+            finalValue = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
         if (key !== 'phoneCountryCode' && touched[key]) {
-            const error = validateField(key as keyof EmergencyContactFormData, value);
+            const error = validateField(key as keyof EmergencyContactFormData, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
+
 
     const handleBlur = (key: keyof EmergencyContactFormData) => {
         setTouched(prev => ({ ...prev, [key]: true }));

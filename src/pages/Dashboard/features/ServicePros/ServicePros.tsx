@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
+import { formatPhoneNumber as formatPhone } from '@/utils/phone.utils';
+
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
@@ -37,11 +39,10 @@ const ServicePros = () => {
 
     // Helper function to format phone number with country code
     const formatPhoneNumber = (phoneNumber: string, phoneCountryCode?: string | null): string => {
-        if (phoneCountryCode) {
-            return `${phoneCountryCode} ${phoneNumber}`;
-        }
-        return phoneNumber;
+        const raw = phoneCountryCode ? `${phoneCountryCode} ${phoneNumber}` : phoneNumber;
+        return formatPhone(raw);
     };
+
 
     // Helper function to format category with subcategory
     const formatCategory = (category: string, subcategory?: string | null): string => {

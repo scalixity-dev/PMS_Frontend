@@ -2,6 +2,8 @@ import React from 'react';
 import { DollarSign, Mail, Phone, MapPin, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { type MaintenanceRequestApplicant } from '../../../../../services/maintenance-request.service';
+import { formatPhoneNumber as formatPhone } from '../../../../../utils/phone.utils';
+
 
 interface ApplicantCardProps {
     applicant: MaintenanceRequestApplicant;
@@ -25,9 +27,12 @@ const ApplicantCard: React.FC<ApplicantCardProps> = ({
         `${serviceProvider.firstName} ${serviceProvider.lastName}`.trim();
     
     const fullName = `${serviceProvider.firstName} ${serviceProvider.lastName}`.trim();
-    const phoneDisplay = serviceProvider.phoneCountryCode
-        ? `${serviceProvider.phoneCountryCode} ${serviceProvider.phoneNumber}`
-        : serviceProvider.phoneNumber;
+    const phoneDisplay = formatPhone(
+        serviceProvider.phoneCountryCode
+            ? `${serviceProvider.phoneCountryCode} ${serviceProvider.phoneNumber}`
+            : serviceProvider.phoneNumber
+    );
+
     
     const categoryDisplay = serviceProvider.subcategory
         ? `${serviceProvider.category} - ${serviceProvider.subcategory}`

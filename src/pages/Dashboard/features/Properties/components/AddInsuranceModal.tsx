@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import DatePicker from '../../../../../components/ui/DatePicker';
@@ -386,10 +388,11 @@ const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, 
                                         type="tel"
                                         value={agentPhone}
                                         onChange={(e) => {
-                                            const val = e.target.value.replace(/\D/g, '');
+                                            const val = formatPhoneNumber(e.target.value);
                                             setAgentPhone(val);
                                             if (errors.agentPhone) setErrors({ ...errors, agentPhone: '' });
                                         }}
+
                                         className="flex-1 min-w-0 px-4 py-3 rounded-r-lg outline-none text-gray-700 placeholder-gray-400 font-medium bg-white"
                                         placeholder="Phone number"
                                     />

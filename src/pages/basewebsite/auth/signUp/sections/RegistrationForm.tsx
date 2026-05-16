@@ -7,6 +7,7 @@ import { Eye, EyeOff, Search, ChevronDown } from 'lucide-react';
 import { useSignUpStore } from '../store/signUpStore';
 import { useRegister, useUpdateProfile, useGetCurrentUser } from '../../../../../hooks/useAuthQueries';
 import { authService } from '../../../../../services/auth.service';
+import { formatPhoneNumber } from '@/utils/phone.utils';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = (hasValue: boolean = true) =>
@@ -491,7 +492,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                 <input
                   type="tel"
                   value={formData.phone || ''}
-                  onChange={(e) => updateFormData('phone', e.target.value)}
+                  onChange={(e) => updateFormData('phone', formatPhoneNumber(e.target.value))}
                   placeholder="Type your phone"
                   className="flex-1 px-4 py-3 rounded-r-md focus:outline-none text-sm placeholder-gray-400 border-0"
                 />

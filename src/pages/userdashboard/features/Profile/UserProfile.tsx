@@ -3,6 +3,7 @@ import { Check, Eye, EyeOff, Loader2 } from "lucide-react";
 import BaseModal from "../../../../components/common/modals/BaseModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import UserAccountSettingsLayout from "../../components/layout/UserAccountSettingsLayout";
+import { formatPhoneNumber } from '@/utils/phone.utils';
 
 
 import { useAuthStore } from "./store/authStore";
@@ -178,7 +179,13 @@ const Profile: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setTempInfo(prev => prev ? ({ ...prev, [name]: value }) : null);
+    let finalValue = value;
+
+    if (name === 'phone') {
+      finalValue = formatPhoneNumber(value);
+    }
+
+    setTempInfo(prev => prev ? ({ ...prev, [name]: finalValue }) : null);
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {

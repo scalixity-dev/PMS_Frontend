@@ -3,6 +3,8 @@ import { Upload, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import ImageCropModal from '../../Tenants/components/ImageCropModal';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 
 interface FormData {
     firstName: string;
@@ -228,14 +230,19 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     };
 
     const handleFieldChange = (key: keyof FormData, value: any) => {
-        onChange(key, value);
+        let finalValue = value;
+        if (key === 'phoneNumber') {
+            finalValue = formatPhoneNumber(value);
+        }
+        onChange(key, finalValue);
 
         // Clear error for this field when user starts typing
         if (touched[key]) {
-            const error = validateField(key, value);
+            const error = validateField(key, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
+
 
     const handleSubmitClick = () => {
         // Mark all required fields as touched
