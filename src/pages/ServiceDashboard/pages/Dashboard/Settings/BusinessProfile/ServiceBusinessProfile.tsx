@@ -17,6 +17,7 @@ import type { ICountry, IState, ICity } from 'country-state-city';
 import { useGetCurrentUser } from '../../../../../../hooks/useAuthQueries';
 import { serviceProviderService, type BackendServiceProvider, type CreateServiceProviderDto } from '../../../../../../services/service-provider.service';
 import { authService } from '../../../../../../services/auth.service';
+import { formatPhoneNumber } from '@/utils/phone.utils';
 
 // Define service categories and their options
 const SERVICE_CATEGORIES = [
@@ -607,9 +608,9 @@ const ServiceBusinessProfile = () => {
                                         <input
                                             type="text"
                                             value={formData.phone}
-                                            onChange={(e) => handleInputChange('phone', e.target.value)}
+                                            onChange={(e) => handleInputChange('phone', formatPhoneNumber(e.target.value))}
                                             className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm mb-3 focus:ring-2 focus:ring-green-500 outline-none"
-                                            placeholder="+1 1234567890"
+                                            placeholder="111-111-1111"
                                         />
                                     ) : (
                                         <div className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 shadow-sm mb-3">

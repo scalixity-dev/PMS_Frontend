@@ -190,7 +190,7 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
               value={formValues.phoneNumber}
               onChange={(event) => handleChange("phoneNumber", event.target.value)}
               className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
-              placeholder="+91 0000000000"
+              placeholder="111-111-1111"
             />
           </div>
         </div>

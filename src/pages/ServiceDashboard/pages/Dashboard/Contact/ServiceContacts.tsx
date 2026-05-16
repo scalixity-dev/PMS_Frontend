@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
 import { useOutletContext } from 'react-router-dom';
 import { List, Grid3X3, LogIn, Plus, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
@@ -282,8 +283,8 @@ const ServiceContacts: React.FC = () => {
                                 <input
                                     type="tel"
                                     value={form.phone}
-                                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                                    placeholder="+91 9876543210"
+                                    onChange={(e) => setForm({ ...form, phone: formatPhoneNumber(e.target.value) })}
+                                    placeholder="111-111-1111"
                                     className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947]"
                                 />
                             </div>

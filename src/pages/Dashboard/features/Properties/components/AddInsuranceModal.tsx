@@ -394,7 +394,7 @@ const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, 
                                         }}
 
                                         className="flex-1 min-w-0 px-4 py-3 rounded-r-lg outline-none text-gray-700 placeholder-gray-400 font-medium bg-white"
-                                        placeholder="Phone number"
+                                        placeholder="111-111-1111"
                                     />
                                 </div>
                                 {errors.agentPhone && <p className="text-red-600 text-xs mt-1 ml-1">{errors.agentPhone}</p>}

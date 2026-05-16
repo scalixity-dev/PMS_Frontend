@@ -412,7 +412,7 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                             {/* Phone Number Input */}
                             <input
                                 type="tel"
-                                placeholder="Enter Phone Number"
+                                placeholder="111-111-1111"
                                 className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.phoneNumber && errors.phoneNumber ? 'text-red-500' : 'text-gray-700'
                                     }`}
                                 value={formData.phoneNumber}

@@ -503,7 +503,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                 <input
                                     ref={phoneRef}
                                     type="tel"
-                                    placeholder="Enter Phone Number"
+                                    placeholder="111-111-1111"
                                     className="flex-1 min-w-0 px-4 py-3 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0"
                                     value={data.phoneNumber || ''}
                                     onChange={(e) => handleFieldChange('phoneNumber', e.target.value)}

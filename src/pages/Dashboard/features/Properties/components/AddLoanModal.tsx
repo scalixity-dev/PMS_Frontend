@@ -375,7 +375,7 @@ const AddLoanModal: React.FC<AddLoanModalProps> = ({ isOpen, onClose, onAdd, ini
                                     onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
 
                                     className={inputClasses}
-                                    placeholder="Enter phone number"
+                                    placeholder="111-111-1111"
                                 />
                             </div>
                         </div>

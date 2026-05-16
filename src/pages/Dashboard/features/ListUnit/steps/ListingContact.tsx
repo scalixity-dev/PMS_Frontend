@@ -2,6 +2,7 @@ import React from 'react';
 import { Listbox } from '@headlessui/react';
 import { ChevronDown } from 'lucide-react';
 import { useListUnitStore } from '../store/listUnitStore';
+import { formatPhoneNumber } from '@/utils/phone.utils';
 
 interface ListingContactProps {
     onSubmit: () => void;
@@ -81,8 +82,8 @@ const ListingContact: React.FC<ListingContactProps> = ({ onSubmit }) => {
                         <input
                             type="text"
                             value={formData.phoneNumber || ''}
-                            onChange={(e) => updateFormData('phoneNumber', e.target.value)}
-                            placeholder="8659742136"
+                            onChange={(e) => updateFormData('phoneNumber', formatPhoneNumber(e.target.value))}
+                            placeholder="111-111-1111"
                             className="w-full bg-transparent text-white placeholder-white/80 text-lg font-medium py-3 px-2 focus:outline-none"
                         />
                     </div>

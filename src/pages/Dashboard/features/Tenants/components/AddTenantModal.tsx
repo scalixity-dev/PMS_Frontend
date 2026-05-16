@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+import { formatPhoneNumber } from '@/utils/phone.utils';
 
 interface AddTenantModalProps {
     isOpen: boolean;
@@ -101,8 +102,11 @@ const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, onSave
                             type="tel"
                             name="phone"
                             value={formData.phone}
-                            onChange={handleChange}
-                            placeholder="+91 8659742136"
+                            onChange={(e) => {
+                                const formatted = formatPhoneNumber(e.target.value);
+                                setFormData(prev => ({ ...prev, phone: formatted }));
+                            }}
+                            placeholder="111-111-1111"
                             className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
                         />
                     </div>
