@@ -74,7 +74,7 @@ const RecurringIncome: React.FC = () => {
     const [selectedPayerType, setSelectedPayerType] = useState<'tenant' | 'Service Pro' | 'other'>('tenant');
     const [category, setCategory] = useState<string>('');
     const [frequency, setFrequency] = useState<string>('');
-    const [currency, setCurrency] = useState<string>('');
+    const [currency, setCurrency] = useState<string>('USD');
     const [amount, setAmount] = useState<string>('');
     const [leaseId, setLeaseId] = useState<string>('');
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);

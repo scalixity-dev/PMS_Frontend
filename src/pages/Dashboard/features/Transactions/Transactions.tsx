@@ -324,7 +324,7 @@ const Transactions: React.FC = () => {
                             transactionId: transactionId.toString(),
                             updateData: {
                                 category: data.category || undefined,
-                                amount: data.amount ? parseFloat(String(data.amount).replace(/[₹$,]/g, '')) : undefined,
+                                amount: data.amount ? parseFloat(String(data.amount).replace(/[$,]/g, '')) : undefined,
                                 dueDate: data.dueOn ? data.dueOn.toISOString().split('T')[0] : undefined,
                                 details: data.details || undefined,
                                 notes: data.details || undefined,
@@ -390,7 +390,7 @@ const Transactions: React.FC = () => {
                             transactionId: transactionId.toString(),
                             data: {
                                 datePaid: data.datePaid?.toISOString() || new Date().toISOString(),
-                                amountPaid: parseFloat(data.amountPaid.replace(/[₹,]/g, '')) || parseFloat(data.amountPaid),
+                                amountPaid: parseFloat(data.amountPaid.replace(/[$,]/g, '')) || parseFloat(data.amountPaid),
                                 method: data.method,
                                 paymentDetails: data.paymentDetails,
                                 notes: data.paymentDetails, // Use paymentDetails as notes if notes not provided
@@ -461,7 +461,7 @@ const Transactions: React.FC = () => {
                             <span className="text-white text-sm font-medium mb-2">Outstanding</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">
-                                    ₹{stats.outstanding.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    ${stats.outstanding.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                         </div>
@@ -471,7 +471,7 @@ const Transactions: React.FC = () => {
                             <span className="text-white text-sm font-medium mb-2">Paid</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">
-                                    ₹{stats.paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    ${stats.paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                         </div>
@@ -481,7 +481,7 @@ const Transactions: React.FC = () => {
                             <span className="text-white text-sm font-medium mb-2">Overdue</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">
-                                    ₹{stats.overdue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    ${stats.overdue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                         </div>
@@ -634,7 +634,7 @@ const Transactions: React.FC = () => {
                                                                     e.stopPropagation();
                                                                     setMoreMenuOpenId(null);
                                                                     const dataToPass = {
-                                                                        amount: `₹${item.total.toLocaleString()}`,
+                                                                        amount: `$${item.total.toLocaleString()}`,
                                                                         user: item.contact,
                                                                         date: item.dueDate,
                                                                         category: item.category,
@@ -652,7 +652,7 @@ const Transactions: React.FC = () => {
                                                                     e.stopPropagation();
                                                                     setMoreMenuOpenId(null);
                                                                     const dataToClone = {
-                                                                        amount: `₹${item.total.toLocaleString()}`,
+                                                                        amount: `$${item.total.toLocaleString()}`,
                                                                         user: item.contact,
                                                                         date: item.dueDate,
                                                                         category: item.category,
@@ -759,14 +759,14 @@ const Transactions: React.FC = () => {
                                         {/* Total */}
                                         <div className="w-full lg:w-auto flex justify-between lg:block">
                                             <span className="lg:hidden text-xs text-gray-500 font-bold uppercase tracking-wider">Total</span>
-                                            <div className="font-bold text-gray-900 text-sm">₹ {item.total.toLocaleString()}</div>
+                                            <div className="font-bold text-gray-900 text-sm">$ {item.total.toLocaleString()}</div>
                                         </div>
 
                                         {/* Balance */}
                                         <div className="w-full lg:w-auto flex justify-between lg:block">
                                             <span className="lg:hidden text-xs text-gray-500 font-bold uppercase tracking-wider">Balance</span>
                                             <div className={`text-sm font-bold ${item.balance > 0 ? 'text-[#3A6D6C]' : 'text-gray-800'}`}>
-                                                ₹ {item.balance.toLocaleString()}
+                                                $ {item.balance.toLocaleString()}
                                             </div>
                                         </div>
 
@@ -820,7 +820,7 @@ const Transactions: React.FC = () => {
                                                                 e.stopPropagation();
                                                                 setMoreMenuOpenId(null);
                                                                 const dataToPass = {
-                                                                    amount: `₹${item.total.toLocaleString()}`,
+                                                                    amount: `$${item.total.toLocaleString()}`,
                                                                     user: item.contact,
                                                                     date: item.dueDate,
                                                                     category: item.category,
@@ -838,7 +838,7 @@ const Transactions: React.FC = () => {
                                                                 e.stopPropagation();
                                                                 setMoreMenuOpenId(null);
                                                                 const dataToClone = {
-                                                                    amount: `₹${item.total.toLocaleString()}`,
+                                                                    amount: `$${item.total.toLocaleString()}`,
                                                                     user: item.contact,
                                                                     date: item.dueDate,
                                                                     category: item.category,

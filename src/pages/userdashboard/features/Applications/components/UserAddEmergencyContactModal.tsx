@@ -29,7 +29,7 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
         relationship: '',
         email: '',
         phoneNumber: '',
-        phoneCountryCode: undefined,
+        phoneCountryCode: 'US|1',
         details: ''
     });
 
@@ -96,7 +96,7 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
                 relationship: '',
                 email: '',
                 phoneNumber: '',
-                phoneCountryCode: undefined,
+                phoneCountryCode: 'US|1',
                 details: ''
             });
             setErrors({});

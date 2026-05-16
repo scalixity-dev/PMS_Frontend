@@ -49,7 +49,7 @@ const ExpensePayments: React.FC = () => {
     const [category, setCategory] = useState<string>('');
     const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
     const [amount, setAmount] = useState<string>('');
-    const [currency, setCurrency] = useState<string>('');
+    const [currency, setCurrency] = useState<string>('USD');
     const [tags, setTags] = useState<string[]>([]);
     const { data: tagSuggestions = [] } = useGetTransactionTags();
     const [isPaid, setIsPaid] = useState<boolean>(false);

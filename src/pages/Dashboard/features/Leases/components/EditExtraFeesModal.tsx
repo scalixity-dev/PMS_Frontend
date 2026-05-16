@@ -177,7 +177,7 @@ const EditExtraFeesModal: React.FC<EditExtraFeesModalProps> = ({ isOpen, onClose
                                             value={maxMonthlyBalance}
                                             onChange={(e) => setMaxMonthlyBalance(e.target.value)}
                                             className={inputClasses}
-                                            prefix="₹"
+                                            prefix="$"
                                             onFocus={(e) => e.target.select()}
                                         />
                                     </div>
@@ -234,8 +234,8 @@ const EditExtraFeesModal: React.FC<EditExtraFeesModalProps> = ({ isOpen, onClose
                                 // Not used in display but part of logic flow
 
                                 // Format values
-                                const oneTimeAmtDisplay = oneTimeFeeType !== 'Fixed amount' ? `${oneTimeFeeAmount}% of ${oneTimeFeeType.toLowerCase().replace('percentage of ', '')}` : `₹${Number(oneTimeFeeAmount).toLocaleString()}`;
-                                const dailyAmtDisplay = dailyFeeType !== 'Fixed amount' ? `${dailyFeeAmount}% of ${dailyFeeType.toLowerCase().replace('percentage of ', '')}` : `₹${Number(dailyFeeAmount).toLocaleString()}`;
+                                const oneTimeAmtDisplay = oneTimeFeeType !== 'Fixed amount' ? `${oneTimeFeeAmount}% of ${oneTimeFeeType.toLowerCase().replace('percentage of ', '')}` : `$${Number(oneTimeFeeAmount).toLocaleString()}`;
+                                const dailyAmtDisplay = dailyFeeType !== 'Fixed amount' ? `${dailyFeeAmount}% of ${dailyFeeType.toLowerCase().replace('percentage of ', '')}` : `$${Number(dailyFeeAmount).toLocaleString()}`;
 
                                 return (
                                     <>
@@ -243,7 +243,7 @@ const EditExtraFeesModal: React.FC<EditExtraFeesModalProps> = ({ isOpen, onClose
                                         {oneTimeFeeEnabled ? ` one time rent late fee in ${oneTimeAmtDisplay} will be applied` : ''}
                                         {oneTimeFeeEnabled && dailyFeeEnabled ? ' and' : ''}
                                         {dailyFeeEnabled ? ` a daily rent late fee of ${dailyAmtDisplay} will start posting daily on the next day until the tenant’s balance is positive.` : '.'}
-                                        {dailyFeeEnabled && maxMonthlyBalance && ` If the maximum monthly balance of ₹${Number(maxMonthlyBalance).toLocaleString()} is reached, late fees won't be posted.`}
+                                        {dailyFeeEnabled && maxMonthlyBalance && ` If the maximum monthly balance of $${Number(maxMonthlyBalance).toLocaleString()} is reached, late fees won't be posted.`}
                                     </>
                                 );
                             })()}

@@ -82,6 +82,7 @@ const initialFormData: ApplicationFormData = {
   lastName: '',
   email: '',
   phoneNumber: '',
+  phoneCountryCode: 'US|1',
   dob: undefined,
   shortBio: '',
   moveInDate: undefined,

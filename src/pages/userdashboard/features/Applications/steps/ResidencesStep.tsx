@@ -26,14 +26,14 @@ const ResidenceItem: React.FC<{ residence: ResidenceFormData & { id: string }; o
                     <p className="text-[11px] text-[#ADADAD]">{residence.city}, {residence.state} • {residence.residencyType} • Moved in {formatDate(residence.moveInDate)}</p>
                     {/* Only show rent if residency is Rent AND an amount exists */}
                     {residence.residencyType?.toLowerCase() === 'rent' && residence.rentAmount && (
-                        <p className="text-[11px] font-bold text-[#7ED957] sm:hidden mt-0.5">₹{residence.rentAmount}/mo</p>
+                        <p className="text-[11px] font-bold text-[#7ED957] sm:hidden mt-0.5">${residence.rentAmount}/mo</p>
                     )}
                 </div>
             </div>
             <div className="flex items-center gap-4">
                 {residence.residencyType?.toLowerCase() === 'rent' && residence.rentAmount ? (
                     <div className="hidden sm:flex flex-col items-end text-right mr-2">
-                        <p className="text-[11px] font-bold text-[#1A1A1A]">₹{residence.rentAmount}/mo</p>
+                        <p className="text-[11px] font-bold text-[#1A1A1A]">${residence.rentAmount}/mo</p>
                         <p className="text-[9px] text-[#ADADAD]">Rent</p>
                     </div>
                 ) : (

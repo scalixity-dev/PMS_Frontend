@@ -16,7 +16,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
         relationship: '',
         email: '',
         phoneNumber: '',
-        phoneCountryCode: undefined,
+        phoneCountryCode: 'US|1',
         details: ''
     });
 
@@ -103,7 +103,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                     relationship: '',
                     email: '',
                     phoneNumber: '',
-                    phoneCountryCode: undefined,
+                    phoneCountryCode: 'US|1',
                     details: ''
                 });
             }

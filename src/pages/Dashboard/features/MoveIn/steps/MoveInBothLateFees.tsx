@@ -355,13 +355,13 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext }) => {
                             dailyDate.setDate(oneTimeDate.getDate() + 1);
                             let dailyDateStr = dailyDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
-                            const formattedRent = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(recurringRentAmount) || 0);
+                            const formattedRent = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(recurringRentAmount) || 0);
                             const oneTimeChargeType = oneTimeType === 'outstanding' ? 'outstanding charges' : (oneTimeType === 'recurring' ? 'recurring charges' : '');
-                            const oneTimeFeeDisplay = oneTimeType === 'fixed' ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(oneTimeAmount) || 0) : `${oneTimeAmount}% of ${oneTimeChargeType}`;
+                            const oneTimeFeeDisplay = oneTimeType === 'fixed' ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(oneTimeAmount) || 0) : `${oneTimeAmount}% of ${oneTimeChargeType}`;
 
                             const dailyChargeType = dailyType === 'outstanding' ? 'outstanding charges' : (dailyType === 'recurring' ? 'recurring charges' : '');
-                            const dailyFeeDisplay = dailyType === 'fixed' ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(dailyAmount) || 0) : `${dailyAmount}% of ${dailyChargeType}`;
-                            const formattedMaxBalance = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(maxMonthlyBalance) || 0);
+                            const dailyFeeDisplay = dailyType === 'fixed' ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(dailyAmount) || 0) : `${dailyAmount}% of ${dailyChargeType}`;
+                            const formattedMaxBalance = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(maxMonthlyBalance) || 0);
 
 
                             return (

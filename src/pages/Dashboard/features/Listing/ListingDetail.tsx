@@ -910,7 +910,7 @@ const ListingDetail: React.FC = () => {
                                 </div>
                             </div>
                             <div className="bg-[#3A6D6C] text-white p-4 rounded-2xl flex flex-col self-center h-fit min-w-[180px]">
-                                <span className="text-xl font-bold">{getCurrencySymbol(listing.country)}{listing.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-xl font-bold">{getCurrencySymbol(listing.country)}{listing.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                                 <span className="text-xs opacity-80">Monthly rent</span>
                                 <span className="text-[10px] opacity-60 mt-1">Listing expires on {listing.expiryDate}</span>
                             </div>
@@ -1037,7 +1037,7 @@ const ListingDetail: React.FC = () => {
                                                     className="text-xs font-bold text-gray-800 mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2"
                                                 />
                                             ) : (
-                                                <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.monthlyRent || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                                <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.monthlyRent || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center bg-[#E3EBDE] p-3 rounded-full shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
@@ -1095,7 +1095,7 @@ const ListingDetail: React.FC = () => {
                                                     className="text-xs font-bold text-gray-800 mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2"
                                                 />
                                             ) : (
-                                                <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.securityDeposit || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                                <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.securityDeposit || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center bg-[#E3EBDE] p-3 rounded-full shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
@@ -1108,7 +1108,7 @@ const ListingDetail: React.FC = () => {
                                                     className="text-xs font-bold text-gray-800 mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2"
                                                 />
                                             ) : (
-                                                <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.amountRefundable || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                                <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.amountRefundable || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center bg-[#E3EBDE] p-3 rounded-full shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">

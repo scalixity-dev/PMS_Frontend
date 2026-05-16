@@ -46,8 +46,8 @@ const ApplicationPropertyIntro: React.FC<ApplicationPropertyIntroProps> = ({ pro
                             title: "Luxury Villa",
                             address: "Gandhi Path Rd, Jaipur, RJ 302020, IN",
                             rent: 30000,
-                            currencySymbol: "₹",
-                            currencyCode: "INR",
+                            currencySymbol: "$",
+                            currencyCode: "USD",
                             beds: 3,
                             baths: 2,
                             agentName: "Ashendra Sharma"
@@ -102,9 +102,8 @@ const ApplicationPropertyIntro: React.FC<ApplicationPropertyIntroProps> = ({ pro
                 const rent = listing.monthlyRent ? parseFloat(listing.monthlyRent) : (listing.listingPrice ? parseFloat(listing.listingPrice) : 0);
 
                 // Determine currency (simple logic as per UserPropertyDetail)
-                const isIndia = addressObj.country === 'India' || addressObj.country === 'IN';
-                const currencySymbol = isIndia ? '₹' : '$';
-                const currencyCode = isIndia ? 'INR' : 'USD';
+                const currencySymbol = '$';
+                const currencyCode = 'USD';
 
                 const image = apiData.coverPhotoUrl || (apiData.photos && apiData.photos.length > 0 ? apiData.photos[0].photoUrl : "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800");
 
@@ -161,7 +160,7 @@ const ApplicationPropertyIntro: React.FC<ApplicationPropertyIntroProps> = ({ pro
 
     // Helper to format currency
     const formatMoney = (amount: number, code: string) => {
-        return new Intl.NumberFormat('en-IN', {
+        return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: code,
             minimumFractionDigits: 2

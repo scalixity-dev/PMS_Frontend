@@ -187,7 +187,7 @@ const MoveInOneTimeLateFees: React.FC<MoveInOneTimeLateFeesProps> = ({ onNext })
                                 }
 
                                 // Format currency
-                                const formattedRent = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(recurringRentAmount) || 0);
+                                const formattedRent = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(recurringRentAmount) || 0);
 
                                 const chargeType = lateFeeType === 'outstanding' ? 'outstanding charges' : 'recurring charges';
 

@@ -237,7 +237,7 @@ const AddEditRecurringRentModal: React.FC<AddEditRecurringRentModalProps> = ({ i
                                                 value={tenant.amount}
                                                 onChange={(e) => handleAmountChange(index, e.target.value)}
                                                 className={inputClasses}
-                                                prefix="₹"
+                                                prefix="$"
                                                 onFocus={(e) => e.target.select()}
                                             />
                                         </div>
@@ -257,7 +257,7 @@ const AddEditRecurringRentModal: React.FC<AddEditRecurringRentModalProps> = ({ i
                                         onChange={(e) => handleTotalAmountChange(e.target.value)}
                                         className={inputClasses}
                                         placeholder="Enter total amount"
-                                        prefix="₹"
+                                        prefix="$"
                                         onFocus={(e) => e.target.select()}
                                     />
                                 </div>

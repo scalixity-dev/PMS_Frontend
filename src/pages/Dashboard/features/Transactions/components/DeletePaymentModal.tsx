@@ -23,7 +23,7 @@ const DeletePaymentModal: React.FC<DeletePaymentModalProps> = ({
             } catch { return String(rawDate); }
         })()
         : '';
-    const paymentAmount = selectedPayment?.amount != null ? `₹ ${Number(selectedPayment.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '';
+    const paymentAmount = selectedPayment?.amount != null ? `$ ${Number(selectedPayment.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '';
     if (!isOpen) return null;
 
     return (

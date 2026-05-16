@@ -23,7 +23,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
         contactName: '',
         contactEmail: '',
         contactNumber: '',
-        phoneCountryCode: undefined,
+        phoneCountryCode: 'US|1',
         relationship: '',
         yearsKnown: ''
     });
@@ -89,7 +89,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                     contactName: '',
                     contactEmail: '',
                     contactNumber: '',
-                    phoneCountryCode: undefined,
+                    phoneCountryCode: 'US|1',
                     relationship: '',
                     yearsKnown: ''
                 });

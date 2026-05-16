@@ -125,7 +125,7 @@ const PetDetails: React.FC<PetDetailsProps> = ({ propertyId }) => {
                             className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
                             value={formData.petDeposit || ''}
                             onChange={(e) => updateFormData('petDeposit', e.target.value)}
-                            placeholder={`${currencySymbol || '₹'} 0.00`}
+                            placeholder={`${currencySymbol || '$'} 0.00`}
                         />
                     </div>
                 </div>
@@ -142,7 +142,7 @@ const PetDetails: React.FC<PetDetailsProps> = ({ propertyId }) => {
                             className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
                             value={formData.petRent || ''}
                             onChange={(e) => updateFormData('petRent', e.target.value)}
-                            placeholder={`${currencySymbol || '₹'} 0.00`}
+                            placeholder={`${currencySymbol || '$'} 0.00`}
                         />
                     </div>
                 </div>

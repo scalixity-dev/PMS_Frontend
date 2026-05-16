@@ -130,8 +130,8 @@ const PropertyStatement: React.FC = () => {
     const gridTemplateColumns = activeColumns.map(col => col.width).join(' ');
 
     const formatCurrency = (amount: number) => {
-        if (amount === 0) return '₹0.00';
-        return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (amount === 0) return '$0.00';
+        return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
     const renderCellContent = (item: PropertyStatementItem, columnId: ColumnId) => {

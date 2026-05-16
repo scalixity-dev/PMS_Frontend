@@ -219,9 +219,9 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext }) => 
                                 }
 
                                 // Format currency
-                                const formattedRent = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(recurringRentAmount) || 0);
-                                const formattedMaxBalance = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(maxMonthlyBalance) || 0);
-                                const formattedFixedAmount = lateFeeType === 'fixed' ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(amount) || 0) : '';
+                                const formattedRent = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(recurringRentAmount) || 0);
+                                const formattedMaxBalance = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(maxMonthlyBalance) || 0);
+                                const formattedFixedAmount = lateFeeType === 'fixed' ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(amount) || 0) : '';
 
                                 let feeDescription = '';
                                 if (lateFeeType === 'outstanding') {

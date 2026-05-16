@@ -102,7 +102,7 @@ const initialFormData: ListUnitFormData = {
   applicationFeeAmount: '',
   // Listing Contact
   contactName: '',
-  countryCode: '+91',
+  countryCode: '+1',
   phoneNumber: '',
   email: '',
   displayPhonePublicly: false,

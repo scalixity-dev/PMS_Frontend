@@ -28,7 +28,7 @@ const LeaseDetail: React.FC = () => {
             headerPills: [
                 { label: 'Effective date', value: data.effectiveDate || '-' },
                 { label: 'Expiration date', value: data.expirationDate || '-' },
-                { label: 'Price', value: data.price ? `₹${data.price} ` : '-' },
+                { label: 'Price', value: data.price ? `$${data.price} ` : '-' },
             ],
             details: [
                 { label: 'Company name', value: data.companyName },
@@ -125,10 +125,10 @@ const LeaseDetail: React.FC = () => {
         };
 
         const formatCurrency = (amount: string | number | null | undefined): string => {
-            if (!amount) return '₹0.00';
+            if (!amount) return '$0.00';
             const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-            if (isNaN(numAmount)) return '₹0.00';
-            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(numAmount);
+            if (isNaN(numAmount)) return '$0.00';
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(numAmount);
         };
 
         // Format address
@@ -1107,7 +1107,7 @@ const LeaseDetail: React.FC = () => {
                                                             </button>
                                                         </div>
                                                         <div className="text-right">
-                                                            <div className="text-[#3A6D6C] font-bold text-lg">₹{transaction.totalAmount?.toLocaleString('en-IN', { minimumFractionDigits: 2 }) || '0.00'}</div>
+                                                            <div className="text-[#3A6D6C] font-bold text-lg">${transaction.totalAmount?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}</div>
                                                             <div className="text-gray-400 text-xs">Total Amount</div>
                                                         </div>
                                                     </div>
@@ -1119,7 +1119,7 @@ const LeaseDetail: React.FC = () => {
                                                         {transaction.tenants?.map((tenant: any, idx: number) => (
                                                             <div key={idx} className="flex justify-between items-center bg-gray-50 p-2 rounded-lg">
                                                                 <span className="text-gray-700 font-medium text-sm">{tenant.name}</span>
-                                                                <span className="text-gray-900 font-bold text-sm">₹{tenant.amount?.toLocaleString() || '0'}</span>
+                                                                <span className="text-gray-900 font-bold text-sm">${tenant.amount?.toLocaleString() || '0'}</span>
                                                             </div>
                                                         ))}
                                                     </div>

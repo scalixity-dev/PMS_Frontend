@@ -161,13 +161,8 @@ export const TenantOnboardingFlow: React.FC = () => {
     })).sort((a, b) => a.label.localeCompare(b.label));
   }, [cities]);
 
-  const selectedCountry = useMemo(
-    () => countries.find((c) => c.isoCode === country),
-    [countries, country]
-  );
-  const usesINR = selectedCountry?.isoCode === 'IN';
-  const priceCurrencyLabel = usesINR ? 'INR' : 'USD';
-  const priceCurrencySymbol = usesINR ? '₹' : '$';
+  const priceCurrencyLabel = 'USD';
+  const priceCurrencySymbol = '$';
 
   const handleBack = () => {
     if (currentStep === 1) {

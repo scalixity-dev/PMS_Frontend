@@ -22,7 +22,7 @@ interface ApplyDepositsFormData {
 
 const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
     onConfirm,
-    amountOwned = '₹45,000.00'
+    amountOwned = '$45,000.00'
 }) => {
     const { isApplyDepositsOpen, setApplyDepositsOpen } = useTransactionStore();
     const isOpen = isApplyDepositsOpen;

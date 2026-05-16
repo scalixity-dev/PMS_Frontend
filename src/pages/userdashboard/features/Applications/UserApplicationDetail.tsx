@@ -147,11 +147,11 @@ const formatPhoneNumberForBackend = (phoneNumber: string, countryCode?: string):
 
 // Helper to split phone number into code and number
 const getPhonePartsForInitialData = (fullNumber: string | null | undefined): { phoneNumber: string; phoneCountryCode: string } => {
-    if (!fullNumber) return { phoneNumber: '', phoneCountryCode: 'IN|91' };
+    if (!fullNumber) return { phoneNumber: '', phoneCountryCode: 'US|1' };
 
     let strNum = String(fullNumber).trim();
-    let detectedIsoCode = 'IN';
-    let detectedPhoneCode = '91';
+    let detectedIsoCode = 'US';
+    let detectedPhoneCode = '1';
 
     const countries = Country.getAllCountries().sort((a, b) => b.phonecode.length - a.phonecode.length);
 

@@ -23,7 +23,7 @@ const UserAddReferenceModal: React.FC<UserAddReferenceModalProps> = ({ isOpen, o
         relationship: '',
         email: '',
         phoneNumber: '',
-        phoneCountryCode: 'IN|+91'
+        phoneCountryCode: 'US|+1'
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -38,7 +38,7 @@ const UserAddReferenceModal: React.FC<UserAddReferenceModalProps> = ({ isOpen, o
                 relationship: '',
                 email: '',
                 phoneNumber: '',
-                phoneCountryCode: 'IN|+91'
+                phoneCountryCode: 'US|+1'
             });
             setErrors({});
             setTouched({});

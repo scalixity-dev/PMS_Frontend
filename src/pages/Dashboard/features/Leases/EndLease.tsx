@@ -28,10 +28,10 @@ const formatDate = (dateString: string | null | undefined): string => {
 
 // Helper function to format currency
 const formatCurrency = (amount: string | number | null | undefined): string => {
-    if (!amount) return '₹0.00';
+    if (!amount) return '$0.00';
     const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-    if (isNaN(numAmount)) return '₹0.00';
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(numAmount);
+    if (isNaN(numAmount)) return '$0.00';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(numAmount);
 };
 
 // --- Component ---
@@ -84,7 +84,7 @@ const EndLease: React.FC = () => {
     // Calculate total unpaid
     const totalUnpaid = useMemo(() => {
         return unpaidInvoices.reduce((sum, invoice) => {
-            const total = parseFloat(invoice.total.replace(/[₹,]/g, '')) || 0;
+            const total = parseFloat(invoice.total.replace(/[$,]/g, '')) || 0;
             return sum + total;
         }, 0);
     }, [unpaidInvoices]);

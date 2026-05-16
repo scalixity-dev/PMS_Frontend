@@ -75,7 +75,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
                 <div className="flex justify-between items-center mb-3 md:mb-4">
                     <div className="flex items-baseline gap-1">
                         <span className="text-base md:text-lg font-bold text-gray-800">
-                            {price ? `${currencySymbol} ${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : `${currencySymbol} -----`}
+                            {price ? `${currencySymbol} ${price.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : `${currencySymbol} -----`}
                         </span>
                         <span className="text-[10px] md:text-xs text-gray-500">/month</span>
                     </div>

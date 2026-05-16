@@ -289,11 +289,7 @@ const PropertyDetailUser: React.FC = () => {
                             : 0;
 
                 // Get currency from backend response, fallback to property country or default
-                const currencyInfo = data.currency || (address?.country ? {
-                    code: address.country === 'India' || address.country === 'IN' ? 'INR' : 'USD',
-                    symbol: address.country === 'India' || address.country === 'IN' ? '₹' : '$',
-                    name: address.country === 'India' || address.country === 'IN' ? 'Indian Rupee' : 'US Dollar'
-                } : { code: 'USD', symbol: '$', name: 'US Dollar' });
+                const currencyInfo = data.currency || { code: 'USD', symbol: '$', name: 'US Dollar' };
 
                 const beds = data.singleUnitDetail?.beds ?? null;
                 const title = data.listing?.title ||

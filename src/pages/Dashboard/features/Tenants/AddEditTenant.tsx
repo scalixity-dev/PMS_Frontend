@@ -140,7 +140,7 @@ const AddEditTenant = () => {
                             city: '',
                             stateRegion: '',
                             zip: '',
-                            country: ''
+                            country: 'US'
                         };
                     }
 

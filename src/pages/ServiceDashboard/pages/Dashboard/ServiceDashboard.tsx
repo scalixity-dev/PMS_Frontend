@@ -123,7 +123,7 @@ const ServiceDashboard: React.FC = () => {
                         <div>
                             <p className="text-gray-500 text-sm mb-1">Outstanding</p>
                             <p className="text-xl font-bold text-gray-900">
-                                ₹{(stats?.outstandingBalance ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                ${(stats?.outstandingBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                         </div>
                         <button
@@ -155,7 +155,7 @@ const ServiceDashboard: React.FC = () => {
                         <div>
                             <p className="text-gray-500 text-sm mb-1">Earnings This Month</p>
                             <p className="text-xl font-bold text-gray-900">
-                                ₹{(stats?.earningsThisMonth ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                ${(stats?.earningsThisMonth ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                         </div>
                         <button
@@ -172,7 +172,7 @@ const ServiceDashboard: React.FC = () => {
                         <div>
                             <p className="text-gray-500 text-sm mb-1">Total Earnings</p>
                             <p className="text-xl font-bold text-gray-900">
-                                ₹{(stats?.totalEarnings ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                ${(stats?.totalEarnings ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                         </div>
                         <button

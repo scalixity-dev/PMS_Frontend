@@ -21,7 +21,7 @@ const UserEditApplicantInfoModal: React.FC<UserEditApplicantInfoModalProps> = ({
         lastName: '',
         email: '',
         phoneNumber: '',
-        phoneCountryCode: '',
+        phoneCountryCode: 'US|1',
         dob: undefined,
         shortBio: '',
         moveInDate: undefined,

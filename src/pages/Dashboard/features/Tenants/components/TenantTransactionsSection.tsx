@@ -178,9 +178,9 @@ const TenantTransactionsSection = ({ tenantId: _tenantId, tenant: _tenant }: Ten
                             <div className="flex justify-between items-center">
                                 <span className="text-xs text-gray-500">Total</span>
                                 <div className="flex flex-col items-end">
-                                    <span className="text-sm font-bold text-gray-900">₹{transaction.total.toLocaleString()}</span>
+                                    <span className="text-sm font-bold text-gray-900">${transaction.total.toLocaleString()}</span>
                                     {transaction.balance > 0 && (
-                                        <span className="text-xs text-red-500">Bal: ₹{transaction.balance.toLocaleString()}</span>
+                                        <span className="text-xs text-red-500">Bal: ${transaction.balance.toLocaleString()}</span>
                                     )}
                                 </div>
                             </div>
@@ -221,9 +221,9 @@ const TenantTransactionsSection = ({ tenantId: _tenantId, tenant: _tenant }: Ten
                             <span className="text-sm text-gray-700 truncate">{transaction.contact}</span>
                         </div>
                         <div className="hidden md:flex flex-col">
-                            <span className="text-sm font-bold text-gray-900">₹{transaction.total.toLocaleString()}</span>
+                            <span className="text-sm font-bold text-gray-900">${transaction.total.toLocaleString()}</span>
                             {transaction.balance > 0 && (
-                                <span className="text-xs text-red-500">Bal: ₹{transaction.balance.toLocaleString()}</span>
+                                <span className="text-xs text-red-500">Bal: ${transaction.balance.toLocaleString()}</span>
                             )}
                         </div>
                         <div className="hidden md:flex items-center justify-end gap-2">

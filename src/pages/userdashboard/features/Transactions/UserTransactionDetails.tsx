@@ -120,7 +120,7 @@ const TransactionDetails = () => {
             property: tx.property?.propertyName || 'N/A',
             unit: tx.unit?.unitName || '-',
             type,
-            currency: tx.currency || 'INR',
+            currency: tx.currency || 'USD',
             attachments
         };
     }, [backendTransaction]);

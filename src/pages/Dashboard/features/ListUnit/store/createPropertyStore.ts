@@ -78,7 +78,7 @@ const initialFormData: CreatePropertyFormData = {
   address: '',
   city: '',
   stateRegion: '',
-  country: '',
+  country: 'US',
   zip: '',
   // Basic Amenities
   parking: '',

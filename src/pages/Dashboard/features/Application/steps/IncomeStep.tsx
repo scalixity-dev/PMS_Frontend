@@ -59,7 +59,7 @@ const IncomeCard: React.FC<{ income: IncomeFormData & { id: string }; onDelete: 
                 <div className="flex flex-wrap gap-4 justify-center w-full">
                     {/* Amount */}
                     <CustomTextBox
-                        value={`₹ ${income.monthlyAmount}`}
+                        value={`$ ${income.monthlyAmount}`}
                         className="bg-[#E3E8E3] px-6 py-2 rounded-full min-w-[120px] justify-center"
                         valueClassName="font-semibold text-black text-lg text-center w-full"
                     />

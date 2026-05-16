@@ -396,7 +396,7 @@ const Payments: React.FC = () => {
                             <span className="text-white text-sm font-medium mb-2">Paid Income</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">
-                                    ₹{payments
+                                    ${payments
                                         .filter(p => p.type === 'income' && p.status === 'Success')
                                         .reduce((sum, p) => sum + p.amount, 0)
                                         .toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -409,7 +409,7 @@ const Payments: React.FC = () => {
                             <span className="text-white text-sm font-medium mb-2">Paid Expense</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">
-                                    ₹{payments
+                                    ${payments
                                         .filter(p => p.type === 'expense' && p.status === 'Success')
                                         .reduce((sum, p) => sum + p.amount, 0)
                                         .toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -422,7 +422,7 @@ const Payments: React.FC = () => {
                             <span className="text-white text-sm font-medium mb-2">Paid Refund</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">
-                                    ₹{payments
+                                    ${payments
                                         .filter(p => p.type === 'refund' && p.status === 'Success')
                                         .reduce((sum, p) => sum + p.amount, 0)
                                         .toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -610,7 +610,7 @@ const Payments: React.FC = () => {
                             {/* Amount */}
                             <div className="w-full lg:w-auto flex justify-between lg:block">
                                 <span className="lg:hidden text-xs text-gray-500 font-bold uppercase tracking-wider">Amount</span>
-                                <div className="text-gray-900 text-sm font-bold">₹ {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                <div className="text-gray-900 text-sm font-bold">$ {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                             </div>
 
                             {/* Desktop Actions */}

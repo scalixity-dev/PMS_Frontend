@@ -102,7 +102,7 @@ const RentScheduleModal: React.FC<RentScheduleModalProps> = ({ isOpen, onClose, 
 
                     <div>
                         <h3 className="text-[#2c3e50] font-bold text-sm mb-1">Current rent</h3>
-                        <p className="text-[#2c3e50] font-medium">₹{currentRent.toLocaleString('en-IN', { minimumFractionDigits: 2 })} /monthly</p>
+                        <p className="text-[#2c3e50] font-medium">${currentRent.toLocaleString('en-US', { minimumFractionDigits: 2 })} /monthly</p>
                     </div>
 
                     <div className="border-t border-gray-200"></div>
@@ -158,7 +158,7 @@ const RentScheduleModal: React.FC<RentScheduleModalProps> = ({ isOpen, onClose, 
                                             <input
                                                 type="number"
                                                 className={inputClasses}
-                                                placeholder="₹0.00"
+                                                placeholder="$0.00"
                                             />
                                         </div>
                                     </React.Fragment>

@@ -115,7 +115,7 @@ const GeneralExpenses: React.FC = () => {
     const gridTemplateColumns = activeColumns.map(col => col.width).join(' ');
 
     const formatCurrency = (amount: number) => {
-        return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
     const renderCellContent = (item: GeneralExpenseItem, columnId: ColumnId) => {

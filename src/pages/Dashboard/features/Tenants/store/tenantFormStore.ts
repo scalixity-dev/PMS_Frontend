@@ -102,7 +102,7 @@ const initialFormData: TenantFormData = {
     city: '',
     stateRegion: '',
     zip: '',
-    country: '',
+    country: 'US',
   },
   emergencyContacts: [
     { id: 1, name: '', email: '', phone: '', details: '' }

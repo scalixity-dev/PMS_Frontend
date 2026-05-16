@@ -33,7 +33,7 @@ const ResidenceItem: React.FC<{ residence: ResidenceFormData & { id: string }; o
                 <div className="flex flex-wrap gap-4 justify-center">
                     {residence.rentAmount && (
                         <CustomTextBox
-                            value={`₹ ${residence.rentAmount}`}
+                            value={`$ ${residence.rentAmount}`}
                             className="bg-opacity-100 rounded-full min-w-[80px] justify-center"
                             valueClassName="text-sm font-semibold text-[#2c3e50] text-center w-full"
                         />
