@@ -181,6 +181,9 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
             }
         }
         if (formData.residencyType === 'Others' && key === 'otherResidencyType' && (!value || value.trim() === '')) return 'Specify residence type';
+        if (key === 'reason' && (!value || value.trim() === '')) {
+            return `Reason for ${formData.isCurrent ? 'moving' : 'leaving'} is required`;
+        }
         return '';
     };
 
@@ -198,6 +201,7 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
             ['landlordName', 'landlordPhone', 'landlordEmail'].forEach(check);
         }
         if (formData.residencyType === 'Others') check('otherResidencyType');
+        check('reason');
 
         setErrors(newErrors);
         return isValid;
@@ -214,6 +218,7 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
         }
 
         if (formData.residencyType === 'Others' && check('otherResidencyType')) return false;
+        if (check('reason')) return false;
 
         return true;
     };
@@ -557,6 +562,21 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
                         </div>
                     </div>
                 )}
+                
+                {/* Reason for leaving */}
+                <div className="mt-2">
+                    <label className={labelClasses}>
+                        {formData.isCurrent ? 'Reason for moving *' : 'Reason for leaving *'}
+                    </label>
+                    <textarea 
+                        placeholder={formData.isCurrent ? "e.g. Relocating for work, seeking more space" : "e.g. Lease ended, relocating for work"} 
+                        className={`${inputClasses} h-24 resize-none pt-2 ${touched.reason && errors.reason ? 'border-red-500' : ''}`}
+                        value={formData.reason} 
+                        onChange={(e) => handleChange('reason', e.target.value)} 
+                        onBlur={() => handleBlur('reason')} 
+                    />
+                    {touched.reason && errors.reason && <p className={errorClasses}>{errors.reason}</p>}
+                </div>
             </div>
         </BaseModal>
     );

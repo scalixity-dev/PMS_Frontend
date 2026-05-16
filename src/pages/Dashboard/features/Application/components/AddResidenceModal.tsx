@@ -273,6 +273,9 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             }
         }
 
+        if (key === 'reason' && (!value || (typeof value === 'string' && value.trim() === ''))) {
+            return `Reason for ${formData.isCurrent ? 'moving' : 'leaving'} is required`;
+        }
         return '';
     };
 
@@ -318,6 +321,13 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                 newErrors.otherResidencyType = error;
                 isValid = false;
             }
+        }
+
+        // Reason is now mandatory
+        const reasonError = validateField('reason', formData.reason);
+        if (reasonError) {
+            newErrors.reason = reasonError;
+            isValid = false;
         }
 
         setErrors(newErrors);
@@ -391,7 +401,8 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             state: true,
             zip: true,
             country: true,
-            moveInDate: true
+            moveInDate: true,
+            reason: true
         };
 
         if (formData.residencyType === 'Rent') {
@@ -441,6 +452,9 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         if (formData.residencyType === 'Others') {
             if (validateField('otherResidencyType', formData.otherResidencyType)) return false;
         }
+
+        // Check reason
+        if (validateField('reason', formData.reason)) return false;
 
         return baseValid;
     };
@@ -828,11 +842,13 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                             </div>
                         )}
 
-                        {/* Please Explain */}
+                        {/* Reason for leaving */}
                         <div>
-                            <label className={labelClasses}>Please Explain</label>
+                            <label className={labelClasses}>
+                                {formData.isCurrent ? 'Reason for moving *' : 'Reason for leaving *'}
+                            </label>
                             <textarea
-                                placeholder="Enter additional details"
+                                placeholder={formData.isCurrent ? "e.g. Relocating for work, seeking more space" : "e.g. Lease ended, relocating for work"}
                                 className={`${getInputClassWithError('reason')} h-32 resize-none pt-4`}
                                 value={formData.reason}
                                 onChange={(e) => handleChange('reason', e.target.value)}
