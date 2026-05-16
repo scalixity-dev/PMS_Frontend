@@ -240,15 +240,19 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
     };
 
     const handleSubmit = () => {
-        // Mark all fields as touched
-        const allTouched = (Object.keys(formData) as Array<keyof OccupantFormData>).reduce((acc, key) => {
-            acc[key] = true;
-            return acc;
-        }, {} as Record<string, boolean>);
-        setTouched(allTouched);
+        const allTouched: Record<string, boolean> = {};
+        const allErrors: Record<string, string> = {};
 
-        // Validate all fields
-        if (validateAllFields()) {
+        (Object.keys(formData) as Array<keyof OccupantFormData>).forEach(key => {
+            allTouched[key] = true;
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
+        setTouched(allTouched);
+        setErrors(allErrors);
+
+        if (isFormValid()) {
             onSave(formData);
             onClose();
         }
@@ -476,11 +480,8 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                     <div className="pt-2">
                         <button
                             onClick={handleSubmit}
-                            disabled={!isFormValid()}
-                            className={`px-8 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-md ${isFormValid()
-                                ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                }`}
+                            disabled={false}
+                            className={`px-8 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-md bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer`}
                         >
                             {initialData ? 'Save' : 'Add'}
                         </button>

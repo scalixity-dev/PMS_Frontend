@@ -166,7 +166,6 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
     };
 
     const handleSubmit = async () => {
-        // Mark all fields as touched
         const allTouched: Record<string, boolean> = {
             type: true,
             make: true,
@@ -176,11 +175,17 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
             licensePlate: true,
             registeredIn: true
         };
-        setTouched(allTouched);
+        const allErrors: Record<string, string> = {};
 
-        // Validate all fields
+        (Object.keys(formData) as Array<keyof VehicleFormData>).forEach(key => {
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
+        setTouched(allTouched);
+        setErrors(allErrors);
+
         if (!validateAllFields()) {
-            // Don't submit if validation fails
             return;
         }
 
@@ -370,11 +375,8 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                     <div className="pt-2">
                         <button
                             onClick={handleSubmit}
-                            disabled={!isFormValid()}
-                            className={`px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-md ${isFormValid()
-                                ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                }`}
+                            disabled={false}
+                            className={`px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-md bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer`}
                         >
                             {initialData ? 'Save' : 'Add'}
                         </button>

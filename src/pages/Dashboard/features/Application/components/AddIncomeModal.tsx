@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
+import { Country } from 'country-state-city';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '@/components/ui/DatePicker';
 import { formatPhoneNumber } from '@/utils/phone.utils';
@@ -17,9 +18,11 @@ export interface IncomeFormData {
     address: string;
     office: string;
     companyPhone: string;
+    companyPhoneCountryCode?: string;
     supervisorName: string;
     supervisorEmail: string;
     supervisorPhone: string;
+    supervisorPhoneCountryCode?: string;
 }
 
 interface AddIncomeModalProps {
@@ -55,9 +58,11 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
         address: '',
         office: '',
         companyPhone: '',
+        companyPhoneCountryCode: 'US|1',
         supervisorName: '',
         supervisorEmail: '',
-        supervisorPhone: ''
+        supervisorPhone: '',
+        supervisorPhoneCountryCode: 'US|1'
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -65,6 +70,13 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
     const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
     const [currencySearch, setCurrencySearch] = useState('');
     const currencyRef = useRef<HTMLDivElement>(null);
+    const companyPhoneCodeRef = useRef<HTMLDivElement>(null);
+    const supervisorPhoneCodeRef = useRef<HTMLDivElement>(null);
+
+    const [isCompanyPhoneCodeOpen, setIsCompanyPhoneCodeOpen] = useState(false);
+    const [isSupervisorPhoneCodeOpen, setIsSupervisorPhoneCodeOpen] = useState(false);
+    const [companyPhoneCodeSearch, setCompanyPhoneCodeSearch] = useState('');
+    const [supervisorPhoneCodeSearch, setSupervisorPhoneCodeSearch] = useState('');
 
     // Prevent background scrolling when modal is open
     // Prevent background scrolling when modal is open
@@ -86,9 +98,11 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                     address: '',
                     office: '',
                     companyPhone: '',
+                    companyPhoneCountryCode: 'US|1',
                     supervisorName: '',
                     supervisorEmail: '',
-                    supervisorPhone: ''
+                    supervisorPhone: '',
+                    supervisorPhoneCountryCode: 'US|1'
                 });
             }
         } else {
@@ -102,6 +116,47 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
             document.body.style.overflow = 'unset';
         };
     }, [isOpen, initialData]);
+
+    const phoneCountryCodes = useMemo(() => {
+        return Country.getAllCountries().map((country: any) => ({
+            label: `${country.flag} ${country.phonecode.startsWith('+') ? '' : '+'}${country.phonecode}`,
+            value: `${country.isoCode}|${country.phonecode}`,
+            name: country.name,
+            phonecode: country.phonecode.startsWith('+') ? country.phonecode : `+${country.phonecode}`,
+            flag: country.flag,
+            isoCode: country.isoCode,
+        })).sort((a: any, b: any) => a.name.localeCompare(b.name));
+    }, []);
+
+    const filteredCompanyPhoneCodes = useMemo(() => {
+        if (!companyPhoneCodeSearch) return phoneCountryCodes;
+        const searchLower = companyPhoneCodeSearch.toLowerCase();
+        return phoneCountryCodes.filter((code: any) =>
+            code.name.toLowerCase().includes(searchLower) ||
+            code.phonecode.includes(searchLower) ||
+            code.isoCode.toLowerCase().includes(searchLower)
+        );
+    }, [companyPhoneCodeSearch, phoneCountryCodes]);
+
+    const filteredSupervisorPhoneCodes = useMemo(() => {
+        if (!supervisorPhoneCodeSearch) return phoneCountryCodes;
+        const searchLower = supervisorPhoneCodeSearch.toLowerCase();
+        return phoneCountryCodes.filter((code: any) =>
+            code.name.toLowerCase().includes(searchLower) ||
+            code.phonecode.includes(searchLower) ||
+            code.isoCode.toLowerCase().includes(searchLower)
+        );
+    }, [supervisorPhoneCodeSearch, phoneCountryCodes]);
+
+    const selectedCompanyPhoneCode = useMemo(() => {
+        if (!formData.companyPhoneCountryCode) return null;
+        return phoneCountryCodes.find((code: any) => code.value === formData.companyPhoneCountryCode);
+    }, [formData.companyPhoneCountryCode, phoneCountryCodes]);
+
+    const selectedSupervisorPhoneCode = useMemo(() => {
+        if (!formData.supervisorPhoneCountryCode) return null;
+        return phoneCountryCodes.find((code: any) => code.value === formData.supervisorPhoneCountryCode);
+    }, [formData.supervisorPhoneCountryCode, phoneCountryCodes]);
 
     // Filter currencies based on search
     const filteredCurrencies = useMemo(() => {
@@ -126,6 +181,14 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
             if (currencyRef.current && !currencyRef.current.contains(event.target as Node)) {
                 setIsCurrencyOpen(false);
                 setCurrencySearch('');
+            }
+            if (companyPhoneCodeRef.current && !companyPhoneCodeRef.current.contains(event.target as Node)) {
+                setIsCompanyPhoneCodeOpen(false);
+                setCompanyPhoneCodeSearch('');
+            }
+            if (supervisorPhoneCodeRef.current && !supervisorPhoneCodeRef.current.contains(event.target as Node)) {
+                setIsSupervisorPhoneCodeOpen(false);
+                setSupervisorPhoneCodeSearch('');
             }
         };
 
@@ -167,6 +230,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                 if (!value || value.trim() === '') return 'Office is required';
                 break;
             case 'companyPhone':
+                if (!formData.companyPhoneCountryCode) return 'Please select a country code first';
                 if (!value || value.trim() === '') return 'Company Phone is required';
                 {
                     const digitsOnly = value.replace(/\D/g, '');
@@ -182,6 +246,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                 if (value && value.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email';
                 break;
             case 'supervisorPhone':
+                if (!formData.supervisorPhoneCountryCode) return 'Please select a country code first';
                 if (!value || value.trim() === '') return 'Supervisor Phone is required';
                 {
                     const digitsOnly = value.replace(/\D/g, '');
@@ -224,7 +289,18 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
     };
 
     const handleSubmit = () => {
-        // Even if button is disabled, we keep this check for safety
+        const allTouched: Record<string, boolean> = {};
+        const allErrors: Record<string, string> = {};
+
+        (Object.keys(formData) as Array<keyof IncomeFormData>).forEach(key => {
+            allTouched[key] = true;
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
+        setTouched(allTouched);
+        setErrors(allErrors);
+
         if (isFormValid()) {
             onSave(formData);
             onClose();
@@ -475,14 +551,84 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                         {/* Company Phone */}
                         <div className="md:col-span-1">
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Company Phone Number *</label>
-                            <input
-                                type="tel"
-                                placeholder="Type Phone Number"
-                                className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm text-sm ${touched.companyPhone && errors.companyPhone ? 'border-2 border-red-500' : ''}`}
-                                value={formData.companyPhone}
-                                onChange={(e) => handleChange('companyPhone', e.target.value)}
-                                onBlur={() => handleBlur('companyPhone')}
-                            />
+                            <div className={`flex border rounded-xl transition-all ${touched.companyPhone && errors.companyPhone
+                                ? 'border-red-500 border-2'
+                                : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                                }`}>
+                                {/* Phone Code Selector */}
+                                <div className="relative" ref={companyPhoneCodeRef}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCompanyPhoneCodeOpen(!isCompanyPhoneCodeOpen)}
+                                        className="flex items-center gap-1 px-3 py-3 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors h-full"
+                                    >
+                                        <span className="text-sm font-medium">
+                                            {selectedCompanyPhoneCode ? (
+                                                <span className="flex items-center gap-1">
+                                                    <span>{selectedCompanyPhoneCode.flag}</span>
+                                                    <span className="hidden sm:inline text-xs">{selectedCompanyPhoneCode.phonecode}</span>
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-500">Code</span>
+                                            )}
+                                        </span>
+                                        <ChevronDown size={16} className={`text-gray-500 transition-transform ${isCompanyPhoneCodeOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {/* Dropdown */}
+                                    {isCompanyPhoneCodeOpen && (
+                                        <div className="absolute left-0 top-full mt-1 w-64 bg-white border border-gray-300 rounded-xl shadow-lg z-[100] max-h-60 overflow-hidden flex flex-col">
+                                            <div className="p-2 border-b border-gray-200">
+                                                <div className="relative">
+                                                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search..."
+                                                        value={companyPhoneCodeSearch}
+                                                        onChange={(e) => setCompanyPhoneCodeSearch(e.target.value)}
+                                                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] text-sm"
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="overflow-y-auto max-h-48">
+                                                {filteredCompanyPhoneCodes.map((code: any) => (
+                                                    <button
+                                                        key={code.value}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            handleChange('companyPhoneCountryCode', code.value);
+                                                            setIsCompanyPhoneCodeOpen(false);
+                                                            setCompanyPhoneCodeSearch('');
+                                                            if (touched.companyPhone && formData.companyPhone) {
+                                                                setTimeout(() => handleBlur('companyPhone'), 0);
+                                                            }
+                                                        }}
+                                                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.companyPhoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''}`}
+                                                    >
+                                                        <span className="text-lg">{code.flag}</span>
+                                                        <span className="flex-1 text-sm font-medium text-gray-900 truncate">{code.name}</span>
+                                                        <span className="text-xs text-gray-600">{code.phonecode}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <input
+                                    type="tel"
+                                    placeholder="Phone"
+                                    className={`flex-1 min-w-0 px-4 py-3 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.companyPhone && errors.companyPhone ? 'text-red-500' : 'text-gray-700'}`}
+                                    value={formData.companyPhone}
+                                    onChange={(e) => {
+                                        if (!formData.companyPhoneCountryCode) return;
+                                        handleChange('companyPhone', e.target.value);
+                                    }}
+                                    onBlur={() => handleBlur('companyPhone')}
+                                    disabled={!formData.companyPhoneCountryCode}
+                                />
+                            </div>
                             {touched.companyPhone && errors.companyPhone && <p className="text-red-500 text-xs mt-1">{errors.companyPhone}</p>}
                         </div>
 
@@ -517,14 +663,84 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                         {/* Supervisor Phone */}
                         <div className="md:col-span-1">
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Supervisor Phone Number *</label>
-                            <input
-                                type="tel"
-                                placeholder="Add Phone number here"
-                                className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm text-sm ${touched.supervisorPhone && errors.supervisorPhone ? 'border-2 border-red-500' : ''}`}
-                                value={formData.supervisorPhone}
-                                onChange={(e) => handleChange('supervisorPhone', e.target.value)}
-                                onBlur={() => handleBlur('supervisorPhone')}
-                            />
+                            <div className={`flex border rounded-xl transition-all ${touched.supervisorPhone && errors.supervisorPhone
+                                ? 'border-red-500 border-2'
+                                : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                                }`}>
+                                {/* Phone Code Selector */}
+                                <div className="relative" ref={supervisorPhoneCodeRef}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsSupervisorPhoneCodeOpen(!isSupervisorPhoneCodeOpen)}
+                                        className="flex items-center gap-1 px-3 py-3 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors h-full"
+                                    >
+                                        <span className="text-sm font-medium">
+                                            {selectedSupervisorPhoneCode ? (
+                                                <span className="flex items-center gap-1">
+                                                    <span>{selectedSupervisorPhoneCode.flag}</span>
+                                                    <span className="hidden sm:inline text-xs">{selectedSupervisorPhoneCode.phonecode}</span>
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-500">Code</span>
+                                            )}
+                                        </span>
+                                        <ChevronDown size={16} className={`text-gray-500 transition-transform ${isSupervisorPhoneCodeOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {/* Dropdown */}
+                                    {isSupervisorPhoneCodeOpen && (
+                                        <div className="absolute left-0 top-full mt-1 w-64 bg-white border border-gray-300 rounded-xl shadow-lg z-[100] max-h-60 overflow-hidden flex flex-col">
+                                            <div className="p-2 border-b border-gray-200">
+                                                <div className="relative">
+                                                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search..."
+                                                        value={supervisorPhoneCodeSearch}
+                                                        onChange={(e) => setSupervisorPhoneCodeSearch(e.target.value)}
+                                                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] text-sm"
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="overflow-y-auto max-h-48">
+                                                {filteredSupervisorPhoneCodes.map((code: any) => (
+                                                    <button
+                                                        key={code.value}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            handleChange('supervisorPhoneCountryCode', code.value);
+                                                            setIsSupervisorPhoneCodeOpen(false);
+                                                            setSupervisorPhoneCodeSearch('');
+                                                            if (touched.supervisorPhone && formData.supervisorPhone) {
+                                                                setTimeout(() => handleBlur('supervisorPhone'), 0);
+                                                            }
+                                                        }}
+                                                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.supervisorPhoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''}`}
+                                                    >
+                                                        <span className="text-lg">{code.flag}</span>
+                                                        <span className="flex-1 text-sm font-medium text-gray-900 truncate">{code.name}</span>
+                                                        <span className="text-xs text-gray-600">{code.phonecode}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <input
+                                    type="tel"
+                                    placeholder="Phone"
+                                    className={`flex-1 min-w-0 px-4 py-3 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.supervisorPhone && errors.supervisorPhone ? 'text-red-500' : 'text-gray-700'}`}
+                                    value={formData.supervisorPhone}
+                                    onChange={(e) => {
+                                        if (!formData.supervisorPhoneCountryCode) return;
+                                        handleChange('supervisorPhone', e.target.value);
+                                    }}
+                                    onBlur={() => handleBlur('supervisorPhone')}
+                                    disabled={!formData.supervisorPhoneCountryCode}
+                                />
+                            </div>
                             {touched.supervisorPhone && errors.supervisorPhone && <p className="text-red-500 text-xs mt-1">{errors.supervisorPhone}</p>}
                         </div>
 
@@ -534,8 +750,8 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                     <div>
                         <button
                             onClick={handleSubmit}
-                            disabled={!isFormValid()}
-                            className={`px-12 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${isFormValid() ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251]' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                            disabled={false}
+                            className="px-12 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm bg-[#3A6D6C] text-white hover:bg-[#2c5251]"
                         >
                             {initialData ? 'Save' : 'Add'}
                         </button>

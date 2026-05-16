@@ -138,6 +138,31 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         return requiredFields.every(key => !validateField(key, data[key]));
     }, [data, validateField]);
 
+    const handleSubmit = () => {
+        const requiredFields: Array<keyof FormData> = [
+            'firstName', 'lastName', 'email', 'phoneNumber', 'dob', 'shortBio', 'moveInDate'
+        ];
+        const allTouched: Record<string, boolean> = {};
+        const allErrors: Record<string, string> = {};
+
+        // Mark all fields as touched
+        Object.keys(data).forEach(key => {
+            allTouched[key as keyof FormData] = true;
+        });
+
+        requiredFields.forEach(key => {
+            const error = validateField(key, data[key]);
+            if (error) allErrors[key] = error;
+        });
+
+        setTouched(allTouched);
+        setErrors(allErrors);
+
+        if (isFormValid) {
+            onSubmit();
+        }
+    };
+
     const inputClass = (fieldName: string) => `
         w-full px-4 py-3 bg-white border rounded-[10px] text-sm font-medium transition-all
         ${touched[fieldName] && errors[fieldName]
@@ -317,10 +342,10 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
             <div className="flex justify-center mt-12">
                 <PrimaryActionButton
                     text={submitLabel}
-                    onClick={onSubmit}
-                    disabled={!isFormValid}
+                    onClick={handleSubmit}
+                    disabled={false}
                     className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all
-                        ${isFormValid
+                        ${true // Always show active style to encourage clicking for validation feedback
                             ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
                             : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'}`}
                 />

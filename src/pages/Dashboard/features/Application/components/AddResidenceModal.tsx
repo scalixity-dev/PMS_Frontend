@@ -56,7 +56,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         landlordName: '',
         landlordPhone: '',
         landlordEmail: '',
-        landlordPhoneCountryCode: undefined,
+        landlordPhoneCountryCode: 'US|1',
         rentAmount: ''
     });
 
@@ -411,25 +411,6 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         if (validateAllFields()) {
             onSave(formData);
             onClose();
-            // Reset form after successful save
-            setFormData({
-                isCurrent: true,
-                address: '',
-                city: '',
-                state: '',
-                zip: '',
-                country: 'US',
-                residencyType: 'Rent',
-                moveInDate: undefined,
-                moveOutDate: undefined,
-                reason: '',
-                landlordName: '',
-                landlordPhone: '',
-                landlordEmail: '',
-                rentAmount: ''
-            });
-            setErrors({});
-            setTouched({});
         }
     };
 
@@ -866,11 +847,8 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                         <div className="pt-4">
                             <button
                                 onClick={handleSubmit}
-                                disabled={!isFormValid()}
-                                className={`px-10 py-3 rounded-xl font-medium transition-colors shadow-lg ${isFormValid()
-                                    ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    }`}
+                                disabled={false}
+                                className={`px-10 py-3 rounded-xl font-medium transition-colors shadow-lg bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer`}
                             >
                                 {initialData ? 'Save' : 'Add'}
                             </button>

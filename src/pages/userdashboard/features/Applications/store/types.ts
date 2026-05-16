@@ -76,9 +76,11 @@ export interface IncomeFormData {
     address: string;
     office: string;
     companyPhone: string;
+    companyPhoneCountryCode?: string;
     supervisorName: string;
     supervisorEmail: string;
     supervisorPhone: string;
+    supervisorPhoneCountryCode?: string;
 }
 
 export interface UserApplicationFormData {

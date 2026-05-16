@@ -44,11 +44,12 @@ const ApplicantInfoStep: React.FC<ApplicantInfoStepProps> = ({ onNext }) => {
             title="Applicant Information"
             subTitle="Tell us about yourself and when you plan to move."
             disabledFields={{
-                firstName: true,
-                lastName: true,
-                email: true,
-                phoneCountryCode: true,
-                phoneNumber: true,
+                firstName: !!currentUser?.fullName,
+                lastName: !!currentUser?.fullName,
+                email: !!currentUser?.email,
+                // Never disable phone fields as they often need correction or are missing
+                phoneCountryCode: false,
+                phoneNumber: false,
             }}
         />
     );

@@ -182,6 +182,18 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
     };
 
     const handleSubmit = () => {
+        const allTouched: Record<string, boolean> = {};
+        const allErrors: Record<string, string> = {};
+
+        (Object.keys(formData) as Array<keyof ReferenceFormData>).forEach(key => {
+            allTouched[key] = true;
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
+        setTouched(allTouched);
+        setErrors(allErrors);
+
         if (isFormValid()) {
             onSave(formData);
             onClose();
@@ -370,8 +382,8 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                     <div>
                         <button
                             onClick={handleSubmit}
-                            disabled={!isFormValid()}
-                            className={`px-12 py-3 rounded-lg text-sm font-medium transition-colors shadow-sm ${isFormValid() ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251]' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                            disabled={false}
+                            className={`px-12 py-3 rounded-lg text-sm font-medium transition-colors shadow-sm bg-[#3A6D6C] text-white hover:bg-[#2c5251]`}
                         >
                             {initialData ? 'Save' : 'Add'}
                         </button>

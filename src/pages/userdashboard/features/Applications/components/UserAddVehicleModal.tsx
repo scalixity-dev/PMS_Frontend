@@ -133,11 +133,17 @@ const UserAddVehicleModal: React.FC<UserAddVehicleModalProps> = ({ isOpen, onClo
         const requiredFields: Array<keyof VehicleFormData> = [
             'type', 'make', 'model', 'year', 'color', 'licensePlate', 'registeredIn'
         ];
-        const allTouched = requiredFields.reduce((acc, key) => {
-            acc[key] = true;
-            return acc;
-        }, {} as Record<string, boolean>);
+        const allTouched: Record<string, boolean> = {};
+        const allErrors: Record<string, string> = {};
+
+        requiredFields.forEach(key => {
+            allTouched[key] = true;
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
         setTouched(allTouched);
+        setErrors(allErrors);
 
         if (validateAllFields()) {
             onSave(formData);
@@ -164,7 +170,7 @@ const UserAddVehicleModal: React.FC<UserAddVehicleModalProps> = ({ isOpen, onClo
                 {
                     label: initialData ? 'Save Changes' : 'Add',
                     onClick: handleSubmit,
-                    disabled: !isFormValid(),
+                    disabled: false,
                     variant: 'primary',
                     className: "bg-[#7ED957] hover:bg-[#6BC847] border-none text-white",
                     icon: <Check size={16} strokeWidth={3} />
