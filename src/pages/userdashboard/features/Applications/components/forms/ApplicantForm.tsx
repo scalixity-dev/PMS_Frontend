@@ -44,6 +44,18 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
     const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
 
+    const maxDobDate = useMemo(() => {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - 5);
+        return d;
+    }, []);
+
+    const minMoveInDate = useMemo(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }, []);
+
     // Phone country codes
     const phoneCountryCodes = useMemo(() => {
         return Country.getAllCountries().map(country => ({
@@ -104,11 +116,26 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                 if (digitsOnly.length > 15) return 'Phone number cannot exceed 15 digits';
             }
         }
-        if (key === 'dob' && !value) return 'Date of birth is required';
+        if (key === 'dob') {
+            if (!value) return 'Date of birth is required';
+            const dateVal = value instanceof Date ? value : new Date(value as string);
+            const today = new Date();
+            const fiveYearsAgo = new Date();
+            fiveYearsAgo.setFullYear(today.getFullYear() - 5);
+            if (dateVal > today) {
+                return 'Date of birth cannot be in the future';
+            }
+            if (dateVal > fiveYearsAgo) {
+                return 'Date of birth must be at least 5 years ago';
+            }
+        }
         if (key === 'moveInDate') {
             if (!value) return 'Preferred move in date is required';
-            if (value instanceof Date) {
-                // Removed past date validation to allow edits
+            const dateVal = value instanceof Date ? value : new Date(value as string);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (dateVal < today) {
+                return 'Preferred move in date must be today or a future date';
             }
         }
         return '';
@@ -308,10 +335,12 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                         <label className="text-[13px] font-semibold text-[#1A1A1A]">Date of Birth *</label>
                         <DatePicker
                             value={data.dob}
-                            onChange={(date) => handleFieldChange('dob', date)}
+                            onChange={(date) => { handleFieldChange('dob', date); setTouched(prev => ({ ...prev, dob: true })); }}
                             placeholder="Select Date"
                             className={inputClass('dob')}
+                            maxDate={maxDobDate}
                         />
+                        {touched.dob && errors.dob && <span className="text-red-500 text-[11px] font-medium">{errors.dob}</span>}
                     </div>
 
                     <div className="space-y-1.5">
@@ -321,7 +350,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                             onChange={(date) => handleFieldChange('moveInDate', date)}
                             placeholder="Select Date"
                             className={inputClass('moveInDate')}
-                            minDate={new Date()} // Prevent selecting past dates
+                            minDate={minMoveInDate}
                         />
                         {touched.moveInDate && errors.moveInDate && <span className="text-red-500 text-[11px] font-medium">{errors.moveInDate}</span>}
                     </div>

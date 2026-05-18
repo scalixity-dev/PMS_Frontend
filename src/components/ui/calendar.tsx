@@ -26,15 +26,21 @@ function Calendar({
   const defaultClassNames = getDefaultClassNames()
   const [view, setView] = React.useState<CalendarView>("days")
   const yearContainerRef = React.useRef<HTMLDivElement>(null)
-  
-  // Safely access selected date
+
+  // Extract date boundary props for use in custom year/month views
+  const startMonth = (props as any).startMonth as Date | undefined
+  const endMonth = (props as any).endMonth as Date | undefined
+  const minYear = startMonth?.getFullYear() ?? -Infinity
+  const maxYear = endMonth?.getFullYear() ?? Infinity
+
+  // Safely access selected date, clamped to valid range
   const getSelectedDate = () => {
-    if ('selected' in props && props.selected instanceof Date) {
-      return props.selected
-    }
-    return new Date()
+    let d = ('selected' in props && props.selected instanceof Date) ? props.selected : new Date()
+    if (endMonth && d > endMonth) d = endMonth
+    if (startMonth && d < startMonth) d = startMonth
+    return d
   }
-  
+
   const initialDate = getSelectedDate()
   const [selectedYear, setSelectedYear] = React.useState<number>(initialDate.getFullYear())
   const [selectedMonth, setSelectedMonth] = React.useState<number>(initialDate.getMonth())
@@ -115,19 +121,24 @@ function Calendar({
         <div className="flex flex-col gap-2">
           <div className="text-center font-medium text-sm mb-1">Select Year</div>
           <div ref={yearContainerRef} className="grid grid-cols-4 gap-1.5 max-h-[196px] overflow-y-auto">
-            {years.map((year) => (
-              <Button
-                key={year}
-                variant={year === selectedYear ? "default" : "ghost"}
-                className={cn(
-                  "h-9 text-xs",
-                  year === selectedYear && "bg-primary text-primary-foreground"
-                )}
-                onClick={() => handleYearSelect(year)}
-              >
-                {year}
-              </Button>
-            ))}
+            {years.map((year) => {
+              const isDisabled = year < minYear || year > maxYear
+              return (
+                <Button
+                  key={year}
+                  variant={year === selectedYear ? "default" : "ghost"}
+                  className={cn(
+                    "h-9 text-xs",
+                    year === selectedYear && "bg-primary text-primary-foreground",
+                    isDisabled && "opacity-30 pointer-events-none"
+                  )}
+                  disabled={isDisabled}
+                  onClick={() => handleYearSelect(year)}
+                >
+                  {year}
+                </Button>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -155,19 +166,30 @@ function Calendar({
             </Button>
           </div>
           <div className="grid grid-cols-3 gap-1.5">
-            {months.map((month, index) => (
-              <Button
-                key={month}
-                variant={index === selectedMonth ? "default" : "ghost"}
-                className={cn(
-                  "h-9 text-xs px-1",
-                  index === selectedMonth && "bg-primary text-primary-foreground"
-                )}
-                onClick={() => handleMonthSelect(index)}
-              >
-                {month.slice(0, 3)}
-              </Button>
-            ))}
+            {months.map((month, index) => {
+              let isDisabled = false
+              if (selectedYear < minYear || selectedYear > maxYear) {
+                isDisabled = true
+              } else {
+                if (startMonth && selectedYear === startMonth.getFullYear() && index < startMonth.getMonth()) isDisabled = true
+                if (endMonth && selectedYear === endMonth.getFullYear() && index > endMonth.getMonth()) isDisabled = true
+              }
+              return (
+                <Button
+                  key={month}
+                  variant={index === selectedMonth ? "default" : "ghost"}
+                  className={cn(
+                    "h-9 text-xs px-1",
+                    index === selectedMonth && "bg-primary text-primary-foreground",
+                    isDisabled && "opacity-30 pointer-events-none"
+                  )}
+                  disabled={isDisabled}
+                  onClick={() => handleMonthSelect(index)}
+                >
+                  {month.slice(0, 3)}
+                </Button>
+              )
+            })}
           </div>
         </div>
       </div>

@@ -143,6 +143,12 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
         };
     }, [isOpen, initialData]);
 
+    const today = useMemo(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }, []);
+
     const phoneCountryCodes = useMemo(() => {
         return Country.getAllCountries().map((country: any) => ({
             label: `${country.flag} ${country.phonecode.startsWith('+') ? '' : '+'}${country.phonecode}`,
@@ -232,13 +238,23 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
             case 'incomeType':
                 // Keeping optional as per existing logic
                 break;
-            case 'startDate':
+            case 'startDate': {
                 if (!value) return 'Start Date is required';
+                const startVal = value instanceof Date ? value : new Date(value);
+                if (startVal > today) return 'Start date cannot be in the future';
                 break;
-            case 'endDate':
+            }
+            case 'endDate': {
                 if (formData.currentEmployment) return '';
                 if (!value) return 'End Date is required';
+                const endVal = value instanceof Date ? value : new Date(value);
+                if (endVal > today) return 'End date cannot be in the future';
+                if (formData.startDate) {
+                    const startVal = formData.startDate instanceof Date ? formData.startDate : new Date(formData.startDate);
+                    if (endVal <= startVal) return 'End date must be after start date';
+                }
                 break;
+            }
             case 'company':
                 if (!value || value.trim() === '') return 'Company is required';
                 break;
@@ -402,6 +418,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                                 }}
                                 placeholder="DD/MM/YYYY"
                                 className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 shadow-sm text-sm ${touched.startDate && errors.startDate ? 'border-2 border-red-500' : ''}`}
+                                maxDate={today}
                             />
                             {touched.startDate && errors.startDate && <p className="text-red-500 text-xs mt-1">{errors.startDate}</p>}
                         </div>
@@ -417,6 +434,9 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                                 }}
                                 placeholder="DD/MM/YYYY"
                                 className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 shadow-sm text-sm ${touched.endDate && errors.endDate ? 'border-2 border-red-500' : ''} ${formData.currentEmployment ? 'opacity-50 pointer-events-none' : ''}`}
+                                maxDate={today}
+                                minDate={formData.startDate}
+                                disabled={formData.currentEmployment}
                             />
                             {touched.endDate && errors.endDate && <p className="text-red-500 text-xs mt-1">{errors.endDate}</p>}
                         </div>

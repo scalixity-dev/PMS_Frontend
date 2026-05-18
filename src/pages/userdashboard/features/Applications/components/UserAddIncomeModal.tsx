@@ -131,6 +131,12 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
         }
     }, [isOpen, initialData]);
 
+    const today = useMemo(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }, []);
+
     const filteredCurrencies = useMemo(() => {
         if (!currencySearch) return currencyOptions;
         const searchLower = currencySearch.toLowerCase();
@@ -211,14 +217,23 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
 
     const validateField = (key: keyof IncomeFormData, value: any): string => {
         switch (key) {
-            case 'startDate':
+            case 'startDate': {
                 if (!value) return 'Start Date is required';
+                const startVal = value instanceof Date ? value : new Date(value as string);
+                if (startVal > today) return 'Start date cannot be in the future';
                 break;
-            case 'endDate':
-                if (!formData.currentEmployment && !value) return 'End Date is required';
+            }
+            case 'endDate': {
                 if (formData.currentEmployment) return '';
                 if (!value) return 'End Date is required';
+                const endVal = value instanceof Date ? value : new Date(value as string);
+                if (endVal > today) return 'End date cannot be in the future';
+                if (formData.startDate) {
+                    const startVal = formData.startDate instanceof Date ? formData.startDate : new Date(formData.startDate as string);
+                    if (endVal <= startVal) return 'End date must be after start date';
+                }
                 break;
+            }
             case 'company':
                 if (!value || String(value).trim() === '') return 'Company is required';
                 break;
@@ -395,6 +410,7 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                             }}
                             placeholder="DD/MM/YYYY"
                             className={`${inputClasses} ${touched.startDate && errors.startDate ? 'border-red-500' : ''}`}
+                            maxDate={today}
                         />
                         {touched.startDate && errors.startDate && <p className={errorClasses}>{errors.startDate}</p>}
                     </div>
@@ -411,6 +427,9 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                                 }}
                                 placeholder="DD/MM/YYYY"
                                 className={`${inputClasses} ${touched.endDate && errors.endDate ? 'border-red-500' : ''}`}
+                                maxDate={today}
+                                minDate={formData.startDate}
+                                disabled={formData.currentEmployment}
                             />
                         </div>
                         {touched.endDate && errors.endDate && <p className={errorClasses}>{errors.endDate}</p>}

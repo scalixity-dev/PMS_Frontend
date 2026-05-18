@@ -89,8 +89,12 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 
               onChange?.(date);
               setOpen(false);
             }}
-            fromDate={minDate}
-            toDate={maxDate}
+            startMonth={minDate}
+            endMonth={maxDate}
+            disabled={[
+              ...(minDate ? [{ before: minDate }] : []),
+              ...(maxDate ? [{ after: maxDate }] : []),
+            ] as any}
           />
         </div>
       )}

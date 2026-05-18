@@ -66,6 +66,12 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
     const [landlordPhoneCodeSearch, setLandlordPhoneCodeSearch] = useState('');
     const landlordPhoneCodeRef = useRef<HTMLDivElement>(null);
 
+    const today = useMemo(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }, []);
+
     // Load all countries on mount
     useEffect(() => {
         setCountries(Country.getAllCountries());
@@ -237,14 +243,21 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             }
         }
 
-        // moveInDate is always required
-        if (key === 'moveInDate' && !value) {
-            return 'Move in date is required';
+        if (key === 'moveInDate') {
+            if (!value) return 'Move in date is required';
+            const dateVal = value instanceof Date ? value : new Date(value);
+            if (dateVal > today) return 'Move in date cannot be in the future';
         }
-
-        // moveOutDate is required when residency type is Rent
-        if (key === 'moveOutDate' && formData.residencyType === 'Rent' && !value) {
-            return 'Move out date is required for rented properties';
+        if (key === 'moveOutDate') {
+            if (formData.residencyType === 'Rent' && !value) return 'Move out date is required for rented properties';
+            if (value) {
+                const dateVal = value instanceof Date ? value : new Date(value);
+                if (formData.moveInDate) {
+                    const moveInVal = formData.moveInDate instanceof Date ? formData.moveInDate : new Date(formData.moveInDate);
+                    if (dateVal <= moveInVal) return 'Move out date must be after move in date';
+                }
+                if (formData.isCurrent && dateVal < today) return 'Move out date must be today or later for current residence';
+            }
         }
 
         // Conditional fields for Rent
@@ -262,6 +275,12 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(value)) {
                     return 'Please enter a valid email address';
+                }
+            }
+            if (key === 'rentAmount') {
+                if (value) {
+                    if (isNaN(Number(value))) return 'Rent amount must be a number';
+                    if (Number(value) < 0) return 'Rent amount cannot be negative';
                 }
             }
         }
@@ -305,7 +324,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
 
         // Conditional: landlord fields when Rent
         if (formData.residencyType === 'Rent') {
-            ['landlordName', 'landlordPhone', 'landlordEmail'].forEach(field => {
+            ['landlordName', 'landlordPhone', 'landlordEmail', 'rentAmount'].forEach(field => {
                 const error = validateField(field, (formData as any)[field]);
                 if (error) {
                     newErrors[field] = error;
@@ -442,7 +461,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
 
         // Check conditional landlord fields when Rent
         if (formData.residencyType === 'Rent') {
-            const landlordValid = ['landlordName', 'landlordPhone', 'landlordEmail'].every(field => {
+            const landlordValid = ['landlordName', 'landlordPhone', 'landlordEmail', 'rentAmount'].every(field => {
                 return !validateField(field, (formData as any)[field]);
             });
             if (!landlordValid) return false;
@@ -672,6 +691,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                         placeholder="DD/MM/YYYY"
                                         className={getInputClassWithError('moveInDate')}
                                         popoverClassName="z-[60]"
+                                        maxDate={today}
                                     />
                                 </div>
                                 {touched.moveInDate && errors.moveInDate && (
@@ -693,7 +713,8 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                             placeholder="DD/MM/YYYY"
                                             className={getInputClassWithError('moveOutDate')}
                                             popoverClassName="z-[60]"
-                                            disabled={false}
+                                            minDate={formData.isCurrent ? today : formData.moveInDate}
+                                            maxDate={formData.isCurrent ? undefined : today}
                                         />
                                     ) : (
                                         <div className={cn("w-full text-left rounded-md bg-gray-100 px-4 py-3 text-sm text-gray-400 outline-none shadow-sm flex items-center justify-between cursor-not-allowed", getInputClassWithError('moveOutDate'))}>
@@ -712,18 +733,36 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                         {formData.residencyType === 'Rent' ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
                                 <div>
-                                    <label className={labelClasses}>Landlord Name *</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Enter name"
-                                        className={getInputClassWithError('landlordName')}
-                                        value={formData.landlordName}
-                                        onChange={(e) => handleChange('landlordName', e.target.value)}
-                                        onBlur={() => handleBlur('landlordName')}
-                                    />
-                                    {touched.landlordName && errors.landlordName && (
-                                        <p className="text-red-500 text-xs mt-1 ml-1">{errors.landlordName}</p>
-                                    )}
+                                    <div className="mb-6">
+                                        <label className={labelClasses}>Landlord Name *</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Enter name"
+                                            className={getInputClassWithError('landlordName')}
+                                            value={formData.landlordName}
+                                            onChange={(e) => handleChange('landlordName', e.target.value)}
+                                            onBlur={() => handleBlur('landlordName')}
+                                        />
+                                        {touched.landlordName && errors.landlordName && (
+                                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.landlordName}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className={labelClasses}>Rent Amount</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Enter amount"
+                                            className={getInputClassWithError('rentAmount')}
+                                            value={formData.rentAmount || ''}
+                                            onChange={(e) => handleChange('rentAmount', e.target.value)}
+                                            onBlur={() => handleBlur('rentAmount')}
+                                            min="0"
+                                            step="0.01"
+                                        />
+                                        {touched.rentAmount && errors.rentAmount && (
+                                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.rentAmount}</p>
+                                        )}
+                                    </div>
                                 </div>
                                 <div>
                                     <div className="mb-6">

@@ -49,6 +49,12 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
     const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
     const phoneCodeRef = useRef<HTMLDivElement>(null);
 
+    const maxDobDate = useMemo(() => {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - 5);
+        return d;
+    }, []);
+
     // Phone country codes
     const phoneCountryCodes = useMemo(() => {
         return Country.getAllCountries().map(country => ({
@@ -179,11 +185,22 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                     return 'Phone number cannot exceed 15 digits';
                 }
                 break;
-            case 'dob':
+            case 'dob': {
                 if (!value) {
                     return 'Date of birth is required';
                 }
+                const dateVal = value instanceof Date ? value : new Date(value);
+                const today = new Date();
+                const fiveYearsAgo = new Date();
+                fiveYearsAgo.setFullYear(today.getFullYear() - 5);
+                if (dateVal > today) {
+                    return 'Date of birth cannot be in the future';
+                }
+                if (dateVal > fiveYearsAgo) {
+                    return 'Date of birth must be at least 5 years ago';
+                }
                 break;
+            }
             case 'relationship':
                 if (!value || value.trim() === '') {
                     return 'Relationship is required';
@@ -445,6 +462,7 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                                 className={`w-full bg-white p-2.5 rounded-xl outline-none text-gray-700 shadow-sm text-sm ${touched.dob && errors.dob ? 'border-2 border-red-500' : 'border-none'
                                     }`}
                                 popoverClassName="bottom-full mb-2"
+                                maxDate={maxDobDate}
                             />
                         </div>
                         {touched.dob && errors.dob && (
