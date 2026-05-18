@@ -14,6 +14,7 @@ import { serviceProviderService, type BackendServiceProvider } from '../../../..
 import { useQuery } from '@tanstack/react-query';
 import { validateFile } from '../../../../utils/fileValidation';
 import { useGetLeasesByTenant, useGetLeasesByProperty } from '../../../../hooks/useLeaseQueries';
+import { CURRENCY_OPTIONS } from '../../../../utils/currency.utils';
 
 // Income Categories
 const INCOME_CATEGORIES = [
@@ -408,14 +409,7 @@ const IncomePayments: React.FC = () => {
                                 <CustomDropdown
                                     value={currency}
                                     onChange={setCurrency}
-                                    options={[
-                                        { value: 'USD', label: 'USD' },
-                                        { value: 'EUR', label: 'EUR' },
-                                        { value: 'GBP', label: 'GBP' },
-                                        { value: 'INR', label: 'INR' },
-                                        { value: 'CAD', label: 'CAD' },
-                                        { value: 'AUD', label: 'AUD' },
-                                    ]}
+                                    options={CURRENCY_OPTIONS}
                                     placeholder="Select Currency"
                                     buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                                 />

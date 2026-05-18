@@ -5,6 +5,8 @@ import type { ICountry, IState, ICity } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
 import { cn } from '@/lib/utils';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 
 export interface ResidenceFormData {
     isCurrent: boolean;
@@ -54,7 +56,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         landlordName: '',
         landlordPhone: '',
         landlordEmail: '',
-        landlordPhoneCountryCode: undefined,
+        landlordPhoneCountryCode: 'US|1',
         rentAmount: ''
     });
 
@@ -271,6 +273,9 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             }
         }
 
+        if (key === 'reason' && (!value || (typeof value === 'string' && value.trim() === ''))) {
+            return `Reason for ${formData.isCurrent ? 'moving' : 'leaving'} is required`;
+        }
         return '';
     };
 
@@ -318,18 +323,31 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             }
         }
 
+        // Reason is now mandatory
+        const reasonError = validateField('reason', formData.reason);
+        if (reasonError) {
+            newErrors.reason = reasonError;
+            isValid = false;
+        }
+
         setErrors(newErrors);
         return isValid;
     };
 
     const handleChange = (key: keyof ResidenceFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'landlordPhone') {
+            finalValue = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
 
         // Clear error for this field when user starts typing/selecting
         if (touched[key]) {
-            const error = validateField(key, value);
+            const error = validateField(key, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
+
+
 
         // Special case: when residencyType changes, revalidate conditional fields
         if (key === 'residencyType') {
@@ -383,7 +401,8 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             state: true,
             zip: true,
             country: true,
-            moveInDate: true
+            moveInDate: true,
+            reason: true
         };
 
         if (formData.residencyType === 'Rent') {
@@ -403,25 +422,6 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         if (validateAllFields()) {
             onSave(formData);
             onClose();
-            // Reset form after successful save
-            setFormData({
-                isCurrent: true,
-                address: '',
-                city: '',
-                state: '',
-                zip: '',
-                country: 'US',
-                residencyType: 'Rent',
-                moveInDate: undefined,
-                moveOutDate: undefined,
-                reason: '',
-                landlordName: '',
-                landlordPhone: '',
-                landlordEmail: '',
-                rentAmount: ''
-            });
-            setErrors({});
-            setTouched({});
         }
     };
 
@@ -452,6 +452,9 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         if (formData.residencyType === 'Others') {
             if (validateField('otherResidencyType', formData.otherResidencyType)) return false;
         }
+
+        // Check reason
+        if (validateField('reason', formData.reason)) return false;
 
         return baseValid;
     };
@@ -839,11 +842,13 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                             </div>
                         )}
 
-                        {/* Please Explain */}
+                        {/* Reason for leaving */}
                         <div>
-                            <label className={labelClasses}>Please Explain</label>
+                            <label className={labelClasses}>
+                                {formData.isCurrent ? 'Reason for moving *' : 'Reason for leaving *'}
+                            </label>
                             <textarea
-                                placeholder="Enter additional details"
+                                placeholder={formData.isCurrent ? "e.g. Relocating for work, seeking more space" : "e.g. Lease ended, relocating for work"}
                                 className={`${getInputClassWithError('reason')} h-32 resize-none pt-4`}
                                 value={formData.reason}
                                 onChange={(e) => handleChange('reason', e.target.value)}
@@ -858,11 +863,8 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                         <div className="pt-4">
                             <button
                                 onClick={handleSubmit}
-                                disabled={!isFormValid()}
-                                className={`px-10 py-3 rounded-xl font-medium transition-colors shadow-lg ${isFormValid()
-                                    ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    }`}
+                                disabled={false}
+                                className={`px-10 py-3 rounded-xl font-medium transition-colors shadow-lg bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer`}
                             >
                                 {initialData ? 'Save' : 'Add'}
                             </button>

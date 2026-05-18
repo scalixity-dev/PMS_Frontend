@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
 import type { EmergencyContactFormData } from '../store/applicationStore';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+
 
 interface AddEmergencyContactModalProps {
     isOpen: boolean;
@@ -159,13 +161,18 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
     };
 
     const handleChange = (key: keyof EmergencyContactFormData | 'phoneCountryCode', value: any) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'phoneNumber') {
+            finalValue = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
 
         if (key !== 'phoneCountryCode' && touched[key]) {
-            const error = validateField(key as keyof EmergencyContactFormData, value);
+            const error = validateField(key as keyof EmergencyContactFormData, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
+
 
     const handleBlur = (key: keyof EmergencyContactFormData) => {
         setTouched(prev => ({ ...prev, [key]: true }));
@@ -174,6 +181,18 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
     };
 
     const handleSubmit = () => {
+        const allTouched: Record<string, boolean> = {};
+        const allErrors: Record<string, string> = {};
+
+        (Object.keys(formData) as Array<keyof EmergencyContactFormData>).forEach(key => {
+            allTouched[key] = true;
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
+        setTouched(allTouched);
+        setErrors(allErrors);
+
         if (isFormValid()) {
             onSave(formData);
             onClose();
@@ -317,7 +336,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                     {/* Phone Number Input */}
                                     <input
                                         type="tel"
-                                        placeholder="Enter phone number"
+                                        placeholder="111-111-1111"
                                         className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-lg focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.phoneNumber && errors.phoneNumber ? 'text-red-500' : 'text-gray-700'
                                             }`}
                                         value={formData.phoneNumber}
@@ -387,8 +406,8 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                     <div>
                         <button
                             onClick={handleSubmit}
-                            disabled={!isFormValid()}
-                            className={`bg-[#3A6D6C] text-white px-12 py-3 rounded-lg text-sm font-medium transition-colors shadow-sm ${isFormValid() ? 'bg-[#3A6D6C] hover:bg-[#2c5251]' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                            disabled={false}
+                            className={`bg-[#3A6D6C] text-white px-12 py-3 rounded-lg text-sm font-medium transition-colors shadow-sm hover:bg-[#2c5251]`}
                         >
                             {initialData ? 'Save' : 'Add'}
                         </button>

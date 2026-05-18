@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Check, Search, ChevronDown } from 'lucide-react';
+import { Country } from 'country-state-city';
 import CustomDropdown from '../../../../Dashboard/components/CustomDropdown';
 import DatePicker from '@/components/ui/DatePicker';
 import BaseModal from '@/components/common/modals/BaseModal';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+
 
 export interface IncomeFormData {
     currentEmployment: boolean;
@@ -16,9 +19,11 @@ export interface IncomeFormData {
     address: string;
     office: string;
     companyPhone: string;
+    companyPhoneCountryCode?: string;
     supervisorName: string;
     supervisorEmail: string;
     supervisorPhone: string;
+    supervisorPhoneCountryCode?: string;
 }
 
 interface UserAddIncomeModalProps {
@@ -79,9 +84,11 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
         address: '',
         office: '',
         companyPhone: '',
+        companyPhoneCountryCode: 'US|1',
         supervisorName: '',
         supervisorEmail: '',
-        supervisorPhone: ''
+        supervisorPhone: '',
+        supervisorPhoneCountryCode: 'US|1'
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -89,6 +96,13 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
     const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
     const [currencySearch, setCurrencySearch] = useState('');
     const currencyRef = useRef<HTMLDivElement>(null);
+    const companyPhoneCodeRef = useRef<HTMLDivElement>(null);
+    const supervisorPhoneCodeRef = useRef<HTMLDivElement>(null);
+
+    const [isCompanyPhoneCodeOpen, setIsCompanyPhoneCodeOpen] = useState(false);
+    const [isSupervisorPhoneCodeOpen, setIsSupervisorPhoneCodeOpen] = useState(false);
+    const [companyPhoneCodeSearch, setCompanyPhoneCodeSearch] = useState('');
+    const [supervisorPhoneCodeSearch, setSupervisorPhoneCodeSearch] = useState('');
 
     useEffect(() => {
         if (isOpen && initialData) {
@@ -106,9 +120,11 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                 address: '',
                 office: '',
                 companyPhone: '',
+                companyPhoneCountryCode: 'US|1',
                 supervisorName: '',
                 supervisorEmail: '',
-                supervisorPhone: ''
+                supervisorPhone: '',
+                supervisorPhoneCountryCode: 'US|1'
             });
             setErrors({});
             setTouched({});
@@ -125,6 +141,47 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
         );
     }, [currencySearch]);
 
+    const phoneCountryCodes = useMemo(() => {
+        return Country.getAllCountries().map(country => ({
+            label: `${country.flag} ${country.phonecode.startsWith('+') ? '' : '+'}${country.phonecode}`,
+            value: `${country.isoCode}|${country.phonecode}`,
+            name: country.name,
+            phonecode: country.phonecode.startsWith('+') ? country.phonecode : `+${country.phonecode}`,
+            flag: country.flag,
+            isoCode: country.isoCode,
+        })).sort((a, b) => a.name.localeCompare(b.name));
+    }, []);
+
+    const filteredCompanyPhoneCodes = useMemo(() => {
+        if (!companyPhoneCodeSearch) return phoneCountryCodes;
+        const searchLower = companyPhoneCodeSearch.toLowerCase();
+        return phoneCountryCodes.filter(code =>
+            code.name.toLowerCase().includes(searchLower) ||
+            code.phonecode.includes(searchLower) ||
+            code.isoCode.toLowerCase().includes(searchLower)
+        );
+    }, [companyPhoneCodeSearch, phoneCountryCodes]);
+
+    const filteredSupervisorPhoneCodes = useMemo(() => {
+        if (!supervisorPhoneCodeSearch) return phoneCountryCodes;
+        const searchLower = supervisorPhoneCodeSearch.toLowerCase();
+        return phoneCountryCodes.filter(code =>
+            code.name.toLowerCase().includes(searchLower) ||
+            code.phonecode.includes(searchLower) ||
+            code.isoCode.toLowerCase().includes(searchLower)
+        );
+    }, [supervisorPhoneCodeSearch, phoneCountryCodes]);
+
+    const selectedCompanyPhoneCode = useMemo(() => {
+        if (!formData.companyPhoneCountryCode) return null;
+        return phoneCountryCodes.find(code => code.value === formData.companyPhoneCountryCode);
+    }, [formData.companyPhoneCountryCode, phoneCountryCodes]);
+
+    const selectedSupervisorPhoneCode = useMemo(() => {
+        if (!formData.supervisorPhoneCountryCode) return null;
+        return phoneCountryCodes.find(code => code.value === formData.supervisorPhoneCountryCode);
+    }, [formData.supervisorPhoneCountryCode, phoneCountryCodes]);
+
     const selectedCurrency = useMemo(() => {
         if (!formData.currency) return currencyOptions[0];
         return currencyOptions.find(c => c.code === formData.currency) || currencyOptions[0];
@@ -135,6 +192,14 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
             if (currencyRef.current && !currencyRef.current.contains(event.target as Node)) {
                 setIsCurrencyOpen(false);
                 setCurrencySearch('');
+            }
+            if (companyPhoneCodeRef.current && !companyPhoneCodeRef.current.contains(event.target as Node)) {
+                setIsCompanyPhoneCodeOpen(false);
+                setCompanyPhoneCodeSearch('');
+            }
+            if (supervisorPhoneCodeRef.current && !supervisorPhoneCodeRef.current.contains(event.target as Node)) {
+                setIsSupervisorPhoneCodeOpen(false);
+                setSupervisorPhoneCodeSearch('');
             }
         };
 
@@ -162,6 +227,7 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                 break;
             case 'monthlyAmount':
                 if (!value || String(value).trim() === '') return 'Monthly Income is required';
+                if (Number(value) <= 0) return 'Monthly Income must be a positive number';
                 break;
             case 'address':
                 if (!value || String(value).trim() === '') return 'Address is required';
@@ -170,7 +236,16 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                 if (!value || String(value).trim() === '') return 'Office is required';
                 break;
             case 'companyPhone':
+                if (!formData.companyPhoneCountryCode) {
+                    return 'Please select a country code first';
+                }
                 if (!value || String(value).trim() === '') return 'Company Phone is required';
+                {
+                    const digitsOnly = value.replace(/\D/g, '');
+                    if (digitsOnly.length < 4 || digitsOnly.length > 15) {
+                        return 'Phone number must be between 4 and 15 digits';
+                    }
+                }
                 break;
             case 'supervisorName':
                 if (!value || String(value).trim() === '') return 'Supervisor Name is required';
@@ -179,7 +254,15 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                 if (value && String(value).trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value))) return 'Invalid email';
                 break;
             case 'supervisorPhone':
-                if (!value || String(value).trim() === '') return 'Supervisor Phone is required';
+                if (value && String(value).trim() !== '') {
+                    if (!formData.supervisorPhoneCountryCode) {
+                        return 'Please select a country code first';
+                    }
+                    const digitsOnly = value.replace(/\D/g, '');
+                    if (digitsOnly.length < 4 || digitsOnly.length > 15) {
+                        return 'Phone number must be between 4 and 15 digits';
+                    }
+                }
                 break;
         }
         return '';
@@ -187,7 +270,7 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
 
     const isFormValid = () => {
         const requiredFields: Array<keyof IncomeFormData> = [
-            'startDate', 'company', 'position', 'monthlyAmount', 'address', 'office', 'companyPhone', 'supervisorName', 'supervisorPhone'
+            'startDate', 'company', 'position', 'monthlyAmount', 'address', 'office', 'companyPhone', 'supervisorName'
         ];
 
         let isValid = requiredFields.every(key => !validateField(key, formData[key]));
@@ -201,12 +284,17 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
     };
 
     const handleChange = (key: keyof IncomeFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'companyPhone' || key === 'supervisorPhone') {
+            finalValue = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
         if (touched[key]) {
-            const error = validateField(key, value);
+            const error = validateField(key, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
+
 
     const handleBlur = (key: keyof IncomeFormData, currentValue?: any) => {
         setTouched(prev => ({ ...prev, [key]: true }));
@@ -216,11 +304,17 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
     };
 
     const handleSubmit = () => {
-        const allTouched = (Object.keys(formData) as Array<keyof IncomeFormData>).reduce((acc, key) => {
-            acc[key] = true;
-            return acc;
-        }, {} as Record<string, boolean>);
+        const allTouched: Record<string, boolean> = {};
+        const allErrors: Record<string, string> = {};
+
+        (Object.keys(formData) as Array<keyof IncomeFormData>).forEach(key => {
+            allTouched[key] = true;
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
         setTouched(allTouched);
+        setErrors(allErrors);
 
         if (isFormValid()) {
             onSave(formData);
@@ -259,7 +353,7 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                 {
                     label: initialData ? 'Save Changes' : 'Add',
                     onClick: handleSubmit,
-                    disabled: !isFormValid(),
+                    disabled: false,
                     variant: 'primary',
                     className: "bg-[#7ED957] hover:bg-[#6BC847] border-none text-white",
                     icon: <Check size={16} strokeWidth={3} />
@@ -462,18 +556,93 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                     {/* Company Phone */}
                     <div>
                         <label className={labelClasses}>Company Phone Number *</label>
-                        <input
-                            type="tel"
-                            placeholder="Type Phone Number"
-                            className={`${inputClasses} ${touched.companyPhone && errors.companyPhone ? 'border-red-500' : ''}`}
-                            value={formData.companyPhone}
-                            onChange={(e) => {
-                                const value = e.target.value.replace(/[^\d\s\-\+\(\)]/g, '');
-                                handleChange('companyPhone', value);
-                            }}
-                            onBlur={() => handleBlur('companyPhone')}
-                        />
-                        {touched.companyPhone && errors.companyPhone && <p className={errorClasses}>{errors.companyPhone}</p>}
+                        <div className={`flex border rounded-md transition-all ${(touched.companyPhone && errors.companyPhone) || (!formData.companyPhoneCountryCode && touched.companyPhone)
+                            ? 'border-red-500'
+                            : 'border-gray-300 focus-within:border-[#7CD947] focus-within:ring-1 focus-within:ring-[#7CD947]'
+                            }`}>
+                            {/* Phone Code Selector */}
+                            <div className="relative" ref={companyPhoneCodeRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCompanyPhoneCodeOpen(!isCompanyPhoneCodeOpen)}
+                                    className={`flex items-center gap-1 px-3 py-2 border-r bg-gray-50 rounded-l-md focus:outline-none text-sm hover:bg-gray-100 transition-colors h-full min-w-[80px] ${touched.companyPhone && !formData.companyPhoneCountryCode ? 'border-red-500' : ''
+                                        }`}
+                                >
+                                    <span className="text-sm font-medium">
+                                        {selectedCompanyPhoneCode ? (
+                                            <span className="flex items-center gap-1">
+                                                <span>{selectedCompanyPhoneCode.flag}</span>
+                                                <span className="hidden sm:inline text-xs text-gray-500">{selectedCompanyPhoneCode.phonecode}</span>
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-500">Code</span>
+                                        )}
+                                    </span>
+                                    <ChevronDown size={14} className={`text-gray-500 transition-transform ${isCompanyPhoneCodeOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {/* Dropdown */}
+                                {isCompanyPhoneCodeOpen && (
+                                    <div className="absolute left-0 top-full mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-[100] max-h-60 overflow-hidden flex flex-col">
+                                        <div className="p-2 border-b border-gray-200">
+                                            <div className="relative">
+                                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search..."
+                                                    value={companyPhoneCodeSearch}
+                                                    onChange={(e) => setCompanyPhoneCodeSearch(e.target.value)}
+                                                    className="w-full pl-8 pr-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:border-[#7CD947]"
+                                                    autoFocus
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="overflow-y-auto max-h-48">
+                                            {filteredCompanyPhoneCodes.map((code) => (
+                                                <button
+                                                    key={code.value}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        handleChange('companyPhoneCountryCode', code.value);
+                                                        setIsCompanyPhoneCodeOpen(false);
+                                                        setCompanyPhoneCodeSearch('');
+                                                        if (touched.companyPhone && formData.companyPhone) {
+                                                            setTimeout(() => {
+                                                                handleBlur('companyPhone');
+                                                            }, 0);
+                                                        }
+                                                    }}
+                                                    className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors text-left ${formData.companyPhoneCountryCode === code.value ? 'bg-[#7ED957]/10' : ''}`}
+                                                >
+                                                    <span className="text-lg">{code.flag}</span>
+                                                    <span className="flex-1 text-xs font-medium text-gray-700 truncate">{code.name}</span>
+                                                    <span className="text-xs text-gray-500">{code.phonecode}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <input
+                                type="tel"
+                                placeholder="Phone"
+                                className={`flex-1 min-w-0 px-3 py-2 rounded-r-md focus:outline-none text-sm border-0 bg-transparent ${!formData.companyPhoneCountryCode ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                value={formData.companyPhone}
+                                onChange={(e) => {
+                                    if (!formData.companyPhoneCountryCode) return;
+                                    const value = e.target.value.replace(/[^\d\s\-\+\(\)]/g, '');
+                                    handleChange('companyPhone', value);
+                                }}
+                                onBlur={() => handleBlur('companyPhone')}
+                                disabled={!formData.companyPhoneCountryCode}
+                            />
+                        </div>
+                        {(touched.companyPhone && errors.companyPhone) || (!formData.companyPhoneCountryCode && touched.companyPhone) ? (
+                            <p className={errorClasses}>
+                                {errors.companyPhone || 'Please select a country code first'}
+                            </p>
+                        ) : null}
                     </div>
 
                     <div className="md:col-span-2 border-t border-gray-100 pt-4 mt-2">
@@ -509,19 +678,94 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
 
                             {/* Supervisor Phone */}
                             <div>
-                                <label className={labelClasses}>Supervisor Phone *</label>
-                                <input
-                                    type="tel"
-                                    placeholder="Add Phone number here"
-                                    className={`${inputClasses} ${touched.supervisorPhone && errors.supervisorPhone ? 'border-red-500' : ''}`}
-                                    value={formData.supervisorPhone}
-                                    onChange={(e) => {
-                                        const value = e.target.value.replace(/[^\d\s\-\+\(\)]/g, '');
-                                        handleChange('supervisorPhone', value);
-                                    }}
-                                    onBlur={() => handleBlur('supervisorPhone')}
-                                />
-                                {touched.supervisorPhone && errors.supervisorPhone && <p className={errorClasses}>{errors.supervisorPhone}</p>}
+                                <label className={labelClasses}>Supervisor Phone</label>
+                                <div className={`flex border rounded-md transition-all ${(touched.supervisorPhone && errors.supervisorPhone) || (!formData.supervisorPhoneCountryCode && touched.supervisorPhone)
+                                    ? 'border-red-500'
+                                    : 'border-gray-300 focus-within:border-[#7CD947] focus-within:ring-1 focus-within:ring-[#7CD947]'
+                                    }`}>
+                                    {/* Phone Code Selector */}
+                                    <div className="relative" ref={supervisorPhoneCodeRef}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsSupervisorPhoneCodeOpen(!isSupervisorPhoneCodeOpen)}
+                                            className={`flex items-center gap-1 px-3 py-2 border-r bg-gray-50 rounded-l-md focus:outline-none text-sm hover:bg-gray-100 transition-colors h-full min-w-[80px] ${touched.supervisorPhone && !formData.supervisorPhoneCountryCode ? 'border-red-500' : ''
+                                                }`}
+                                        >
+                                            <span className="text-sm font-medium">
+                                                {selectedSupervisorPhoneCode ? (
+                                                    <span className="flex items-center gap-1">
+                                                        <span>{selectedSupervisorPhoneCode.flag}</span>
+                                                        <span className="hidden sm:inline text-xs text-gray-500">{selectedSupervisorPhoneCode.phonecode}</span>
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-500">Code</span>
+                                                )}
+                                            </span>
+                                            <ChevronDown size={14} className={`text-gray-500 transition-transform ${isSupervisorPhoneCodeOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+
+                                        {/* Dropdown */}
+                                        {isSupervisorPhoneCodeOpen && (
+                                            <div className="absolute left-0 top-full mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-[100] max-h-60 overflow-hidden flex flex-col">
+                                                <div className="p-2 border-b border-gray-200">
+                                                    <div className="relative">
+                                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Search..."
+                                                            value={supervisorPhoneCodeSearch}
+                                                            onChange={(e) => setSupervisorPhoneCodeSearch(e.target.value)}
+                                                            className="w-full pl-8 pr-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:border-[#7CD947]"
+                                                            autoFocus
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="overflow-y-auto max-h-48">
+                                                    {filteredSupervisorPhoneCodes.map((code) => (
+                                                        <button
+                                                            key={code.value}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleChange('supervisorPhoneCountryCode', code.value);
+                                                                setIsSupervisorPhoneCodeOpen(false);
+                                                                setSupervisorPhoneCodeSearch('');
+                                                                if (touched.supervisorPhone && formData.supervisorPhone) {
+                                                                    setTimeout(() => {
+                                                                        handleBlur('supervisorPhone');
+                                                                    }, 0);
+                                                                }
+                                                            }}
+                                                            className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors text-left ${formData.supervisorPhoneCountryCode === code.value ? 'bg-[#7ED957]/10' : ''}`}
+                                                        >
+                                                            <span className="text-lg">{code.flag}</span>
+                                                            <span className="flex-1 text-xs font-medium text-gray-700 truncate">{code.name}</span>
+                                                            <span className="text-xs text-gray-500">{code.phonecode}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <input
+                                        type="tel"
+                                        placeholder="Phone"
+                                        className={`flex-1 min-w-0 px-3 py-2 rounded-r-md focus:outline-none text-sm border-0 bg-transparent ${!formData.supervisorPhoneCountryCode ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                        value={formData.supervisorPhone}
+                                        onChange={(e) => {
+                                            if (!formData.supervisorPhoneCountryCode) return;
+                                            const value = e.target.value.replace(/[^\d\s\-\+\(\)]/g, '');
+                                            handleChange('supervisorPhone', value);
+                                        }}
+                                        onBlur={() => handleBlur('supervisorPhone')}
+                                        disabled={!formData.supervisorPhoneCountryCode}
+                                    />
+                                </div>
+                                {(touched.supervisorPhone && errors.supervisorPhone) || (!formData.supervisorPhoneCountryCode && touched.supervisorPhone) ? (
+                                    <p className={errorClasses}>
+                                        {errors.supervisorPhone || 'Please select a country code first'}
+                                    </p>
+                                ) : null}
                             </div>
                         </div>
                     </div>

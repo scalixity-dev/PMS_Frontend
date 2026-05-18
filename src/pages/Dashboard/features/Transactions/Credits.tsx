@@ -14,6 +14,7 @@ import { useGetAllApplications } from '../../../../hooks/useApplicationQueries';
 import { serviceProviderService } from '../../../../services/service-provider.service';
 import { useGetTransactionTags } from '../../../../hooks/useTransactionQueries';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { CURRENCY_OPTIONS as SHARED_CURRENCY_OPTIONS } from '../../../../utils/currency.utils';
 
 const CREDIT_CATEGORIES = [
     { value: 'general_credit', label: 'General Credit' },
@@ -22,14 +23,7 @@ const CREDIT_CATEGORIES = [
     { value: 'other', label: 'Other' },
 ];
 
-const CURRENCY_OPTIONS = [
-    { value: 'USD', label: 'USD' },
-    { value: 'EUR', label: 'EUR' },
-    { value: 'GBP', label: 'GBP' },
-    { value: 'INR', label: 'INR' },
-    { value: 'CAD', label: 'CAD' },
-    { value: 'AUD', label: 'AUD' },
-];
+const CURRENCY_OPTIONS = SHARED_CURRENCY_OPTIONS;
 
 const PAYMENT_METHOD_OPTIONS = [
     { value: 'CASH', label: 'Cash' },

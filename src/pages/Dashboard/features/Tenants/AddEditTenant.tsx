@@ -4,7 +4,9 @@ import { ChevronLeft, Plus, Trash2, Upload, FileText, X } from 'lucide-react';
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from '../../components/CustomDropdown';
+import { formatPhoneNumber } from '@/utils/phone.utils';
 import ImageCropModal from './components/ImageCropModal';
+
 import { useTenantFormStore } from './store/tenantFormStore';
 import {
     useGetTenant,
@@ -292,8 +294,13 @@ const AddEditTenant = () => {
 
     const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        updatePersonalInfo(name, value);
+        let finalValue = value;
+        if (name === 'phone') {
+            finalValue = formatPhoneNumber(value);
+        }
+        updatePersonalInfo(name, finalValue);
     };
+
 
     const handleForwardingAddressChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -624,7 +631,7 @@ const AddEditTenant = () => {
                         <InputField label="Last Name" name="lastName" value={formData.personalInfo.lastName} onChange={handlePersonalInfoChange} placeholder="Last Name" error={errors.lastName} required />
                         <InputField label="Email" name="email" value={formData.personalInfo.email} onChange={handlePersonalInfoChange} placeholder="Email Address" type="email" error={errors.email} required />
                         <InputField label="Date of Birth" name="dateOfBirth" type="date" value={formData.personalInfo.dateOfBirth} onChange={handlePersonalInfoChange} placeholder="YYYY-MM-DD" error={errors.dateOfBirth} required />
-                        <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" error={errors.phone} required />
+                        <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="111-111-1111" error={errors.phone} required />
                     </div>
                 </div>
 
@@ -725,7 +732,8 @@ const AddEditTenant = () => {
                                     <InputField
                                         label="Phone Number"
                                         value={contact.phone}
-                                        onChange={(e: any) => updateEmergencyContact(contact.id, 'phone', e.target.value)}
+                                        onChange={(e: any) => updateEmergencyContact(contact.id, 'phone', formatPhoneNumber(e.target.value))}
+
                                         placeholder="Phone Number"
                                     />
                                 </div>

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import type { LinkProps } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 type BaseProps = {
   /** Optional label text; ignored when children are provided */
@@ -45,7 +46,7 @@ function PrimaryActionButton(props: PrimaryActionButtonProps): React.ReactElemen
   } = props;
   
   const content = children ?? text;
-  const classes = `${baseClasses} ${className}`.trim();
+  const classes = cn(baseClasses, className);
   
   // Extract aria-label/ariaLabel from rest to handle it explicitly
   const restWithAriaLabel = rest as Record<string, unknown>;

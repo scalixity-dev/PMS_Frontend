@@ -445,7 +445,7 @@ const Recurring: React.FC = () => {
 
                                 {/* Amount */}
                                 <div className="text-gray-900 text-sm font-bold">
-                                    {item.currency === 'USD' ? '$' : item.currency === 'EUR' ? '€' : item.currency === 'GBP' ? '£' : item.currency === 'INR' ? '$' : item.currency} {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    $ {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </div>
 
                                 {/* Actions */}
@@ -495,7 +495,7 @@ const Recurring: React.FC = () => {
                                 <div className="space-y-1">
                                     <div className="text-lg font-bold text-gray-800">{item.property}</div>
                                     <div className="text-2xl font-bold text-gray-900">
-                                        {item.currency === 'USD' ? '$' : item.currency === 'EUR' ? '€' : item.currency === 'GBP' ? '£' : item.currency === 'INR' ? '$' : item.currency} {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        $ {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </div>
                                 </div>
 

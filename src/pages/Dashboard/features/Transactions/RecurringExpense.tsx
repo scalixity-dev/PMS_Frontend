@@ -11,6 +11,7 @@ import { TRANSACTION_CATEGORIES } from '../../../../utils/transactionCategories'
 import { useTransactionStore } from './store/transactionStore';
 import { validateFile } from '../../../../utils/fileValidation';
 import { useCreateRecurringIncome } from '../../../../hooks/useTransactionQueries';
+import { CURRENCY_OPTIONS } from '../../../../utils/currency.utils';
 
 
 
@@ -281,13 +282,7 @@ const RecurringExpense: React.FC = () => {
                                 <CustomDropdown
                                     value={currency}
                                     onChange={setCurrency}
-                                    options={[
-                                        { value: 'USD', label: 'USD' },
-                                        { value: 'EUR', label: 'EUR' },
-                                        { value: 'GBP', label: 'GBP' },
-                                        { value: 'CAD', label: 'CAD' },
-                                        { value: 'AUD', label: 'AUD' },
-                                    ]}
+                                    options={CURRENCY_OPTIONS}
                                     placeholder="Select Currency"
                                     buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                                 />

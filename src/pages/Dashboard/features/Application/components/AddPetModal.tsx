@@ -173,15 +173,19 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
     };
 
     const handleSubmit = () => {
-        // Mark all required fields as touched
         const requiredFields: Array<keyof PetFormData> = ['type', 'name', 'weight', 'breed'];
-        const allTouched = requiredFields.reduce((acc, key) => {
-            acc[key] = true;
-            return acc;
-        }, {} as Record<string, boolean>);
-        setTouched(allTouched);
+        const allTouched: Record<string, boolean> = {};
+        const allErrors: Record<string, string> = {};
 
-        // Validate all fields
+        requiredFields.forEach(key => {
+            allTouched[key] = true;
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
+        setTouched(allTouched);
+        setErrors(allErrors);
+
         if (validateAllFields()) {
             onSave(formData);
             onClose();
@@ -340,11 +344,8 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                         <div className="pt-4">
                             <button
                                 onClick={handleSubmit}
-                                disabled={!isFormValid()}
-                                className={`px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-md ${isFormValid()
-                                    ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    }`}
+                                disabled={false}
+                                className={`px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-md bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer`}
                             >
                                 {initialData ? 'Save' : 'Add'}
                             </button>

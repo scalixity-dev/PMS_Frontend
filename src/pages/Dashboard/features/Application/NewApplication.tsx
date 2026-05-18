@@ -216,7 +216,18 @@ const NewApplication: React.FC = () => {
         }
     };
 
-    const handlePropertySelected = () => {
+    const handlePropertySelected = async () => {
+        try {
+            const { leasingService } = await import('../../../../services/leasing.service');
+            const leasing = await leasingService.getByPropertyId(formData.propertyId);
+            if (!leasing) {
+                setErrorMessages(['This property does not have an active leasing set up. Please create a leasing for this property first before creating an application.']);
+                setShowErrorModal(true);
+                return;
+            }
+        } catch {
+            // If check fails due to network issue, still allow proceeding — final submit will catch it
+        }
         setIsPropertySelected(true);
     };
 

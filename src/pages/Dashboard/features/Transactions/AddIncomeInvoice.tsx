@@ -14,6 +14,7 @@ import { serviceProviderService, type BackendServiceProvider } from '../../../..
 import { useQuery } from '@tanstack/react-query';
 import { validateFile } from '../../../../utils/fileValidation';
 import { useGetLeasesByTenant, useGetLeasesByProperty } from '../../../../hooks/useLeaseQueries';
+import { CURRENCY_OPTIONS } from '../../../../utils/currency.utils';
 
 // Income Categories
 const INCOME_CATEGORIES = [
@@ -229,7 +230,7 @@ const AddIncomeInvoice: React.FC = () => {
 		
 		// Validate required fields
 		if (!amount || parseFloat(amount) <= 0) {
-			setError('Amount is required and must be greater than 0');
+			setError('Amount is required and must be a positive value');
 			return;
 		}
 
@@ -408,11 +409,7 @@ const AddIncomeInvoice: React.FC = () => {
 								<CustomDropdown
 									value={currency}
 									onChange={setCurrency}
-									options={[
-										{ value: 'USD', label: 'USD' },
-										{ value: 'EUR', label: 'EUR' },
-										{ value: 'GBP', label: 'GBP' },
-									]}
+									options={CURRENCY_OPTIONS}
 									placeholder="Select Currency"
 									buttonClassName="!rounded-md"
 								/>

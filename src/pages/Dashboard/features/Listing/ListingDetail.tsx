@@ -1,4 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
@@ -532,8 +534,9 @@ const ListingDetail: React.FC = () => {
             contact: {
                 name: property.listingContactName || 'N/A',
                 phone: property.listingPhoneNumber
-                    ? `${property.listingPhoneCountryCode || ''} ${property.listingPhoneNumber}`.trim()
+                    ? `${property.listingPhoneCountryCode || ''} ${formatPhoneNumber(property.listingPhoneNumber)}`.trim()
                     : 'N/A',
+
                 email: property.listingEmail || 'N/A',
                 avatar: '' // No avatar in backend
             },
@@ -1002,8 +1005,12 @@ const ListingDetail: React.FC = () => {
                                         }
                                         setIsLeaseTermsEditing(!isLeaseTermsEditing);
                                     }}
-                                    disabled={updateListing.isPending}
-                                    className={`${isLeaseTermsEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50`}
+                                    disabled={updateListing.isPending || (isLeaseTermsEditing && (
+                                        Number(leaseTerms?.monthlyRent) <= 0 ||
+                                        Number(leaseTerms?.securityDeposit) < 0 ||
+                                        Number(leaseTerms?.amountRefundable) < 0
+                                    ))}
+                                    className={`${isLeaseTermsEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
                                     {isLeaseTermsEditing ? (updateListing.isPending ? 'Saving...' : 'Done') : 'Edit'} <SquarePen className="w-3 h-3" />
                                 </button>
@@ -1034,7 +1041,7 @@ const ListingDetail: React.FC = () => {
                                                     type="number"
                                                     value={leaseTerms?.monthlyRent || 0}
                                                     onChange={(e) => setLeaseTerms({ ...leaseTerms, monthlyRent: parseFloat(e.target.value) || 0 })}
-                                                    className="text-xs font-bold text-gray-800 mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2"
+                                                    className={`text-xs font-bold mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2 ${Number(leaseTerms?.monthlyRent) <= 0 ? 'text-red-500 border-red-500' : 'text-gray-800'}`}
                                                 />
                                             ) : (
                                                 <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.monthlyRent || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
@@ -1092,7 +1099,7 @@ const ListingDetail: React.FC = () => {
                                                     type="number"
                                                     value={leaseTerms?.securityDeposit || 0}
                                                     onChange={(e) => setLeaseTerms({ ...leaseTerms, securityDeposit: parseFloat(e.target.value) || 0 })}
-                                                    className="text-xs font-bold text-gray-800 mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2"
+                                                    className={`text-xs font-bold mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2 ${Number(leaseTerms?.securityDeposit) <= 0 ? 'text-red-500 border-red-500' : 'text-gray-800'}`}
                                                 />
                                             ) : (
                                                 <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.securityDeposit || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
@@ -1105,7 +1112,7 @@ const ListingDetail: React.FC = () => {
                                                     type="number"
                                                     value={leaseTerms?.amountRefundable || 0}
                                                     onChange={(e) => setLeaseTerms({ ...leaseTerms, amountRefundable: parseFloat(e.target.value) || 0 })}
-                                                    className="text-xs font-bold text-gray-800 mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2"
+                                                    className={`text-xs font-bold mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2 ${Number(leaseTerms?.amountRefundable) < 0 ? 'text-red-500 border-red-500' : 'text-gray-800'}`}
                                                 />
                                             ) : (
                                                 <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.amountRefundable || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
@@ -1163,8 +1170,11 @@ const ListingDetail: React.FC = () => {
                                             setIsPetPolicyEditing(true);
                                         }
                                     }}
-                                    disabled={isSavingPetPolicy}
-                                    className={`${isPetPolicyEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50`}
+                                    disabled={isSavingPetPolicy || (isPetPolicyEditing && (
+                                        Number(petPolicyEdit?.petFee) < 0 ||
+                                        Number(petPolicyEdit?.petDeposit) < 0
+                                    ))}
+                                    className={`${isPetPolicyEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
                                     {isPetPolicyEditing ? (isSavingPetPolicy ? 'Saving...' : 'Done') : 'Edit'} <SquarePen className="w-3 h-3" />
                                 </button>
@@ -1218,7 +1228,7 @@ const ListingDetail: React.FC = () => {
                                                             type="number"
                                                             value={petPolicyEdit.petFee}
                                                             onChange={(e) => setPetPolicyEdit({ ...petPolicyEdit, petFee: parseFloat(e.target.value) || 0 })}
-                                                            className="text-sm font-medium text-gray-800 bg-transparent text-right focus:outline-none border-b border-gray-400 w-28"
+                                                            className={`text-sm font-medium mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-28 ${Number(petPolicyEdit.petFee) < 0 ? 'text-red-500 border-red-500' : 'text-gray-800'}`}
                                                         />
                                                     </div>
                                                 </div>
@@ -1231,7 +1241,7 @@ const ListingDetail: React.FC = () => {
                                                             type="number"
                                                             value={petPolicyEdit.petDeposit}
                                                             onChange={(e) => setPetPolicyEdit({ ...petPolicyEdit, petDeposit: parseFloat(e.target.value) || 0 })}
-                                                            className="text-sm font-medium text-gray-800 bg-transparent text-right focus:outline-none border-b border-gray-400 w-28"
+                                                            className={`text-sm font-medium mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-28 ${Number(petPolicyEdit.petDeposit) < 0 ? 'text-red-500 border-red-500' : 'text-gray-800'}`}
                                                         />
                                                     </div>
                                                 </div>
@@ -1590,11 +1600,11 @@ const ListingDetail: React.FC = () => {
                                                 <input
                                                     type="text"
                                                     value={contactDetails?.phone || ''}
-                                                    onChange={(e) => setContactDetails({ ...contactDetails, phone: e.target.value })}
+                                                    onChange={(e) => setContactDetails({ ...contactDetails, phone: formatPhoneNumber(e.target.value) })}
                                                     className="text-sm font-bold text-gray-800 bg-transparent focus:outline-none border-b border-gray-400 w-full"
                                                 />
                                             ) : (
-                                                <span className="text-sm font-bold text-gray-800">{contactDetails?.phone || 'N/A'}</span>
+                                                <span className="text-sm font-bold text-gray-800">{contactDetails?.phone ? formatPhoneNumber(contactDetails.phone) : 'N/A'}</span>
                                             )}
                                         </div>
                                         <div className="bg-[#E8E8EA] px-4 py-2 rounded-full flex items-center gap-3">

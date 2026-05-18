@@ -9,6 +9,16 @@ interface ApplicationFeeDetailsProps {
 
 const ApplicationFeeDetails: React.FC<ApplicationFeeDetailsProps> = ({ propertyId }) => {
     const { formData, updateFormData } = useListUnitStore();
+    const [validationError, setValidationError] = React.useState<string>('');
+
+    const validateField = (value: string) => {
+        const numValue = parseFloat(value);
+        if (value && (isNaN(numValue) || numValue < 0)) {
+            setValidationError('Value must be a positive number');
+        } else {
+            setValidationError('');
+        }
+    };
 
     // Use React Query to fetch property data
     const { data: property } = useGetProperty(propertyId || null, !!propertyId);
@@ -41,10 +51,14 @@ const ApplicationFeeDetails: React.FC<ApplicationFeeDetailsProps> = ({ propertyI
                         <input
                             type="number"
                             value={formData.applicationFeeAmount || ''}
-                            onChange={(e) => updateFormData('applicationFeeAmount', e.target.value)}
+                            onChange={(e) => {
+                                updateFormData('applicationFeeAmount', e.target.value);
+                                validateField(e.target.value);
+                            }}
                             placeholder={`${currencySymbol || '$'} 0.00`}
-                            className={`w-full bg-[#84CC16] text-white placeholder-white/80 text-center text-lg font-medium py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#84CC16] ${currencySymbol ? 'pl-8' : ''}`}
+                            className={`w-full bg-[#84CC16] text-white placeholder-white/80 text-center text-lg font-medium py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#84CC16] ${currencySymbol ? 'pl-8' : ''} ${validationError ? 'ring-2 ring-red-500' : ''}`}
                         />
+                        {validationError && <p className="text-red-500 text-xs mt-2 text-center">{validationError}</p>}
                     </div>
                 </div>
             </div>

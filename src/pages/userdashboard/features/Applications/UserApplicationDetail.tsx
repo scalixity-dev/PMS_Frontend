@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { formatPhoneNumber } from '../../../../utils/phone.utils';
+
 import {
     ChevronLeft,
     ChevronDown,
@@ -294,7 +296,10 @@ const IncomeCard = ({ income, idx, isApproved, onEdit, onDelete }: any) => (
         <div className="pt-4 border-t border-gray-50 flex flex-wrap gap-x-8 gap-y-2">
             <div className="flex flex-col"><p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight mb-0.5">Work Phone</p><p className="text-sm font-semibold text-gray-700">{income.workPhone || '—'}</p></div>
             <div className="flex flex-col"><p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight mb-0.5">Address</p><p className="text-sm font-semibold text-gray-700">{income.address}</p></div>
+            <div className="flex flex-col"><p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight mb-0.5">Supervisor</p><p className="text-sm font-semibold text-gray-700">{income.supervisorName || '—'}</p></div>
+            <div className="flex flex-col"><p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight mb-0.5">Supervisor Phone</p><p className="text-sm font-semibold text-gray-700">{income.supervisorPhone || '—'}</p></div>
         </div>
+
     </div>
 );
 
@@ -435,9 +440,10 @@ const SummaryHeader = ({ application, navigate, getStatusColor }: any) => (
                                 </span>
                             </div>
                             <div className="flex flex-col gap-1">
-                                <a href={`tel:${application.phone}`} className="text-gray-500 font-medium hover:opacity-80 transition-opacity">{application.phone}</a>
+                                <a href={`tel:${application.phone}`} className="text-gray-500 font-medium hover:opacity-80 transition-opacity">{formatPhoneNumber(application.phone)}</a>
                                 <a href={`mailto:${application.email}`} className="text-gray-500 font-medium hover:opacity-80 transition-opacity">{application.email}</a>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -533,13 +539,9 @@ const formatDateStr = (date: any) => {
 };
 
 const formatPhone = (phone: any) => {
-    if (!phone) return '—';
-    const s = String(phone).replace(/\D/g, '');
-    if (s.length === 10) {
-        return `(${s.substring(0, 3)}) ${s.substring(3, 6)}-${s.substring(6)}`;
-    }
-    return phone;
+    return formatPhoneNumber(phone) || '—';
 };
+
 
 const mapBackendToUI = (backendApplication: any) => {
     if (!backendApplication) return null;
@@ -621,8 +623,11 @@ const mapBackendToUI = (backendApplication: any) => {
         address: inc.officeAddress || '—',
         incomePerMonth: parseFloat(inc.monthlyIncome || '0') || 0,
         officeNumber: inc.office || '—',
-        workPhone: inc.companyPhone || '—'
+        workPhone: formatPhoneNumber(inc.companyPhone) || '—',
+        supervisorName: inc.supervisorName || '—',
+        supervisorPhone: formatPhoneNumber(inc.supervisorPhone) || '—'
     }));
+
 
     // Map Contacts
     const emergencyContactsData = (backendApplication.emergencyContacts || []).map((contact: any, idx: number) => ({

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import PrimaryActionButton from '../../../../components/common/buttons/PrimaryActionButton';
@@ -144,7 +146,8 @@ const AddLead = () => {
                                 <input
                                     type="text"
                                     value={formData.phone}
-                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, phone: formatPhoneNumber(e.target.value) })}
+
                                     placeholder="Phone Number"
                                     className={`w-full bg-white border ${errors.phone ? 'border-red-500' : 'border-gray-100'} rounded-lg py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium`}
                                 />

@@ -3,6 +3,8 @@ import { Check, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
 import BaseModal from '@/components/common/modals/BaseModal';
 import type { EmergencyContactFormData } from '../store/userApplicationStore';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+
 
 interface UserAddEmergencyContactModalProps {
     isOpen: boolean;
@@ -144,12 +146,17 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
     };
 
     const handleChange = (key: keyof EmergencyContactFormData | 'phoneCountryCode', value: any) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'phoneNumber') {
+            finalValue = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
         if (key !== 'phoneCountryCode' && touched[key]) {
-            const error = validateField(key as keyof EmergencyContactFormData, value);
+            const error = validateField(key as keyof EmergencyContactFormData, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
+
 
     const handleBlur = (key: keyof EmergencyContactFormData) => {
         setTouched(prev => ({ ...prev, [key]: true }));
@@ -158,11 +165,17 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
     };
 
     const handleSubmit = () => {
-        const allTouched = (Object.keys(formData) as Array<keyof EmergencyContactFormData>).reduce((acc, key) => {
-            acc[key] = true;
-            return acc;
-        }, {} as Record<string, boolean>);
+        const allTouched: Record<string, boolean> = {};
+        const allErrors: Record<string, string> = {};
+
+        (Object.keys(formData) as Array<keyof EmergencyContactFormData>).forEach(key => {
+            allTouched[key] = true;
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
         setTouched(allTouched);
+        setErrors(allErrors);
 
         if (isFormValid()) {
             onSave(formData);
@@ -189,7 +202,7 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
                 {
                     label: initialData ? 'Save Changes' : 'Add',
                     onClick: handleSubmit,
-                    disabled: !isFormValid(),
+                    disabled: false,
                     variant: 'primary',
                     className: "bg-[#7ED957] hover:bg-[#6BC847] border-none text-white",
                     icon: <Check size={16} strokeWidth={3} />

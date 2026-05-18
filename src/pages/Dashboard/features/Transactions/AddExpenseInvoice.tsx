@@ -28,6 +28,7 @@ import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
 import { useGetAllApplications } from '../../../../hooks/useApplicationQueries';
 import { serviceProviderService, type BackendServiceProvider } from '../../../../services/service-provider.service';
 import { useQuery } from '@tanstack/react-query';
+import { CURRENCY_OPTIONS } from '../../../../utils/currency.utils';
 
 const AddExpenseInvoice: React.FC = () => {
     const navigate = useNavigate();
@@ -224,7 +225,7 @@ const AddExpenseInvoice: React.FC = () => {
         
         // Validate required fields
         if (!amount || parseFloat(amount) <= 0) {
-            setError('Amount is required and must be greater than 0');
+            setError('Amount is required and must be a positive value');
             return;
         }
 
@@ -402,11 +403,7 @@ const AddExpenseInvoice: React.FC = () => {
                                 <CustomDropdown
                                     value={currency}
                                     onChange={setCurrency}
-                                    options={[
-                                        { value: 'USD', label: 'USD' },
-                                        { value: 'EUR', label: 'EUR' },
-                                        { value: 'GBP', label: 'GBP' },
-                                    ]}
+                                    options={CURRENCY_OPTIONS}
                                     placeholder="Select Currency"
                                     buttonClassName="!rounded-md"
                                 />

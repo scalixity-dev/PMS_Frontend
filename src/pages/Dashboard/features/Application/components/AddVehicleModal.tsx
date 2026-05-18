@@ -75,16 +75,15 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
 
     const validateField = (key: keyof VehicleFormData, value: string): string => {
         // Check if required field is empty
-        if (!value || value.trim() === '') {
-            // Map field names to display names
+        const requiredFields = ['type', 'model', 'year', 'color', 'licensePlate'];
+        if (requiredFields.includes(key) && (!value || value.trim() === '')) {
             const displayNames: Record<string, string> = {
                 type: 'Type',
-                make: 'Company name',
+                make: 'Make',
                 model: 'Model',
                 year: 'Year',
                 color: 'Color',
                 licensePlate: 'License Plate',
-                registeredIn: 'Registered In'
             };
             const displayName = displayNames[key] || key;
             return `${displayName} is required`;
@@ -126,7 +125,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
 
         // All fields are required
         const requiredFields: Array<keyof VehicleFormData> = [
-            'type', 'make', 'model', 'year', 'color', 'licensePlate', 'registeredIn'
+            'type', 'model', 'year', 'color', 'licensePlate'
         ];
 
         requiredFields.forEach(key => {
@@ -166,21 +165,24 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
     };
 
     const handleSubmit = async () => {
-        // Mark all fields as touched
         const allTouched: Record<string, boolean> = {
             type: true,
-            make: true,
             model: true,
             year: true,
             color: true,
-            licensePlate: true,
-            registeredIn: true
+            licensePlate: true
         };
-        setTouched(allTouched);
+        const allErrors: Record<string, string> = {};
 
-        // Validate all fields
+        (Object.keys(formData) as Array<keyof VehicleFormData>).forEach(key => {
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
+        setTouched(allTouched);
+        setErrors(allErrors);
+
         if (!validateAllFields()) {
-            // Don't submit if validation fails
             return;
         }
 
@@ -211,7 +213,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
     // Check if form is valid for button state
     const isFormValid = () => {
         const requiredFields: Array<keyof VehicleFormData> = [
-            'type', 'make', 'model', 'year', 'color', 'licensePlate', 'registeredIn'
+            'type', 'model', 'year', 'color', 'licensePlate'
         ];
 
         return requiredFields.every(key => {
@@ -264,7 +266,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                             )}
                         </div>
                         <div>
-                            <label className={labelClasses}>Company name *</label>
+                            <label className={labelClasses}>Make</label>
                             <input
                                 type="text"
                                 placeholder="Type here"
@@ -351,7 +353,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                     {/* Row 3 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                            <label className={labelClasses}>Registered in*</label>
+                            <label className={labelClasses}>Registered in</label>
                             <input
                                 type="text"
                                 placeholder="Type Here"
@@ -370,11 +372,8 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                     <div className="pt-2">
                         <button
                             onClick={handleSubmit}
-                            disabled={!isFormValid()}
-                            className={`px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-md ${isFormValid()
-                                ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                }`}
+                            disabled={false}
+                            className={`px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-md bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer`}
                         >
                             {initialData ? 'Save' : 'Add'}
                         </button>

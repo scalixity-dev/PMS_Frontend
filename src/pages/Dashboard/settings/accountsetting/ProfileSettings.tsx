@@ -5,6 +5,8 @@ import { authService } from "../../../../services/auth.service";
 import { useUpdateProfile } from "../../../../hooks/useAuthQueries";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
 import { API_ENDPOINTS } from "../../../../config/api.config";
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 
 interface ProfileUser {
   fullName: string;
@@ -110,11 +112,16 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
   };
 
   const handleChange = (field: "firstName" | "lastName" | "phoneNumber", value: string) => {
+    let finalValue = value;
+    if (field === "phoneNumber") {
+      finalValue = formatPhoneNumber(value);
+    }
     setFormValues((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: finalValue,
     }));
   };
+
 
   const handleSaveClick = async () => {
     const didSave = await onSave(formValues);
@@ -183,7 +190,7 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
               value={formValues.phoneNumber}
               onChange={(event) => handleChange("phoneNumber", event.target.value)}
               className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
-              placeholder="+91 0000000000"
+              placeholder="111-111-1111"
             />
           </div>
         </div>
@@ -682,10 +689,11 @@ export default function ProfileSettings() {
             <label className="text-xs font-semibold text-gray-600">Phone Number</label>
             <input
               disabled
-              value={profileDetails.phoneNumber}
+              value={formatPhoneNumber(profileDetails.phoneNumber)}
               className="w-full h-10 rounded-md border border-[#E4E4E4] bg-[#F7F7F7] px-3 text-sm text-gray-800"
             />
           </div>
+
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">User Role</label>
             <input

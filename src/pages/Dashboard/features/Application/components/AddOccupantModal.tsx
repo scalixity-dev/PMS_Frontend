@@ -3,6 +3,8 @@ import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 
 export interface OccupantFormData {
     firstName: string;
@@ -215,14 +217,20 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
             }
         }
 
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'phoneNumber') {
+            finalValue = formatPhoneNumber(value);
+        }
+
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
 
         // Clear error for this field when user starts typing
         if (touched[key]) {
-            const error = validateField(key, value);
+            const error = validateField(key, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
+
 
     const handleBlur = (key: keyof OccupantFormData, currentValue?: any) => {
         setTouched(prev => ({ ...prev, [key]: true }));
@@ -232,15 +240,19 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
     };
 
     const handleSubmit = () => {
-        // Mark all fields as touched
-        const allTouched = (Object.keys(formData) as Array<keyof OccupantFormData>).reduce((acc, key) => {
-            acc[key] = true;
-            return acc;
-        }, {} as Record<string, boolean>);
-        setTouched(allTouched);
+        const allTouched: Record<string, boolean> = {};
+        const allErrors: Record<string, string> = {};
 
-        // Validate all fields
-        if (validateAllFields()) {
+        (Object.keys(formData) as Array<keyof OccupantFormData>).forEach(key => {
+            allTouched[key] = true;
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
+        setTouched(allTouched);
+        setErrors(allErrors);
+
+        if (isFormValid()) {
             onSave(formData);
             onClose();
         }
@@ -404,7 +416,7 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                             {/* Phone Number Input */}
                             <input
                                 type="tel"
-                                placeholder="Enter Phone Number"
+                                placeholder="111-111-1111"
                                 className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.phoneNumber && errors.phoneNumber ? 'text-red-500' : 'text-gray-700'
                                     }`}
                                 value={formData.phoneNumber}
@@ -468,11 +480,8 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                     <div className="pt-2">
                         <button
                             onClick={handleSubmit}
-                            disabled={!isFormValid()}
-                            className={`px-8 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-md ${isFormValid()
-                                ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                }`}
+                            disabled={false}
+                            className={`px-8 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-md bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer`}
                         >
                             {initialData ? 'Save' : 'Add'}
                         </button>

@@ -15,6 +15,7 @@ import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
 import { useGetAllApplications } from '../../../../hooks/useApplicationQueries';
 import { serviceProviderService, type BackendServiceProvider } from '../../../../services/service-provider.service';
 import { useQuery } from '@tanstack/react-query';
+import { CURRENCY_OPTIONS } from '../../../../utils/currency.utils';
 
 // Property-related expense categories that require lease selection
 const PROPERTY_RELATED_EXPENSE_CATEGORIES = [
@@ -228,7 +229,7 @@ const ExpensePayments: React.FC = () => {
         
         // Validate required fields
         if (!amount || parseFloat(amount) <= 0) {
-            setError('Amount is required and must be greater than 0');
+            setError('Amount is required and must be a positive value');
             return;
         }
 
@@ -397,13 +398,7 @@ const ExpensePayments: React.FC = () => {
                                 <CustomDropdown
                                     value={currency}
                                     onChange={setCurrency}
-                                    options={[
-                                        { value: 'USD', label: 'USD' },
-                                        { value: 'EUR', label: 'EUR' },
-                                        { value: 'GBP', label: 'GBP' },
-                                        { value: 'CAD', label: 'CAD' },
-                                        { value: 'AUD', label: 'AUD' },
-                                    ]}
+                                    options={CURRENCY_OPTIONS}
                                     placeholder="Select Currency"
                                     buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                                 />

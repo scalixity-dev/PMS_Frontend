@@ -71,8 +71,11 @@ const OnlineApplicationModal: React.FC<OnlineApplicationModalProps> = ({
                             value={fee}
                             onChange={(e) => setFee(e.target.value)}
                             placeholder="Enter Amount"
-                            className="w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm"
+                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm ${Number(fee) < 0 ? 'border border-red-500 text-red-500' : ''}`}
                         />
+                        {Number(fee) < 0 && (
+                            <p className="text-red-500 text-[10px] mt-1 ml-1">Fee cannot be negative</p>
+                        )}
                     </div>
                 </div>
 
@@ -86,7 +89,8 @@ const OnlineApplicationModal: React.FC<OnlineApplicationModalProps> = ({
                     </button>
                     <button
                         onClick={handleSubmit}
-                        className="flex-1 bg-[#3D7475] text-white py-2.5 rounded-md font-bold hover:bg-[#2c5556] transition-colors shadow-md text-sm"
+                        disabled={Number(fee) < 0}
+                        className="flex-1 bg-[#3D7475] text-white py-2.5 rounded-md font-bold hover:bg-[#2c5556] transition-colors shadow-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Save
                     </button>

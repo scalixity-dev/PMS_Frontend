@@ -1,4 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { formatPhoneNumber } from '@/utils/phone.utils';
+
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, ChevronLeft, Download, MoreHorizontal, Edit2, Trash2, Check, X } from 'lucide-react';
 import { utils, writeFile } from 'xlsx';
@@ -84,11 +86,12 @@ const Leads = () => {
             type: lead.type || null, // Keep enum value for filtering
             listingId: lead.listingId || null, // Keep listing ID for filtering
             name: lead.name,
-            phone: lead.phoneNumber || '',
+            phone: formatPhoneNumber(lead.phoneNumber || ''),
             email: lead.email || '',
             source: lead.source || 'OTHER',
             lastUpdate: lead.updatedAt ? format(new Date(lead.updatedAt), 'MMM dd, yyyy') : '-',
         }));
+
     }, [backendLeads]);
 
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);

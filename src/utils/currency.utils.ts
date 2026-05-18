@@ -1,8 +1,31 @@
-/**
- * Get currency symbol based on country code
- * @param countryCode - ISO country code (e.g., 'US', 'IN', 'GB')
- * @returns Currency symbol string
- */
+
+
+export const CURRENCY_OPTIONS = [
+  { value: 'USD', label: 'USD' },
+  { value: 'EUR', label: 'EUR' },
+  { value: 'GBP', label: 'GBP' },
+  { value: 'INR', label: 'INR' },
+  { value: 'CAD', label: 'CAD' },
+  { value: 'AUD', label: 'AUD' },
+  { value: 'JPY', label: 'JPY' },
+  { value: 'CNY', label: 'CNY' },
+  { value: 'AED', label: 'AED' },
+  { value: 'SAR', label: 'SAR' },
+  { value: 'PKR', label: 'PKR' },
+  { value: 'BDT', label: 'BDT' },
+  { value: 'NGN', label: 'NGN' },
+  { value: 'EGP', label: 'EGP' },
+  { value: 'KES', label: 'KES' },
+  { value: 'ZAR', label: 'ZAR' },
+  { value: 'BRL', label: 'BRL' },
+  { value: 'MXN', label: 'MXN' },
+  { value: 'KRW', label: 'KRW' },
+  { value: 'THB', label: 'THB' },
+  { value: 'MYR', label: 'MYR' },
+  { value: 'PHP', label: 'PHP' },
+  { value: 'IDR', label: 'IDR' },
+];
+
 export const getCurrencySymbol = (countryCode?: string): string => {
   if (!countryCode) return '$'; // Default to USD
 
@@ -113,13 +136,14 @@ const getLocaleForCurrency = (currency: string): string => {
   return currencyLocaleMap[currency.toUpperCase()] || 'en-US'; // Default to en-US for Western-style formatting
 };
 
+
 /**
  * Format amount with currency
  * @param amount - The numeric amount to format
  * @param currency - The currency code (e.g. 'USD', 'INR', 'EUR')
  * @returns Formatted money string
  */
-export const formatMoney = (amount: number, currency: string): string => {
+export const formatMoney = (amount: number, currency: string = 'USD'): string => {
   const locale = getLocaleForCurrency(currency);
   return new Intl.NumberFormat(locale, {
     style: 'currency',

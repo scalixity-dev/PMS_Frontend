@@ -7,6 +7,8 @@ import ServiceProProfileSection from './components/ServiceProProfileSection';
 import ServiceProTransactionsSection from './components/ServiceProTransactionsSection';
 import { serviceProviderService, type BackendServiceProvider } from '../../../../services/service-provider.service';
 import { useGetServiceProAggregates } from '../../../../hooks/useTransactionQueries';
+import { formatPhoneNumber as formatPhone } from '@/utils/phone.utils';
+
 
 // Helper function to generate initials from name
 const getInitials = (firstName: string, lastName: string): string => {
@@ -17,11 +19,10 @@ const getInitials = (firstName: string, lastName: string): string => {
 
 // Helper function to format phone number with country code
 const formatPhoneNumber = (phoneNumber: string, phoneCountryCode?: string | null): string => {
-    if (phoneCountryCode) {
-        return `${phoneCountryCode} ${phoneNumber}`;
-    }
-    return phoneNumber;
+    const raw = phoneCountryCode ? `${phoneCountryCode} ${phoneNumber}` : phoneNumber;
+    return formatPhone(raw);
 };
+
 
 // Helper function to format category with subcategory
 const formatCategory = (category: string, subcategory?: string | null): string => {
@@ -66,7 +67,7 @@ const transformServiceProvider = (data: BackendServiceProvider) => {
             additionalPhone: formatPhoneNumber(data.phoneNumber, data.phoneCountryCode),
             companyName: data.companyName || '-',
             companyWebsite: data.companyWebsite || '-',
-            fax: data.faxNumber || '-',
+            fax: formatPhoneNumber(data.faxNumber),
             category: formatCategory(data.category, data.subcategory)
         },
         forwardingAddress: formatAddress(data.address, data.city, data.state, data.zipCode, data.country)

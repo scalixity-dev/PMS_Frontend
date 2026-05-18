@@ -1,4 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
+import { formatPhoneNumber } from "../../utils/phone.utils";
+
 import { useNavigate } from "react-router-dom";
 import { useDashboardStore } from "./store/dashboardStore";
 import { Sidebar } from "./components/layout/Sidebar";
@@ -81,7 +83,8 @@ const UserDashboard = () => {
                         lastName: lastNameParts.join(" ") || "",
                         email: user.email,
                         role: user.role,
-                        phone: user.phoneNumber || "",
+                        phone: formatPhoneNumber(user.phoneNumber) || "",
+
                         country: user.country || "",
                         city: user.state || "",
                         pincode: user.pincode || "",
@@ -281,7 +284,8 @@ const UserDashboard = () => {
                             firstName: t.firstName,
                             lastName: t.lastName,
                             email: t.email,
-                            phone: t.phone || '',
+                            phone: formatPhoneNumber(t.phone) || '',
+
                             avatarSeed: t.avatarSeed || t.email
                         }));
                     setRoommates(otherTenants);

@@ -4,33 +4,7 @@ import { X, ChevronDown, Search } from 'lucide-react';
 // Common currencies with symbols
 const currencyOptions = [
     { code: 'USD', symbol: '$', name: 'US Dollar' },
-    { code: 'EUR', symbol: '€', name: 'Euro' },
-    { code: 'GBP', symbol: '£', name: 'British Pound' },
-    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
-    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
-    { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
-    { code: 'HKD', symbol: 'HK$', name: 'Hong Kong Dollar' },
-    { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar' },
-    { code: 'ZAR', symbol: 'R', name: 'South African Rand' },
-    { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
-    { code: 'MXN', symbol: '$', name: 'Mexican Peso' },
-    { code: 'KRW', symbol: '₩', name: 'South Korean Won' },
-    { code: 'THB', symbol: '฿', name: 'Thai Baht' },
-    { code: 'MYR', symbol: 'RM', name: 'Malaysian Ringgit' },
-    { code: 'PHP', symbol: '₱', name: 'Philippine Peso' },
-    { code: 'IDR', symbol: 'Rp', name: 'Indonesian Rupiah' },
-    { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham' },
-    { code: 'SAR', symbol: '﷼', name: 'Saudi Riyal' },
-    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
-    { code: 'BDT', symbol: '৳', name: 'Bangladeshi Taka' },
-    { code: 'NGN', symbol: '₦', name: 'Nigerian Naira' },
-    { code: 'EGP', symbol: 'E£', name: 'Egyptian Pound' },
-    { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling' },
-].sort((a, b) => a.name.localeCompare(b.name));
+];
 
 interface RequestApplicationFeeModalProps {
     isOpen: boolean;
@@ -186,9 +160,12 @@ const RequestApplicationFeeModal: React.FC<RequestApplicationFeeModalProps> = ({
                                     
                                     setAmount(val);
                                 }}
-                                className="flex-1 min-w-0 px-4 py-3 rounded-r-xl focus:outline-none text-sm font-medium text-gray-900 placeholder-gray-400 bg-transparent"
+                                className={`flex-1 min-w-0 px-4 py-3 rounded-r-xl focus:outline-none text-sm font-medium text-gray-900 placeholder-gray-400 bg-transparent ${Number(amount) <= 0 && amount !== '' ? 'text-red-500' : ''}`}
                             />
                         </div>
+                        {Number(amount) <= 0 && amount !== '' && (
+                            <p className="text-red-500 text-xs mt-1 ml-1">Amount must be a positive number</p>
+                        )}
                     </div>
 
                     {/* Footer Buttons */}
@@ -204,7 +181,7 @@ const RequestApplicationFeeModal: React.FC<RequestApplicationFeeModalProps> = ({
                                 onSend(amount, currency);
                                 onClose();
                             }}
-                            disabled={!amount}
+                            disabled={!amount || Number(amount) <= 0}
                             className="flex-1 bg-[#3A6D6C] text-white py-3 rounded-xl font-medium hover:bg-[#2c5251] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Send Request

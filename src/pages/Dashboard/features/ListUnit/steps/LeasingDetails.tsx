@@ -21,7 +21,7 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
   // Use React Query to fetch property data
   const { data: property } = useGetProperty(propertyId || null, !!propertyId);
 
-  // Clear form data when propertyId or unitId changes to prevent data leakage
+  // Update refs to track current propertyId and unitId
   useEffect(() => {
     // Only clear if propertyId or unitId actually changed (not on initial mount with same property/unit)
     if ((previousPropertyIdRef.current !== undefined && previousPropertyIdRef.current !== propertyId) ||
@@ -39,6 +39,19 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
     previousPropertyIdRef.current = propertyId;
     previousUnitIdRef.current = unitId;
   }, [propertyId, unitId, updateFormData]);
+
+  const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
+
+  const validateField = (key: string, value: string) => {
+    let error = '';
+    if (['rent', 'deposit', 'refundable'].includes(key)) {
+      const numValue = parseFloat(value);
+      if (value && (isNaN(numValue) || numValue < 0)) {
+        error = 'Value must be a positive number';
+      }
+    }
+    setValidationErrors(prev => ({ ...prev, [key]: error }));
+  };
 
   const inputClass = "w-full p-3 bg-[#84CC16] text-white placeholder-white/70 border-none rounded-lg focus:ring-2 focus:ring-white/50 outline-none text-center font-medium";
   const labelClass = "block text-xs font-medium text-gray-700 mb-1 ml-1";
@@ -65,11 +78,15 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
               )}
               <input
                 type="number"
-                className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
+                className={`${inputClass} ${currencySymbol ? 'pl-8' : ''} ${validationErrors.rent ? 'ring-2 ring-red-500' : ''}`}
                 value={formData.rent || ''}
-                onChange={(e) => updateFormData('rent', e.target.value)}
+                onChange={(e) => {
+                  updateFormData('rent', e.target.value);
+                  validateField('rent', e.target.value);
+                }}
                 placeholder={`${currencySymbol || '$'} 50,000`}
               />
+              {validationErrors.rent && <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.rent}</p>}
             </div>
           </div>
 
@@ -84,11 +101,15 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
               )}
               <input
                 type="number"
-                className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
+                className={`${inputClass} ${currencySymbol ? 'pl-8' : ''} ${validationErrors.deposit ? 'ring-2 ring-red-500' : ''}`}
                 value={formData.deposit || ''}
-                onChange={(e) => updateFormData('deposit', e.target.value)}
+                onChange={(e) => {
+                  updateFormData('deposit', e.target.value);
+                  validateField('deposit', e.target.value);
+                }}
                 placeholder={`${currencySymbol || '$'} 0.00`}
               />
+              {validationErrors.deposit && <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.deposit}</p>}
             </div>
           </div>
 
@@ -103,11 +124,15 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
               )}
               <input
                 type="number"
-                className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
+                className={`${inputClass} ${currencySymbol ? 'pl-8' : ''} ${validationErrors.refundable ? 'ring-2 ring-red-500' : ''}`}
                 value={formData.refundable || ''}
-                onChange={(e) => updateFormData('refundable', e.target.value)}
+                onChange={(e) => {
+                  updateFormData('refundable', e.target.value);
+                  validateField('refundable', e.target.value);
+                }}
                 placeholder={`${currencySymbol || '$'} 0.00`}
               />
+              {validationErrors.refundable && <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.refundable}</p>}
             </div>
           </div>
 

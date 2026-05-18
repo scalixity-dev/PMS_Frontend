@@ -11,7 +11,9 @@ import TenantApplicationsSection from './components/TenantApplicationsSection';
 import TenantRequestsSection from './components/TenantRequestsSection';
 import { useGetTenant, useDeleteTenant } from '../../../../hooks/useTenantQueries';
 import { useGetTenantAggregates } from '../../../../hooks/useTransactionQueries';
+import { formatPhoneNumber } from '@/utils/phone.utils';
 import type { BackendTenantProfile } from '../../../../services/tenant.service';
+
 
 // Transform backend tenant profile to detail page format
 const transformTenantForDetail = (backendTenant: BackendTenantProfile) => {
@@ -23,13 +25,16 @@ const transformTenantForDetail = (backendTenant: BackendTenantProfile) => {
     // prepend the country code when it is actually different from, and not a
     // substring of, the phone number.
     const phone = backendTenant.phoneNumber
-        ? (() => {
-              const cc = backendTenant.phoneCountryCode?.trim();
-              const num = backendTenant.phoneNumber!;
-              const duplicated = cc && (cc === num || cc.includes(num) || num.includes(cc));
-              return cc && !duplicated ? `${cc} ${num}` : num;
-          })()
+        ? formatPhoneNumber(
+              backendTenant.phoneCountryCode?.trim() && 
+              !(backendTenant.phoneCountryCode.trim() === backendTenant.phoneNumber || 
+                backendTenant.phoneCountryCode.trim().includes(backendTenant.phoneNumber!) || 
+                backendTenant.phoneNumber!.includes(backendTenant.phoneCountryCode.trim()))
+              ? `${backendTenant.phoneCountryCode.trim()} ${backendTenant.phoneNumber}`
+              : backendTenant.phoneNumber
+          )
         : 'N/A';
+
     // Date of birth: prefer the dedicated column on the tenant profile
     // (always persisted), fall back to the linked user's value.
     const dobRaw = backendTenant.dateOfBirth ?? (backendTenant.user as any)?.dateOfBirth;
@@ -64,10 +69,11 @@ const transformTenantForDetail = (backendTenant: BackendTenantProfile) => {
         forwardingAddress: backendTenant.forwardingAddress || '-',
         emergencyContacts: backendTenant.emergencyContacts.map(contact => ({
             name: contact.name,
-            phone: contact.phoneNumber,
+            phone: formatPhoneNumber(contact.phoneNumber),
             relationship: contact.relationship,
             email: contact.email || '-'
         })),
+
         pets: backendTenant.pets.map(pet => ({
             name: pet.name,
             breed: pet.breed || '-',

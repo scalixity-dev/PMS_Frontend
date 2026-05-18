@@ -4,6 +4,8 @@ import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { API_ENDPOINTS } from '../../config/api.config';
 import { getCurrencySymbol } from '../../utils/currency.utils';
+import { formatPhoneNumber } from '../../utils/phone.utils';
+
 
 const ENUM_TO_MONTHS: Record<string, string> = {
   ONE_MONTH: '1', TWO_MONTHS: '2', THREE_MONTHS: '3', FOUR_MONTHS: '4',
@@ -119,9 +121,10 @@ const ListingPreview: React.FC = () => {
       basicAmenities, features, amenitiesList,
       contact: {
         name: property.listingContactName || '',
-        phone: [property.listingPhoneCountryCode, property.listingPhoneNumber].filter(Boolean).join(' '),
+        phone: formatPhoneNumber([property.listingPhoneCountryCode, property.listingPhoneNumber].filter(Boolean).join(' ')),
         email: property.listingEmail || '',
       },
+
     };
   }, [data]);
 

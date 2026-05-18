@@ -129,11 +129,28 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
         return standardAnswered && customAnswered;
     };
 
+    const [showErrors, setShowErrors] = useState(false);
+
+    const handleNext = () => {
+        if (isAllAnswered()) {
+            onNext();
+        } else {
+            setShowErrors(true);
+            // Scroll to top or first unanswered? For now just show errors
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
     return (
         <div className="w-full">
             <div className="text-center mb-8">
                 <h2 className="text-xl font-medium text-[#1A1A1A] mb-1">Background questions</h2>
                 <p className="text-gray-400 text-sm">Please answer the questions provided below.</p>
+                {showErrors && (
+                    <p className="text-red-500 text-sm mt-2 animate-bounce font-semibold">
+                        Please answer all questions before proceeding.
+                    </p>
+                )}
             </div>
 
             {loading ? (
@@ -145,14 +162,19 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
                     {/* Standard Questions */}
                     {standardQuestions.map((q) => {
                         const showExplanation = responses[q.id] === true && questionsNeedingExplanation.includes(q.id);
+                        const isAnswered = responses[q.id] !== undefined && responses[q.id] !== null;
+                        const needsExplanation = responses[q.id] === true && questionsNeedingExplanation.includes(q.id) && !(explanations[q.id] || '').trim();
 
                         return (
                             <div
                                 key={q.id}
-                                className="bg-white px-5 py-4 rounded-2xl border border-[#E5E7EB] shadow-sm hover:shadow-md transition-all flex flex-col gap-4"
+                                className={`bg-white px-5 py-4 rounded-2xl border transition-all flex flex-col gap-4 ${showErrors && (!isAnswered || needsExplanation) ? 'border-red-300 bg-red-50/30' : 'border-[#E5E7EB] hover:shadow-md'}`}
                             >
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    <p className="text-[#1A1A1A] font-semibold text-sm sm:max-w-[60%] md:max-w-[70%]">{q.text}</p>
+                                    <p className="text-[#1A1A1A] font-semibold text-sm sm:max-w-[60%] md:max-w-[70%]">
+                                        {q.text}
+                                        {showErrors && !isAnswered && <span className="text-red-500 ml-1">*</span>}
+                                    </p>
                                     <div className="flex items-center gap-6 sm:justify-end">
                                         <label className="flex items-center gap-2 cursor-pointer group">
                                             <div
@@ -176,13 +198,13 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
                                 </div>
 
                                 {showExplanation && (
-                                    <div className="bg-[#F9FAFB] p-4 rounded-xl border border-[#E5E7EB] space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <div className={`bg-white p-4 rounded-xl border space-y-2 animate-in fade-in slide-in-from-top-2 duration-300 ${showErrors && needsExplanation ? 'border-red-300' : 'border-[#E5E7EB]'}`}>
                                         <label className="text-[11px] font-bold text-[#1A1A1A] uppercase tracking-wider flex items-center gap-1.5">
                                             Please explain <span className="text-red-500">*</span>
                                         </label>
                                         <textarea
                                             placeholder="Type explain here"
-                                            className="w-full bg-white border border-[#E5E7EB] rounded-[10px] p-3 text-sm font-medium outline-none focus:border-[#7ED957] focus:ring-1 focus:ring-[#7ED957]/20 transition-all min-h-[100px] resize-none"
+                                            className={`w-full bg-white border rounded-[10px] p-3 text-sm font-medium outline-none focus:border-[#7ED957] focus:ring-1 focus:ring-[#7ED957]/20 transition-all min-h-[100px] resize-none ${showErrors && needsExplanation ? 'border-red-300 ring-1 ring-red-100' : 'border-[#E5E7EB]'}`}
                                             value={explanations[q.id] || ''}
                                             onChange={(e) => handleExplanationChange(q.id, e.target.value)}
                                         />
@@ -197,13 +219,17 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
                         <>
                             {customQuestions.map((q) => {
                                 const answer = getCustomAnswer(q.id);
+                                const isAnswered = answer !== null;
                                 return (
                                     <div
                                         key={q.id}
-                                        className="bg-white px-5 py-4 rounded-2xl border border-[#E5E7EB] shadow-sm hover:shadow-md transition-all"
+                                        className={`bg-white px-5 py-4 rounded-2xl border transition-all ${showErrors && !isAnswered ? 'border-red-300 bg-red-50/30' : 'border-[#E5E7EB] hover:shadow-md'}`}
                                     >
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                            <p className="text-[#1A1A1A] font-semibold text-sm sm:max-w-[60%] md:max-w-[70%]">{q.question}</p>
+                                            <p className="text-[#1A1A1A] font-semibold text-sm sm:max-w-[60%] md:max-w-[70%]">
+                                                {q.question}
+                                                {showErrors && !isAnswered && <span className="text-red-500 ml-1">*</span>}
+                                            </p>
                                             <div className="flex items-center gap-6 sm:justify-end">
                                                 <label className="flex items-center gap-2 cursor-pointer group">
                                                     <div
@@ -235,10 +261,10 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
 
             <div className="flex justify-center">
                 <PrimaryActionButton
-                    onClick={onNext}
-                    disabled={loading || !isAllAnswered()}
+                    onClick={handleNext}
+                    disabled={loading}
                     text="Next"
-                    className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${isAllAnswered() && !loading
+                    className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${!loading
                         ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
                         : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                         }`}

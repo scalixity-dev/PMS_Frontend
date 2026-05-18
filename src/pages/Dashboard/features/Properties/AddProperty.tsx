@@ -615,6 +615,48 @@ const AddProperty: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
+  const isFormValid = useMemo(() => {
+    const hasGeneralInfo = !!(
+      formData.propertyName.trim() &&
+      formData.yearBuilt.trim() &&
+      formData.streetAddress.trim() &&
+      formData.city &&
+      formData.stateRegion &&
+      formData.zip.trim() &&
+      formData.country
+    );
+
+    if (!hasGeneralInfo) return false;
+
+    if (formData.propertyType === 'single') {
+      return !!(
+        formData.beds &&
+        formData.baths &&
+        formData.size.trim() && Number(formData.size) > 0 &&
+        formData.marketRent.trim() && Number(formData.marketRent) > 0 &&
+        formData.deposit.trim() && Number(formData.deposit) > 0 &&
+        formData.parking &&
+        formData.laundry &&
+        formData.ac
+      );
+    }
+
+    if (formData.propertyType === 'multi') {
+      if (formData.units.length === 0) return false;
+      return formData.units.every(unit => 
+        unit.unitNumber.trim() &&
+        unit.unitType.trim() &&
+        unit.size.trim() && Number(unit.size) > 0 &&
+        unit.beds.trim() &&
+        unit.baths.trim() &&
+        unit.rent.trim() && Number(unit.rent) > 0 &&
+        unit.deposit.trim() && Number(unit.deposit) > 0
+      );
+    }
+
+    return true;
+  }, [formData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -1011,45 +1053,33 @@ const AddProperty: React.FC = () => {
               <div>
                 <label className="block text-xs font-medium mb-1 ml-1">Property Name*</label>
                 <Input
+                  id="propertyName"
                   placeholder="Property Name"
                   value={formData.propertyName}
                   onChange={(e) => {
                     updateFormData('propertyName', e.target.value);
-                    if (validationErrors.propertyName) {
-                      setValidationErrors(prev => {
-                        const newErrors = { ...prev };
-                        delete newErrors.propertyName;
-                        return newErrors;
-                      });
-                    }
                   }}
-                  className={`bg-white border-gray-200 ${validationErrors.propertyName ? 'border-red-500' : ''}`}
+                  className={`bg-white border-gray-200 ${!formData.propertyName.trim() ? 'border-red-500' : ''}`}
                 />
-                {validationErrors.propertyName && (
-                  <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.propertyName}</p>
+                {!formData.propertyName.trim() && (
+                  <p className="text-red-500 text-xs mt-1 ml-1">Property name is required</p>
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Year Built*</label>
                   <Input
+                    id="yearBuilt"
                     type="number"
                     placeholder="2021"
                     value={formData.yearBuilt}
                     onChange={(e) => {
                       updateFormData('yearBuilt', e.target.value);
-                      if (validationErrors.yearBuilt) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.yearBuilt;
-                          return newErrors;
-                        });
-                      }
                     }}
-                    className={`bg-white border-gray-200 ${validationErrors.yearBuilt ? 'border-red-500' : ''}`}
+                    className={`bg-white border-gray-200 ${!formData.yearBuilt.trim() ? 'border-red-500' : ''}`}
                   />
-                  {validationErrors.yearBuilt && (
-                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.yearBuilt}</p>
+                  {!formData.yearBuilt.trim() && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">Year built is required</p>
                   )}
                 </div>
                 <div>
@@ -1079,22 +1109,16 @@ const AddProperty: React.FC = () => {
               <div>
                 <label className="block text-xs font-medium mb-1 ml-1">Street address*</label>
                 <Input
+                  id="streetAddress"
                   placeholder="Street Address"
                   value={formData.streetAddress}
                   onChange={(e) => {
                     updateFormData('streetAddress', e.target.value);
-                    if (validationErrors.streetAddress) {
-                      setValidationErrors(prev => {
-                        const newErrors = { ...prev };
-                        delete newErrors.streetAddress;
-                        return newErrors;
-                      });
-                    }
                   }}
-                  className={`bg-white border-gray-200 ${validationErrors.streetAddress ? 'border-red-500' : ''}`}
+                  className={`bg-white border-gray-200 ${!formData.streetAddress.trim() ? 'border-red-500' : ''}`}
                 />
-                {validationErrors.streetAddress && (
-                  <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.streetAddress}</p>
+                {!formData.streetAddress.trim() && (
+                  <p className="text-red-500 text-xs mt-1 ml-1">Street address is required</p>
                 )}
               </div>
 
@@ -1103,51 +1127,39 @@ const AddProperty: React.FC = () => {
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Country*</label>
                   <CustomDropdown
+                    id="country"
                     value={formData.country}
                     onChange={(value) => {
                       updateFormData('country', value);
-                      if (validationErrors.country) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.country;
-                          return newErrors;
-                        });
-                      }
                     }}
                     options={countryOptions}
                     placeholder="Select country"
                     required
                     disabled={countryOptions.length === 0}
                     searchable={true}
-                    buttonClassName={`bg-white border-gray-200 px-3 py-2 ${validationErrors.country ? 'border-red-500' : ''}`}
+                    buttonClassName={`bg-white border-gray-200 px-3 py-2 ${!formData.country ? 'border-red-500' : ''}`}
                   />
-                  {validationErrors.country && (
-                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.country}</p>
+                  {!formData.country && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">Country is required</p>
                   )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">State / Region*</label>
                   <CustomDropdown
+                    id="stateRegion"
                     value={formData.stateRegion}
                     onChange={(value) => {
                       updateFormData('stateRegion', value);
-                      if (validationErrors.stateRegion) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.stateRegion;
-                          return newErrors;
-                        });
-                      }
                     }}
                     options={stateOptions}
                     placeholder="Select state"
                     required
                     disabled={stateOptions.length === 0}
                     searchable={true}
-                    buttonClassName={`bg-white border-gray-200 px-3 py-2 ${validationErrors.stateRegion ? 'border-red-500' : ''}`}
+                    buttonClassName={`bg-white border-gray-200 px-3 py-2 ${!formData.stateRegion ? 'border-red-500' : ''}`}
                   />
-                  {validationErrors.stateRegion && (
-                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.stateRegion}</p>
+                  {!formData.stateRegion && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">State/Region is required</p>
                   )}
                 </div>
               </div>
@@ -1157,47 +1169,35 @@ const AddProperty: React.FC = () => {
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">City*</label>
                   <CustomDropdown
+                    id="city"
                     value={formData.city}
                     onChange={(value) => {
                       updateFormData('city', value);
-                      if (validationErrors.city) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.city;
-                          return newErrors;
-                        });
-                      }
                     }}
                     options={cityOptions}
                     placeholder="Select city"
                     required
                     disabled={cityOptions.length === 0}
                     searchable={true}
-                    buttonClassName={`bg-white border-gray-200 px-3 py-2 ${validationErrors.city ? 'border-red-500' : ''}`}
+                    buttonClassName={`bg-white border-gray-200 px-3 py-2 ${!formData.city ? 'border-red-500' : ''}`}
                   />
-                  {validationErrors.city && (
-                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.city}</p>
+                  {!formData.city && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">City is required</p>
                   )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Zip *</label>
                   <Input
+                    id="zip"
                     placeholder="Enter Zip code"
                     value={formData.zip}
                     onChange={(e) => {
                       updateFormData('zip', e.target.value);
-                      if (validationErrors.zip) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.zip;
-                          return newErrors;
-                        });
-                      }
                     }}
-                    className={`bg-white border-gray-200 ${validationErrors.zip ? 'border-red-500' : ''}`}
+                    className={`bg-white border-gray-200 ${!formData.zip.trim() ? 'border-red-500' : ''}`}
                   />
-                  {validationErrors.zip && (
-                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.zip}</p>
+                  {!formData.zip.trim() && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">Zip code is required</p>
                   )}
                 </div>
               </div>
@@ -1282,6 +1282,7 @@ const AddProperty: React.FC = () => {
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Beds*</label>
                     <CustomDropdown
+                      id="beds"
                       value={formData.beds}
                       onChange={(value) => {
                         updateFormData('beds', value);
@@ -1305,6 +1306,7 @@ const AddProperty: React.FC = () => {
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Baths*</label>
                     <CustomDropdown
+                      id="baths"
                       value={formData.baths}
                       onChange={(value) => {
                         updateFormData('baths', value);
@@ -1328,23 +1330,20 @@ const AddProperty: React.FC = () => {
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Size, sq.ft*</label>
                     <Input
+                      id="size"
                       type="number"
                       placeholder="500"
                       value={formData.size}
                       onChange={(e) => {
                         updateFormData('size', e.target.value);
-                        if (validationErrors.size) {
-                          setValidationErrors(prev => {
-                            const newErrors = { ...prev };
-                            delete newErrors.size;
-                            return newErrors;
-                          });
-                        }
                       }}
-                      className={`bg-white border-gray-200 ${validationErrors.size ? 'border-red-500' : ''}`}
+                      className={`bg-white border-gray-200 ${Number(formData.size) <= 0 && formData.size.trim() !== '' ? 'border-red-500' : ''}`}
                     />
-                    {validationErrors.size && (
-                      <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.size}</p>
+                    {Number(formData.size) <= 0 && formData.size.trim() !== '' && (
+                      <p className="text-red-500 text-xs mt-1 ml-1">Size must be a positive number</p>
+                    )}
+                    {formData.size.trim() === '' && (
+                      <p className="text-red-500 text-xs mt-1 ml-1">Size is required</p>
                     )}
                   </div>
                 </div>
@@ -1357,25 +1356,22 @@ const AddProperty: React.FC = () => {
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
                       <Input
+                        id="marketRent"
                         type="number"
                         step="0.01"
                         placeholder="0.00"
                         value={formData.marketRent}
                         onChange={(e) => {
                           updateFormData('marketRent', e.target.value);
-                          if (validationErrors.marketRent) {
-                            setValidationErrors(prev => {
-                              const newErrors = { ...prev };
-                              delete newErrors.marketRent;
-                              return newErrors;
-                            });
-                          }
                         }}
-                        className={`bg-white border-gray-200 pl-8 ${validationErrors.marketRent ? 'border-red-500' : ''}`}
+                        className={`bg-white border-gray-200 pl-8 ${Number(formData.marketRent) <= 0 && formData.marketRent.trim() !== '' ? 'border-red-500' : ''}`}
                       />
                     </div>
-                    {validationErrors.marketRent && (
-                      <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.marketRent}</p>
+                    {Number(formData.marketRent) <= 0 && formData.marketRent.trim() !== '' && (
+                      <p className="text-red-500 text-xs mt-1 ml-1">Rent must be a positive number</p>
+                    )}
+                    {formData.marketRent.trim() === '' && (
+                      <p className="text-red-500 text-xs mt-1 ml-1">Market rent is required</p>
                     )}
                   </div>
                   <div>
@@ -1385,25 +1381,22 @@ const AddProperty: React.FC = () => {
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
                       <Input
+                        id="deposit"
                         type="number"
                         step="0.01"
                         placeholder="0.00"
                         value={formData.deposit}
                         onChange={(e) => {
                           updateFormData('deposit', e.target.value);
-                          if (validationErrors.deposit) {
-                            setValidationErrors(prev => {
-                              const newErrors = { ...prev };
-                              delete newErrors.deposit;
-                              return newErrors;
-                            });
-                          }
                         }}
-                        className={`bg-white border-gray-200 pl-8 ${validationErrors.deposit ? 'border-red-500' : ''}`}
+                        className={`bg-white border-gray-200 pl-8 ${Number(formData.deposit) <= 0 && formData.deposit.trim() !== '' ? 'border-red-500' : ''}`}
                       />
                     </div>
-                    {validationErrors.deposit && (
-                      <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.deposit}</p>
+                    {Number(formData.deposit) <= 0 && formData.deposit.trim() !== '' && (
+                      <p className="text-red-500 text-xs mt-1 ml-1">Deposit must be a positive number</p>
+                    )}
+                    {formData.deposit.trim() === '' && (
+                      <p className="text-red-500 text-xs mt-1 ml-1">Deposit is required</p>
                     )}
                   </div>
                 </div>
@@ -1416,6 +1409,7 @@ const AddProperty: React.FC = () => {
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Parking*</label>
                     <CustomDropdown
+                      id="parking"
                       value={formData.parking}
                       onChange={(value) => {
                         updateFormData('parking', value);
@@ -1439,6 +1433,7 @@ const AddProperty: React.FC = () => {
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Laundry*</label>
                     <CustomDropdown
+                      id="laundry"
                       value={formData.laundry}
                       onChange={(value) => {
                         updateFormData('laundry', value);
@@ -1462,6 +1457,7 @@ const AddProperty: React.FC = () => {
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Air Conditioning*</label>
                     <CustomDropdown
+                      id="ac"
                       value={formData.ac}
                       onChange={(value) => {
                         updateFormData('ac', value);
@@ -1575,6 +1571,7 @@ const AddProperty: React.FC = () => {
                       <div>
                         <label className="block text-xs font-medium mb-1 ml-1">unit {index + 1}</label>
                         <Input
+                          id={`unit_${index}_unitNumber`}
                           placeholder={`unit ${index + 1}`}
                           value={unit.unitNumber}
                           onChange={(e) => {
@@ -1597,6 +1594,7 @@ const AddProperty: React.FC = () => {
                       <div>
                         <label className="block text-xs font-medium mb-1 ml-1">unit type*</label>
                         <CustomDropdown
+                          id={`unit_${index}_unitType`}
                           value={unit.unitType}
                           onChange={(value) => {
                             updateUnit(index, 'unitType', value);
@@ -1621,25 +1619,21 @@ const AddProperty: React.FC = () => {
                       <div>
                         <label className="block text-xs font-medium mb-1 ml-1">Size, sq.ft*</label>
                         <Input
+                          id={`unit_${index}_size`}
                           type="number"
                           step="0.01"
                           placeholder="500.00"
                           value={unit.size}
                           onChange={(e) => {
                             updateUnit(index, 'size', e.target.value);
-                            const errorKey = `unit_${index}_size`;
-                            if (validationErrors[errorKey]) {
-                              setValidationErrors(prev => {
-                                const newErrors = { ...prev };
-                                delete newErrors[errorKey];
-                                return newErrors;
-                              });
-                            }
                           }}
-                          className={`bg-white border-gray-200 ${validationErrors[`unit_${index}_size`] ? 'border-red-500' : ''}`}
+                          className={`bg-white border-gray-200 ${Number(unit.size) <= 0 && unit.size.trim() !== '' ? 'border-red-500' : ''}`}
                         />
-                        {validationErrors[`unit_${index}_size`] && (
-                          <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors[`unit_${index}_size`]}</p>
+                        {Number(unit.size) <= 0 && unit.size.trim() !== '' && (
+                          <p className="text-red-500 text-xs mt-1 ml-1">Size must be a positive number</p>
+                        )}
+                        {unit.size.trim() === '' && (
+                          <p className="text-red-500 text-xs mt-1 ml-1">Size is required</p>
                         )}
                       </div>
                     </div>
@@ -1648,6 +1642,7 @@ const AddProperty: React.FC = () => {
                       <div>
                         <label className="block text-xs font-medium mb-1 ml-1">Baths*</label>
                         <Input
+                          id={`unit_${index}_baths`}
                           type="number"
                           step="0.01"
                           placeholder="0.00"
@@ -1676,26 +1671,22 @@ const AddProperty: React.FC = () => {
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
                           <Input
+                            id={`unit_${index}_rent`}
                             type="number"
                             step="0.01"
                             placeholder="0.00"
                             value={unit.rent}
                             onChange={(e) => {
                               updateUnit(index, 'rent', e.target.value);
-                              const errorKey = `unit_${index}_rent`;
-                              if (validationErrors[errorKey]) {
-                                setValidationErrors(prev => {
-                                  const newErrors = { ...prev };
-                                  delete newErrors[errorKey];
-                                  return newErrors;
-                                });
-                              }
                             }}
-                            className={`bg-white border-gray-200 pl-8 ${validationErrors[`unit_${index}_rent`] ? 'border-red-500' : ''}`}
+                            className={`bg-white border-gray-200 pl-8 ${Number(unit.rent) <= 0 && unit.rent.trim() !== '' ? 'border-red-500' : ''}`}
                           />
                         </div>
-                        {validationErrors[`unit_${index}_rent`] && (
-                          <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors[`unit_${index}_rent`]}</p>
+                        {Number(unit.rent) <= 0 && unit.rent.trim() !== '' && (
+                          <p className="text-red-500 text-xs mt-1 ml-1">Rent must be a positive number</p>
+                        )}
+                        {unit.rent.trim() === '' && (
+                          <p className="text-red-500 text-xs mt-1 ml-1">Rent is required</p>
                         )}
                       </div>
                       <div>
@@ -1705,31 +1696,28 @@ const AddProperty: React.FC = () => {
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
                           <Input
+                            id={`unit_${index}_deposit`}
                             type="number"
                             step="0.01"
                             placeholder="0.00"
                             value={unit.deposit}
                             onChange={(e) => {
                               updateUnit(index, 'deposit', e.target.value);
-                              const errorKey = `unit_${index}_deposit`;
-                              if (validationErrors[errorKey]) {
-                                setValidationErrors(prev => {
-                                  const newErrors = { ...prev };
-                                  delete newErrors[errorKey];
-                                  return newErrors;
-                                });
-                              }
                             }}
-                            className={`bg-white border-gray-200 pl-8 ${validationErrors[`unit_${index}_deposit`] ? 'border-red-500' : ''}`}
+                            className={`bg-white border-gray-200 pl-8 ${Number(unit.deposit) <= 0 && unit.deposit.trim() !== '' ? 'border-red-500' : ''}`}
                           />
                         </div>
-                        {validationErrors[`unit_${index}_deposit`] && (
-                          <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors[`unit_${index}_deposit`]}</p>
+                        {Number(unit.deposit) <= 0 && unit.deposit.trim() !== '' && (
+                          <p className="text-red-500 text-xs mt-1 ml-1">Deposit must be a positive number</p>
+                        )}
+                        {unit.deposit.trim() === '' && (
+                          <p className="text-red-500 text-xs mt-1 ml-1">Deposit is required</p>
                         )}
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1 ml-1">Beds*</label>
                         <Input
+                          id={`unit_${index}_beds`}
                           type="number"
                           placeholder="Select beds"
                           value={unit.beds}
@@ -1928,7 +1916,7 @@ const AddProperty: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isFormValid}
               className="px-8 py-2 bg-[#376F7E] text-white rounded-lg font-medium hover:bg-[#2c5a66] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating...' : 'Create'}

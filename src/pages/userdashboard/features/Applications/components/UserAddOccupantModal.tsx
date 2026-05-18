@@ -4,6 +4,8 @@ import { Search, ChevronDown, Check } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import CustomDropdown from '../../../../Dashboard/components/CustomDropdown';
 import BaseModal from '@/components/common/modals/BaseModal';
+import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+
 
 export interface OccupantFormData {
     firstName: string;
@@ -157,12 +159,17 @@ const UserAddOccupantModal: React.FC<UserAddOccupantModalProps> = ({ isOpen, onC
     };
 
     const handleChange = (key: keyof OccupantFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        let finalValue = value;
+        if (key === 'phoneNumber') {
+            finalValue = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [key]: finalValue }));
         if (touched[key]) {
-            const error = validateField(key, value);
+            const error = validateField(key, finalValue);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
+
 
     const handleBlur = (key: keyof OccupantFormData, currentValue?: any) => {
         setTouched(prev => ({ ...prev, [key]: true }));
@@ -176,11 +183,17 @@ const UserAddOccupantModal: React.FC<UserAddOccupantModalProps> = ({ isOpen, onC
     };
 
     const handleSubmit = () => {
-        const allTouched = (Object.keys(formData) as Array<keyof OccupantFormData>).reduce((acc, key) => {
-            acc[key] = true;
-            return acc;
-        }, {} as Record<string, boolean>);
+        const allTouched: Record<string, boolean> = {};
+        const allErrors: Record<string, string> = {};
+
+        (Object.keys(formData) as Array<keyof OccupantFormData>).forEach(key => {
+            allTouched[key] = true;
+            const error = validateField(key, formData[key]);
+            if (error) allErrors[key] = error;
+        });
+
         setTouched(allTouched);
+        setErrors(allErrors);
 
         if (validateAllFields()) {
             onSave(formData);
@@ -207,7 +220,7 @@ const UserAddOccupantModal: React.FC<UserAddOccupantModalProps> = ({ isOpen, onC
                 {
                     label: initialData ? 'Save Changes' : 'Add',
                     onClick: handleSubmit,
-                    disabled: !isFormValid(),
+                    disabled: false,
                     variant: 'primary',
                     className: "bg-[#7ED957] hover:bg-[#6BC847] border-none text-white",
                     icon: <Check size={16} strokeWidth={3} />
