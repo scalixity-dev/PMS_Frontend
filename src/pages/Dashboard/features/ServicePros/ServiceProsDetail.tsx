@@ -18,7 +18,8 @@ const getInitials = (firstName: string, lastName: string): string => {
 };
 
 // Helper function to format phone number with country code
-const formatPhoneNumber = (phoneNumber: string, phoneCountryCode?: string | null): string => {
+const formatPhoneNumber = (phoneNumber?: string | null, phoneCountryCode?: string | null): string => {
+    if (!phoneNumber) return '-';
     const raw = phoneCountryCode ? `${phoneCountryCode} ${phoneNumber}` : phoneNumber;
     return formatPhone(raw);
 };
