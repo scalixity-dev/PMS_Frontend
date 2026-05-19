@@ -68,19 +68,19 @@ const LeadDetail = () => {
     const store = useLeadDetailStore();
 
     // Fetch notes, tasks, activities, calls, and meetings
-    const { data: queryNotes = [] } = useGetAllNotes(id || null, !!id);
-    const { data: queryTasks = [] } = useGetAllTasks(id || null, !!id);
-    const { data: queryActivities = [] } = useGetAllActivities(id || null, !!id);
-    const { data: queryCalls = [] } = useGetAllCalls(id || null, !!id);
-    const { data: queryMeetings = [] } = useGetAllMeetings(id || null, !!id);
+    const { data: queryNotes } = useGetAllNotes(id || null, !!id);
+    const { data: queryTasks } = useGetAllTasks(id || null, !!id);
+    const { data: queryActivities } = useGetAllActivities(id || null, !!id);
+    const { data: queryCalls } = useGetAllCalls(id || null, !!id);
+    const { data: queryMeetings } = useGetAllMeetings(id || null, !!id);
 
     // Sync React Query data into Zustand store
     useEffect(() => { if (id) store.setLeadId(id); return () => { store.reset(); }; }, [id]);
-    useEffect(() => { store.setNotes(queryNotes); }, [queryNotes]);
-    useEffect(() => { store.setTasks(queryTasks); }, [queryTasks]);
-    useEffect(() => { store.setActivities(queryActivities); }, [queryActivities]);
-    useEffect(() => { store.setCalls(queryCalls); }, [queryCalls]);
-    useEffect(() => { store.setMeetings(queryMeetings); }, [queryMeetings]);
+    useEffect(() => { if (queryNotes) store.setNotes(queryNotes); }, [queryNotes]);
+    useEffect(() => { if (queryTasks) store.setTasks(queryTasks); }, [queryTasks]);
+    useEffect(() => { if (queryActivities) store.setActivities(queryActivities); }, [queryActivities]);
+    useEffect(() => { if (queryCalls) store.setCalls(queryCalls); }, [queryCalls]);
+    useEffect(() => { if (queryMeetings) store.setMeetings(queryMeetings); }, [queryMeetings]);
 
     // Read from store for rendering
     const notes = store.notes;
