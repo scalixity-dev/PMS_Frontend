@@ -617,12 +617,12 @@ const AddProperty: React.FC = () => {
 
   const isFormValid = useMemo(() => {
     const hasGeneralInfo = !!(
-      formData.propertyName.trim() &&
-      formData.yearBuilt.trim() &&
-      formData.streetAddress.trim() &&
+      String(formData.propertyName || '').trim() &&
+      String(formData.yearBuilt || '').trim() &&
+      String(formData.streetAddress || '').trim() &&
       formData.city &&
       formData.stateRegion &&
-      formData.zip.trim() &&
+      String(formData.zip || '').trim() &&
       formData.country
     );
 
@@ -632,9 +632,9 @@ const AddProperty: React.FC = () => {
       return !!(
         formData.beds &&
         formData.baths &&
-        formData.size.trim() && Number(formData.size) > 0 &&
-        formData.marketRent.trim() && Number(formData.marketRent) > 0 &&
-        formData.deposit.trim() && Number(formData.deposit) > 0 &&
+        String(formData.size || '').trim() && Number(formData.size) > 0 &&
+        String(formData.marketRent || '').trim() && Number(formData.marketRent) > 0 &&
+        String(formData.deposit || '').trim() && Number(formData.deposit) > 0 &&
         formData.parking &&
         formData.laundry &&
         formData.ac
@@ -815,9 +815,19 @@ const AddProperty: React.FC = () => {
     Object.entries(aiData).forEach(([key, value]) => {
       if (value !== null && value !== '' && value !== undefined) {
         if (Array.isArray(value) && value.length > 0) {
-          updates[key] = value;
+          if (key === 'units') {
+            updates[key] = value.map((unit: any) => {
+              const cleanedUnit: any = {};
+              Object.entries(unit).forEach(([uKey, uVal]) => {
+                cleanedUnit[uKey] = uVal !== null && uVal !== undefined ? String(uVal) : '';
+              });
+              return cleanedUnit;
+            });
+          } else {
+            updates[key] = value;
+          }
         } else if (!Array.isArray(value)) {
-          updates[key] = value;
+          updates[key] = typeof value === 'number' ? String(value) : value;
         }
       }
     });

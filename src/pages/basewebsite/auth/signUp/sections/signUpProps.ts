@@ -16,6 +16,8 @@ export interface RegisterFormData {
   accountType?: string;
   email?: string;
   fullName?: string;
+  firstName?: string;
+  lastName?: string;
   phone?: string;
   phoneCountryCode?: string;
   country?: string;

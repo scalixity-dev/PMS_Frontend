@@ -86,6 +86,12 @@ export interface BackendOccupant {
   relationship: string;
 }
 
+export interface BackendPetPhoto {
+  id: string;
+  petId: string;
+  photoUrl: string;
+}
+
 export interface BackendPet {
   id: string;
   applicationId: string;
@@ -94,6 +100,7 @@ export interface BackendPet {
   weight?: string | null;
   breed: string;
   photoUrl?: string | null;
+  photos?: BackendPetPhoto[];
 }
 
 export interface BackendVehicle {
@@ -200,6 +207,7 @@ export interface CreateApplicationDto {
     weight?: number;
     breed: string;
     photoUrl?: string;
+    photoUrls?: string[];
   }[];
   vehicles?: {
     type: string;
@@ -282,6 +290,23 @@ export interface ApplicationAttachment {
 }
 
 class ApplicationService {
+  private async uploadPetPhoto(file: File): Promise<string> {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('category', 'IMAGE');
+    const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+      method: 'POST',
+      credentials: 'include',
+      body: fd,
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to upload pet photo');
+    }
+    const data = await response.json();
+    return data.url as string;
+  }
+
   /**
    * Transform frontend form data to backend DTO format
    */
@@ -324,7 +349,7 @@ class ApplicationService {
         name: p.name,
         weight: p.weight ? parseFloat(p.weight) : undefined,
         breed: p.breed,
-        photoUrl: undefined, // TODO: Handle photo upload if needed
+        photoUrl: p.existingPhotoUrls?.[0] || undefined,
       })),
       vehicles: formData.vehicles.map((v) => ({
         type: v.type,
@@ -503,7 +528,7 @@ class ApplicationService {
         name: p.name,
         weight: p.weight ? parseFloat(p.weight) : undefined,
         breed: p.breed,
-        photoUrl: p.existingPhotoUrl || undefined,
+        photoUrl: p.existingPhotoUrls?.[0] || undefined,
       })) : undefined,
       vehicles: formData.vehicles?.length > 0 ? formData.vehicles.map((v) => ({
         type: v.type,
@@ -577,6 +602,15 @@ class ApplicationService {
   async create(formData: ApplicationFormData, leasingId: string): Promise<BackendApplication> {
     const dto = this.transformFormDataToDto(formData, leasingId);
 
+    if (dto.pets) {
+      for (let i = 0; i < dto.pets.length; i++) {
+        const pet = formData.pets[i];
+        if (pet?.photos?.length) {
+          dto.pets[i].photoUrls = await Promise.all(pet.photos.map((f) => this.uploadPetPhoto(f)));
+        }
+      }
+    }
+
     const response = await fetch(API_ENDPOINTS.APPLICATION.CREATE, {
       method: 'POST',
       headers: {
@@ -618,6 +652,15 @@ class ApplicationService {
    */
   async createUserApplication(formData: UserApplicationFormData, leasingId: string): Promise<BackendApplication> {
     const dto = this.transformUserFormDataToDto(formData, leasingId);
+
+    if (dto.pets) {
+      for (let i = 0; i < dto.pets.length; i++) {
+        const pet = formData.pets?.[i];
+        if (pet?.photos?.length) {
+          dto.pets[i].photoUrls = await Promise.all(pet.photos.map((f) => this.uploadPetPhoto(f)));
+        }
+      }
+    }
 
     const response = await fetch(API_ENDPOINTS.APPLICATION.CREATE, {
       method: 'POST',

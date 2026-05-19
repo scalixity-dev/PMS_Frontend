@@ -59,11 +59,23 @@ const UserNewApplication: React.FC = () => {
 
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessages, setErrorMessages] = useState<string[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Load draft on mount
     useEffect(() => {
         const state = location.state as { propertyId?: string };
-        const targetPropertyId = state?.propertyId;
+        let targetPropertyId = state?.propertyId;
+
+        // Save to sessionStorage if present, or retrieve if missing (fallback for refresh)
+        if (targetPropertyId) {
+            sessionStorage.setItem('current_application_property_id', targetPropertyId);
+        } else {
+            const savedPropId = sessionStorage.getItem('current_application_property_id');
+            if (savedPropId) {
+                targetPropertyId = savedPropId;
+            }
+        }
+
         const draftId = getDraftId(targetPropertyId);
         const dataKey = getDraftDataKey(draftId);
 
@@ -73,7 +85,7 @@ const UserNewApplication: React.FC = () => {
             try {
                 const { formData: savedData, currentStep: savedStep } = JSON.parse(savedDraftData);
 
-                // If we have a propertyId from state (Invitation flow)
+                // If we have a propertyId from state or fallback
                 if (targetPropertyId) {
                     // Ideally the saved draft propertyId matches the target because the key matched
                     // But double check to be safe
@@ -97,7 +109,7 @@ const UserNewApplication: React.FC = () => {
                 console.error('Failed to parse saved draft:', error);
             }
         } else if (targetPropertyId) {
-            // No saved draft for this property, but coming from invitation
+            // No saved draft for this property, but coming from invitation or recovered
             resetForm();
             updateFormData('propertyId', targetPropertyId);
             setIsPropertySelected(true);
@@ -403,6 +415,7 @@ const UserNewApplication: React.FC = () => {
     };
 
     const handleSubmitSuccess = async () => {
+        setIsSubmitting(true);
         try {
             const { leasingId, address, propertyName, landlordName } = await fetchLeasingData();
             await submitApplication(leasingId);
@@ -421,6 +434,7 @@ const UserNewApplication: React.FC = () => {
             resetForm();
             setShouldAllowNavigation(true);
             shouldAllowNavigationRef.current = true;
+            sessionStorage.removeItem('current_application_property_id');
 
             // Redirect to applications page with success details for the popup
             navigate('/userdashboard/applications', {
@@ -435,12 +449,39 @@ const UserNewApplication: React.FC = () => {
             console.error('Failed to submit application:', error);
             setErrorMessages([error instanceof Error ? error.message : 'Failed to submit application.']);
             setShowErrorModal(true);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const renderStep = () => {
         const state = location.state as { propertyId?: string };
-        const targetPropertyId = state?.propertyId;
+        const targetPropertyId = state?.propertyId || sessionStorage.getItem('current_application_property_id');
+
+        // Check if propertyId is completely missing
+        if (!formData.propertyId && !targetPropertyId) {
+            return (
+                <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+                    <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-6 text-amber-500 shadow-sm border border-amber-100">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">No Property Selected</h2>
+                    <p className="text-gray-500 text-sm max-w-md leading-relaxed mb-8">
+                        To fill out and submit a rental application, you must first select a property you wish to apply for.
+                    </p>
+                    <button
+                        onClick={() => navigate('/userdashboard/properties')}
+                        className="bg-[#7ED957] hover:bg-[#6BC847] text-white font-bold py-3 px-8 rounded-full shadow-lg shadow-[#7ED957]/30 transition-all hover:scale-105"
+                    >
+                        Browse Properties
+                    </button>
+                </div>
+            );
+        }
 
         // If we have a target property from navigation that doesn't match our store,
         // we are in a transition frame. Show the intro for the target property.
@@ -490,7 +531,7 @@ const UserNewApplication: React.FC = () => {
             case 10:
                 return <BackgroundQuestionsStep onNext={() => setCurrentStep(11)} />;
             case 11:
-                return <DocumentsStep onNext={handleSubmitSuccess} />;
+                return <DocumentsStep onNext={handleSubmitSuccess} isSubmitting={isSubmitting} />;
             default:
                 return null;
         }

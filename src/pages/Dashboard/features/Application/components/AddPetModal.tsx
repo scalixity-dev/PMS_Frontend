@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft, Upload, Edit2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, ChevronLeft, Upload, Plus } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 
 export interface PetFormData {
@@ -7,8 +7,8 @@ export interface PetFormData {
     name: string;
     weight: string;
     breed: string;
-    photo?: File | null;
-    existingPhotoUrl?: string | null;
+    photos: File[];
+    existingPhotoUrls?: string[];
 }
 
 interface AddPetModalProps {
@@ -33,19 +33,23 @@ const weightOptions = [
     { value: '> 20kg', label: '> 20kg' }
 ];
 
+const MAX_PHOTOS = 5;
+const MAX_BYTES = 5 * 1024 * 1024;
+
 const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [formData, setFormData] = useState<PetFormData>({
         type: '',
         name: '',
         weight: '',
         breed: '',
-        photo: null
+        photos: [],
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
+    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Prevent background scrolling when modal is open
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
@@ -57,148 +61,117 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
         };
     }, [isOpen]);
 
-    // Reset form and errors when modal closes
     useEffect(() => {
         if (isOpen && initialData) {
             setFormData(initialData);
-            if (initialData.photo) {
-                const url = URL.createObjectURL(initialData.photo);
-                setPreviewUrl(url);
-            } else if (initialData.existingPhotoUrl) {
-                setPreviewUrl(initialData.existingPhotoUrl);
-            }
         } else if (!isOpen) {
-            setFormData({
-                type: '',
-                name: '',
-                weight: '',
-                breed: '',
-                photo: null,
-                existingPhotoUrl: null
-            });
+            setFormData({ type: '', name: '', weight: '', breed: '', photos: [] });
             setErrors({});
             setTouched({});
-            setPreviewUrl(null);
         }
     }, [isOpen, initialData]);
 
-    // Image preview state
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-
     useEffect(() => {
-        if (formData.photo) {
-            const url = URL.createObjectURL(formData.photo);
-            setPreviewUrl(url);
-            return () => URL.revokeObjectURL(url);
-        } else {
-            setPreviewUrl(null);
-        }
-    }, [formData.photo]);
+        const urls = formData.photos.map(f => URL.createObjectURL(f));
+        setPreviewUrls(urls);
+        return () => urls.forEach(u => URL.revokeObjectURL(u));
+    }, [formData.photos]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            handleChange('photo', e.target.files[0]);
+        if (!e.target.files) return;
+        const incoming = Array.from(e.target.files);
+        const remaining = MAX_PHOTOS - formData.photos.length - (formData.existingPhotoUrls?.length ?? 0);
+
+        const valid: File[] = [];
+        for (const file of incoming.slice(0, remaining)) {
+            if (!file.type.startsWith('image/')) {
+                alert(`"${file.name}" is not an image file and was skipped.`);
+                continue;
+            }
+            if (file.size > MAX_BYTES) {
+                alert(`"${file.name}" exceeds 5 MB and was skipped.`);
+                continue;
+            }
+            valid.push(file);
         }
+
+        if (valid.length > 0) {
+            setFormData(prev => ({ ...prev, photos: [...prev.photos, ...valid] }));
+        }
+        e.target.value = '';
+    };
+
+    const removePhoto = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            photos: prev.photos.filter((_, i) => i !== index),
+        }));
     };
 
     if (!isOpen) return null;
 
     const validateField = (key: keyof PetFormData, value: any): string => {
-        // Skip validation for optional photo field
-        if (key === 'photo') {
-            return '';
+        if (key === 'photos' || key === 'existingPhotoUrls') return '';
+        if (typeof value === 'string' && (!value || value.trim() === '')) {
+            const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
+            return `${fieldName} is required`;
         }
-
-        // Validate required string fields
-        if (typeof value === 'string') {
-            if (!value || value.trim() === '') {
+        if ((key === 'name' || key === 'breed') && typeof value === 'string' && value) {
+            if (!/^[a-zA-Z\s\-']+$/.test(value)) {
                 const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
-                return `${fieldName} is required`;
-            }
-
-            // Specific validation for Name and Breed
-            if (key === 'name' || key === 'breed') {
-                if (!/^[a-zA-Z\s\-']+$/.test(value)) {
-                    const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
-                    return `${fieldName} can only contain letters, spaces, hyphens, and apostrophes`;
-                }
+                return `${fieldName} can only contain letters, spaces, hyphens, and apostrophes`;
             }
         }
-
         return '';
     };
 
     const validateAllFields = (): boolean => {
         const newErrors: Record<string, string> = {};
         let isValid = true;
-
-        // Validate only required fields (type, name, weight, breed)
         const requiredFields: Array<keyof PetFormData> = ['type', 'name', 'weight', 'breed'];
-
         requiredFields.forEach(key => {
             const error = validateField(key, formData[key]);
-            if (error) {
-                newErrors[key] = error;
-                isValid = false;
-            }
+            if (error) { newErrors[key] = error; isValid = false; }
         });
-
         setErrors(newErrors);
         return isValid;
     };
 
     const handleChange = (key: keyof PetFormData, value: any) => {
-        // Restrict input for Name and Breed fields to allow only letters, spaces, hyphens, and apostrophes
         if ((key === 'name' || key === 'breed') && typeof value === 'string') {
-            if (value && !/^[a-zA-Z\s\-']*$/.test(value)) {
-                return;
-            }
+            if (value && !/^[a-zA-Z\s\-']*$/.test(value)) return;
         }
-
         setFormData(prev => ({ ...prev, [key]: value }));
-
-        // Clear error for this field when user starts typing/selecting
         if (touched[key]) {
-            const error = validateField(key, value);
-            setErrors(prev => ({ ...prev, [key]: error }));
+            setErrors(prev => ({ ...prev, [key]: validateField(key, value) }));
         }
     };
 
     const handleBlur = (key: keyof PetFormData, currentValue?: any) => {
         setTouched(prev => ({ ...prev, [key]: true }));
         const value = currentValue !== undefined ? currentValue : formData[key];
-        const error = validateField(key, value);
-        setErrors(prev => ({ ...prev, [key]: error }));
+        setErrors(prev => ({ ...prev, [key]: validateField(key, value) }));
     };
 
     const handleSubmit = () => {
         const requiredFields: Array<keyof PetFormData> = ['type', 'name', 'weight', 'breed'];
         const allTouched: Record<string, boolean> = {};
         const allErrors: Record<string, string> = {};
-
         requiredFields.forEach(key => {
             allTouched[key] = true;
             const error = validateField(key, formData[key]);
             if (error) allErrors[key] = error;
         });
-
         setTouched(allTouched);
         setErrors(allErrors);
-
-        if (validateAllFields()) {
-            onSave(formData);
-            onClose();
-        }
+        if (validateAllFields()) { onSave(formData); onClose(); }
     };
 
-    // Check if form is valid for button state
-    const isFormValid = () => {
-        const requiredFields: Array<keyof PetFormData> = ['type', 'name', 'weight', 'breed'];
-        return requiredFields.every(key => {
-            return !validateField(key, formData[key]);
-        });
-    };
+    const allPreviews = [
+        ...previewUrls,
+        ...(formData.existingPhotoUrls ?? []),
+    ];
+    const canAddMore = formData.photos.length + (formData.existingPhotoUrls?.length ?? 0) < MAX_PHOTOS;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
@@ -216,142 +189,122 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                 </div>
 
                 {/* Body */}
-                {/* Body */}
-                <div className="p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+                <div className="p-4 sm:p-8 space-y-6">
 
-                    {/* Left Column: Image Upload */}
-                    <div className="col-span-1 flex justify-center lg:block">
+                    {/* Photo upload area */}
+                    <div>
+                        <label className="block text-sm font-semibold text-[#2c3e50] mb-2 ml-1">
+                            Pet Photos <span className="text-gray-400 font-normal">(up to {MAX_PHOTOS})</span>
+                        </label>
                         <input
                             type="file"
                             ref={fileInputRef}
                             className="hidden"
                             accept="image/*"
+                            multiple
                             onChange={handleFileChange}
                         />
-                        <div
-                            onClick={() => fileInputRef.current?.click()}
-                            className="bg-white rounded-3xl w-40 sm:w-full aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 text-gray-500 cursor-pointer hover:border-[#3A6D6C] hover:text-[#3A6D6C] transition-colors p-4 relative overflow-hidden group"
-                            style={{
-                                backgroundImage: `
-                                    linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
-                                    linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
-                                    linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
-                                    linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
-                                `,
-                                backgroundSize: '20px 20px',
-                                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
-                            }}
-                        >
-                            {previewUrl ? (
-                                <>
-                                    <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover z-20 rounded-3xl" />
-                                    <div className="absolute top-2 right-2 z-30 bg-white/90 p-1.5 rounded-full shadow-sm text-gray-700">
-                                        <Edit2 size={14} />
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <Upload size={40} className="mb-2 relative z-10" />
-                                    <span className="font-semibold relative z-10">upload image</span>
-                                </>
-                            )}
-                        </div>
-                    </div>
 
-                    {/* Right Column: Form Fields */}
-                    <div className="col-span-1 lg:col-span-2 space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {/* Type */}
-                            <div>
-                                <label className="block text-sm font-semibold text-[#2c3e50] mb-1 ml-1">Type *</label>
-                                <CustomDropdown
-                                    value={formData.type}
-                                    onChange={(val) => {
-                                        handleChange('type', val);
-                                        if (!touched.type) {
-                                            handleBlur('type', val);
-                                        }
-                                    }}
-                                    options={typeOptions}
-                                    placeholder="Choose Type"
-                                    buttonClassName={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.type && errors.type ? 'border-2 border-red-500' : 'border-none'
-                                        }`}
-                                    dropdownClassName="max-h-60"
-                                />
-                                {touched.type && errors.type && (
-                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.type}</p>
-                                )}
-                            </div>
-
-                            {/* Name */}
-                            <div>
-                                <label className="block text-sm font-semibold text-[#2c3e50] mb-1 ml-1">Name *</label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter Name"
-                                    className={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.name && errors.name ? 'border-2 border-red-500' : 'border-none'
-                                        }`}
-                                    value={formData.name}
-                                    onChange={(e) => handleChange('name', e.target.value)}
-                                    onBlur={() => handleBlur('name')}
-                                />
-                                {touched.name && errors.name && (
-                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.name}</p>
-                                )}
-                            </div>
-
-                            {/* Weight */}
-                            <div>
-                                <label className="block text-sm font-semibold text-[#2c3e50] mb-1 ml-1">Weight *</label>
-                                <CustomDropdown
-                                    value={formData.weight}
-                                    onChange={(val) => {
-                                        handleChange('weight', val);
-                                        if (!touched.weight) {
-                                            handleBlur('weight', val);
-                                        }
-                                    }}
-                                    options={weightOptions}
-                                    placeholder="Choose Type"
-                                    buttonClassName={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.weight && errors.weight ? 'border-2 border-red-500' : 'border-none'
-                                        }`}
-                                    dropdownClassName="max-h-60"
-                                />
-                                {touched.weight && errors.weight && (
-                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.weight}</p>
-                                )}
-                            </div>
-
-                            {/* Breed */}
-                            <div>
-                                <label className="block text-sm font-semibold text-[#2c3e50] mb-1 ml-1">Breed *</label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter Breed"
-                                    className={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.breed && errors.breed ? 'border-2 border-red-500' : 'border-none'
-                                        }`}
-                                    value={formData.breed}
-                                    onChange={(e) => handleChange('breed', e.target.value)}
-                                    onBlur={() => handleBlur('breed')}
-                                />
-                                {touched.breed && errors.breed && (
-                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.breed}</p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Add Button */}
-                        <div className="pt-4">
-                            <button
-                                onClick={handleSubmit}
-                                disabled={false}
-                                className={`px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-md bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer`}
+                        {allPreviews.length === 0 ? (
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-full h-36 bg-white rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#3A6D6C] hover:bg-[#3A6D6C]/5 transition-all cursor-pointer flex flex-col items-center justify-center gap-2"
                             >
-                                {initialData ? 'Save' : 'Add'}
-                            </button>
+                                <Upload size={28} className="text-gray-400" />
+                                <span className="text-sm text-gray-500 font-medium">Click to upload photos</span>
+                            </div>
+                        ) : (
+                            <div className="flex flex-wrap gap-3">
+                                {allPreviews.map((url, i) => (
+                                    <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200 group">
+                                        <img src={url} alt={`pet-${i}`} className="w-full h-full object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={() => removePhoto(i)}
+                                            className="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <X size={10} className="text-white" />
+                                        </button>
+                                    </div>
+                                ))}
+                                {canAddMore && (
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#3A6D6C] hover:bg-[#3A6D6C]/5 transition-all flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-[#3A6D6C]"
+                                    >
+                                        <Plus size={20} />
+                                        <span className="text-[10px] font-medium">Add more</span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Form Fields */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-semibold text-[#2c3e50] mb-1 ml-1">Type *</label>
+                            <CustomDropdown
+                                value={formData.type}
+                                onChange={(val) => { handleChange('type', val); if (!touched.type) handleBlur('type', val); }}
+                                options={typeOptions}
+                                placeholder="Choose Type"
+                                buttonClassName={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.type && errors.type ? 'border-2 border-red-500' : 'border-none'}`}
+                                dropdownClassName="max-h-60"
+                            />
+                            {touched.type && errors.type && <p className="text-red-500 text-xs mt-1 ml-1">{errors.type}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-[#2c3e50] mb-1 ml-1">Name *</label>
+                            <input
+                                type="text"
+                                placeholder="Enter Name"
+                                className={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.name && errors.name ? 'border-2 border-red-500' : 'border-none'}`}
+                                value={formData.name}
+                                onChange={(e) => handleChange('name', e.target.value)}
+                                onBlur={() => handleBlur('name')}
+                            />
+                            {touched.name && errors.name && <p className="text-red-500 text-xs mt-1 ml-1">{errors.name}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-[#2c3e50] mb-1 ml-1">Weight *</label>
+                            <CustomDropdown
+                                value={formData.weight}
+                                onChange={(val) => { handleChange('weight', val); if (!touched.weight) handleBlur('weight', val); }}
+                                options={weightOptions}
+                                placeholder="Select Weight"
+                                buttonClassName={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.weight && errors.weight ? 'border-2 border-red-500' : 'border-none'}`}
+                                dropdownClassName="max-h-60"
+                            />
+                            {touched.weight && errors.weight && <p className="text-red-500 text-xs mt-1 ml-1">{errors.weight}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-[#2c3e50] mb-1 ml-1">Breed *</label>
+                            <input
+                                type="text"
+                                placeholder="Enter Breed"
+                                className={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.breed && errors.breed ? 'border-2 border-red-500' : 'border-none'}`}
+                                value={formData.breed}
+                                onChange={(e) => handleChange('breed', e.target.value)}
+                                onBlur={() => handleBlur('breed')}
+                            />
+                            {touched.breed && errors.breed && <p className="text-red-500 text-xs mt-1 ml-1">{errors.breed}</p>}
                         </div>
                     </div>
 
+                    {/* Submit */}
+                    <div className="pt-2">
+                        <button
+                            onClick={handleSubmit}
+                            className="px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-md bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer"
+                        >
+                            {initialData ? 'Save' : 'Add'}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

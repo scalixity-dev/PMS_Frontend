@@ -269,7 +269,8 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                 if (!value || value.trim() === '') return 'Address is required';
                 break;
             case 'office':
-                if (!value || value.trim() === '') return 'Office is required';
+                if (!value || value.trim() === '') return 'Company email address is required';
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
                 break;
             case 'companyPhone':
                 if (!formData.companyPhoneCountryCode) return 'Please select a country code first';
@@ -288,8 +289,9 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                 if (value && value.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email';
                 break;
             case 'supervisorPhone':
-                if (value && value.trim() !== '') {
-                    if (!formData.supervisorPhoneCountryCode) return 'Please select a country code first';
+                if (!formData.supervisorPhoneCountryCode) return 'Please select a country code first';
+                if (!value || value.trim() === '') return 'Supervisor Phone is required';
+                {
                     const digitsOnly = value.replace(/\D/g, '');
                     if (digitsOnly.length < 4 || digitsOnly.length > 15) {
                         return 'Phone number must be between 4 and 15 digits';
@@ -393,12 +395,12 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                     </div>
 
                     <div className="mb-6">
-                        <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Income Type</label>
+                        <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Employee Type</label>
                         <CustomDropdown
                             value={formData.incomeType}
                             onChange={(val) => handleChange('incomeType', val)}
                             options={incomeTypeOptions}
-                            placeholder="Select"
+                            placeholder="Select Employee Type"
                             buttonClassName="w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm text-sm"
                             dropdownClassName="max-h-60"
                         />
@@ -567,7 +569,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
 
                         {/* Address */}
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Address *</label>
+                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Business Address *</label>
                             <input
                                 type="text"
                                 placeholder="Starting Address"
@@ -579,23 +581,23 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                             {touched.address && errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
                         </div>
 
-                        {/* Office */}
+                        {/* Company Email Address */}
                         <div className="md:col-span-1">
-                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Office *</label>
+                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Company Email Address *</label>
                             <input
-                                type="text"
-                                placeholder="Type Office"
+                                type="email"
+                                placeholder="Enter company email address"
                                 className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm text-sm ${touched.office && errors.office ? 'border-2 border-red-500' : ''}`}
                                 value={formData.office}
                                 onChange={(e) => handleChange('office', e.target.value)}
-                                onBlur={() => handleBlur('office')}
+                                  onBlur={() => handleBlur('office')}
                             />
                             {touched.office && errors.office && <p className="text-red-500 text-xs mt-1">{errors.office}</p>}
                         </div>
 
                         {/* Company Phone */}
                         <div className="md:col-span-1">
-                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Company Phone Number *</label>
+                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Company Landline Number *</label>
                             <div className={`flex border rounded-xl transition-all ${touched.companyPhone && errors.companyPhone
                                 ? 'border-red-500 border-2'
                                 : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
@@ -707,7 +709,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
 
                         {/* Supervisor Phone */}
                         <div className="md:col-span-1">
-                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Supervisor Phone Number</label>
+                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Supervisor Phone Number *</label>
                             <div className={`flex border rounded-xl transition-all ${touched.supervisorPhone && errors.supervisorPhone
                                 ? 'border-red-500 border-2'
                                 : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
