@@ -26,6 +26,8 @@ const initialFormData: RegisterFormData = {
   accountType: undefined,
   email: undefined,
   fullName: undefined,
+  firstName: undefined,
+  lastName: undefined,
   phone: undefined,
   phoneCountryCode: 'US|1',
   country: 'US',

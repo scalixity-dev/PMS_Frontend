@@ -8,12 +8,13 @@ const PetItem: React.FC<{ pet: PetFormData & { id: string }; onDelete: () => voi
     const [imageUrl, setImageUrl] = useState<string | null>(null);
 
     useEffect(() => {
-        if (pet.photo instanceof File) {
-            const url = URL.createObjectURL(pet.photo);
+        const firstPhoto = pet.photos?.[0];
+        if (firstPhoto instanceof File) {
+            const url = URL.createObjectURL(firstPhoto);
             setImageUrl(url);
             return () => URL.revokeObjectURL(url);
         }
-    }, [pet.photo]);
+    }, [pet.photos]);
 
     return (
         <div className="bg-white px-5 py-4 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-sm hover:shadow-md transition-shadow group">

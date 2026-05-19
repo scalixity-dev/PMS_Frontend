@@ -2164,8 +2164,8 @@ const ApplicationDetail = () => {
                         return '> 20kg';
                     })() : '',
                     breed: editingPet.breed,
-                    photo: null,
-                    existingPhotoUrl: editingPet.photoUrl
+                    photos: [],
+                    existingPhotoUrls: editingPet.photoUrl ? [editingPet.photoUrl] : []
                 } : undefined}
             />
             < DeleteConfirmationModal

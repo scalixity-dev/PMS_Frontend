@@ -6,9 +6,10 @@ import { API_ENDPOINTS } from '@/config/api.config';
 
 interface DocumentsStepProps {
     onNext: () => void;
+    isSubmitting?: boolean;
 }
 
-const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
+const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext, isSubmitting = false }) => {
     const { formData, setFormData } = useUserApplicationStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [fileError, setFileError] = useState<string>('');
@@ -261,13 +262,23 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
                     </div>
                     <PrimaryActionButton
                         onClick={onNext}
-                        disabled={uploadingFiles.size > 0}
-                        text={uploadingFiles.size > 0 ? `Uploading ${uploadingFiles.size} file(s)...` : "Submit Application"}
-                        className={`px-20 py-4 rounded-full font-bold uppercase tracking-wider transition-all ${uploadingFiles.size === 0
-                            ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
+                        disabled={uploadingFiles.size > 0 || isSubmitting}
+                        className={`px-20 py-4 rounded-full font-bold uppercase tracking-wider transition-all ${(uploadingFiles.size === 0 && !isSubmitting)
+                            ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white cursor-pointer'
                             : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                             }`}
-                    />
+                    >
+                        {isSubmitting ? (
+                            <span className="flex items-center gap-2">
+                                <Loader2 className="w-5 h-5 text-gray-500 animate-spin" />
+                                Submitting...
+                            </span>
+                        ) : uploadingFiles.size > 0 ? (
+                            `Uploading ${uploadingFiles.size} file(s)...`
+                        ) : (
+                            "Submit Application"
+                        )}
+                    </PrimaryActionButton>
                 </div>
             </div>
         </div>

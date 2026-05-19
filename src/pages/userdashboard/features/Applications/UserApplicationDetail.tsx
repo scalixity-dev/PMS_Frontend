@@ -291,11 +291,11 @@ const IncomeCard = ({ income, idx, isApproved, onEdit, onDelete }: any) => (
             <div className="space-y-1"><p className="text-[11px] font-medium text-gray-400 uppercase tracking-tight">Income Type</p><p className="text-sm font-semibold text-gray-700">{income.type}</p></div>
             <div className="space-y-1"><p className="text-[11px] font-medium text-gray-400 uppercase tracking-tight">Monthly Income</p><p className="text-sm font-bold text-gray-900">${income.incomePerMonth.toLocaleString('en-US')}.00</p></div>
             <div className="space-y-1"><p className="text-[11px] font-medium text-gray-400 uppercase tracking-tight">Start Date</p><p className="text-sm font-semibold text-gray-700">{income.startDate}</p></div>
-            <div className="space-y-1"><p className="text-[11px] font-medium text-gray-400 uppercase tracking-tight">Office #</p><p className="text-sm font-semibold text-gray-700">{income.officeNumber || '—'}</p></div>
+            <div className="space-y-1"><p className="text-[11px] font-medium text-gray-400 uppercase tracking-tight">Company Email</p><p className="text-sm font-semibold text-gray-700 truncate">{income.officeNumber || '—'}</p></div>
         </div>
         <div className="pt-4 border-t border-gray-50 flex flex-wrap gap-x-8 gap-y-2">
-            <div className="flex flex-col"><p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight mb-0.5">Work Phone</p><p className="text-sm font-semibold text-gray-700">{income.workPhone || '—'}</p></div>
-            <div className="flex flex-col"><p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight mb-0.5">Address</p><p className="text-sm font-semibold text-gray-700">{income.address}</p></div>
+            <div className="flex flex-col"><p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight mb-0.5">Company Landline Number</p><p className="text-sm font-semibold text-gray-700">{income.workPhone || '—'}</p></div>
+            <div className="flex flex-col"><p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight mb-0.5">Business Address</p><p className="text-sm font-semibold text-gray-700">{income.address}</p></div>
             <div className="flex flex-col"><p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight mb-0.5">Supervisor</p><p className="text-sm font-semibold text-gray-700">{income.supervisorName || '—'}</p></div>
             <div className="flex flex-col"><p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight mb-0.5">Supervisor Phone</p><p className="text-sm font-semibold text-gray-700">{income.supervisorPhone || '—'}</p></div>
         </div>
@@ -330,10 +330,24 @@ const OccupantCard = ({ occupant, idx, isApproved, onEdit, onDelete }: any) => (
     </div>
 );
 
-const PetCard = ({ pet, idx, isApproved, onEdit, onDelete }: any) => (
+const PetCard = ({ pet, idx, isApproved, onEdit, onDelete }: any) => {
+    const photos: string[] = pet.photoUrls?.length ? pet.photoUrls : (pet.photoUrl ? [pet.photoUrl] : []);
+    return (
     <div key={pet.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4 flex gap-4 relative group">
-        <div className="w-20 h-20 rounded-lg bg-gray-50 flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-100">
-            {pet.photoUrl ? <img src={pet.photoUrl} alt={pet.name} className="w-full h-full object-cover" /> : <PawPrint size={32} className="text-[#7ED957] opacity-60" />}
+        <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-100">
+            {photos.length === 0 ? (
+                <div className="w-full h-full bg-gray-50 flex items-center justify-center"><PawPrint size={32} className="text-[#7ED957] opacity-60" /></div>
+            ) : photos.length === 1 ? (
+                <img src={photos[0]} alt={pet.name} className="w-full h-full object-cover" />
+            ) : (
+                <div className="grid grid-cols-2 gap-px w-full h-full bg-gray-200">
+                    {photos.slice(0, 4).map((url: string, i: number) => (
+                        <div key={i} className="overflow-hidden bg-gray-50">
+                            <img src={url} alt={`${pet.name}-${i + 1}`} className="w-full h-full object-cover" />
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
         <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-1">
@@ -352,7 +366,8 @@ const PetCard = ({ pet, idx, isApproved, onEdit, onDelete }: any) => (
             <div className="space-y-0.5"><p className="text-[11px] font-medium text-gray-400 uppercase tracking-tight leading-none">Breed</p><p className="text-sm font-semibold text-gray-700 truncate">{pet.breed}</p></div>
         </div>
     </div>
-);
+    );
+};
 
 const VehicleCard = ({ vehicle, idx, isApproved, onEdit, onDelete }: any) => (
     <div key={vehicle.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 relative group">
@@ -576,13 +591,15 @@ const mapBackendToUI = (backendApplication: any) => {
             displayWeight = wStr.replace('>', 'Above');
         }
 
+        const photoUrls: string[] = pet.photos?.map((p: any) => p.photoUrl).filter(Boolean) || (pet.photoUrl ? [pet.photoUrl] : []);
         return {
             id: pet.id || `pet_${idx}`,
             name: pet.name,
             type: pet.type,
             breed: pet.breed,
             weight: displayWeight,
-            photoUrl: pet.photoUrl || null
+            photoUrl: photoUrls[0] || null,
+            photoUrls
         };
     });
 
@@ -977,7 +994,8 @@ const ApplicationDetail: React.FC = () => {
             name: data.name,
             weight: parseWeight(data.weight),
             breed: data.breed,
-            photoUrl: data.existingPhotoUrl || undefined
+            photoUrl: data.existingPhotoUrls?.[0] || undefined,
+            photoUrls: data.existingPhotoUrls?.length ? data.existingPhotoUrls : undefined
         };
 
         const updatedPets = currentPets.map((p: any, idx: number) => {
@@ -989,7 +1007,8 @@ const ApplicationDetail: React.FC = () => {
                 name: source.name,
                 weight: parseWeight(source.weight),
                 breed: source.breed,
-                photoUrl: source.photoUrl || undefined
+                photoUrl: source.photoUrl || undefined,
+                photoUrls: source.photoUrls || undefined
             };
         }) as any[];
 
@@ -1446,7 +1465,8 @@ const ApplicationDetail: React.FC = () => {
                         name: pet.name,
                         weight: String(pet.weight || ''),
                         breed: pet.breed,
-                        existingPhotoUrl: pet.photoUrl
+                        photos: [],
+                        existingPhotoUrls: pet.photos?.map((p: any) => p.photoUrl).filter(Boolean) || (pet.photoUrl ? [pet.photoUrl] : [])
                     };
                 })()}
             />

@@ -35,6 +35,18 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
 
+    const maxDobDate = React.useMemo(() => {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - 5);
+        return d;
+    }, []);
+
+    const minMoveInDate = React.useMemo(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }, []);
+
     useEffect(() => {
         if (isOpen) {
             setFormData({
@@ -56,12 +68,30 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
                     return 'Must be a positive number';
                 }
                 break;
-            case 'dateOfBirth':
+            case 'dateOfBirth': {
                 if (!value) return 'Date of birth is required';
+                const dateVal = value instanceof Date ? value : new Date(value);
+                const today = new Date();
+                const fiveYearsAgo = new Date();
+                fiveYearsAgo.setFullYear(today.getFullYear() - 5);
+                if (dateVal > today) {
+                    return 'Date of birth cannot be in the future';
+                }
+                if (dateVal > fiveYearsAgo) {
+                    return 'Date of birth must be at least 5 years ago';
+                }
                 break;
-            case 'moveInDate':
+            }
+            case 'moveInDate': {
                 if (!value) return 'Move-in date is required';
+                const dateVal = value instanceof Date ? value : new Date(value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (dateVal < today) {
+                    return 'Move-in date must be today or a future date';
+                }
                 break;
+            }
             default:
                 break;
         }
@@ -143,6 +173,7 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
                                     onChange={(date) => handleChange('dateOfBirth', date)}
                                     placeholder="Select date"
                                     className={`w-full pl-3 pr-4 py-2.5 bg-white rounded-lg outline-none text-gray-700 shadow-sm text-sm border-none focus:ring-1 focus:ring-[#3A6D6C] ${touched.dateOfBirth && errors.dateOfBirth ? 'ring-2 ring-red-500' : ''}`}
+                                    maxDate={maxDobDate}
                                 />
                                 {touched.dateOfBirth && errors.dateOfBirth && (
                                     <p className="text-red-500 text-xs mt-1 absolute -bottom-5 left-0">{errors.dateOfBirth}</p>
@@ -159,6 +190,7 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
                                     onChange={(date) => handleChange('moveInDate', date)}
                                     placeholder="Select date"
                                     className={`w-full pl-3 pr-4 py-2.5 bg-white rounded-lg outline-none text-gray-700 shadow-sm text-sm border-none focus:ring-1 focus:ring-[#3A6D6C] ${touched.moveInDate && errors.moveInDate ? 'ring-2 ring-red-500' : ''}`}
+                                    minDate={minMoveInDate}
                                 />
                                 {touched.moveInDate && errors.moveInDate && (
                                     <p className="text-red-500 text-xs mt-1 absolute -bottom-5 left-0">{errors.moveInDate}</p>

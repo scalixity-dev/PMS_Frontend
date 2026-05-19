@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Edit2, Check } from 'lucide-react';
+import { Upload, X, Check, Plus } from 'lucide-react';
 import CustomDropdown from '../../../../Dashboard/components/CustomDropdown';
 import BaseModal from '@/components/common/modals/BaseModal';
 
@@ -8,8 +8,8 @@ export interface PetFormData {
     name: string;
     weight: string;
     breed: string;
-    photo?: File | null;
-    existingPhotoUrl?: string | null;
+    photos: File[];
+    existingPhotoUrls?: string[];
 }
 
 interface UserAddPetModalProps {
@@ -34,77 +34,76 @@ const weightOptions = [
     { value: '> 20kg', label: '> 20kg' }
 ];
 
+const MAX_PHOTOS = 5;
+const MAX_BYTES = 5 * 1024 * 1024;
+
 const UserAddPetModal: React.FC<UserAddPetModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [formData, setFormData] = useState<PetFormData>({
         type: '',
         name: '',
         weight: '',
         breed: '',
-        photo: null
+        photos: [],
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen && initialData) {
             setFormData(initialData);
-            if (initialData.photo) {
-                const url = URL.createObjectURL(initialData.photo);
-                setPreviewUrl(url);
-            } else if (initialData.existingPhotoUrl) {
-                setPreviewUrl(initialData.existingPhotoUrl);
-            }
         } else if (!isOpen) {
-            setFormData({
-                type: '',
-                name: '',
-                weight: '',
-                breed: '',
-                photo: null,
-                existingPhotoUrl: null
-            });
+            setFormData({ type: '', name: '', weight: '', breed: '', photos: [] });
             setErrors({});
             setTouched({});
-            setPreviewUrl(null);
         }
     }, [isOpen, initialData]);
 
+    // Keep preview URLs in sync with formData.photos
     useEffect(() => {
-        if (formData.photo) {
-            const url = URL.createObjectURL(formData.photo);
-            setPreviewUrl(url);
-            return () => URL.revokeObjectURL(url);
-        }
-    }, [formData.photo]);
+        const urls = formData.photos.map(f => URL.createObjectURL(f));
+        setPreviewUrls(urls);
+        return () => urls.forEach(u => URL.revokeObjectURL(u));
+    }, [formData.photos]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            const MAX_PET_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+        if (!e.target.files) return;
+        const incoming = Array.from(e.target.files);
+        const remaining = MAX_PHOTOS - formData.photos.length;
+
+        const valid: File[] = [];
+        for (const file of incoming.slice(0, remaining)) {
             if (!file.type.startsWith('image/')) {
-                alert('Please select an image file (JPG, PNG, etc.)');
-                e.target.value = '';
-                return;
+                alert(`"${file.name}" is not an image file and was skipped.`);
+                continue;
             }
-            if (file.size > MAX_PET_IMAGE_BYTES) {
-                alert(`Pet photo must be under 5 MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
-                e.target.value = '';
-                return;
+            if (file.size > MAX_BYTES) {
+                alert(`"${file.name}" exceeds 5 MB and was skipped.`);
+                continue;
             }
-            handleChange('photo', file);
+            valid.push(file);
         }
+
+        if (valid.length > 0) {
+            setFormData(prev => ({ ...prev, photos: [...prev.photos, ...valid] }));
+        }
+        e.target.value = '';
+    };
+
+    const removePhoto = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            photos: prev.photos.filter((_, i) => i !== index),
+        }));
     };
 
     const validateField = (key: keyof PetFormData, value: any): string => {
-        if (key === 'photo' || key === 'existingPhotoUrl') return '';
-        if (typeof value === 'string') {
-            if (!value || value.trim() === '') {
-                const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
-                return `${fieldName} is required`;
-            }
+        if (key === 'photos' || key === 'existingPhotoUrls') return '';
+        if (typeof value === 'string' && (!value || value.trim() === '')) {
+            const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
+            return `${fieldName} is required`;
         }
         return '';
     };
@@ -113,15 +112,10 @@ const UserAddPetModal: React.FC<UserAddPetModalProps> = ({ isOpen, onClose, onSa
         const newErrors: Record<string, string> = {};
         let isValid = true;
         const requiredFields: Array<keyof PetFormData> = ['type', 'name', 'weight', 'breed'];
-
         requiredFields.forEach(key => {
             const error = validateField(key, formData[key]);
-            if (error) {
-                newErrors[key] = error;
-                isValid = false;
-            }
+            if (error) { newErrors[key] = error; isValid = false; }
         });
-
         setErrors(newErrors);
         return isValid;
     };
@@ -134,41 +128,39 @@ const UserAddPetModal: React.FC<UserAddPetModalProps> = ({ isOpen, onClose, onSa
     const handleChange = (key: keyof PetFormData, value: any) => {
         setFormData(prev => ({ ...prev, [key]: value }));
         if (touched[key]) {
-            const error = validateField(key, value);
-            setErrors(prev => ({ ...prev, [key]: error }));
+            setErrors(prev => ({ ...prev, [key]: validateField(key, value) }));
         }
     };
 
     const handleBlur = (key: keyof PetFormData, currentValue?: any) => {
         setTouched(prev => ({ ...prev, [key]: true }));
         const value = currentValue !== undefined ? currentValue : formData[key];
-        const error = validateField(key, value);
-        setErrors(prev => ({ ...prev, [key]: error }));
+        setErrors(prev => ({ ...prev, [key]: validateField(key, value) }));
     };
 
     const handleSubmit = () => {
         const requiredFields: Array<keyof PetFormData> = ['type', 'name', 'weight', 'breed'];
         const allTouched: Record<string, boolean> = {};
         const allErrors: Record<string, string> = {};
-
         requiredFields.forEach(key => {
             allTouched[key] = true;
             const error = validateField(key, formData[key]);
             if (error) allErrors[key] = error;
         });
-
         setTouched(allTouched);
         setErrors(allErrors);
-
-        if (validateAllFields()) {
-            onSave(formData);
-            onClose();
-        }
+        if (validateAllFields()) { onSave(formData); onClose(); }
     };
 
     const inputClasses = "w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]";
     const labelClasses = "block text-xs font-semibold text-gray-700 mb-1";
     const errorClasses = "text-red-500 text-xs mt-1";
+
+    const allPreviews = [
+        ...previewUrls,
+        ...(formData.existingPhotoUrls ?? []),
+    ];
+    const canAddMore = formData.photos.length + (formData.existingPhotoUrls?.length ?? 0) < MAX_PHOTOS;
 
     return (
         <BaseModal
@@ -177,11 +169,7 @@ const UserAddPetModal: React.FC<UserAddPetModalProps> = ({ isOpen, onClose, onSa
             title={initialData ? 'Edit pet' : 'Add a new pet'}
             maxWidth="max-w-2xl"
             footerButtons={[
-                {
-                    label: 'Cancel',
-                    onClick: onClose,
-                    variant: 'ghost',
-                },
+                { label: 'Cancel', onClick: onClose, variant: 'ghost' },
                 {
                     label: initialData ? 'Save Changes' : 'Add',
                     onClick: handleSubmit,
@@ -192,95 +180,107 @@ const UserAddPetModal: React.FC<UserAddPetModalProps> = ({ isOpen, onClose, onSa
                 }
             ]}
         >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-2">
-                {/* Image Upload Column */}
-                <div className="md:col-span-1 flex flex-col items-center">
-                    <label className={labelClasses}>Pet Photo</label>
+            <div className="space-y-4 py-2">
+                {/* Photo upload area */}
+                <div>
+                    <label className={labelClasses}>
+                        Pet Photos <span className="text-gray-400 font-normal">(up to {MAX_PHOTOS})</span>
+                    </label>
                     <input
                         type="file"
                         ref={fileInputRef}
                         className="hidden"
                         accept="image/*"
+                        multiple
                         onChange={handleFileChange}
                     />
-                    <div
-                        onClick={() => fileInputRef.current?.click()}
-                        className="mt-1 w-full aspect-square md:w-40 md:h-40 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#7CD947] hover:bg-[#F4F9F0] transition-all cursor-pointer flex flex-col items-center justify-center relative overflow-hidden group"
-                    >
-                        {previewUrl ? (
-                            <>
-                                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                                    <Edit2 size={20} />
+
+                    {allPreviews.length === 0 ? (
+                        <div
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-full h-32 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#7CD947] hover:bg-[#F4F9F0] transition-all cursor-pointer flex flex-col items-center justify-center gap-2"
+                        >
+                            <Upload size={22} className="text-gray-400" />
+                            <span className="text-xs text-gray-500 font-medium">Click to upload photos</span>
+                        </div>
+                    ) : (
+                        <div className="flex flex-wrap gap-2">
+                            {allPreviews.map((url, i) => (
+                                <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group">
+                                    <img src={url} alt={`pet-${i}`} className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        onClick={() => removePhoto(i)}
+                                        className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 hover:bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X size={10} className="text-white" />
+                                    </button>
                                 </div>
-                            </>
-                        ) : (
-                            <div className="text-center p-4">
-                                <Upload size={24} className="mx-auto mb-2 text-gray-400" />
-                                <span className="text-xs text-gray-500 font-medium">Click to upload</span>
-                            </div>
-                        )}
-                    </div>
+                            ))}
+                            {canAddMore && (
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 hover:border-[#7CD947] hover:bg-[#F4F9F0] transition-all flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-[#7CD947]"
+                                >
+                                    <Plus size={18} />
+                                    <span className="text-[10px] font-medium">Add more</span>
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
-                {/* Fields Column */}
-                <div className="md:col-span-2 space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className={labelClasses}>Type</label>
-                            <CustomDropdown
-                                value={formData.type}
-                                onChange={(val: string) => {
-                                    handleChange('type', val);
-                                    if (!touched.type) handleBlur('type', val);
-                                }}
-                                options={typeOptions}
-                                placeholder="Choose Type"
-                                buttonClassName={`${inputClasses} ${touched.type && errors.type ? 'border-red-500' : ''}`}
-                            />
-                            {touched.type && errors.type && <p className={errorClasses}>{errors.type}</p>}
-                        </div>
+                {/* Fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className={labelClasses}>Type *</label>
+                        <CustomDropdown
+                            value={formData.type}
+                            onChange={(val: string) => { handleChange('type', val); if (!touched.type) handleBlur('type', val); }}
+                            options={typeOptions}
+                            placeholder="Choose Type"
+                            buttonClassName={`${inputClasses} ${touched.type && errors.type ? 'border-red-500' : ''}`}
+                        />
+                        {touched.type && errors.type && <p className={errorClasses}>{errors.type}</p>}
+                    </div>
 
-                        <div>
-                            <label className={labelClasses}>Name</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Name"
-                                className={`${inputClasses} ${touched.name && errors.name ? 'border-red-500' : ''}`}
-                                value={formData.name}
-                                onChange={(e) => handleChange('name', e.target.value)}
-                                onBlur={() => handleBlur('name')}
-                            />
-                            {touched.name && errors.name && <p className={errorClasses}>{errors.name}</p>}
-                        </div>
+                    <div>
+                        <label className={labelClasses}>Name *</label>
+                        <input
+                            type="text"
+                            placeholder="Enter Name"
+                            className={`${inputClasses} ${touched.name && errors.name ? 'border-red-500' : ''}`}
+                            value={formData.name}
+                            onChange={(e) => handleChange('name', e.target.value)}
+                            onBlur={() => handleBlur('name')}
+                        />
+                        {touched.name && errors.name && <p className={errorClasses}>{errors.name}</p>}
+                    </div>
 
-                        <div>
-                            <label className={labelClasses}>Weight</label>
-                            <CustomDropdown
-                                value={formData.weight}
-                                onChange={(val: string) => {
-                                    handleChange('weight', val);
-                                    if (!touched.weight) handleBlur('weight', val);
-                                }}
-                                options={weightOptions}
-                                placeholder="Select Weight"
-                                buttonClassName={`${inputClasses} ${touched.weight && errors.weight ? 'border-red-500' : ''}`}
-                            />
-                            {touched.weight && errors.weight && <p className={errorClasses}>{errors.weight}</p>}
-                        </div>
+                    <div>
+                        <label className={labelClasses}>Weight *</label>
+                        <CustomDropdown
+                            value={formData.weight}
+                            onChange={(val: string) => { handleChange('weight', val); if (!touched.weight) handleBlur('weight', val); }}
+                            options={weightOptions}
+                            placeholder="Select Weight"
+                            buttonClassName={`${inputClasses} ${touched.weight && errors.weight ? 'border-red-500' : ''}`}
+                        />
+                        {touched.weight && errors.weight && <p className={errorClasses}>{errors.weight}</p>}
+                    </div>
 
-                        <div>
-                            <label className={labelClasses}>Breed</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Breed"
-                                className={`${inputClasses} ${touched.breed && errors.breed ? 'border-red-500' : ''}`}
-                                value={formData.breed}
-                                onChange={(e) => handleChange('breed', e.target.value)}
-                                onBlur={() => handleBlur('breed')}
-                            />
-                            {touched.breed && errors.breed && <p className={errorClasses}>{errors.breed}</p>}
-                        </div>
+                    <div>
+                        <label className={labelClasses}>Breed *</label>
+                        <input
+                            type="text"
+                            placeholder="Enter Breed"
+                            className={`${inputClasses} ${touched.breed && errors.breed ? 'border-red-500' : ''}`}
+                            value={formData.breed}
+                            onChange={(e) => handleChange('breed', e.target.value)}
+                            onBlur={() => handleBlur('breed')}
+                        />
+                        {touched.breed && errors.breed && <p className={errorClasses}>{errors.breed}</p>}
                     </div>
                 </div>
             </div>

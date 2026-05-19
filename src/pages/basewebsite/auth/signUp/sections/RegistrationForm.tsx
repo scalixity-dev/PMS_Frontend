@@ -192,13 +192,14 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
       return !!(
         formData.email &&
         formData.password &&
-        formData.fullName &&
+        formData.firstName &&
+        formData.lastName &&
         formData.agreedToTerms &&
         formData.password === formData.confirmPassword &&
         !passwordErrors.strength
       );
     }
-  }, [isOAuthSignup, formData.email, formData.password, formData.fullName, formData.agreedToTerms, formData.confirmPassword, passwordErrors.strength]);
+  }, [isOAuthSignup, formData.email, formData.password, formData.firstName, formData.lastName, formData.agreedToTerms, formData.confirmPassword, passwordErrors.strength]);
 
   // Handle registration
   const handleRegistration = async () => {
@@ -258,7 +259,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
     }
 
     // Regular email signup - validate all fields
-    if (!formData.email || !formData.password || !formData.fullName) {
+    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
       setError('Please fill in all required fields');
       return;
     }
@@ -280,12 +281,13 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
 
     try {
       const accountType = formData.accountType;
+      const combinedFullName = `${formData.firstName || ''} ${formData.lastName || ''}`.trim();
 
       if (accountType === 'renting') {
         await authService.registerTenant({
           email: formData.email!,
           password: formData.password!,
-          fullName: formData.fullName!,
+          fullName: combinedFullName,
         });
 
         navigate('/login', {
@@ -294,7 +296,8 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
             email: formData.email,
           },
           replace: true,
-        });
+          window: undefined
+        } as any);
         return;
       }
 
@@ -302,7 +305,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
         await authService.registerServicePro({
           email: formData.email!,
           password: formData.password!,
-          fullName: formData.fullName!,
+          fullName: combinedFullName,
         });
 
         navigate('/login', {
@@ -311,7 +314,8 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
             email: formData.email,
           },
           replace: true,
-        });
+          window: undefined
+        } as any);
         return;
       }
 
@@ -323,7 +327,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
       const response = await registerMutation.mutateAsync({
         email: formData.email!,
         password: formData.password!,
-        fullName: formData.fullName!,
+        fullName: combinedFullName,
         phoneCountryCode: phoneCountryCode,
         phoneNumber: phoneNumber,
         country: formData.country,
@@ -402,15 +406,35 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
             </div>
           )}
           {!isOAuthSignup && (
-            <div>
-              <label className={labelClasses}>Full Name</label>
-              <input
-                type="text"
-                value={formData.fullName || ''}
-                onChange={(e) => updateFormData('fullName', e.target.value)}
-                placeholder="Type full name"
-                className={inputClasses()}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClasses}>First Name *</label>
+                <input
+                  type="text"
+                  value={formData.firstName || ''}
+                  onChange={(e) => {
+                    updateFormData('firstName', e.target.value);
+                    updateFormData('fullName', `${e.target.value} ${formData.lastName || ''}`.trim());
+                  }}
+                  placeholder="Type first name"
+                  className={inputClasses()}
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>Last Name *</label>
+                <input
+                  type="text"
+                  value={formData.lastName || ''}
+                  onChange={(e) => {
+                    updateFormData('lastName', e.target.value);
+                    updateFormData('fullName', `${formData.firstName || ''} ${e.target.value}`.trim());
+                  }}
+                  placeholder="Type last name"
+                  className={inputClasses()}
+                  required
+                />
+              </div>
             </div>
           )}
 

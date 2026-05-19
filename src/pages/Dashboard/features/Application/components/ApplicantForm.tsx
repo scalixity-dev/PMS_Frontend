@@ -57,6 +57,18 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     const bioRef = React.useRef<HTMLInputElement>(null);
     const moveInDateRef = React.useRef<HTMLDivElement>(null);
 
+    const maxDobDate = useMemo(() => {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - 5);
+        return d;
+    }, []);
+
+    const minMoveInDate = useMemo(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }, []);
+
     // Phone country codes
     const phoneCountryCodes = useMemo(() => {
         return Country.getAllCountries().map(country => ({
@@ -183,12 +195,32 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         }
 
         // Date fields validation
-        if (key === 'dob' && !value) {
-            return 'Date of birth is required';
+        if (key === 'dob') {
+            if (!value) {
+                return 'Date of birth is required';
+            }
+            const dateVal = value instanceof Date ? value : new Date(value);
+            const today = new Date();
+            const fiveYearsAgo = new Date();
+            fiveYearsAgo.setFullYear(today.getFullYear() - 5);
+            if (dateVal > today) {
+                return 'Date of birth cannot be in the future';
+            }
+            if (dateVal > fiveYearsAgo) {
+                return 'Date of birth must be at least 5 years ago';
+            }
         }
 
-        if (key === 'moveInDate' && !value) {
-            return 'Preferred move in date is required';
+        if (key === 'moveInDate') {
+            if (!value) {
+                return 'Preferred move in date is required';
+            }
+            const dateVal = value instanceof Date ? value : new Date(value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (dateVal < today) {
+                return 'Preferred move in date must be today or a future date';
+            }
         }
 
         return '';
@@ -531,6 +563,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                     }}
                                     placeholder="DD/MM/YYYY"
                                     className={getInputClass('dob')}
+                                    maxDate={maxDobDate}
                                 />
                             </div>
                             {touched.dob && errors.dob && (
@@ -573,6 +606,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                     }}
                                     placeholder="DD/MM/YYYY"
                                     className={getInputClass('moveInDate')}
+                                    minDate={minMoveInDate}
                                 />
                             </div>
                             {touched.moveInDate && errors.moveInDate && (

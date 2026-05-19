@@ -11,15 +11,15 @@ const ApplicantInfoStep: React.FC<ApplicantInfoStepProps> = ({ onNext }) => {
     const { formData, updateFormData } = useUserApplicationStore();
     const { data: currentUser } = useGetCurrentUser();
 
+    const [profileFirstName, ...rest] = (currentUser?.fullName ?? '').split(' ');
+    const profileLastName = rest.join(' ');
+
     useEffect(() => {
         if (!currentUser) return;
 
-        const [firstName, ...rest] = (currentUser.fullName ?? '').split(' ');
-        const lastName = rest.join(' ');
-
         const fieldsToFill: Array<[string, string | undefined | null]> = [
-            ['firstName', firstName],
-            ['lastName', lastName],
+            ['firstName', profileFirstName],
+            ['lastName', profileLastName],
             ['email', currentUser.email],
             ['phoneCountryCode', currentUser.phoneCountryCode],
             ['phoneNumber', currentUser.phoneNumber],
@@ -34,7 +34,7 @@ const ApplicantInfoStep: React.FC<ApplicantInfoStepProps> = ({ onNext }) => {
         if (currentUser.dateOfBirth && !formData.dob) {
             updateFormData('dob', new Date(currentUser.dateOfBirth));
         }
-    }, [currentUser]);
+    }, [currentUser, profileFirstName, profileLastName]);
 
     return (
         <ApplicantForm
@@ -44,12 +44,11 @@ const ApplicantInfoStep: React.FC<ApplicantInfoStepProps> = ({ onNext }) => {
             title="Applicant Information"
             subTitle="Tell us about yourself and when you plan to move."
             disabledFields={{
-                firstName: !!currentUser?.fullName,
-                lastName: !!currentUser?.fullName,
+                firstName: !!profileFirstName,
+                lastName: !!profileLastName,
                 email: !!currentUser?.email,
-                // Never disable phone fields as they often need correction or are missing
-                phoneCountryCode: false,
-                phoneNumber: false,
+                phoneCountryCode: !!currentUser?.phoneCountryCode,
+                phoneNumber: !!currentUser?.phoneNumber,
             }}
         />
     );

@@ -131,6 +131,12 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
         }
     }, [isOpen, initialData]);
 
+    const today = useMemo(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }, []);
+
     const filteredCurrencies = useMemo(() => {
         if (!currencySearch) return currencyOptions;
         const searchLower = currencySearch.toLowerCase();
@@ -211,14 +217,23 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
 
     const validateField = (key: keyof IncomeFormData, value: any): string => {
         switch (key) {
-            case 'startDate':
+            case 'startDate': {
                 if (!value) return 'Start Date is required';
+                const startVal = value instanceof Date ? value : new Date(value as string);
+                if (startVal > today) return 'Start date cannot be in the future';
                 break;
-            case 'endDate':
-                if (!formData.currentEmployment && !value) return 'End Date is required';
+            }
+            case 'endDate': {
                 if (formData.currentEmployment) return '';
                 if (!value) return 'End Date is required';
+                const endVal = value instanceof Date ? value : new Date(value as string);
+                if (endVal > today) return 'End date cannot be in the future';
+                if (formData.startDate) {
+                    const startVal = formData.startDate instanceof Date ? formData.startDate : new Date(formData.startDate as string);
+                    if (endVal <= startVal) return 'End date must be after start date';
+                }
                 break;
+            }
             case 'company':
                 if (!value || String(value).trim() === '') return 'Company is required';
                 break;
@@ -233,7 +248,8 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                 if (!value || String(value).trim() === '') return 'Address is required';
                 break;
             case 'office':
-                if (!value || String(value).trim() === '') return 'Office is required';
+                if (!value || String(value).trim() === '') return 'Company email address is required';
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value))) return 'Please enter a valid email address';
                 break;
             case 'companyPhone':
                 if (!formData.companyPhoneCountryCode) {
@@ -254,10 +270,11 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                 if (value && String(value).trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value))) return 'Invalid email';
                 break;
             case 'supervisorPhone':
-                if (value && String(value).trim() !== '') {
-                    if (!formData.supervisorPhoneCountryCode) {
-                        return 'Please select a country code first';
-                    }
+                if (!formData.supervisorPhoneCountryCode) {
+                    return 'Please select a country code first';
+                }
+                if (!value || String(value).trim() === '') return 'Supervisor Phone is required';
+                {
                     const digitsOnly = value.replace(/\D/g, '');
                     if (digitsOnly.length < 4 || digitsOnly.length > 15) {
                         return 'Phone number must be between 4 and 15 digits';
@@ -270,7 +287,7 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
 
     const isFormValid = () => {
         const requiredFields: Array<keyof IncomeFormData> = [
-            'startDate', 'company', 'position', 'monthlyAmount', 'address', 'office', 'companyPhone', 'supervisorName'
+            'startDate', 'company', 'position', 'monthlyAmount', 'address', 'office', 'companyPhone', 'supervisorName', 'supervisorPhone'
         ];
 
         let isValid = requiredFields.every(key => !validateField(key, formData[key]));
@@ -365,12 +382,12 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                 {/* Current Employment & Type */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="w-full sm:w-1/2">
-                        <label className={labelClasses}>Income Type</label>
+                        <label className={labelClasses}>Employee Type</label>
                         <CustomDropdown
                             value={formData.incomeType}
                             onChange={(val: string) => handleChange('incomeType', val)}
                             options={incomeTypeOptions}
-                            placeholder="Select Income Type"
+                            placeholder="Select Employee Type"
                             buttonClassName={inputClasses}
                         />
                     </div>
@@ -395,6 +412,7 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                             }}
                             placeholder="DD/MM/YYYY"
                             className={`${inputClasses} ${touched.startDate && errors.startDate ? 'border-red-500' : ''}`}
+                            maxDate={today}
                         />
                         {touched.startDate && errors.startDate && <p className={errorClasses}>{errors.startDate}</p>}
                     </div>
@@ -411,6 +429,9 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                                 }}
                                 placeholder="DD/MM/YYYY"
                                 className={`${inputClasses} ${touched.endDate && errors.endDate ? 'border-red-500' : ''}`}
+                                maxDate={today}
+                                minDate={formData.startDate}
+                                disabled={formData.currentEmployment}
                             />
                         </div>
                         {touched.endDate && errors.endDate && <p className={errorClasses}>{errors.endDate}</p>}
@@ -527,7 +548,7 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
 
                     {/* Address */}
                     <div className="md:col-span-2">
-                        <label className={labelClasses}>Address *</label>
+                        <label className={labelClasses}>Business Address *</label>
                         <input
                             type="text"
                             placeholder="Starting Address"
@@ -539,12 +560,12 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                         {touched.address && errors.address && <p className={errorClasses}>{errors.address}</p>}
                     </div>
 
-                    {/* Office */}
+                    {/* Company Email Address */}
                     <div>
-                        <label className={labelClasses}>Office *</label>
+                        <label className={labelClasses}>Company Email Address *</label>
                         <input
-                            type="text"
-                            placeholder="Type Office"
+                            type="email"
+                            placeholder="Enter company email address"
                             className={`${inputClasses} ${touched.office && errors.office ? 'border-red-500' : ''}`}
                             value={formData.office}
                             onChange={(e) => handleChange('office', e.target.value)}
@@ -555,7 +576,7 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
 
                     {/* Company Phone */}
                     <div>
-                        <label className={labelClasses}>Company Phone Number *</label>
+                        <label className={labelClasses}>Company Landline Number *</label>
                         <div className={`flex border rounded-md transition-all ${(touched.companyPhone && errors.companyPhone) || (!formData.companyPhoneCountryCode && touched.companyPhone)
                             ? 'border-red-500'
                             : 'border-gray-300 focus-within:border-[#7CD947] focus-within:ring-1 focus-within:ring-[#7CD947]'
@@ -678,7 +699,7 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
 
                             {/* Supervisor Phone */}
                             <div>
-                                <label className={labelClasses}>Supervisor Phone</label>
+                                <label className={labelClasses}>Supervisor Phone *</label>
                                 <div className={`flex border rounded-md transition-all ${(touched.supervisorPhone && errors.supervisorPhone) || (!formData.supervisorPhoneCountryCode && touched.supervisorPhone)
                                     ? 'border-red-500'
                                     : 'border-gray-300 focus-within:border-[#7CD947] focus-within:ring-1 focus-within:ring-[#7CD947]'

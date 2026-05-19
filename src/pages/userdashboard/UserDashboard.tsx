@@ -496,7 +496,12 @@ const UserDashboard = () => {
                                         key={app.id}
                                         app={app}
                                         onDelete={(id) => setDeleteModalState({ isOpen: true, targetId: String(id) })}
-                                        onNavigate={() => navigate(app.status === "Draft" ? "/userdashboard/new-application" : `/userdashboard/applications/${app.id}`)}
+                                        onNavigate={() => navigate(
+                                            app.status === "Draft" ? "/userdashboard/new-application" : `/userdashboard/applications/${app.id}`,
+                                            {
+                                                state: app.status === "Draft" && app.propertyId ? { propertyId: app.propertyId } : undefined
+                                            }
+                                        )}
                                     />
                                 ))}
                             </div>

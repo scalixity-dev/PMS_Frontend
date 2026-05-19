@@ -60,8 +60,8 @@ export interface PetFormData {
     name: string;
     weight: string;
     breed: string;
-    photo?: File | null;
-    existingPhotoUrl?: string | null;
+    photos: File[];
+    existingPhotoUrls?: string[];
 }
 
 export interface IncomeFormData {

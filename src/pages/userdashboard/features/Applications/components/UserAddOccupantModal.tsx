@@ -50,6 +50,12 @@ const UserAddOccupantModal: React.FC<UserAddOccupantModalProps> = ({ isOpen, onC
     const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
     const phoneCodeRef = useRef<HTMLDivElement>(null);
 
+    const maxDobDate = useMemo(() => {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - 5);
+        return d;
+    }, []);
+
     const phoneCountryCodes = useMemo(() => {
         return Country.getAllCountries().map(country => ({
             label: `${country.flag} ${country.phonecode.startsWith('+') ? '' : '+'}${country.phonecode}`,
@@ -134,9 +140,20 @@ const UserAddOccupantModal: React.FC<UserAddOccupantModalProps> = ({ isOpen, onC
                 if (digitsOnly.length < 4) return 'Phone number must contain at least 4 digits';
                 if (digitsOnly.length > 15) return 'Phone number cannot exceed 15 digits';
                 break;
-            case 'dob':
+            case 'dob': {
                 if (!value) return 'Date of birth is required';
+                const dateVal = value instanceof Date ? value : new Date(value);
+                const today = new Date();
+                const fiveYearsAgo = new Date();
+                fiveYearsAgo.setFullYear(today.getFullYear() - 5);
+                if (dateVal > today) {
+                    return 'Date of birth cannot be in the future';
+                }
+                if (dateVal > fiveYearsAgo) {
+                    return 'Date of birth must be at least 5 years ago';
+                }
                 break;
+            }
             case 'relationship':
                 if (!value || value.trim() === '') return 'Relationship is required';
                 break;
@@ -369,6 +386,7 @@ const UserAddOccupantModal: React.FC<UserAddOccupantModalProps> = ({ isOpen, onC
                             placeholder="DD/MM/YYYY"
                             className={`${inputClasses} ${touched.dob && errors.dob ? 'border-red-500' : ''}`}
                             popoverClassName="bottom-full mb-2"
+                            maxDate={maxDobDate}
                         />
                     </div>
                     {touched.dob && errors.dob && <p className={errorClasses}>{errors.dob}</p>}

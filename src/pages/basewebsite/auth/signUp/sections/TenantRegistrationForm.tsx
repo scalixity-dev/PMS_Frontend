@@ -89,12 +89,13 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
     return !!(
       formData.email &&
       formData.password &&
-      formData.fullName &&
+      formData.firstName &&
+      formData.lastName &&
       formData.agreedToTerms &&
       formData.password === formData.confirmPassword &&
       !passwordErrors.strength
     );
-  }, [formData.email, formData.password, formData.fullName, formData.agreedToTerms, formData.confirmPassword, passwordErrors.strength]);
+  }, [formData.email, formData.password, formData.firstName, formData.lastName, formData.agreedToTerms, formData.confirmPassword, passwordErrors.strength]);
 
   // Handle registration
   const handleRegistration = async () => {
@@ -102,7 +103,7 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
     if (isLoading) return;
 
     // Validate all fields
-    if (!formData.email || !formData.password || !formData.fullName) {
+    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
       setError('Please fill in all required fields');
       return;
     }
@@ -134,7 +135,7 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
       await authService.registerTenant({
         email: formData.email!,
         password: formData.password!,
-        fullName: formData.fullName!,
+        fullName: `${formData.firstName || ''} ${formData.lastName || ''}`.trim(),
       });
 
       // Registration successful - redirect to login
@@ -171,16 +172,36 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
             </div>
           )}
 
-          {/* Full Name */}
-          <div>
-            <label className={labelClasses}>Full Name</label>
-            <input
-              type="text"
-              value={formData.fullName || ''}
-              onChange={(e) => updateFormData('fullName', e.target.value)}
-              placeholder="Enter your full name"
-              className={inputClasses()}
-            />
+          {/* First Name & Last Name */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClasses}>First Name *</label>
+              <input
+                type="text"
+                value={formData.firstName || ''}
+                onChange={(e) => {
+                  updateFormData('firstName', e.target.value);
+                  updateFormData('fullName', `${e.target.value} ${formData.lastName || ''}`.trim());
+                }}
+                placeholder="Enter your first name"
+                className={inputClasses()}
+                required
+              />
+            </div>
+            <div>
+              <label className={labelClasses}>Last Name *</label>
+              <input
+                type="text"
+                value={formData.lastName || ''}
+                onChange={(e) => {
+                  updateFormData('lastName', e.target.value);
+                  updateFormData('fullName', `${formData.firstName || ''} ${e.target.value}`.trim());
+                }}
+                placeholder="Enter your last name"
+                className={inputClasses()}
+                required
+              />
+            </div>
           </div>
 
           {/* Email Address */}

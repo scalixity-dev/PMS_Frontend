@@ -36,6 +36,22 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
     const [amount, setAmount] = useState(formData.recurringRent.amount || '');
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    const minStartDate = React.useMemo(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }, []);
+
+    const minEndDate = React.useMemo(() => {
+        if (startOn) {
+            const startVal = startOn instanceof Date ? startOn : new Date(startOn);
+            return startVal;
+        }
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }, [startOn]);
+
     // Update store when local state changes
     useEffect(() => {
         setRecurringRent({
@@ -51,14 +67,33 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
         
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
         if (!amount || parseFloat(amount) <= 0) {
             newErrors.amount = 'Amount is required and must be greater than zero';
         }
         if (!startOn) {
             newErrors.startOn = 'Start date is required';
+        } else {
+            const startVal = startOn instanceof Date ? startOn : new Date(startOn);
+            if (startVal < today) {
+                newErrors.startOn = 'Start date must be today or a future date';
+            }
         }
         if (!isMonthToMonth && !endOn) {
             newErrors.endOn = 'End date is required when not month-to-month';
+        } else if (endOn) {
+            const endVal = endOn instanceof Date ? endOn : new Date(endOn);
+            if (endVal < today) {
+                newErrors.endOn = 'End date must be today or a future date';
+            }
+            if (startOn) {
+                const startVal = startOn instanceof Date ? startOn : new Date(startOn);
+                if (endVal < startVal) {
+                    newErrors.endOn = 'End date must be after the start date';
+                }
+            }
         }
         
         setErrors(newErrors);
@@ -126,6 +161,7 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
                                 popoverClassName="z-50"
                                 iconClassName="text-white"
                                 placeholderClassName="text-white"
+                                minDate={minStartDate}
                             />
                         </div>
                     </div>
@@ -151,6 +187,7 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
                                 iconClassName="text-white"
                                 placeholderClassName="text-white"
                                 disabled={isMonthToMonth}
+                                minDate={minEndDate}
                             />
                         </div>
                     </div>

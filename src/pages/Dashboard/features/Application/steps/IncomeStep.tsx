@@ -94,7 +94,7 @@ const IncomeCard: React.FC<{ income: IncomeFormData & { id: string }; onDelete: 
                     <CustomTextBox
                         value={
                             <span className="text-black text-sm font-medium truncate w-full">
-                                <span className="font-semibold">Office</span> - {income.address}
+                                <span className="font-semibold">Business Address</span> - {income.address}
                             </span>
                         }
                         className="bg-[#E3E8E3] rounded-full px-8 py-3 w-full justify-start"
@@ -106,7 +106,7 @@ const IncomeCard: React.FC<{ income: IncomeFormData & { id: string }; onDelete: 
                         value={
                             <div className="flex flex-wrap items-center justify-between gap-4 w-full text-black text-sm font-medium">
                                 <div className="whitespace-nowrap">
-                                    <span className="font-semibold">Work Phone</span> - {income.companyPhone}
+                                    <span className="font-semibold">Company Landline Number</span> - {income.companyPhone}
                                 </div>
                                 <div className="hidden sm:block w-px h-4 bg-black"></div>
                                 <div className="whitespace-nowrap">
