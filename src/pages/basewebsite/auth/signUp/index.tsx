@@ -9,12 +9,39 @@ import { useSignUpStore } from './store/signUpStore';
 
 // Main Signup Component
 const SignUpPage: React.FC = () => {
-  const { currentStep, nextStep, resetForm, formData } = useSignUpStore();
+  const { currentStep, nextStep, resetForm, formData, updateFormData, setCurrentStep } = useSignUpStore();
 
   // Reset form when component mounts
   useEffect(() => {
     resetForm();
-  }, [resetForm]);
+
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const email = searchParams.get('email');
+      const role = searchParams.get('role');
+      const propertyId = searchParams.get('propertyId');
+
+      if (email || role || propertyId) {
+        if (propertyId) {
+          sessionStorage.setItem('redirect_property_id', propertyId);
+        }
+        if (role === 'tenant') {
+          updateFormData('accountType', 'renting');
+          if (email) {
+            updateFormData('email', email);
+          }
+          // Direct to step 3 (TenantRegistrationForm)
+          setCurrentStep(3);
+        } else if (email) {
+          updateFormData('email', email);
+          // Direct to step 2 (EmailSignup)
+          setCurrentStep(2);
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing signup query parameters:', e);
+    }
+  }, [resetForm, updateFormData, setCurrentStep]);
 
   const handleNext = (): void => {
     nextStep();

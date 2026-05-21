@@ -59,6 +59,18 @@ const OtpPage: React.FC = () => {
     console.log('Redirecting user after OTP with role:', userRole);
 
     if (userRole === 'TENANT') {
+      try {
+        const redirectPropertyId = sessionStorage.getItem('redirect_property_id');
+        if (redirectPropertyId) {
+          sessionStorage.removeItem('redirect_property_id');
+          console.log('Redirecting tenant after OTP to new application form:', redirectPropertyId);
+          navigate(`/userdashboard/new-application?propertyId=${redirectPropertyId}`, { replace: true });
+          return;
+        }
+      } catch (e) {
+        console.error('Error reading redirect_property_id from sessionStorage:', e);
+      }
+
       // Check if tenant has preferences (onboarding completed)
       try {
         const preferencesResponse = await fetch(API_ENDPOINTS.TENANT.GET_PREFERENCES, {

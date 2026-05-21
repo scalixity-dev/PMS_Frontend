@@ -28,6 +28,10 @@ const LoginForm: React.FC = () => {
             const params = new URLSearchParams(location.search);
             const q = params.get('email');
             if (q) setEmail(q);
+            const propertyId = params.get('propertyId');
+            if (propertyId) {
+                sessionStorage.setItem('redirect_property_id', propertyId);
+            }
         } catch { /* ignore */ }
     }, [location.state, location.search]);
 
@@ -150,6 +154,18 @@ const LoginForm: React.FC = () => {
                 
                 // Check if user is a tenant and needs onboarding
                 if (userRole === 'TENANT') {
+                    try {
+                        const redirectPropertyId = sessionStorage.getItem('redirect_property_id');
+                        if (redirectPropertyId) {
+                            sessionStorage.removeItem('redirect_property_id');
+                            console.log('Redirecting tenant to new application form:', redirectPropertyId);
+                            navigate(`/userdashboard/new-application?propertyId=${redirectPropertyId}`, { replace: true });
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('Error reading redirect_property_id from sessionStorage:', e);
+                    }
+
                     // Check if tenant has preferences (onboarding completed)
                     // Add retry logic in case cookie isn't ready yet
                     let preferencesResponse: Response | null = null;
