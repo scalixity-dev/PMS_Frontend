@@ -10,6 +10,7 @@ interface TemplateEditorProps {
     onEditorContentChange?: (content: string) => void;
     showPreviewButton?: boolean;
     showSignatureSection?: boolean;
+    previewValues?: Record<string, string>;
 }
 
 const AUTO_FILL_MAPPINGS: Record<string, string> = {
@@ -32,6 +33,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     onEditorContentChange,
     showPreviewButton = false,
     showSignatureSection = false,
+    previewValues = {},
 }) => {
     const [activeTab, setActiveTab] = useState<'fields' | 'autoFill'>('fields');
     const [editorContent, setEditorContent] = useState(initialEditorContent);
@@ -39,6 +41,16 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [, setEditor] = useState(null);
     const previewContentRef = useRef<HTMLDivElement | null>(null);
+
+    const buildPreviewContent = (): string => {
+        let content = editorContent;
+        for (const [key, value] of Object.entries(previewValues)) {
+            if (value) {
+                content = content.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+            }
+        }
+        return content;
+    };
 
     const handlePrint = () => {
         if (previewContentRef.current) {
@@ -260,7 +272,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 isOpen={isPreviewModalOpen}
                 onClose={() => setIsPreviewModalOpen(false)}
                 title="Document Preview"
-                htmlContent={editorContent}
+                htmlContent={buildPreviewContent()}
                 customPrintHandler={handlePrint}
             />
 

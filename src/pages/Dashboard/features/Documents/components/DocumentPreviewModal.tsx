@@ -27,7 +27,30 @@ const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     if (!isOpen) return null;
 
     const handlePrint = () => {
-        if (customPrintHandler) {
+        // Prefer printing from htmlContent string directly (always available when set)
+        if (htmlContent) {
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+            document.body.appendChild(iframe);
+            const doc = iframe.contentWindow?.document;
+            if (doc) {
+                doc.write(`<!DOCTYPE html><html><head><title>${title || 'Document'}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 40px; color: #374151; line-height: 1.6; }
+                        h1, h2, h3 { color: #111827; }
+                        p { margin-bottom: 1em; }
+                    </style>
+                </head><body>${htmlContent}</body></html>`);
+                doc.close();
+                setTimeout(() => {
+                    iframe.contentWindow?.focus();
+                    iframe.contentWindow?.print();
+                    setTimeout(() => document.body.removeChild(iframe), 1000);
+                }, 300);
+            } else {
+                document.body.removeChild(iframe);
+            }
+        } else if (customPrintHandler) {
             customPrintHandler();
         } else if (contentRef) {
             handleDocumentPrint(contentRef, { title });

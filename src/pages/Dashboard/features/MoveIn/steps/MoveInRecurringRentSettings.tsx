@@ -4,6 +4,7 @@ import CustomCheckbox from '../../../../../components/ui/CustomCheckbox';
 import SearchableDropdown from '../../../../../components/ui/SearchableDropdown';
 import { useMoveInStore } from '../store/moveInStore';
 import { useCreateLease } from '../../../../../hooks/useLeaseQueries';
+import { useGetProperty } from '../../../../../hooks/usePropertyQueries';
 import { Loader2 } from 'lucide-react';
 
 interface MoveInRecurringRentSettingsProps {
@@ -26,7 +27,10 @@ const SCHEDULE_OPTIONS = [
 const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = ({ onNext }) => {
     const { formData, setRecurringRent } = useMoveInStore();
     const createLeaseMutation = useCreateLease();
-    
+
+    // Fetch property to auto-populate market rent
+    const { data: property } = useGetProperty(formData.propertyId, !!formData.propertyId);
+
     // Initialize local state from store
     const [invoiceSchedule, setInvoiceSchedule] = useState(formData.recurringRent.invoiceSchedule || 'Monthly');
     const [startOn, setStartOn] = useState<Date | undefined>(formData.recurringRent.startOn);
@@ -35,6 +39,23 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
     const [markPastPaid, setMarkPastPaid] = useState(formData.recurringRent.markPastPaid || false);
     const [amount, setAmount] = useState(formData.recurringRent.amount || '');
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Auto-fill amount from property's market rent (only when field is still empty)
+    useEffect(() => {
+        if (property?.marketRent && !amount) {
+            setAmount(String(property.marketRent));
+        }
+    }, [property]);
+
+    // Auto-fill start/end dates from lease move-in/move-out dates
+    useEffect(() => {
+        if (!startOn && formData.leaseStartDate) {
+            setStartOn(formData.leaseStartDate);
+        }
+        if (!endOn && formData.leaseEndDate) {
+            setEndOn(formData.leaseEndDate);
+        }
+    }, [formData.leaseStartDate, formData.leaseEndDate]);
 
     const minStartDate = React.useMemo(() => {
         const d = new Date();

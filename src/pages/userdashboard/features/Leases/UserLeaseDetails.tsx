@@ -11,6 +11,7 @@ import { LeaseInsurance } from "./components/LeaseInsurance";
 import { LeaseAgreementsNotices } from "./components/LeaseAgreementsNotices";
 import { useGetLease } from "../../../../hooks/useLeaseQueries";
 import { useGetTransactions } from "../../../../hooks/useTransactionQueries";
+import { useGetRenderedDocuments } from "../../../../hooks/useDocumentsQueries";
 
 // Constants
 const DASHBOARD_PATH = "/userdashboard";
@@ -49,6 +50,13 @@ const LeaseDetails = () => {
     
     // Fetch transactions to filter by lease
     const { data: transactionsData } = useGetTransactions();
+
+    // Fetch rendered documents for this lease (tenant can see docs sent to them)
+    const { data: allRenderedDocs } = useGetRenderedDocuments();
+    const leaseRenderedDocs = useMemo(() => {
+        if (!allRenderedDocs || !id) return [];
+        return allRenderedDocs.filter((doc) => doc.leaseId === id);
+    }, [allRenderedDocs, id]);
 
     // Transform backend lease to frontend format
     const lease = useMemo<Lease | null>(() => {
@@ -300,7 +308,7 @@ const LeaseDetails = () => {
 
                 {/* Agreements & Notices */}
                 {activeTab === "AGREEMENTS" && (
-                    <LeaseAgreementsNotices lease={lease} />
+                    <LeaseAgreementsNotices lease={lease} renderedDocuments={leaseRenderedDocs} />
                 )}
 
                 {/* Insurance Section */}
