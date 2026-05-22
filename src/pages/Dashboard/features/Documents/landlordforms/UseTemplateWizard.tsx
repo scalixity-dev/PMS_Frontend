@@ -192,6 +192,8 @@ const UseTemplateWizard: React.FC = () => {
 
     const [currentStep, setCurrentStep] = useState<StepNumber>(1);
     const [selectedLease, setSelectedLease] = useState(state?.selectedLease || (id ? `Lease ${id}` : ''));
+    const [selectedLeaseId, setSelectedLeaseId] = useState<string | undefined>(id);
+    const [templateValues, setTemplateValues] = useState<Record<string, string>>({});
 
     // Fetch leases, tenants
     const { data: leasesData = [] } = useGetAllLeases(undefined, undefined, true);
@@ -202,15 +204,65 @@ const UseTemplateWizard: React.FC = () => {
 
     const renderMutation = useRenderTemplate();
 
-    const leaseOptions = useMemo(() => {
+    const leaseLabelToId = useMemo(() => {
         const arr = Array.isArray(leasesData) ? leasesData : [];
-        const mapped = arr.map((l: any) => {
+        const map: Record<string, string> = {};
+        arr.forEach((l: any) => {
             const propertyName = l.property?.propertyName || 'Property';
             const tenantName = l.tenant?.fullName || 'Tenant';
-            return `${propertyName} - ${tenantName}`;
-        }).filter(Boolean);
-        return mapped.length > 0 ? mapped : FALLBACK_LEASES;
+            const label = `${propertyName} - ${tenantName}`;
+            if (l.id) map[label] = l.id;
+        });
+        return map;
     }, [leasesData]);
+
+    const leaseOptions = useMemo(() => {
+        const labels = Object.keys(leaseLabelToId);
+        return labels.length > 0 ? labels : FALLBACK_LEASES;
+    }, [leaseLabelToId]);
+
+    const selectedLeaseObj = useMemo(() => {
+        const arr = Array.isArray(leasesData) ? leasesData : [];
+        return arr.find((l: any) => l.id === selectedLeaseId) ?? null;
+    }, [leasesData, selectedLeaseId]);
+
+    const buildPrefilledValues = (tmpl: DocumentTemplate): Record<string, string> => {
+        if (!tmpl.variables) return {};
+        const pre: Record<string, string> = {};
+        for (const v of tmpl.variables) {
+            // Always initialise the key so the form renders every variable
+            pre[v.key] = '';
+            switch (v.key) {
+                case 'tenantName':
+                    pre[v.key] = (selectedLeaseObj as any)?.tenant?.fullName ?? '';
+                    break;
+                case 'propertyAddress': {
+                    const addr = (selectedLeaseObj as any)?.property?.address;
+                    pre[v.key] = addr
+                        ? [addr.streetAddress, addr.city, addr.stateRegion, addr.zipCode].filter(Boolean).join(', ')
+                        : '';
+                    break;
+                }
+                case 'monthlyRent':
+                    pre[v.key] = (selectedLeaseObj as any)?.recurringRent?.amount ?? '';
+                    break;
+                case 'depositAmount':
+                    pre[v.key] = (selectedLeaseObj as any)?.deposits?.[0]?.amount ?? '';
+                    break;
+                case 'startDate': {
+                    const d = (selectedLeaseObj as any)?.startDate;
+                    pre[v.key] = d ? d.slice(0, 10) : '';
+                    break;
+                }
+                case 'endDate': {
+                    const d = (selectedLeaseObj as any)?.endDate;
+                    pre[v.key] = d ? d.slice(0, 10) : '';
+                    break;
+                }
+            }
+        }
+        return pre;
+    };
 
     const tenantOptions = useMemo(() => {
         const arr = Array.isArray(tenantsData) ? tenantsData : [];
@@ -245,17 +297,21 @@ const UseTemplateWizard: React.FC = () => {
     const leaseDropdownRef = useRef<HTMLDivElement>(null);
     const tenantsDropdownRef = useRef<HTMLDivElement>(null);
 
-    // Update content when initial template loads from API
+    // Update content + pre-fill values when initial template loads from API
     useEffect(() => {
-        if (initialTemplate && !templateContents[0]) {
-            setTemplateContents(prev => {
-                const next = [...prev];
-                next[0] = initialTemplate.content;
-                return next;
-            });
-            if (initialTemplate.id) setActiveTemplateId(initialTemplate.id);
+        if (initialTemplate) {
+            if (!templateContents[0]) {
+                setTemplateContents(prev => {
+                    const next = [...prev];
+                    next[0] = initialTemplate.content;
+                    return next;
+                });
+                if (initialTemplate.id) setActiveTemplateId(initialTemplate.id);
+            }
+            // Always refresh values when lease data or template changes
+            setTemplateValues(buildPrefilledValues(initialTemplate));
         }
-    }, [initialTemplate]);
+    }, [initialTemplate, selectedLeaseObj]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -302,6 +358,7 @@ const UseTemplateWizard: React.FC = () => {
         setTemplateContents([tmpl.content]);
         setActiveTemplateIndex(0);
         setActiveTemplateId(tmpl.id);
+        setTemplateValues(buildPrefilledValues(tmpl));
         setIsEditorMode(true);
     };
 
@@ -310,6 +367,7 @@ const UseTemplateWizard: React.FC = () => {
         setTemplateContents(['<p>Start typing your notice...</p>']);
         setActiveTemplateIndex(0);
         setActiveTemplateId(undefined);
+        setTemplateValues({});
         setIsEditorMode(true);
     };
 
@@ -318,7 +376,11 @@ const UseTemplateWizard: React.FC = () => {
             try {
                 await renderMutation.mutateAsync({
                     id: activeTemplateId,
-                    dto: { values: {} }
+                    dto: {
+                        values: templateValues,
+                        leaseId: selectedLeaseId,
+                        sendToTenant: true,
+                    }
                 });
             } catch {
                 // non-blocking — show success either way
@@ -350,7 +412,10 @@ const UseTemplateWizard: React.FC = () => {
                             placeholder="Search a Lease"
                             options={leaseOptions}
                             selectedValue={selectedLease}
-                            onSelect={setSelectedLease}
+                            onSelect={(label) => {
+                                setSelectedLease(label);
+                                setSelectedLeaseId(leaseLabelToId[label]);
+                            }}
                             isOpen={isLeaseDropdownOpen}
                             setIsOpen={setIsLeaseDropdownOpen}
                             dropdownRef={leaseDropdownRef}
@@ -455,6 +520,31 @@ const UseTemplateWizard: React.FC = () => {
                                         </div>
                                     </div>
 
+                                    {/* Variable form — auto-filled where we have data, empty for missing ones */}
+                                    {activeTemplateId && Object.keys(templateValues).length > 0 && (
+                                        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+                                            <h3 className="text-sm font-semibold text-gray-700 mb-1">Fill in Document Variables</h3>
+                                            <p className="text-xs text-gray-400 mb-4">Some fields are auto-filled from your lease. Fill in any remaining required fields.</p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {(apiTemplates.find((t: DocumentTemplate) => t.id === activeTemplateId)?.variables ?? []).map((v) => (
+                                                    <div key={v.key} className="flex flex-col gap-1">
+                                                        <label className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                                                            {v.label}
+                                                            {v.required && <span className="text-red-500">*</span>}
+                                                        </label>
+                                                        <input
+                                                            type={v.type === 'date' ? 'date' : v.type === 'number' ? 'number' : 'text'}
+                                                            value={templateValues[v.key] ?? ''}
+                                                            onChange={(e) => setTemplateValues(prev => ({ ...prev, [v.key]: e.target.value }))}
+                                                            className="px-3 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:border-[#3A6D6C] focus:ring-1 focus:ring-[#3A6D6C]"
+                                                            placeholder={v.label}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <TemplateEditor
                                         key={activeTemplateIndex}
                                         initialEditorContent={templateContents[activeTemplateIndex]}
@@ -467,6 +557,7 @@ const UseTemplateWizard: React.FC = () => {
                                         }}
                                         showPreviewButton={true}
                                         showSignatureSection={true}
+                                        previewValues={templateValues}
                                     />
                                 </div>
 

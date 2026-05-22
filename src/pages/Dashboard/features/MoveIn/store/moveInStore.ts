@@ -46,6 +46,8 @@ export interface MoveInFormData {
   unitId: string | null;
   tenantId: string | null;
   sharedTenantIds: string[];
+  leaseStartDate: Date | undefined;
+  leaseEndDate: Date | undefined;
   
   // Recurring rent
   recurringRent: RecurringRentData;
@@ -83,6 +85,8 @@ const initialFormData: MoveInFormData = {
   unitId: null,
   tenantId: null,
   sharedTenantIds: [],
+  leaseStartDate: undefined,
+  leaseEndDate: undefined,
   recurringRent: {
     enabled: false,
     amount: '',
@@ -203,23 +207,41 @@ export const useMoveInStore = create<MoveInState>((set) => ({
         'BOTH': 'both',
       };
 
+      const leaseStartDate = lease.moveInDate
+        ? new Date(lease.moveInDate)
+        : lease.startDate
+        ? new Date(lease.startDate)
+        : undefined;
+
+      const leaseEndDate = lease.moveOutDate
+        ? new Date(lease.moveOutDate)
+        : lease.endDate
+        ? new Date(lease.endDate)
+        : undefined;
+
       const formData: MoveInFormData = {
         selectedScenario: { type: 'easy' }, // Default to easy for existing leases
         propertyId: lease.propertyId || null,
         unitId: lease.unitId || null,
         tenantId: lease.tenantId || null,
         sharedTenantIds: lease.sharedTenants?.map((st: any) => st.tenantId) || [],
+        leaseStartDate,
+        leaseEndDate,
         recurringRent: lease.recurringRent
           ? {
               enabled: lease.recurringRent.enabled,
               amount: lease.recurringRent.amount || '',
               invoiceSchedule: scheduleMap[lease.recurringRent.invoiceSchedule] || 'Monthly',
-              startOn: lease.recurringRent.startOn ? new Date(lease.recurringRent.startOn) : undefined,
-              endOn: lease.recurringRent.endOn ? new Date(lease.recurringRent.endOn) : undefined,
+              startOn: lease.recurringRent.startOn ? new Date(lease.recurringRent.startOn) : leaseStartDate,
+              endOn: lease.recurringRent.endOn ? new Date(lease.recurringRent.endOn) : leaseEndDate,
               isMonthToMonth: lease.recurringRent.isMonthToMonth || false,
               markPastPaid: lease.recurringRent.markPastPaid || false,
             }
-          : initialFormData.recurringRent,
+          : {
+              ...initialFormData.recurringRent,
+              startOn: leaseStartDate,
+              endOn: leaseEndDate,
+            },
         deposit: lease.deposits && lease.deposits.length > 0
           ? {
               hasDeposit: true,
