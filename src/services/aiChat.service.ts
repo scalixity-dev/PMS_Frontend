@@ -131,8 +131,8 @@ class AIChatService {
 
     try {
       const requestBody: Record<string, unknown> = {
-        query,
-        thread_id: threadId,
+        chatInput: query,
+        sessionId: threadId || this.generateThreadId(),
       };
 
       if (userEmail) {
