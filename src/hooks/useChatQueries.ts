@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getConversations,
@@ -46,22 +47,46 @@ export function useCreateConversation() {
   });
 }
 
+const MESSAGES_LIMIT = 100;
+const MESSAGES_STALE_TIME = 5 * 60 * 1000;
+const MESSAGES_GC_TIME = 30 * 60 * 1000;
+
 export function useMessages(conversationId: string | null, enabled = true) {
   return useQuery({
     queryKey: chatQueryKeys.messages(conversationId ?? ''),
-    queryFn: () => getMessages(conversationId!, 100),
+    queryFn: () => getMessages(conversationId!, MESSAGES_LIMIT),
     enabled: enabled && !!conversationId,
-    staleTime: 10 * 1000,
+    // WebSocket keeps the cache live, so a long stale time is safe and means
+    // reopening a conversation renders instantly from cache (no spinner).
+    staleTime: MESSAGES_STALE_TIME,
+    gcTime: MESSAGES_GC_TIME,
   });
+}
+
+// Warm the cache for a conversation before the user opens it, so the click
+// is instant. Cheap: skipped automatically if the data is already fresh.
+export function usePrefetchMessages() {
+  const qc = useQueryClient();
+  return useCallback(
+    (conversationId: string) => {
+      if (!conversationId) return;
+      qc.prefetchQuery({
+        queryKey: chatQueryKeys.messages(conversationId),
+        queryFn: () => getMessages(conversationId, MESSAGES_LIMIT),
+        staleTime: MESSAGES_STALE_TIME,
+      });
+    },
+    [qc]
+  );
 }
 
 export function useMarkAsRead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (conversationId: string) => markAsRead(conversationId),
-    onSuccess: (_, conversationId) => {
+    onSuccess: () => {
+      // Only the unread badge changes — refresh conversations, not messages.
       qc.invalidateQueries({ queryKey: chatQueryKeys.conversations() });
-      qc.invalidateQueries({ queryKey: chatQueryKeys.messages(conversationId) });
     },
   });
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { ArrowLeft, Printer } from 'lucide-react';
 import type { ServiceRequest } from '../../../utils/types';
+import type { ChatMessage, ChatConversation } from '../../../../../services/chat.service';
 import ChatInput from './ChatInput';
 import MessageBubble from './MessageBubble';
 import { useAuthStore } from '../../Profile/store/authStore';
@@ -46,21 +47,46 @@ const MaintenanceRequestView = ({ request, onBack, pmContact }: MaintenanceReque
 
   const { data: token } = useChatToken(!!currentUserId);
   const { data: messagesData } = useMessages(convId, !!convId);
-  const markRead = useMarkAsRead();
+  const { mutate: markRead } = useMarkAsRead();
 
+  // Debounced so rapidly switching views doesn't fire a request each time.
   useEffect(() => {
-    if (convId) markRead.mutate(convId);
+    if (!convId) return;
+    const id = setTimeout(() => markRead(convId), 500);
+    return () => clearTimeout(id);
   }, [convId, markRead]);
 
+  // Real-time: write the incoming message straight into the React Query
+  // cache instead of refetching. Zero extra HTTP requests.
   const onNewMessage = useCallback(
     (data: unknown) => {
-      const m = data as { conversationId?: string; sender?: { id?: string } };
-      if (m.conversationId === convId && m.sender?.id !== currentUserId) {
-        qc.invalidateQueries({ queryKey: chatQueryKeys.messages(convId!) });
-        qc.invalidateQueries({ queryKey: chatQueryKeys.conversations() });
-      }
+      const m = data as ChatMessage;
+      if (!m?.id || !m.conversationId) return;
+
+      qc.setQueryData<ChatMessage[]>(chatQueryKeys.messages(m.conversationId), (old) => {
+        if (!old) return old;
+        if (old.some((x) => x.id === m.id)) return old;
+        return [...old, m];
+      });
+
+      qc.setQueryData<ChatConversation[]>(chatQueryKeys.conversations(), (old) => {
+        if (!old) return old;
+        const idx = old.findIndex((c) => c.id === m.conversationId);
+        if (idx === -1) return old;
+        const updated: ChatConversation = {
+          ...old[idx],
+          lastMessage: {
+            id: m.id,
+            content: m.content,
+            senderId: m.senderId ?? m.sender?.id ?? '',
+            createdAt: m.createdAt,
+          },
+          updatedAt: m.createdAt,
+        };
+        return [updated, ...old.slice(0, idx), ...old.slice(idx + 1)];
+      });
     },
-    [convId, currentUserId, qc]
+    [qc]
   );
 
   const { sendMessage, isConnected } = useChatWebSocket(
@@ -97,13 +123,11 @@ const MaintenanceRequestView = ({ request, onBack, pmContact }: MaintenanceReque
         messageText = text ? `${text}\n\n📎 Attached: ${names}` : `📎 Attached: ${names}`;
       }
       if (!messageText.trim() || !convId) return;
-      const sent = trySend(convId, messageText);
-      if (sent) {
-        qc.invalidateQueries({ queryKey: chatQueryKeys.messages(convId) });
-        qc.invalidateQueries({ queryKey: chatQueryKeys.conversations() });
-      }
+      trySend(convId, messageText);
+      // When sent, the server echoes the message back over WebSocket and
+      // onNewMessage writes it into the cache — no refetch needed.
     },
-    [convId, trySend, qc]
+    [convId, trySend]
   );
 
   if (!userInfo) {

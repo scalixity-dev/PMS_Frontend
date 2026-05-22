@@ -207,10 +207,9 @@ export function useChatWebSocket(
             break;
           case 'messages_read':
             if (msg.data) {
+              // Read receipts live on the conversation participants, not on
+              // the messages — only the conversations query needs a refresh.
               queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
-              queryClient.invalidateQueries({
-                queryKey: ['chat', 'messages', msg.data.conversationId],
-              });
             }
             break;
           case 'error':
@@ -226,7 +225,9 @@ export function useChatWebSocket(
     };
     ws.addEventListener('message', handler);
     return () => ws.removeEventListener('message', handler);
-  }, [onNewMessage, addTypingUser, removeTypingUser, queryClient]);
+    // isConnected is in deps so the listener re-binds to the new socket
+    // after a reconnect (wsRef.current is replaced on each connect()).
+  }, [onNewMessage, addTypingUser, removeTypingUser, queryClient, isConnected]);
 
   const sendMessage = useCallback((content: string, targetConvId?: string) => {
     const convId = targetConvId ?? conversationId;
