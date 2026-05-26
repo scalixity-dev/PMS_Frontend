@@ -8,6 +8,7 @@ import {
   useCreateConversation,
   useMarkAsRead,
   useOnlineUsers,
+  usePrefetchMessages,
   chatQueryKeys,
 } from '../../../../hooks/useChatQueries';
 import { useChatToken, useChatWebSocket } from '../../../../hooks/useChatWebSocket';
@@ -15,6 +16,7 @@ import { useOfflineQueue } from '../../../../hooks/useOfflineQueue';
 import { useChatToastStore } from '../../../../store/chatToastStore';
 import { useGetCurrentUser } from '../../../../hooks/useAuthQueries';
 import type { Chat, Message, ChatCategory } from './types';
+import type { ChatMessage, ChatConversation } from '../../../../services/chat.service';
 import ChatSidebar from './components/ChatSidebar';
 import ChatHeader from './components/ChatHeader';
 import MessageList from './components/MessageList';
@@ -71,9 +73,17 @@ const ChatPage: React.FC = () => {
   const { data: contacts } = useContacts(!!currentUserId);
   const { data: token } = useChatToken(!!currentUserId);
   const createConv = useCreateConversation();
-  const markRead = useMarkAsRead();
+  const { mutate: markRead } = useMarkAsRead();
+  const prefetchMessages = usePrefetchMessages();
 
   const conversations = convData ?? [];
+
+  // Warm the message cache for the most recent conversations so opening
+  // them is instant. Runs in the background once the list loads.
+  useEffect(() => {
+    conversations.slice(0, 10).forEach((c) => prefetchMessages(c.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convData, prefetchMessages]);
 
   const { data: messagesData } = useMessages(activeChatId, !!activeChatId);
   const apiMessages = messagesData ?? [];
@@ -92,15 +102,39 @@ const ChatPage: React.FC = () => {
   const { data: onlineUserIds } = useOnlineUsers(otherUserIds, !!currentUserId);
   const onlineSet = useMemo(() => new Set(onlineUserIds ?? []), [onlineUserIds]);
 
+  // Real-time message handler: write the incoming message straight into the
+  // React Query cache instead of refetching. Zero extra HTTP requests.
   const onNewMessage = useCallback(
     (data: unknown) => {
-      const m = data as { conversationId: string; sender?: { id: string } };
-      if (m.conversationId === activeChatId && m.sender?.id !== currentUserId) {
-        qc.invalidateQueries({ queryKey: chatQueryKeys.messages(activeChatId!) });
-        qc.invalidateQueries({ queryKey: chatQueryKeys.conversations() });
-      }
+      const m = data as ChatMessage;
+      if (!m?.id || !m.conversationId) return;
+
+      // Append to the conversation's message list (dedup by id).
+      qc.setQueryData<ChatMessage[]>(chatQueryKeys.messages(m.conversationId), (old) => {
+        if (!old) return old;
+        if (old.some((x) => x.id === m.id)) return old;
+        return [...old, m];
+      });
+
+      // Update the sidebar: set last message + move conversation to the top.
+      qc.setQueryData<ChatConversation[]>(chatQueryKeys.conversations(), (old) => {
+        if (!old) return old;
+        const idx = old.findIndex((c) => c.id === m.conversationId);
+        if (idx === -1) return old;
+        const updated: ChatConversation = {
+          ...old[idx],
+          lastMessage: {
+            id: m.id,
+            content: m.content,
+            senderId: m.senderId ?? m.sender?.id ?? '',
+            createdAt: m.createdAt,
+          },
+          updatedAt: m.createdAt,
+        };
+        return [updated, ...old.slice(0, idx), ...old.slice(idx + 1)];
+      });
     },
-    [activeChatId, currentUserId, qc]
+    [qc]
   );
 
   const { sendMessage, sendTyping, sendTypingStop, isConnected, typingUsers } = useChatWebSocket(
@@ -112,8 +146,12 @@ const ChatPage: React.FC = () => {
 
   const { trySend, pendingCount, pendingForConv } = useOfflineQueue(isConnected, sendMessage);
 
+  // Debounced: only mark read once the user settles on a conversation,
+  // so rapidly clicking through the list doesn't fire a request per chat.
   useEffect(() => {
-    if (activeChatId) markRead.mutate(activeChatId);
+    if (!activeChatId) return;
+    const id = setTimeout(() => markRead(activeChatId), 500);
+    return () => clearTimeout(id);
   }, [activeChatId, markRead]);
 
   const chats: Chat[] = useMemo(() => {
@@ -244,14 +282,13 @@ const ChatPage: React.FC = () => {
       if (!finalText.trim() || !activeChatId) return;
       sendTypingStop();
       const sent = trySend(activeChatId, finalText);
-      if (sent) {
-        qc.invalidateQueries({ queryKey: chatQueryKeys.messages(activeChatId) });
-        qc.invalidateQueries({ queryKey: chatQueryKeys.conversations() });
-      } else {
+      if (!sent) {
         useChatToastStore.getState().showInfo('Message saved. Will send when back online.');
       }
+      // When sent, the server echoes the message back over WebSocket and
+      // onNewMessage writes it into the cache — no refetch needed.
     },
-    [trySend, activeChatId, qc, sendTypingStop]
+    [trySend, activeChatId, sendTypingStop]
   );
 
   const handleStartNewChat = useCallback(
