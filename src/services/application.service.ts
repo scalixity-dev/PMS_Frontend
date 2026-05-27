@@ -64,6 +64,7 @@ export interface BackendApplication {
 
 export interface BackendApplicant {
   id: string;
+  userId?: string;
   applicationId: string;
   firstName: string;
   middleName?: string | null;

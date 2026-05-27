@@ -322,6 +322,7 @@ export const API_ENDPOINTS = {
     BASE: CHAT_API_BASE_URL,
     WS: CHAT_WS_URL,
     CONVERSATIONS: `${CHAT_API_BASE_URL}/api/conversations`,
+    APPLICATION_CONVERSATION: `${CHAT_API_BASE_URL}/api/conversations/application`,
     CONVERSATION: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}`,
     MESSAGES: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}/messages`,
     MARK_READ: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}/read`,

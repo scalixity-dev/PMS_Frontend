@@ -31,7 +31,7 @@ import EditApplicantNameModal from './components/EditApplicantNameModal';
 import EditPropertyModal from './components/EditPropertyModal';
 import ChangeStatusModal from './components/ChangeStatusModal';
 import EditApplicantInfoModal from './components/EditApplicantInfoModal';
-
+import { createApplicationConversation } from '../../../../services/chat.service';
 import CustomTextBox from '../../components/CustomTextBox';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useToast } from '../../../../components/common/Toast';
@@ -496,6 +496,24 @@ const ApplicationDetail = () => {
             // Optionally show error toast
         } finally {
             setDeleteConfirmation(null);
+        }
+    };
+
+    const handleChatWithApplicant = async () => {
+        if (!application || !primaryApplicant) return;
+
+        try {
+            const data = await createApplicationConversation(
+                application.id,
+                primaryApplicant.userId || primaryApplicant.id,
+                primaryApplicant.email,
+                `${primaryApplicant.firstName} ${primaryApplicant.lastName}`.trim()
+            );
+
+            navigate(`/dashboard/messages?conversationId=${data.id}`);
+        } catch (error) {
+            console.error('Error starting chat:', error);
+            toast.error('Failed to initiate chat with applicant');
         }
     };
 
@@ -1229,14 +1247,21 @@ const ApplicationDetail = () => {
                     <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
                         <div className="bg-[#7CD947] text-white pl-6 pr-2 py-2 rounded-full shadow-sm flex flex-wrap items-center gap-4 justify-between w-full sm:w-auto">
                             <h2 className="text-lg font-bold whitespace-nowrap">Application Details</h2>
-                            <div className="relative" ref={actionDropdownRef}>
+                            <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
-                                    className="bg-[#3A6D6C] text-white px-6 py-1.5 rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                                    onClick={handleChatWithApplicant}
+                                    className="bg-white text-[#3A6D6C] px-6 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
                                 >
-                                    Action
-                                    <ChevronDown size={14} className={`transition-transformDuration-200 ${isActionDropdownOpen ? 'rotate-180' : ''}`} />
+                                    Chat with Applicant
                                 </button>
+                                <div className="relative" ref={actionDropdownRef}>
+                                    <button
+                                        onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
+                                        className="bg-[#3A6D6C] text-white px-6 py-1.5 rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                                    >
+                                        Action
+                                        <ChevronDown size={14} className={`transition-transformDuration-200 ${isActionDropdownOpen ? 'rotate-180' : ''}`} />
+                                    </button>
 
                                 {isActionDropdownOpen && (
                                     <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
@@ -1301,6 +1326,7 @@ const ApplicationDetail = () => {
                                         </button>
                                     </div>
                                 )}
+                            </div>
                             </div>
                         </div>
                     </div>

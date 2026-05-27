@@ -80,6 +80,7 @@ export interface ChatParticipant {
 export interface ChatConversation {
   id: string;
   type: string;
+  applicationId?: string | null;
   name?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -132,6 +133,27 @@ export async function createConversation(
   return res.json();
 }
 
+export async function createApplicationConversation(
+  applicationId: string,
+  participantUserId: string,
+  participantEmail?: string,
+  participantFullName?: string,
+  token?: string
+): Promise<ChatConversation> {
+  const res = await chatFetch(API_ENDPOINTS.CHAT.APPLICATION_CONVERSATION, {
+    method: 'POST',
+    body: JSON.stringify({
+      applicationId,
+      participantUserId,
+      participantEmail,
+      participantFullName,
+    }),
+    token,
+  });
+  if (!res.ok) throw new Error('Failed to create application conversation');
+  return res.json();
+}
+
 export async function getMessages(
   conversationId: string,
   limit?: number,
@@ -181,4 +203,26 @@ export async function getOnlineUsers(userIds: string[], token?: string): Promise
   if (!res.ok) return [];
   const data = await res.json();
   return data.online ?? [];
+}
+
+export async function uploadChatMedia(file: File, token?: string): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('category', file.type.startsWith('image/') ? 'IMAGE' : 'DOCUMENT');
+
+  const headers: HeadersInit = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+    method: 'POST',
+    body: formData,
+    headers,
+    credentials: 'include',
+  });
+  
+  if (!res.ok) throw new Error('Failed to upload file');
+  const data = await res.json();
+  return data.url;
 }

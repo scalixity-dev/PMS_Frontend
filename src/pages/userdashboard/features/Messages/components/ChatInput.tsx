@@ -1,13 +1,14 @@
 import { useState, useRef, type KeyboardEvent } from 'react';
-import { Send, Paperclip, Image as ImageIcon, X } from 'lucide-react';
+import { Send, Paperclip, Image as ImageIcon, X, Loader2 } from 'lucide-react';
 
 interface ChatInputProps {
     onSendMessage: (text: string, files?: File[]) => void;
     disabled?: boolean;
+    isUploading?: boolean;
     onTyping?: () => void;
 }
 
-const ChatInput = ({ onSendMessage, disabled = false, onTyping }: ChatInputProps) => {
+const ChatInput = ({ onSendMessage, disabled = false, isUploading = false, onTyping }: ChatInputProps) => {
     const [message, setMessage] = useState('');
     const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,7 +90,7 @@ const ChatInput = ({ onSendMessage, disabled = false, onTyping }: ChatInputProps
                 {/* Attachment Button */}
                 <button
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={disabled}
+                    disabled={disabled || isUploading}
                     className="p-2 md:p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                     title="Attach file"
                 >
@@ -113,7 +114,7 @@ const ChatInput = ({ onSendMessage, disabled = false, onTyping }: ChatInputProps
                         value={message}
                         onChange={handleTextareaChange}
                         onKeyPress={handleKeyPress}
-                        disabled={disabled}
+                        disabled={disabled || isUploading}
                         placeholder="Type a message..."
                         rows={1}
                         className="w-full px-3 md:px-4 py-2 md:py-3 bg-transparent resize-none focus:outline-none text-xs md:text-sm disabled:opacity-50 disabled:cursor-not-allowed max-h-[120px]"
@@ -125,17 +126,17 @@ const ChatInput = ({ onSendMessage, disabled = false, onTyping }: ChatInputProps
                 {/* Send Button */}
                 <button
                     onClick={handleSend}
-                    disabled={disabled || (!message.trim() && attachedFiles.length === 0)}
+                    disabled={disabled || isUploading || (!message.trim() && attachedFiles.length === 0)}
                     className="p-2.5 md:p-3 bg-[var(--dashboard-accent)] text-white rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 shadow-lg shadow-[var(--dashboard-accent)]/20"
                     title="Send message"
                 >
-                    <Send className="w-4 h-4 md:w-5 md:h-5" />
+                    {isUploading ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <Send className="w-4 h-4 md:w-5 md:h-5" />}
                 </button>
             </div>
 
             {/* Helper Text */}
             <p className="text-[10px] md:text-xs text-gray-500 mt-1.5 md:mt-2 px-1">
-                Press Enter to send, Shift + Enter for new line
+                {isUploading ? 'Uploading attachments...' : 'Press Enter to send, Shift + Enter for new line'}
             </p>
         </div>
     );

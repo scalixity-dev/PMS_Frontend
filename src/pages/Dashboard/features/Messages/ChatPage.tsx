@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useConversations,
@@ -16,11 +16,12 @@ import { useOfflineQueue } from '../../../../hooks/useOfflineQueue';
 import { useChatToastStore } from '../../../../store/chatToastStore';
 import { useGetCurrentUser } from '../../../../hooks/useAuthQueries';
 import type { Chat, Message, ChatCategory } from './types';
-import type { ChatMessage, ChatConversation } from '../../../../services/chat.service';
+import { uploadChatMedia, type ChatMessage, type ChatConversation } from '../../../../services/chat.service';
 import ChatSidebar from './components/ChatSidebar';
 import ChatHeader from './components/ChatHeader';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
+import { ApplicationBanner } from './components/ApplicationBanner';
 
 function formatTime(iso: string | undefined | null): string {
   if (!iso) return '';
@@ -58,12 +59,14 @@ const ChatPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<ChatCategory>('Tenants');
   const [showMobileChat, setShowMobileChat] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [pendingNewChat, setPendingNewChat] = useState<{
     id: string;
     name: string;
     contact: { userId: string; fullName: string; email: string };
   } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [searchParams] = useSearchParams();
 
   const qc = useQueryClient();
   const { data: user } = useGetCurrentUser();
@@ -81,9 +84,17 @@ const ChatPage: React.FC = () => {
   // Warm the message cache for the most recent conversations so opening
   // them is instant. Runs in the background once the list loads.
   useEffect(() => {
-    conversations.slice(0, 10).forEach((c) => prefetchMessages(c.id));
+    conversations.slice(0, 10).forEach((c: any) => prefetchMessages(c.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [convData, prefetchMessages]);
+
+  useEffect(() => {
+    const cid = searchParams.get('conversationId');
+    if (cid && conversations.some((c: any) => c.id === cid)) {
+      setActiveChatId(cid);
+      setShowMobileChat(true);
+    }
+  }, [searchParams, conversations]);
 
   const { data: messagesData } = useMessages(activeChatId, !!activeChatId);
   const apiMessages = messagesData ?? [];
@@ -155,23 +166,34 @@ const ChatPage: React.FC = () => {
   }, [activeChatId, markRead]);
 
   const chats: Chat[] = useMemo(() => {
-    return conversations.map((c: { id: string; participants: { userId: string; displayName?: string; email?: string; lastReadAt?: string | null }[]; lastMessage?: { content: string; createdAt: string } | null; updatedAt: string }) => {
+    return conversations.map((c: { id: string; applicationId?: string | null; participants: { userId: string; displayName?: string; email?: string; lastReadAt?: string | null }[]; lastMessage?: { content: string; createdAt: string } | null; updatedAt: string }) => {
       const other = c.participants.find((p: { userId: string }) => p.userId !== currentUserId);
       const name = other?.displayName ?? other?.email ?? 'Unknown';
       const contact = contacts?.find((ct: { userId: string; contactType: string }) => ct.userId === other?.userId);
-      const category = contact ? toChatCategory(contact.contactType) : 'Leads';
+      let category = contact ? toChatCategory(contact.contactType) : 'Leads';
+      if ((c as any).type === 'application') {
+        category = 'Tenants';
+      }
       const lastMsg = c.lastMessage;
       const isOnline = other ? onlineSet.has(other.userId) : false;
       const otherLastReadAt = other?.lastReadAt ?? null;
 
+      let formattedLastMessage = lastMsg?.content ?? 'No messages yet';
+      if (formattedLastMessage.match(/^!\[(.*?)\]\((.*?)\)$/)) {
+        formattedLastMessage = '📷 Image';
+      } else if (formattedLastMessage.match(/^\[(.*?)\]\((.*?)\)$/)) {
+        formattedLastMessage = '📎 Attachment';
+      }
+
       return {
         id: c.id,
+        applicationId: c.applicationId ?? null,
         name,
         role: contact?.contactType?.replace('_', ' ') ?? 'Contact',
         category,
         status: isOnline ? 'Active Now' : 'Offline',
         avatar: avatarUrl(name),
-        lastMessage: lastMsg?.content ?? 'No messages yet',
+        lastMessage: formattedLastMessage,
         time: lastMsg ? formatTime(lastMsg.createdAt) : '',
         messages: [],
         isPinned: false,
@@ -276,9 +298,24 @@ const ChatPage: React.FC = () => {
   }, []);
 
   const handleSendMessage = useCallback(
-    (text: string, file: File | null) => {
+    async (text: string, file: File | null) => {
       let finalText = text;
-      if (file) finalText = text ? `${text}\n📎 ${file.name}` : `📎 ${file.name}`;
+      if (file) {
+        setIsUploading(true);
+        try {
+          const url = await uploadChatMedia(file, token ?? undefined);
+          if (file.type.startsWith('image/')) {
+            finalText = text ? `${text}\n\n![${file.name}](${url})` : `![${file.name}](${url})`;
+          } else {
+            finalText = text ? `${text}\n\n[${file.name}](${url})` : `[${file.name}](${url})`;
+          }
+        } catch (error) {
+          useChatToastStore.getState().showError('Failed to upload attachment');
+          setIsUploading(false);
+          return;
+        }
+        setIsUploading(false);
+      }
       if (!finalText.trim() || !activeChatId) return;
       sendTypingStop();
       const sent = trySend(activeChatId, finalText);
@@ -365,8 +402,9 @@ const ChatPage: React.FC = () => {
               onBack={handleBackToSidebar}
               pendingCount={pendingCount}
             />
+            {activeChat.applicationId && <ApplicationBanner applicationId={activeChat.applicationId} />}
             <MessageList activeChat={activeChat} messagesEndRef={messagesEndRef} />
-            <ChatInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
+            <ChatInput onSendMessage={handleSendMessage} onTyping={handleTyping} isUploading={isUploading} />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-400">

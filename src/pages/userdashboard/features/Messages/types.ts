@@ -19,6 +19,7 @@ export interface Attachment {
 
 export interface Chat {
     id: string;
+    applicationId?: string | null;
     contactName: string;
     contactRole: 'Landlord' | 'Property Manager' | 'Maintenance' | 'Co-Tenant';
     contactEmail: string;

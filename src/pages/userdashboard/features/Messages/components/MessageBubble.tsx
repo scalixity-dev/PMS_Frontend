@@ -10,6 +10,29 @@ interface MessageBubbleProps {
     isRead?: boolean;
 }
 
+const renderMessageContent = (text: string) => {
+    const parts = text.split(/(!?\[.*?\]\(.*?\))/g);
+    return parts.map((part, i) => {
+        const imgMatch = part.match(/^!\[(.*?)\]\((.*?)\)$/);
+        if (imgMatch) {
+            return (
+                <div key={i} className="my-2">
+                    <img src={imgMatch[2]} alt={imgMatch[1]} className="max-w-full rounded-lg max-h-64 object-contain cursor-pointer hover:opacity-90 transition-opacity" onClick={() => window.open(imgMatch[2], '_blank')} />
+                </div>
+            );
+        }
+        const linkMatch = part.match(/^\[(.*?)\]\((.*?)\)$/);
+        if (linkMatch) {
+            return (
+                <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="text-current hover:opacity-80 underline inline-flex items-center gap-1 font-medium break-all">
+                    📎 {linkMatch[1]}
+                </a>
+            );
+        }
+        return <span key={i} className="break-words">{part}</span>;
+    });
+};
+
 const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar, isPending, isRead }: MessageBubbleProps) => {
     const formatTime = (timestamp: string) => {
         if (!timestamp) return '';
@@ -58,7 +81,7 @@ const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar, isPe
                         }`}
                 >
                     <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                        {message.text}
+                        {renderMessageContent(message.text)}
                     </p>
 
                     {/* Attachments */}
