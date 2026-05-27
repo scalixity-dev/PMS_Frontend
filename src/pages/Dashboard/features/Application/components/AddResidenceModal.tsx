@@ -72,6 +72,13 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         return d;
     }, []);
 
+    const minMoveOutDate = useMemo(() => {
+        if (!formData.moveInDate) return today;
+        const d = new Date(formData.moveInDate);
+        d.setDate(d.getDate() + 1);
+        return d;
+    }, [formData.moveInDate, today]);
+
     // Load all countries on mount
     useEffect(() => {
         setCountries(Country.getAllCountries());
@@ -246,7 +253,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         if (key === 'moveInDate') {
             if (!value) return 'Move in date is required';
             const dateVal = value instanceof Date ? value : new Date(value);
-            if (dateVal > today) return 'Move in date cannot be in the future';
+            if (dateVal < today) return 'Move in date must be today or in the future';
         }
         if (key === 'moveOutDate') {
             if (formData.residencyType === 'Rent' && !value) return 'Move out date is required for rented properties';
@@ -256,7 +263,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                     const moveInVal = formData.moveInDate instanceof Date ? formData.moveInDate : new Date(formData.moveInDate);
                     if (dateVal <= moveInVal) return 'Move out date must be after move in date';
                 }
-                if (formData.isCurrent && dateVal < today) return 'Move out date must be today or later for current residence';
+                if (dateVal < today) return 'Move out date must be today or in the future';
             }
         }
 
@@ -357,6 +364,8 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         let finalValue = value;
         if (key === 'landlordPhone') {
             finalValue = formatPhoneNumber(value);
+        } else if (key === 'zip') {
+            finalValue = value.replace(/\D/g, '');
         }
         setFormData(prev => ({ ...prev, [key]: finalValue }));
 
@@ -691,7 +700,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                         placeholder="DD/MM/YYYY"
                                         className={getInputClassWithError('moveInDate')}
                                         popoverClassName="z-[60]"
-                                        maxDate={today}
+                                        minDate={today}
                                     />
                                 </div>
                                 {touched.moveInDate && errors.moveInDate && (
@@ -713,8 +722,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                             placeholder="DD/MM/YYYY"
                                             className={getInputClassWithError('moveOutDate')}
                                             popoverClassName="z-[60]"
-                                            minDate={formData.isCurrent ? today : formData.moveInDate}
-                                            maxDate={formData.isCurrent ? undefined : today}
+                                            minDate={minMoveOutDate}
                                         />
                                     ) : (
                                         <div className={cn("w-full text-left rounded-md bg-gray-100 px-4 py-3 text-sm text-gray-400 outline-none shadow-sm flex items-center justify-between cursor-not-allowed", getInputClassWithError('moveOutDate'))}>

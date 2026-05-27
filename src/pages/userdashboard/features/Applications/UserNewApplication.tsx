@@ -64,7 +64,8 @@ const UserNewApplication: React.FC = () => {
     // Load draft on mount
     useEffect(() => {
         const state = location.state as { propertyId?: string };
-        let targetPropertyId = state?.propertyId;
+        const queryParams = new URLSearchParams(location.search);
+        let targetPropertyId = state?.propertyId || queryParams.get('propertyId') || undefined;
 
         // Save to sessionStorage if present, or retrieve if missing (fallback for refresh)
         if (targetPropertyId) {
@@ -114,7 +115,7 @@ const UserNewApplication: React.FC = () => {
             updateFormData('propertyId', targetPropertyId);
             setIsPropertySelected(true);
         }
-    }, [location.state, updateFormData, setCurrentStep, setIsPropertySelected, resetForm]);
+    }, [location.state, location.search, updateFormData, setCurrentStep, setIsPropertySelected, resetForm]);
 
     const isFormDirty = React.useMemo(() => {
         // Form is dirty if anything other than propertyId is set, 
@@ -456,7 +457,8 @@ const UserNewApplication: React.FC = () => {
 
     const renderStep = () => {
         const state = location.state as { propertyId?: string };
-        const targetPropertyId = state?.propertyId || sessionStorage.getItem('current_application_property_id');
+        const queryParams = new URLSearchParams(location.search);
+        const targetPropertyId = state?.propertyId || queryParams.get('propertyId') || sessionStorage.getItem('current_application_property_id');
 
         // Check if propertyId is completely missing
         if (!formData.propertyId && !targetPropertyId) {

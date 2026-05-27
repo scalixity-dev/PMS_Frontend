@@ -20,10 +20,8 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext, isSubmitting = fa
         'application/pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'image/jpeg',
-        'image/jpg',
-        'image/png',
-        'image/webp'
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ];
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -78,7 +76,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext, isSubmitting = fa
             Array.from(files).forEach(file => {
                 // Validate file type
                 if (!ALLOWED_TYPES.includes(file.type)) {
-                    errors.push(`${file.name}: Invalid file type. Only PDF, DOC, DOCX, and images are allowed.`);
+                    errors.push(`${file.name}: Invalid file type. Only PDF, DOC, DOCX, XLS, and XLSX are allowed.`);
                     return;
                 }
 
@@ -128,7 +126,8 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext, isSubmitting = fa
                         });
                     } catch (error) {
                         console.error(`Failed to upload ${file.name}:`, error);
-                        setFileError(prev => prev ? `${prev}. Failed to upload ${file.name}.` : `Failed to upload ${file.name}.`);
+                        const message = error instanceof Error ? error.message : `Failed to upload ${file.name}`;
+                        setFileError(prev => prev ? `${prev} ${message}` : message);
                     }
                 });
             }
@@ -180,13 +179,13 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext, isSubmitting = fa
                         <Upload className="w-6 h-6 text-[#7ED957]" />
                     </div>
                     <h3 className="font-bold text-[#1A1A1A] mb-1">Click to upload documents</h3>
-                    <p className="text-xs text-[#ADADAD]">PDF, DOC, DOCX or Images up to 10MB each</p>
+                    <p className="text-xs text-[#ADADAD]">PDF, DOC, DOCX, XLS or XLSX up to 10MB each</p>
                     <input
                         type="file"
                         ref={fileInputRef}
                         className="hidden"
                         multiple
-                        accept=".pdf,.doc,.docx,image/*"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx"
                         onChange={handleFileUpload}
                     />
                 </div>
