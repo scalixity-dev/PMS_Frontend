@@ -1,10 +1,11 @@
 import React, { useState, useRef, memo, useCallback, useEffect } from 'react';
 import EmojiPicker, { Theme, type EmojiClickData } from 'emoji-picker-react';
-import { Smile, Paperclip, Send, Mic, Trash2 } from 'lucide-react';
+import { Smile, Paperclip, Send, Mic, Trash2, Loader2 } from 'lucide-react';
 
 interface ChatInputProps {
     onSendMessage: (text: string, file: File | null) => void;
     onTyping?: () => void;
+    isUploading?: boolean;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -15,7 +16,7 @@ const ALLOWED_FILE_TYPES = [
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 ];
 
-const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping }) => {
+const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping, isUploading }) => {
     const [inputText, setInputText] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -102,7 +103,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping }) => {
 
     return (
         <div className="px-6 pb-2 pt-2 relative print:hidden">
-            {pendingFile && (
+            {pendingFile && !isUploading && (
                 <div className="absolute bottom-24 left-8 bg-[#EDF2F1] border border-[#A7D8C9] rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm animate-in fade-in slide-in-from-bottom-2">
                     <Paperclip className="w-4 h-4 text-[#3D7068]" />
                     <div className="flex flex-col">
@@ -112,9 +113,17 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping }) => {
                     <button
                         onClick={() => setPendingFile(null)}
                         className="ml-2 text-gray-400 hover:text-red-500 transition-colors"
+                        disabled={isUploading}
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
+                </div>
+            )}
+            
+            {isUploading && (
+                <div className="absolute bottom-24 left-8 bg-[#EDF2F1] border border-[#A7D8C9] rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                    <Loader2 className="w-4 h-4 text-[#3D7068] animate-spin" />
+                    <span className="text-xs font-bold text-gray-900">Uploading...</span>
                 </div>
             )}
 
@@ -136,12 +145,13 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping }) => {
             )}
 
             <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-[0_4px_12px_rgba(0,0,0,0.05)] focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.08)] focus-within:border-gray-300 transition-all duration-300">
-                <button className="text-gray-400 hover:text-[#3D7068] hover:scale-110 active:scale-95 transition-all duration-200">
+                <button className="text-gray-400 hover:text-[#3D7068] hover:scale-110 active:scale-95 transition-all duration-200" disabled={isUploading}>
                     <Mic className="w-4 h-4" />
                 </button>
 
                 <textarea
                     ref={textareaRef}
+                    disabled={isUploading}
                     rows={1}
                     value={inputText}
                     onChange={(e) => {
@@ -163,24 +173,26 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping }) => {
                     />
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="hover:text-[#3D7068] hover:scale-110 active:scale-95 transition-all duration-200"
+                        className="hover:text-[#3D7068] hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-50"
                         title="Attach File"
+                        disabled={isUploading}
                     >
                         <Paperclip className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className={`transition-all duration-200 hover:scale-110 active:scale-95 ${showEmojiPicker ? 'text-[#3D7068]' : 'hover:text-[#3D7068]'}`}
+                        className={`transition-all duration-200 hover:scale-110 active:scale-95 ${showEmojiPicker ? 'text-[#3D7068]' : 'hover:text-[#3D7068]'} disabled:opacity-50`}
                         title="Add Emoji"
+                        disabled={isUploading}
                     >
                         <Smile className="w-4 h-4" />
                     </button>
                     <button
                         onClick={handleSendMessage}
-                        disabled={!inputText.trim() && !pendingFile}
+                        disabled={(!inputText.trim() && !pendingFile) || isUploading}
                         className="bg-[#3D7068] text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#2F5952] hover:scale-105 active:scale-90 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Send className="w-[14px] h-[14px]" />
+                        {isUploading ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Send className="w-[14px] h-[14px]" />}
                     </button>
                 </div>
             </div>

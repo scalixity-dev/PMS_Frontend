@@ -13,6 +13,7 @@ export type ChatCategory = 'Tenants' | 'Service Providers' | 'Maintenance Reques
 
 export interface Chat {
     id: string;
+    applicationId?: string | null;
     name: string;
     role: string;
     category: ChatCategory;

@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { MessageSquare, ListPlus } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import ChatSidebar from './components/ChatSidebar';
 import ChatHeader from './components/ChatHeader';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
+import { ApplicationBanner } from './components/ApplicationBanner';
 import MaintenanceRequestView from './components/MaintenanceRequestView';
 import PublicationView from './components/PublicationView';
 import { useRequestStore } from '../Requests/store/requestStore';
@@ -24,7 +25,7 @@ import { useOfflineQueue } from '../../../../hooks/useOfflineQueue';
 import { useChatToastStore } from '../../../../store/chatToastStore';
 import { useGetCurrentUser } from '../../../../hooks/useAuthQueries';
 import type { Chat } from './types';
-import type { ChatMessage, ChatConversation } from '../../../../services/chat.service';
+import { uploadChatMedia, type ChatMessage, type ChatConversation } from '../../../../services/chat.service';
 import type { ServiceRequest, Publication } from '../../utils/types';
 
 function safeFormatTime(iso: string | undefined | null): string {
@@ -59,6 +60,7 @@ const Messages = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [searchParams] = useSearchParams();
   const { requests } = useRequestStore();
 
   const [chatSearch, setChatSearch] = useState('');
@@ -68,6 +70,7 @@ const Messages = () => {
   const [publications] = useState<Publication[]>([]);
   const [activePublication, setActivePublication] = useState<Publication | null>(null);
   const [showMobileChat, setShowMobileChat] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [viewMode, setViewMode] = useState<'CHAT' | 'MR' | 'PB'>('CHAT');
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -85,9 +88,18 @@ const Messages = () => {
 
   // Warm the message cache for recent conversations so opening is instant.
   useEffect(() => {
-    conversations.slice(0, 10).forEach((c) => prefetchMessages(c.id));
+    conversations.slice(0, 10).forEach((c: any) => prefetchMessages(c.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [convData, prefetchMessages]);
+
+  useEffect(() => {
+    const cid = searchParams.get('conversationId');
+    if (cid && conversations.some((c: any) => c.id === cid)) {
+      setViewMode('CHAT');
+      setActiveChatId(cid);
+      setShowMobileChat(true);
+    }
+  }, [searchParams, conversations]);
 
   const { data: messagesData } = useMessages(activeChatId, !!activeChatId);
   const apiMessages = messagesData ?? [];
@@ -170,13 +182,21 @@ const Messages = () => {
       const isOnline = other ? onlineSet.has(other.userId) : false;
       const otherLastReadAt = other?.lastReadAt ?? null;
 
+      let formattedLastMessage = lastMsg?.content ?? 'No messages yet';
+      if (formattedLastMessage.match(/^!\[(.*?)\]\((.*?)\)$/)) {
+        formattedLastMessage = '📷 Image';
+      } else if (formattedLastMessage.match(/^\[(.*?)\]\((.*?)\)$/)) {
+        formattedLastMessage = '📎 Attachment';
+      }
+
       return {
         id: c.id,
+        applicationId: c.applicationId ?? null,
         contactName: name,
         contactRole: toContactRole(contact?.contactType ?? 'OTHER'),
         contactEmail: other?.email ?? '',
         contactAvatar: avatarUrl(name),
-        lastMessage: lastMsg?.content ?? 'No messages yet',
+        lastMessage: formattedLastMessage,
         lastMessageTime: safeFormatTime(lastMsg?.createdAt),
         unreadCount: c.unreadCount ?? 0,
         isOnline,
@@ -343,12 +363,26 @@ const Messages = () => {
   };
 
   const handleSendMessage = useCallback(
-    (text: string, files?: File[]) => {
+    async (text: string, files?: File[]) => {
       if (!activeChat || !activeChatId) return;
       let messageText = text;
       if (files?.length) {
-        const names = files.map((f) => f.name).join(', ');
-        messageText = text ? `${text}\n\n📎 Attached: ${names}` : `📎 Attached: ${names}`;
+        setIsUploading(true);
+        try {
+          const uploads = await Promise.all(files.map(file => uploadChatMedia(file, token ?? undefined).then(url => ({ file, url }))));
+          const attachmentTexts = uploads.map(({ file, url }) => {
+            if (file.type.startsWith('image/')) {
+              return `![${file.name}](${url})`;
+            }
+            return `[${file.name}](${url})`;
+          });
+          messageText = text ? `${text}\n\n${attachmentTexts.join('\n')}` : attachmentTexts.join('\n');
+        } catch (error) {
+          useChatToastStore.getState().showError('Failed to upload attachments');
+          setIsUploading(false);
+          return;
+        }
+        setIsUploading(false);
       }
       if (!messageText.trim()) return;
       sendTypingStop();
@@ -439,8 +473,9 @@ const Messages = () => {
                   showBackButton={showMobileChat}
                   pendingCount={pendingCount}
                 />
+                {activeChat.applicationId && <ApplicationBanner applicationId={activeChat.applicationId} isUserDashboard />}
                 <MessageList chat={activeChat} currentUserId="user" />
-                <ChatInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
+                <ChatInput onSendMessage={handleSendMessage} onTyping={handleTyping} isUploading={isUploading} />
               </>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50 px-4">
