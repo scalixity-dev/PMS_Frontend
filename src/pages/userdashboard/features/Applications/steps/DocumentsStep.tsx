@@ -32,9 +32,6 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext, isSubmitting = fa
             const formDataToSend = new FormData();
             formDataToSend.append('file', file);
             formDataToSend.append('category', 'DOCUMENT');
-            if (formData.propertyId) {
-                formDataToSend.append('propertyId', formData.propertyId);
-            }
 
             const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
                 method: 'POST',

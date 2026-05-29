@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Trash2, CheckSquare, Square, Loader2, Building2 } from 'lucide-react';
 import PropertiesHeader from './components/PropertiesHeader';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
@@ -7,6 +8,7 @@ import DashboardFilter, { type FilterOption } from '../../components/DashboardFi
 import Pagination from '../../components/Pagination';
 import PropertyCard from './components/PropertyCard';
 import { propertyService, type BackendProperty } from '../../../../services/property.service';
+import { useGetAllProperties, propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
 import { usePropertyStore } from '../../../../stores/propertyStore';
 
 // Property interface for the component
@@ -33,9 +35,11 @@ const Properties: React.FC = () => {
     // Zustand store - persisted state
     const { currentPage, itemsPerPage, searchQuery, filters, setCurrentPage, setSearchQuery, setFilters } = usePropertyStore();
 
+    const queryClient = useQueryClient();
+    const { data: backendProperties = [], isLoading: loading, error: fetchError } = useGetAllProperties(true, true);
+
     // Local state - non-persisted
     const [properties, setProperties] = useState<Property[]>([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedProperties, setSelectedProperties] = useState<Set<string>>(new Set());
@@ -193,26 +197,16 @@ const Properties: React.FC = () => {
         };
     };
 
-    // Fetch properties on component mount
+    // Sync React Query data into local state for filtering/pagination
     useEffect(() => {
-        const fetchProperties = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const backendProperties = await propertyService.getAll(true);
-                const transformedProperties = backendProperties.map(transformProperty);
-                setProperties(transformedProperties);
-            } catch (err) {
-                console.error('Error fetching properties:', err);
-                setError(err instanceof Error ? err.message : 'Failed to fetch properties');
-                setProperties([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchProperties();
-    }, []);
+        if (fetchError) {
+            setError(fetchError instanceof Error ? fetchError.message : 'Failed to fetch properties');
+            setProperties([]);
+        } else {
+            setError(null);
+            setProperties(backendProperties.map(transformProperty));
+        }
+    }, [backendProperties, fetchError]);
 
     // Callback functions wrapped with useCallback to prevent unnecessary re-renders
     const handleAddProperty = useCallback(() => {
@@ -256,10 +250,8 @@ const Properties: React.FC = () => {
                 setError(`Some properties could not be deleted: ${errorMessages}`);
             }
 
-            // Refresh properties list
-            const backendProperties = await propertyService.getAll(true);
-            const transformedProperties = backendProperties.map(transformProperty);
-            setProperties(transformedProperties);
+            // Invalidate React Query cache so the list refetches automatically
+            await queryClient.invalidateQueries({ queryKey: propertyQueryKeys.lists() });
 
             // Clear selection
             setSelectedProperties(new Set());

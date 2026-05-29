@@ -89,12 +89,15 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         if (formData.country) {
             const countryStates = State.getStatesOfCountry(formData.country);
             setStates(countryStates);
-            // Reset state and city when country changes
-            setFormData(prev => ({
-                ...prev,
-                state: '',
-                city: ''
-            }));
+            // Only reset state/city if the current state doesn't belong to this country
+            const stateIsValid = countryStates.some(s => s.isoCode === formData.state);
+            if (!stateIsValid) {
+                setFormData(prev => ({
+                    ...prev,
+                    state: '',
+                    city: ''
+                }));
+            }
         } else {
             setStates([]);
         }
@@ -105,11 +108,14 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         if (formData.country && formData.state) {
             const stateCities = City.getCitiesOfState(formData.country, formData.state);
             setCities(stateCities);
-            // Reset city when state changes
-            setFormData(prev => ({
-                ...prev,
-                city: ''
-            }));
+            // Only reset city if the current city doesn't belong to this state
+            const cityIsValid = stateCities.some(c => c.name === formData.city);
+            if (!cityIsValid) {
+                setFormData(prev => ({
+                    ...prev,
+                    city: ''
+                }));
+            }
         } else {
             setCities([]);
         }
@@ -226,7 +232,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                 landlordName: '',
                 landlordPhone: '',
                 landlordEmail: '',
-                landlordPhoneCountryCode: undefined,
+                landlordPhoneCountryCode: 'US|1',
                 rentAmount: '',
                 otherResidencyType: ''
             });

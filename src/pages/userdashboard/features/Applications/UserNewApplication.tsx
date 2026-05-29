@@ -60,6 +60,7 @@ const UserNewApplication: React.FC = () => {
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessages, setErrorMessages] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isSubmittingRef = useRef(false);
 
     // Load draft on mount
     useEffect(() => {
@@ -121,7 +122,7 @@ const UserNewApplication: React.FC = () => {
         // Form is dirty if anything other than propertyId is set, 
         // or if we have a propertyId and we've moved past step 1
         const hasData = Object.entries(formData).some(([key, value]) => {
-            if (key === 'propertyId') return false;
+            if (key === 'propertyId' || key === 'phoneCountryCode') return false;
             return hasValue(value);
         });
         return hasData || (!!formData.propertyId && currentStep > 1);
@@ -416,6 +417,8 @@ const UserNewApplication: React.FC = () => {
     };
 
     const handleSubmitSuccess = async () => {
+        if (isSubmittingRef.current) return;
+        isSubmittingRef.current = true;
         setIsSubmitting(true);
         try {
             const { leasingId, address, propertyName, landlordName } = await fetchLeasingData();
@@ -451,6 +454,7 @@ const UserNewApplication: React.FC = () => {
             setErrorMessages([error instanceof Error ? error.message : 'Failed to submit application.']);
             setShowErrorModal(true);
         } finally {
+            isSubmittingRef.current = false;
             setIsSubmitting(false);
         }
     };
@@ -568,21 +572,16 @@ const UserNewApplication: React.FC = () => {
             />
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50" onClick={handleCancelLeave} />
-                    <div className="bg-white rounded-2xl w-full max-w-md shadow-xl relative z-10">
-                        <UnsavedChangesModal
-                            isOpen={isModalOpen}
-                            onClose={handleCancelLeave}
-                            onConfirm={handleConfirmLeave}
-                            title="You're about to leave"
-                            message="Are you sure you want to leave without saving? You will lose any changes made."
-                            cancelText="No"
-                            confirmText="Yes, I'm sure"
-                            noBlur={true}
-                        />
-                    </div>
-                </div>
+                <UnsavedChangesModal
+                    isOpen={isModalOpen}
+                    onClose={handleCancelLeave}
+                    onConfirm={handleConfirmLeave}
+                    title="You're about to leave"
+                    message="Are you sure you want to leave without saving? You will lose any changes made."
+                    cancelText="No"
+                    confirmText="Yes, I'm sure"
+                    noBlur={true}
+                />
             )}
         </div>
     );

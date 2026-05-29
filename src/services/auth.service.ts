@@ -633,36 +633,52 @@ class AuthService {
     return data.exists === true;
   }
 
+  private _currentUserCache: { user: CurrentUser; expiresAt: number } | null = null;
+  private _currentUserPromise: Promise<CurrentUser> | null = null;
+
+  invalidateCurrentUserCache() {
+    this._currentUserCache = null;
+    this._currentUserPromise = null;
+  }
+
   /**
    * Get current authenticated user
    */
   async getCurrentUser(): Promise<CurrentUser> {
-    const response = await fetch(API_ENDPOINTS.AUTH.GET_CURRENT_USER, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Unauthorized. Please log in.');
-      }
-      const errorData = await response.json().catch(() => ({
-        message: 'Failed to get user information',
-      }));
-      throw new Error(errorData.message || 'Failed to get user information');
+    if (this._currentUserCache && Date.now() < this._currentUserCache.expiresAt) {
+      return this._currentUserCache.user;
     }
-
-    const data = await response.json();
-    return data.user || data;
+    if (this._currentUserPromise) {
+      return this._currentUserPromise;
+    }
+    this._currentUserPromise = (async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.AUTH.GET_CURRENT_USER, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          if (response.status === 401) throw new Error('Unauthorized. Please log in.');
+          const errorData = await response.json().catch(() => ({ message: 'Failed to get user information' }));
+          throw new Error(errorData.message || 'Failed to get user information');
+        }
+        const data = await response.json();
+        const user: CurrentUser = data.user || data;
+        this._currentUserCache = { user, expiresAt: Date.now() + 30_000 };
+        return user;
+      } finally {
+        this._currentUserPromise = null;
+      }
+    })();
+    return this._currentUserPromise;
   }
 
   /**
    * Logout user
    */
   async logout(): Promise<void> {
+    this.invalidateCurrentUserCache();
     try {
       await fetch(API_ENDPOINTS.AUTH.LOGOUT, {
         method: 'POST',

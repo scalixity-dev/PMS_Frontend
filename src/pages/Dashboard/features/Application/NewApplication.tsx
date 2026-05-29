@@ -18,6 +18,7 @@ import { useApplicationStore } from './store/applicationStore';
 import ApplicationSuccessModal from './components/ApplicationSuccessModal';
 import ApplicationErrorModal from './components/ApplicationErrorModal';
 import AIApplicationChat from './components/AIApplicationChat';
+import BaseModal from '../../../../components/common/modals/BaseModal';
 
 const STORAGE_KEY = 'application_draft';
 
@@ -158,20 +159,21 @@ const NewApplication: React.FC = () => {
     const [errorMessages, setErrorMessages] = React.useState<string[]>([]);
     const [documentsNeedReupload, setDocumentsNeedReupload] = React.useState(false);
     const [showAIChat, setShowAIChat] = React.useState(false);
+    const [showCancelModal, setShowCancelModal] = React.useState(false);
 
     const handleCancel = () => {
         if (isFormDirty) {
-            const shouldCancel = window.confirm(
-                'Are you sure you want to cancel? All progress will be lost.'
-            );
-            if (shouldCancel) {
-                resetForm();
-                localStorage.removeItem(STORAGE_KEY);
-                navigate('/dashboard/leasing/applications');
-            }
+            setShowCancelModal(true);
         } else {
             navigate('/dashboard/leasing/applications');
         }
+    };
+
+    const handleConfirmCancel = () => {
+        resetForm();
+        localStorage.removeItem(STORAGE_KEY);
+        navigate('/dashboard/leasing/applications');
+        setShowCancelModal(false);
     };
 
     const handleBack = () => {
@@ -182,9 +184,7 @@ const NewApplication: React.FC = () => {
             localStorage.removeItem(STORAGE_KEY);
 
             // Force navigation to applications page
-            setTimeout(() => {
-                navigate('/dashboard/leasing/applications');
-            }, 0);
+            navigate('/dashboard/leasing/applications');
         } else if (currentStep === 2) {
             if (occupantSubStep === 'pets') {
                 setOccupantSubStep('occupants');
@@ -453,6 +453,29 @@ const NewApplication: React.FC = () => {
                 onClose={() => setShowAIChat(false)}
                 onFormDataReceived={handleAIFormData}
             />
+
+            <BaseModal
+                isOpen={showCancelModal}
+                onClose={() => setShowCancelModal(false)}
+                title="Cancel Application"
+                maxWidth="max-w-md"
+                footerButtons={[
+                    {
+                        label: 'No, Keep Editing',
+                        onClick: () => setShowCancelModal(false),
+                        variant: 'secondary'
+                    },
+                    {
+                        label: 'Yes, Cancel',
+                        onClick: handleConfirmCancel,
+                        variant: 'danger'
+                    }
+                ]}
+            >
+                <div className="py-2 text-gray-600">
+                    Are you sure you want to cancel? All progress will be lost.
+                </div>
+            </BaseModal>
         </div>
     );
 };
