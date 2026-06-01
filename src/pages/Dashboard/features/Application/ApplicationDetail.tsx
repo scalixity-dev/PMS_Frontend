@@ -12,7 +12,9 @@ import {
     ExternalLink,
     Edit2,
     Camera,
-    Dog
+    Dog,
+    Eye,
+    X as XIcon,
 } from 'lucide-react';
 import { useGetApplication, useUpdateApplication, useGetApplicationAttachments, useDeleteApplicationAttachment, applicationQueryKeys } from '../../../../hooks/useApplicationQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
@@ -130,6 +132,7 @@ const ApplicationDetail = () => {
     const [editingIncome, setEditingIncome] = useState<any>(null); // To store the income item being edited
     const [editingResidence, setEditingResidence] = useState<any>(null);
     const [editingEmergencyContact, setEditingEmergencyContact] = useState<any>(null);
+    const [previewDoc, setPreviewDoc] = useState<{ name: string; url: string; type: string } | null>(null);
     const [editingOccupant, setEditingOccupant] = useState<any>(null);
     const [editingPet, setEditingPet] = useState<any>(null);
     const [editingVehicle, setEditingVehicle] = useState<any>(null);
@@ -588,6 +591,7 @@ const ApplicationDetail = () => {
     };
 
     const statusDisplay = getStatusDisplay(application.status);
+    const isApproved = application.status === 'APPROVED';
 
     // Handler functions for adding items
     const handleSaveOccupant = async (data: any) => {
@@ -654,32 +658,40 @@ const ApplicationDetail = () => {
         });
     };
 
+    const petPhotoUrls = (pet: any): string[] =>
+        pet.photos?.length ? pet.photos.map((p: any) => p.photoUrl as string) : pet.photoUrl ? [pet.photoUrl] : [];
+
     const handleSavePet = async (data: any) => {
         if (!application) return;
 
-        let photoUrl = editingPet?.photoUrl || null;
-
-        if (data.photo instanceof File) {
+        // Upload all new photo files in parallel
+        const newFiles: File[] = Array.isArray(data.photos) ? data.photos.filter((f: any) => f instanceof File) : [];
+        let uploadedUrls: string[] = [];
+        if (newFiles.length > 0) {
             try {
-                const formData = new FormData();
-                formData.append('file', data.photo);
-                formData.append('category', 'IMAGE');
-
-                const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
-                    method: 'POST',
-                    credentials: 'include',
-                    body: formData,
-                });
-
-                if (!response.ok) throw new Error('Failed to upload pet image');
-                const resData = await response.json();
-                photoUrl = resData.url;
+                uploadedUrls = await Promise.all(newFiles.map(async (file) => {
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    fd.append('category', 'IMAGE');
+                    const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+                        method: 'POST',
+                        credentials: 'include',
+                        body: fd,
+                    });
+                    if (!response.ok) throw new Error('Failed to upload pet image');
+                    const resData = await response.json();
+                    return resData.url as string;
+                }));
             } catch (error) {
-                console.error('Error uploading pet image:', error);
+                console.error('Error uploading pet images:', error);
                 alert('Failed to upload pet image. Please try again.');
                 return;
             }
         }
+
+        // Combine kept existing URLs with newly uploaded ones
+        const existingKept: string[] = Array.isArray(data.existingPhotoUrls) ? data.existingPhotoUrls : [];
+        const allPhotoUrls = [...existingKept, ...uploadedUrls];
 
         const newPet = {
             type: data.type,
@@ -694,7 +706,7 @@ const ApplicationDetail = () => {
                 return parseFloat(w.replace(/[^0-9.-]/g, ''));
             })(),
             breed: data.breed,
-            photoUrl: photoUrl,
+            ...(allPhotoUrls.length > 0 ? { photoUrls: allPhotoUrls } : {}),
         };
 
         const existingPets = application.pets.map(pet => ({
@@ -702,7 +714,7 @@ const ApplicationDetail = () => {
             name: pet.name,
             weight: pet.weight ? parseFloat(pet.weight) : undefined,
             breed: pet.breed,
-            photoUrl: pet.photoUrl || null,
+            ...(petPhotoUrls(pet).length > 0 ? { photoUrls: petPhotoUrls(pet) } : {}),
         }));
 
         let updatedPets;
@@ -713,7 +725,7 @@ const ApplicationDetail = () => {
                     name: pet.name,
                     weight: pet.weight,
                     breed: pet.breed,
-                    photoUrl: pet.photoUrl
+                    ...(petPhotoUrls(pet).length > 0 ? { photoUrls: petPhotoUrls(pet) } : {}),
                 }
             );
         } else {
@@ -737,7 +749,7 @@ const ApplicationDetail = () => {
             name: pet.name,
             weight: pet.weight ? parseFloat(pet.weight) : undefined,
             breed: pet.breed,
-            photoUrl: pet.photoUrl || null,
+            ...(petPhotoUrls(pet).length > 0 ? { photoUrls: petPhotoUrls(pet) } : {}),
         }));
 
         await updateApplication.mutateAsync({
@@ -1335,13 +1347,15 @@ const ApplicationDetail = () => {
                     <Section
                         title="Applicant information"
                         secondaryButton={
-                            <button
-                                onClick={() => setIsApplicantInfoEditModalOpen(true)}
-                                className="bg-white border border-gray-200 text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
-                            >
-                                Edit
-                                <Edit2 size={12} />
-                            </button>
+                            !isApproved ? (
+                                <button
+                                    onClick={() => setIsApplicantInfoEditModalOpen(true)}
+                                    className="bg-white border border-gray-200 text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+                                >
+                                    Edit
+                                    <Edit2 size={12} />
+                                </button>
+                            ) : undefined
                         }
                     >
                         <div className="bg-[#F0F0F6] rounded-[2rem] p-6 lg:p-4 relative overflow-hidden border border-gray-100/50">
@@ -1398,7 +1412,7 @@ const ApplicationDetail = () => {
                     {/* 2. Additional Occupants */}
                     <Section
                         title="Additional occupants"
-                        onAdd={() => setIsOccupantModalOpen(true)}
+                        onAdd={isApproved ? undefined : () => setIsOccupantModalOpen(true)}
                         addButtonLabel="Add co-occupant"
                         isEmpty={application.occupants.length === 0}
                         emptyText="No additional occupants added"
@@ -1406,6 +1420,7 @@ const ApplicationDetail = () => {
                         <div className="space-y-3">
                             {application.occupants.map(occ => (
                                 <div key={occ.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
+                                    {!isApproved && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1431,6 +1446,7 @@ const ApplicationDetail = () => {
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
+                                    )}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <CustomTextBox
                                             label="Full name"
@@ -1467,7 +1483,7 @@ const ApplicationDetail = () => {
                     {/* 3. Pets */}
                     <Section
                         title="Pets"
-                        onAdd={() => setIsPetModalOpen(true)}
+                        onAdd={isApproved ? undefined : () => setIsPetModalOpen(true)}
                         addButtonLabel="Add Pets"
                         isEmpty={application.pets.length === 0}
                         emptyText="No pets added"
@@ -1475,6 +1491,7 @@ const ApplicationDetail = () => {
                         <div className="space-y-3">
                             {application.pets.map(pet => (
                                 <div key={pet.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
+                                    {!isApproved && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1500,12 +1517,17 @@ const ApplicationDetail = () => {
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
+                                    )}
                                     <div className="flex gap-4">
-                                        <div className="w-24 h-24 rounded-2xl bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
-                                            {pet.photoUrl ? (
-                                                <img src={pet.photoUrl} alt={pet.name} className="w-full h-full object-cover" />
+                                        <div className="flex gap-2 flex-shrink-0">
+                                            {petPhotoUrls(pet).length > 0 ? (
+                                                petPhotoUrls(pet).map((url, i) => (
+                                                    <div key={i} className="w-24 h-24 rounded-2xl bg-gray-100 overflow-hidden border border-gray-200 flex-shrink-0">
+                                                        <img src={url} alt={`${pet.name} ${i + 1}`} className="w-full h-full object-cover" />
+                                                    </div>
+                                                ))
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                <div className="w-24 h-24 rounded-2xl bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200 flex items-center justify-center text-gray-300">
                                                     <Dog size={32} />
                                                 </div>
                                             )}
@@ -1547,7 +1569,7 @@ const ApplicationDetail = () => {
                     {/* 4. Vehicles */}
                     < Section
                         title="Vehicles"
-                        onAdd={() => setIsVehicleModalOpen(true)}
+                        onAdd={isApproved ? undefined : () => setIsVehicleModalOpen(true)}
                         addButtonLabel="Add Vehicles"
                         isEmpty={application.vehicles.length === 0}
                         emptyText="No vehicles added"
@@ -1555,6 +1577,7 @@ const ApplicationDetail = () => {
                         <div className="space-y-3">
                             {application.vehicles.map(v => (
                                 <div key={v.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
+                                    {!isApproved && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1580,6 +1603,7 @@ const ApplicationDetail = () => {
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
+                                    )}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <CustomTextBox
                                             label="Type"
@@ -1625,11 +1649,12 @@ const ApplicationDetail = () => {
                     {/* 5. Residential History */}
                     < Section
                         title="Residential history"
-                        onAdd={() => setIsResidenceModalOpen(true)}
+                        onAdd={isApproved ? undefined : () => setIsResidenceModalOpen(true)}
                         addButtonLabel="Add residence"
                         isEmpty={application.residenceHistory.length === 0}
                         emptyText="No residential history added"
                         secondaryButton={
+                            !isApproved ? (
                             < button
                                 onClick={() => setIsResidenceInfoModalOpen(true)}
                                 className="flex items-center gap-1 bg-white border border-gray-200 text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm"
@@ -1637,11 +1662,13 @@ const ApplicationDetail = () => {
                                 Additional information
                                 < PlusCircle className="w-4 h-4" />
                             </button >
+                            ) : undefined
                         }
                     >
                         <div className="space-y-4">
                             {application.residenceHistory.map(res => (
                                 <div key={res.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
+                                    {!isApproved && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1677,6 +1704,7 @@ const ApplicationDetail = () => {
                                             )}
                                         </div>
                                     </div>
+                                    )}
                                     <div className="space-y-4">
                                         {/* Address & Status Header */}
                                         <CustomTextBox
@@ -1748,6 +1776,7 @@ const ApplicationDetail = () => {
                         <div className="space-y-4">
                             {application.incomeDetails.map(inc => (
                                 <div key={inc.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
+                                    {!isApproved && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1759,8 +1788,8 @@ const ApplicationDetail = () => {
                                         >
                                             <Edit2 size={16} />
                                         </button>
-
                                     </div>
+                                    )}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <CustomTextBox
                                             label="Income type"
@@ -1817,11 +1846,12 @@ const ApplicationDetail = () => {
                     {/* 7. Contacts */}
                     < Section
                         title="Contacts"
-                        onAdd={() => setIsReferenceModalOpen(true)}
+                        onAdd={isApproved ? undefined : () => setIsReferenceModalOpen(true)}
                         addButtonLabel="Add reference"
                         isEmpty={application.emergencyContacts.length === 0}
                         emptyText="No contacts added"
                         secondaryButton={
+                            !isApproved ? (
                             < button
                                 onClick={() => setIsContactModalOpen(true)}
                                 className="flex items-center gap-1 bg-white border border-gray-200 text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm"
@@ -1829,11 +1859,13 @@ const ApplicationDetail = () => {
                                 Emergency Contact
                                 < PlusCircle className="w-4 h-4" />
                             </button >
+                            ) : undefined
                         }
                     >
                         <div className="space-y-3">
                             {application.emergencyContacts.map(contact => (
                                 <div key={contact.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group flex items-center justify-between">
+                                    {!isApproved && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1842,7 +1874,6 @@ const ApplicationDetail = () => {
                                             }}
                                             className="p-2 bg-white rounded-full text-gray-400 hover:text-[#3A6D6C] hover:bg-teal-50 shadow-md"
                                             title="Edit contact"
-                                            disabled={false}
                                         >
                                             <Edit2 size={16} />
                                         </button>
@@ -1870,6 +1901,7 @@ const ApplicationDetail = () => {
                                             )}
                                         </div>
                                     </div>
+                                    )}
                                     <div className="grid grid-cols-3 gap-4 w-full items-center">
                                         <div className="flex items-center gap-2">
                                             <span className="font-bold text-gray-700 truncate">{contact.contactName}</span>
@@ -2077,6 +2109,13 @@ const ApplicationDetail = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setPreviewDoc({ name: att.fileName, url: att.fileUrl, type: att.fileType || '' })}
+                                            className="p-2 hover:bg-white rounded-full transition-colors text-[#3A6D6C] hover:text-[#2c5251]"
+                                            title="Preview"
+                                        >
+                                            <Eye size={18} />
+                                        </button>
                                         <a
                                             href={att.fileUrl}
                                             target="_blank"
@@ -2148,7 +2187,7 @@ const ApplicationDetail = () => {
                     {/* Footer */}
                     < div className="bg-[#F6F6F8] rounded-[1.5rem] p-6 mt-8 mb-8 border border-white/50 text-center" >
                         <p className="text-xs font-bold text-gray-800">
-                            <span className="font-extrabold">{applicantName}</span> agreed to Terms & Conditions on {new Date(application.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}.
+                            <span className="font-extrabold">{applicantName}</span> agreed to <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-[#7ED957] hover:underline cursor-pointer">Terms & Conditions</a> on {new Date(application.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}.
                         </p>
                     </div >
                 </div >
@@ -2191,7 +2230,7 @@ const ApplicationDetail = () => {
                     })() : '',
                     breed: editingPet.breed,
                     photos: [],
-                    existingPhotoUrls: editingPet.photoUrl ? [editingPet.photoUrl] : []
+                    existingPhotoUrls: petPhotoUrls(editingPet)
                 } : undefined}
             />
             < DeleteConfirmationModal
@@ -2201,6 +2240,38 @@ const ApplicationDetail = () => {
                 title={deleteConfirmation?.title}
                 itemName={deleteConfirmation?.itemName}
             />
+
+            {previewDoc && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setPreviewDoc(null)}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+                            <div className="flex items-center gap-3">
+                                <FileText size={18} className="text-[#3A6D6C]" />
+                                <span className="text-sm font-semibold text-gray-900 truncate max-w-xs">{previewDoc.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <a href={previewDoc.url} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-[#3A6D6C] hover:bg-gray-100 rounded-lg transition-colors" title="Open in new tab">
+                                    <ExternalLink size={16} />
+                                </a>
+                                <button onClick={() => setPreviewDoc(null)} className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                                    <XIcon size={18} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-hidden p-2 min-h-0">
+                            {(() => {
+                                const t = (previewDoc.type || '').toLowerCase();
+                                const n = (previewDoc.name || '').toLowerCase();
+                                const isImage = t.startsWith('image/') || ['jpg','jpeg','png','gif','webp','svg'].some(ext => n.endsWith(`.${ext}`));
+                                const isPdf = t === 'application/pdf' || t === 'pdf' || n.endsWith('.pdf');
+                                if (isImage) return <img src={previewDoc.url} alt={previewDoc.name} className="w-full h-full object-contain rounded-lg" />;
+                                if (isPdf) return <iframe src={previewDoc.url} className="w-full h-full rounded-lg" style={{ minHeight: '60vh' }} title={previewDoc.name} />;
+                                return <div className="flex flex-col items-center justify-center h-40 text-gray-400 gap-2"><FileText size={40} /><p className="text-sm">Preview not available</p><a href={previewDoc.url} target="_blank" rel="noopener noreferrer" className="text-[#3A6D6C] text-sm underline">Open file</a></div>;
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            )}
             < AddVehicleModal
                 isOpen={isVehicleModalOpen}
                 onClose={() => {
@@ -2238,6 +2309,7 @@ const ApplicationDetail = () => {
                     reason: editingResidence.additionalInfo || '',
                     landlordName: editingResidence.landlordName,
                     landlordPhone: editingResidence.landlordPhone,
+                    landlordPhoneCountryCode: 'US|1',
                     rentAmount: editingResidence.monthlyRent ? editingResidence.monthlyRent.toString() : ''
                 } : undefined}
             />
@@ -2260,9 +2332,11 @@ const ApplicationDetail = () => {
                     address: editingIncome.officeAddress,
                     office: editingIncome.office,
                     companyPhone: editingIncome.companyPhone,
+                    companyPhoneCountryCode: 'US|1',
                     supervisorName: editingIncome.supervisorName,
                     supervisorEmail: editingIncome.supervisorEmail,
-                    supervisorPhone: editingIncome.supervisorPhone
+                    supervisorPhone: editingIncome.supervisorPhone,
+                    supervisorPhoneCountryCode: 'US|1',
                 } : undefined}
             />
             < AddEmergencyContactModal
@@ -2352,7 +2426,7 @@ const ApplicationDetail = () => {
                             bio: application.bio || '',
                             monthlyRent: monthlyRent,
                             householdIncome: totalHouseholdIncome,
-                            currency: (application.leasing as any)?.currency || 'GBP' // Pass existing currency if available
+                            currency: (application.leasing as any)?.currency || 'USD'
                         }}
                     />
                 )

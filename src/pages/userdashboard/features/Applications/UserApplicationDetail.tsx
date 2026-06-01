@@ -19,7 +19,9 @@ import {
     Info,
     FileText,
     Pencil,
-    Trash2
+    Trash2,
+    Eye,
+    X as XIcon,
 } from 'lucide-react';
 import DeleteConfirmationModal from '@/components/common/modals/DeleteConfirmationModal';
 import { Country } from 'country-state-city';
@@ -54,7 +56,6 @@ import {
     type BackendEmergencyContact,
     type BackendReferenceContact
 } from '../../../../services/application.service';
-import { applicationService } from '../../../../services/application.service';
 
 
 const handleConfirmDeleteGeneric = async (
@@ -507,7 +508,7 @@ const AdditionalQuestionsContent = ({ questions }: any) => (
                         <div className="mt-0.5 text-gray-400">{q.icon}</div>
                         <p className="text-sm font-medium text-gray-700 leading-relaxed">{q.label}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${questions[q.key] === 'Yes' ? 'bg-red-50 text-red-600' : 'bg-[#DCFCE7] text-[#16A34A]'}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${questions[q.key] === 'Yes' ? 'bg-[#DCFCE7] text-[#16A34A]' : 'bg-red-50 text-red-600'}`}>
                         {String(questions[q.key])}
                     </span>
                 </div>
@@ -730,10 +731,23 @@ const mapBackendToUI = (backendApplication: any) => {
             bankruptcy: backendApplication.backgroundQuestions?.bankruptcy ? 'Yes' : 'No',
             refuseRent: backendApplication.backgroundQuestions?.refusedRent ? 'Yes' : 'No',
             evicted: backendApplication.backgroundQuestions?.evicted ? 'Yes' : 'No',
-            explanations: (backendApplication.backgroundQuestions as any)?.explanations || {},
+            explanations: {
+                smoke: backendApplication.backgroundQuestions?.smokeExplanation || '',
+                military: backendApplication.backgroundQuestions?.militaryExplanation || '',
+                crime: backendApplication.backgroundQuestions?.crimeExplanation || '',
+                bankruptcy: backendApplication.backgroundQuestions?.bankruptcyExplanation || '',
+                refuseRent: backendApplication.backgroundQuestions?.refusedRentExplanation || '',
+                evicted: backendApplication.backgroundQuestions?.evictedExplanation || '',
+            },
         },
-        attachments: 0,
-        documentsData: [],
+        attachments: (backendApplication as any).attachments?.length || 0,
+        documentsData: ((backendApplication as any).attachments || []).map((a: any) => ({
+            id: a.id,
+            name: a.fileName,
+            size: a.fileSize || 0,
+            type: a.fileType,
+            url: a.fileUrl,
+        })),
         termsAccepted: {
             date: formatDateStr(backendApplication.applicationDate || backendApplication.createdAt),
         },
@@ -758,6 +772,7 @@ const ApplicationDetail: React.FC = () => {
     const [isAddReferenceModalOpen, setIsAddReferenceModalOpen] = useState(false);
     const [isEditBackgroundInfoModalOpen, setIsEditBackgroundInfoModalOpen] = useState(false);
     const [isAddFileModalOpen, setIsAddFileModalOpen] = useState(false);
+    const [previewDoc, setPreviewDoc] = useState<{ name: string; url: string; type: string } | null>(null);
 
     const [editingOccupantIndex, setEditingOccupantIndex] = useState<number | null>(null);
     const [editingPetIndex, setEditingPetIndex] = useState<number | null>(null);
@@ -1246,12 +1261,17 @@ const ApplicationDetail: React.FC = () => {
                 updateData: {
                     backgroundQuestions: {
                         smoke: data.smoke,
+                        smokeExplanation: data.smoke ? (data.explanations?.smoke || undefined) : undefined,
                         militaryMember: data.military,
+                        militaryExplanation: data.military ? (data.explanations?.military || undefined) : undefined,
                         criminalRecord: data.crime,
+                        crimeExplanation: data.crime ? (data.explanations?.crime || undefined) : undefined,
                         bankruptcy: data.bankruptcy,
+                        bankruptcyExplanation: data.bankruptcy ? (data.explanations?.bankruptcy || undefined) : undefined,
                         refusedRent: data.refuseRent,
+                        refusedRentExplanation: data.refuseRent ? (data.explanations?.refuseRent || undefined) : undefined,
                         evicted: data.evicted,
-                        explanations: data.explanations
+                        evictedExplanation: data.evicted ? (data.explanations?.evicted || undefined) : undefined,
                     }
                 }
             },
@@ -1368,20 +1388,6 @@ const ApplicationDetail: React.FC = () => {
         );
     };
 
-    const handleSaveFile = async (data: { file: File | null; name: string; type: string }) => {
-        if (!data.file || !id) {
-            setIsAddFileModalOpen(false);
-            return;
-        }
-        try {
-            await applicationService.addAttachment(id, data.file);
-            setIsAddFileModalOpen(false);
-            refetch();
-        } catch (error: any) {
-            console.error('Failed to upload attachment:', error);
-            alert(error.message || 'Failed to upload file');
-        }
-    };
 
     return (
         <div className="flex flex-col gap-6 w-full min-h-screen bg-white p-4 lg:p-8">
@@ -1529,10 +1535,11 @@ const ApplicationDetail: React.FC = () => {
                         residencyType: (res.residenceType === 'RENTED' ? 'Rent' : res.residenceType === 'OWNED' ? 'Own' : 'Others') as any,
                         moveInDate: res.moveInDate ? new Date(res.moveInDate) : undefined,
                         moveOutDate: res.moveOutDate ? new Date(res.moveOutDate) : undefined,
-                        reason: '',
+                        reason: res.additionalInfo || '',
                         rentAmount: res.monthlyRent ? String(res.monthlyRent) : '',
                         landlordName: res.landlordName || '',
                         landlordPhone: res.landlordPhone || '',
+                        landlordPhoneCountryCode: 'US|1',
                         landlordEmail: res.landlordEmail || '',
                     };
                 })()}
@@ -1558,9 +1565,11 @@ const ApplicationDetail: React.FC = () => {
                         address: inc.officeAddress || '',
                         office: inc.office || '',
                         companyPhone: inc.companyPhone || '',
+                        companyPhoneCountryCode: 'US|1',
                         supervisorName: inc.supervisorName || '',
                         supervisorEmail: inc.supervisorEmail || '',
                         supervisorPhone: inc.supervisorPhone || '',
+                        supervisorPhoneCountryCode: 'US|1',
                         currency: 'USD'
                     };
                 })()}
@@ -1607,8 +1616,41 @@ const ApplicationDetail: React.FC = () => {
             <UserAddFileModal
                 isOpen={isAddFileModalOpen}
                 onClose={() => setIsAddFileModalOpen(false)}
-                onSave={handleSaveFile}
+                applicationId={id!}
+                onSuccess={() => { setIsAddFileModalOpen(false); refetch(); }}
             />
+
+            {previewDoc && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setPreviewDoc(null)}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+                            <div className="flex items-center gap-3">
+                                <FileText size={18} className="text-[#7ED957]" />
+                                <span className="text-sm font-semibold text-gray-900 truncate max-w-xs">{previewDoc.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <a href={previewDoc.url} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-100 rounded-lg transition-colors" title="Open in new tab">
+                                    <ExternalLink size={16} />
+                                </a>
+                                <button onClick={() => setPreviewDoc(null)} className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                                    <XIcon size={18} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-hidden p-2 min-h-0">
+                            {(() => {
+                                const t = (previewDoc.type || '').toLowerCase();
+                                const n = (previewDoc.name || '').toLowerCase();
+                                const isImage = t.startsWith('image/') || ['jpg','jpeg','png','gif','webp','svg'].some(ext => n.endsWith(`.${ext}`));
+                                const isPdf = t === 'application/pdf' || t === 'pdf' || n.endsWith('.pdf');
+                                if (isImage) return <img src={previewDoc.url} alt={previewDoc.name} className="w-full h-full object-contain rounded-lg" />;
+                                if (isPdf) return <iframe src={previewDoc.url} className="w-full h-full rounded-lg" style={{ minHeight: '60vh' }} title={previewDoc.name} />;
+                                return <div className="flex flex-col items-center justify-center h-40 text-gray-400 gap-2"><FileText size={40} /><p className="text-sm">Preview not available</p><a href={previewDoc.url} target="_blank" rel="noopener noreferrer" className="text-[#7ED957] text-sm underline">Open file</a></div>;
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            )}
 
 
             <Breadcrumbs applicationNumber={application.applicationNumber} />
@@ -1719,13 +1761,34 @@ const ApplicationDetail: React.FC = () => {
                                                     ))}
                                                 </div>
                                             ) : section.id === 'attachments' ? (
-                                                <div className="space-y-4">
+                                                <div className="space-y-2">
                                                     {application.documentsData.length > 0 ? (
                                                         application.documentsData.map((doc: any, idx: number) => (
-                                                            <div key={idx} className="bg-[#FAFAFA] rounded-lg border border-gray-200 p-5 flex items-center justify-between">
-                                                                <div className="flex items-center gap-4">
-                                                                    <div className="p-2 bg-white rounded-lg border border-gray-200"><FileText size={20} className="text-[#7ED957]" /></div>
-                                                                    <div><h4 className="text-sm font-semibold text-gray-900">{doc.name}</h4><p className="text-xs text-gray-500">{(doc.size / 1024).toFixed(1)} KB • {doc.type}</p></div>
+                                                            <div key={idx} className="bg-[#FAFAFA] rounded-lg border border-gray-200 px-4 py-3 flex items-center justify-between">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="p-2 bg-white rounded-lg border border-gray-200">
+                                                                        <FileText size={18} className="text-[#7ED957]" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <h4 className="text-sm font-semibold text-gray-900">{doc.name}</h4>
+                                                                        <p className="text-xs text-gray-500">{(doc.size / 1024).toFixed(1)} KB · {doc.type}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    {doc.url && (
+                                                                        <button
+                                                                            onClick={() => setPreviewDoc({ name: doc.name, url: doc.url, type: doc.type })}
+                                                                            className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-100 rounded-lg transition-colors"
+                                                                            title="Preview"
+                                                                        >
+                                                                            <Eye size={16} />
+                                                                        </button>
+                                                                    )}
+                                                                    {doc.url && (
+                                                                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-100 rounded-lg transition-colors" title="Open in new tab">
+                                                                            <ExternalLink size={16} />
+                                                                        </a>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         ))
@@ -1762,7 +1825,7 @@ const ApplicationDetail: React.FC = () => {
                     <div className="bg-white p-2 flex items-center gap-3">
                         <ExternalLink size={20} className="text-gray-500" />
                         <p className="text-gray-900 font-normal text-base">
-                            {application.applicantName} agreed to <span className="text-[#7ED957] font-medium cursor-pointer hover:underline">Terms & Conditions</span> on {application.termsAccepted.date}.
+                            {application.applicantName} agreed to <Link to="/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-[#7ED957] font-medium cursor-pointer hover:underline">Terms & Conditions</Link> on {application.termsAccepted.date}.
                         </p>
                     </div>
                 </div>

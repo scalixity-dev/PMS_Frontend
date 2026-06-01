@@ -27,7 +27,6 @@ interface SelectableItem {
 const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext }) => {
     const { formData, updateFormData } = useApplicationStore();
     const [isOpen, setIsOpen] = useState(false);
-    const [selectableItems, setSelectableItems] = useState<SelectableItem[]>([]);
 
     // Derived from store
     const selectedPropertyId = formData.propertyId;
@@ -68,10 +67,9 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
     const { data: selectedUnitData } = useGetUnit(selectedUnitId || null, !!selectedUnitId);
 
     // Build selectable items list
-    useEffect(() => {
+    const selectableItems = useMemo(() => {
         if (!allBackendProperties || allBackendProperties.length === 0) {
-            setSelectableItems([]);
-            return;
+            return [];
         }
 
         const items: SelectableItem[] = [];
@@ -123,8 +121,7 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
             }
         });
 
-        setSelectableItems(items);
-
+        return items;
     }, [allBackendProperties, multiProperties, unitQueries]);
 
     // Click outside handler

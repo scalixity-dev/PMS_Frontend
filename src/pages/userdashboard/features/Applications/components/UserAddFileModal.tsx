@@ -1,153 +1,223 @@
 import React, { useRef, useState } from 'react';
-import { Upload, X, FileText, Check } from 'lucide-react';
+import { Upload, FileText, Trash2, AlertCircle, Loader2, Check, ShieldCheck } from 'lucide-react';
 import BaseModal from '@/components/common/modals/BaseModal';
-
-export interface FileFormData {
-    file: File | null;
-    name: string;
-    type: string;
-}
+import { applicationService } from '@/services/application.service';
 
 interface UserAddFileModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: FileFormData) => void;
+    applicationId: string;
+    onSuccess: () => void;
 }
 
-const UserAddFileModal: React.FC<UserAddFileModalProps> = ({ isOpen, onClose, onSave }) => {
-    const [file, setFile] = useState<File | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [error, setError] = useState<string>('');
+const ALLOWED_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = e.target.files?.[0];
-        if (selectedFile) {
-            // Check file size (e.g. 5MB limit)
-            if (selectedFile.size > 5 * 1024 * 1024) {
-                setError('File size must be less than 5MB');
-                setFile(null);
+interface FileEntry {
+    file: File;
+    status: 'pending' | 'uploading' | 'done' | 'error';
+    errorMsg?: string;
+}
+
+const UserAddFileModal: React.FC<UserAddFileModalProps> = ({ isOpen, onClose, applicationId, onSuccess }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [files, setFiles] = useState<FileEntry[]>([]);
+    const [fileError, setFileError] = useState<string>('');
+    const [isUploading, setIsUploading] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
+
+    const handleClose = () => {
+        if (isUploading) return;
+        setFiles([]);
+        setFileError('');
+        onClose();
+    };
+
+    const addFiles = (incoming: FileList | null) => {
+        if (!incoming) return;
+        setFileError('');
+        const errors: string[] = [];
+        const valid: FileEntry[] = [];
+
+        Array.from(incoming).forEach(f => {
+            if (!ALLOWED_TYPES.includes(f.type)) {
+                errors.push(`${f.name}: Only PDF, DOC, DOCX, XLS, XLSX are allowed.`);
                 return;
             }
-            setFile(selectedFile);
-            setError('');
-        }
+            if (f.size > MAX_FILE_SIZE) {
+                errors.push(`${f.name}: Exceeds 10MB limit.`);
+                return;
+            }
+            valid.push({ file: f, status: 'pending' });
+        });
+
+        if (errors.length) setFileError(errors.join(' '));
+        if (valid.length) setFiles(prev => [...prev, ...valid]);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        addFiles(e.target.files);
+        if (e.target) e.target.value = '';
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
-        e.stopPropagation();
-        const droppedFile = e.dataTransfer.files?.[0];
-        if (droppedFile) {
-            if (droppedFile.size > 5 * 1024 * 1024) {
-                setError('File size must be less than 5MB');
-                setFile(null);
-                return;
+        setDragOver(false);
+        addFiles(e.dataTransfer.files);
+    };
+
+    const removeFile = (index: number) => {
+        setFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const updateStatus = (index: number, status: FileEntry['status'], errorMsg?: string) => {
+        setFiles(prev => prev.map((f, i) => i === index ? { ...f, status, errorMsg } : f));
+    };
+
+    const handleUpload = async () => {
+        const pending = files.filter(f => f.status === 'pending');
+        if (!pending.length) return;
+
+        setIsUploading(true);
+        setFileError('');
+
+        const uploadPromises = files.map(async (entry, index) => {
+            if (entry.status !== 'pending') return;
+            updateStatus(index, 'uploading');
+            try {
+                await applicationService.addAttachment(applicationId, entry.file);
+                updateStatus(index, 'done');
+            } catch (err: any) {
+                updateStatus(index, 'error', err.message || 'Upload failed');
             }
-            setFile(droppedFile);
-            setError('');
-        }
+        });
+
+        await Promise.all(uploadPromises);
+        setIsUploading(false);
+
+        // If all done (none errored), close and refresh
+        setFiles(prev => {
+            const hasErrors = prev.some(f => f.status === 'error');
+            if (!hasErrors) {
+                onSuccess();
+                onClose();
+            }
+            return prev;
+        });
     };
 
-    const handleSave = () => {
-        if (file) {
-            onSave({
-                file,
-                name: file.name,
-                type: file.type || 'Unknown'
-            });
-            onClose();
-            setFile(null);
-        } else {
-            setError('Please select a file to upload');
-        }
-    };
-
-    const formatFileSize = (bytes: number) => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
+    const pendingCount = files.filter(f => f.status === 'pending').length;
+    const allDone = files.length > 0 && files.every(f => f.status === 'done');
 
     return (
         <BaseModal
             isOpen={isOpen}
-            onClose={() => {
-                onClose();
-                setFile(null);
-                setError('');
-            }}
-            title="Add attachment"
+            onClose={handleClose}
+            title="Add attachments"
             maxWidth="max-w-lg"
             footerButtons={[
                 {
                     label: 'Cancel',
-                    onClick: () => {
-                        onClose();
-                        setFile(null);
-                        setError('');
-                    },
+                    onClick: handleClose,
                     variant: 'ghost',
+                    disabled: isUploading,
                 },
                 {
-                    label: 'Upload',
-                    onClick: handleSave,
-                    disabled: false,
+                    label: isUploading ? 'Uploading...' : `Upload${pendingCount > 0 ? ` (${pendingCount})` : ''}`,
+                    onClick: handleUpload,
+                    disabled: pendingCount === 0 || isUploading || allDone,
                     variant: 'primary',
-                    className: "bg-[#7ED957] hover:bg-[#6BC847] border-none text-white",
-                    icon: <Check size={16} strokeWidth={3} />
+                    className: 'bg-[#7ED957] hover:bg-[#6BC847] border-none text-white',
+                    icon: isUploading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} strokeWidth={3} />,
                 }
             ]}
         >
             <div className="py-4 space-y-4">
-                {!file ? (
-                    <div
-                        className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${error ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-[#7ED957] hover:bg-gray-50'
-                            }`}
-                        onClick={() => fileInputRef.current?.click()}
-                        onDragOver={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }}
-                        onDrop={handleDrop}
-                    >
-                        <input
-                            type="file"
-                            className="hidden"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                        />
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="p-3 bg-gray-100 rounded-full">
-                                <Upload size={24} className="text-gray-500" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-900">Click to upload or drag and drop</p>
-                                <p className="text-xs text-gray-500 mt-1">SVG, PNG, JPG or PDF (max. 5MB)</p>
-                            </div>
-                        </div>
-                        {error && <p className="text-red-500 text-xs mt-2 font-medium">{error}</p>}
+                {/* Drop zone */}
+                <div
+                    className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all group ${dragOver ? 'border-[#7ED957] bg-[#7ED957]/5' : 'border-[#E5E7EB] hover:border-[#7ED957] hover:bg-[#7ED957]/5 bg-gray-50/30'}`}
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                >
+                    <div className="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                        <Upload className="w-6 h-6 text-[#7ED957]" />
                     </div>
-                ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white rounded-lg border border-gray-200">
-                                <FileText size={20} className="text-[#7ED957]" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{file.name}</p>
-                                <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => setFile(null)}
-                            className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                        >
-                            <X size={18} />
-                        </button>
+                    <p className="font-bold text-[#1A1A1A] text-sm mb-1">Click to upload or drag and drop</p>
+                    <p className="text-xs text-[#ADADAD]">PDF, DOC, DOCX, XLS or XLSX — up to 10MB each</p>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        multiple
+                        accept=".pdf,.doc,.docx,.xls,.xlsx"
+                        onChange={handleFileChange}
+                    />
+                </div>
+
+                {/* Error */}
+                {fileError && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-3">
+                        <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                        <p className="text-xs text-red-600">{fileError}</p>
                     </div>
                 )}
+
+                {/* File list */}
+                {files.length > 0 && (
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-[#1A1A1A]">Selected files</p>
+                            <span className="bg-[#7ED957] text-white text-[10px] px-2 py-0.5 rounded-full font-bold">{files.length}</span>
+                        </div>
+                        {files.map((entry, idx) => (
+                            <div key={idx} className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-[#E5E7EB] shadow-sm">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-9 h-9 bg-[#F3F4F6] rounded-xl flex items-center justify-center shrink-0">
+                                        {entry.status === 'uploading' ? (
+                                            <Loader2 className="w-4 h-4 text-[#7ED957] animate-spin" />
+                                        ) : entry.status === 'done' ? (
+                                            <Check className="w-4 h-4 text-[#7ED957]" />
+                                        ) : entry.status === 'error' ? (
+                                            <AlertCircle className="w-4 h-4 text-red-500" />
+                                        ) : (
+                                            <FileText className="w-4 h-4 text-[#7ED957]" />
+                                        )}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-[#1A1A1A] truncate max-w-[220px]">{entry.file.name}</p>
+                                        <p className={`text-[11px] ${entry.status === 'error' ? 'text-red-500' : 'text-[#ADADAD]'}`}>
+                                            {entry.status === 'uploading' ? 'Uploading...' :
+                                             entry.status === 'done' ? 'Uploaded' :
+                                             entry.status === 'error' ? (entry.errorMsg || 'Failed') :
+                                             `${(entry.file.size / 1024 / 1024).toFixed(2)} MB`}
+                                        </p>
+                                    </div>
+                                </div>
+                                {entry.status !== 'uploading' && entry.status !== 'done' && (
+                                    <button
+                                        onClick={() => removeFile(idx)}
+                                        className="p-1.5 text-gray-300 hover:text-red-500 transition-colors shrink-0"
+                                    >
+                                        <Trash2 size={15} />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <div className="flex items-center justify-center gap-2 text-[#ADADAD] text-xs pt-1">
+                    <ShieldCheck size={13} className="text-[#7ED957]" />
+                    <span>Your data is encrypted and securely stored</span>
+                </div>
             </div>
         </BaseModal>
     );
