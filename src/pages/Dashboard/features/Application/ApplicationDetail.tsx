@@ -2187,7 +2187,7 @@ const ApplicationDetail = () => {
                     {/* Footer */}
                     < div className="bg-[#F6F6F8] rounded-[1.5rem] p-6 mt-8 mb-8 border border-white/50 text-center" >
                         <p className="text-xs font-bold text-gray-800">
-                            <span className="font-extrabold">{applicantName}</span> agreed to Terms & Conditions on {new Date(application.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}.
+                            <span className="font-extrabold">{applicantName}</span> agreed to <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-[#7ED957] hover:underline cursor-pointer">Terms & Conditions</a> on {new Date(application.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}.
                         </p>
                     </div >
                 </div >

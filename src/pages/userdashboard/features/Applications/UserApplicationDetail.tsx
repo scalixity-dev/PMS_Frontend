@@ -1825,7 +1825,7 @@ const ApplicationDetail: React.FC = () => {
                     <div className="bg-white p-2 flex items-center gap-3">
                         <ExternalLink size={20} className="text-gray-500" />
                         <p className="text-gray-900 font-normal text-base">
-                            {application.applicantName} agreed to <span className="text-[#7ED957] font-medium cursor-pointer hover:underline">Terms & Conditions</span> on {application.termsAccepted.date}.
+                            {application.applicantName} agreed to <Link to="/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-[#7ED957] font-medium cursor-pointer hover:underline">Terms & Conditions</Link> on {application.termsAccepted.date}.
                         </p>
                     </div>
                 </div>
