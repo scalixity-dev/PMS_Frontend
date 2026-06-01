@@ -6,6 +6,7 @@ import { propertyService } from '../../../../../services/property.service';
 import { listingService } from '../../../../../services/listing.service';
 import { unitService } from '../../../../../services/unit.service';
 import { useGetAllProperties, useGetProperty, LISTING_FLOW_PROPERTY_CACHE } from '../../../../../hooks/usePropertyQueries';
+import { listingQueryKeys } from '../../../../../hooks/useListingQueries';
 import { useGetUnit } from '../../../../../hooks/useUnitQueries';
 import { useListUnitStore } from '../store/listUnitStore';
 import type { Property, BackendProperty } from '../../../../../services/property.service';
@@ -56,38 +57,15 @@ const getNextIncompleteStep = (property: BackendProperty): number | null => {
   return null;
 };
 
-// Check if property has an active listing (lazy load if not in property data)
-const checkHasActiveListing = async (property: BackendProperty, listingsCache: Map<string, any[]>): Promise<boolean> => {
-  // If listings are already in property data, use them
-  if (property.listings && property.listings.length > 0) {
-    const hasActive = property.listings.some(
-      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true && !listing.unitId
-    );
-    return hasActive;
-  }
-
-  // Otherwise, check cache first
-  const cachedListings = listingsCache.get(property.id);
-  if (cachedListings !== undefined) {
-    return cachedListings.some(
-      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true && !listing.unitId
-    );
-  }
-
-  // Lazy load listings for this property
-  try {
-    const listings = await listingService.getByPropertyId(property.id);
-    listingsCache.set(property.id, listings);
-
-    return listings.some(
-      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true && !listing.unitId
-    );
-  } catch (err) {
-    // If error fetching listings, assume no active listing
-    console.error('Error checking active listing:', err);
-    listingsCache.set(property.id, []); // Cache empty result
-    return false;
-  }
+// Check if a property has an active property-level listing. Reads from the
+// already-fetched listings map (React Query) — no network call here.
+const checkHasActiveListing = (property: BackendProperty, listingsByPropertyId: Map<string, any[]>): boolean => {
+  const listings = (property.listings && property.listings.length > 0)
+    ? property.listings
+    : (listingsByPropertyId.get(property.id) || []);
+  return listings.some(
+    (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true && !listing.unitId
+  );
 };
 
 
@@ -272,6 +250,57 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   const selectedUnitId = formData.unit || null;
   const { data: selectedUnitData } = useGetUnit(selectedUnitId, !!selectedUnitId);
 
+  // We only need listings for INCOMPLETE properties (complete ones are filtered
+  // out regardless of listing status), so only fetch those.
+  const incompleteBackendProps = useMemo(
+    () => allBackendProperties.filter((p) => !isPropertyListingComplete(p)),
+    [allBackendProperties]
+  );
+
+  // Fetch each incomplete property's listings via React Query — cached (2 min),
+  // deduped, and shared. This replaces the raw per-render fetches that caused
+  // the same /listing/property/{id} to be requested over and over.
+  const listingQueries = useQueries({
+    queries: incompleteBackendProps.map((property) => ({
+      queryKey: listingQueryKeys.byProperty(property.id),
+      queryFn: () => listingService.getByPropertyId(property.id),
+      enabled: !!property.id,
+      staleTime: 2 * 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+      retry: 1,
+    })),
+  });
+
+  // Map propertyId -> its listings (from the cached queries above).
+  const listingsByPropertyId = useMemo(() => {
+    const map = new Map<string, any[]>();
+    incompleteBackendProps.forEach((property, index) => {
+      const data = listingQueries[index]?.data;
+      if (Array.isArray(data)) map.set(property.id, data);
+    });
+    return map;
+  }, [incompleteBackendProps, listingQueries]);
+
+  // Map propertyId -> its units (from the cached unit queries above).
+  const unitsByPropertyId = useMemo(() => {
+    const map = new Map<string, BackendUnit[]>();
+    multiProperties.forEach((property, index) => {
+      const unitsData = unitQueries[index]?.data;
+      if (Array.isArray(unitsData)) map.set(property.id, unitsData);
+    });
+    return map;
+  }, [multiProperties, unitQueries]);
+
+  // A primitive signature of all the data the filter depends on. The filter
+  // effect keys off this instead of the raw query arrays (which get a new
+  // reference every render), so it only recomputes when data actually changes.
+  const dataSignature = useMemo(() => {
+    const props = allBackendProperties.map((p) => p.id).sort().join(',');
+    const units = Array.from(unitsByPropertyId.entries()).map(([k, v]) => `${k}:${v.length}`).sort().join('|');
+    const listings = Array.from(listingsByPropertyId.entries()).map(([k, v]) => `${k}:${v.length}`).sort().join('|');
+    return `${props}#${units}#${listings}`;
+  }, [allBackendProperties, unitsByPropertyId, listingsByPropertyId]);
+
 
   // Helper: shallow compare arrays of objects by id (order-insensitive)
   const areSameById = (a: { id: string }[] = [], b: { id: string }[] = []) => {
@@ -288,171 +317,111 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   // Removed explicit refetch - React Query automatically fetches on mount
   // Cache invalidation is handled at logout/login in DashboardNavbar
 
-  // Cache for listings to avoid redundant API calls
-  const listingsCacheRef = useRef<Map<string, any[]>>(new Map());
-
-  // Filter properties and units based on completeness and active listing status
+  // Filter properties and units based on completeness and active listing status.
+  // Fully synchronous — all data comes from the cached queries above, so this
+  // makes NO network calls. Keyed on `dataSignature` so it only recomputes when
+  // the underlying property/unit/listing data actually changes.
   useEffect(() => {
-    let mounted = true;
-
-    (async () => {
-      if (!allBackendProperties || allBackendProperties.length === 0) {
-        // Only update if it's different - use ref to avoid stale closure
-        if (!areSameById(incompletePropertiesRef.current, [])) {
-          if (!mounted) return;
-          setIncompleteProperties([]);
-          setSelectableItems([]);
-        }
-        return;
+    if (!allBackendProperties || allBackendProperties.length === 0) {
+      if (!areSameById(incompletePropertiesRef.current, [])) {
+        setIncompleteProperties([]);
+        setSelectableItems([]);
       }
+      return;
+    }
 
-      try {
-        // Create a map of propertyId -> units data from unit queries
-        const unitsByPropertyId = new Map<string, BackendUnit[]>();
-        multiProperties.forEach((property, index) => {
-          const unitsData = unitQueries[index]?.data;
-          if (unitsData && Array.isArray(unitsData)) {
-            unitsByPropertyId.set(property.id, unitsData);
-          }
-        });
+    try {
+      // Check completeness and active listings for ALL properties.
+      const propertyChecks = allBackendProperties.map((backendProperty) => ({
+        property: propertyService.transformProperty(backendProperty),
+        backendProperty,
+        isComplete: isPropertyListingComplete(backendProperty),
+        hasActiveListing: checkHasActiveListing(backendProperty, listingsByPropertyId),
+      }));
 
-        // Check completeness and active listings for ALL properties
-        const propertyChecks = await Promise.all(
-          allBackendProperties.map(async (backendProperty) => {
-            const transformedProperty = propertyService.transformProperty(backendProperty);
-            const isComplete = isPropertyListingComplete(backendProperty);
+      // Incomplete SINGLE properties without an active listing (MULTI shown as units).
+      const newIncomplete = propertyChecks
+        .filter((result) =>
+          result.backendProperty.propertyType !== 'MULTI' &&
+          !result.isComplete &&
+          !result.hasActiveListing
+        )
+        .map((result) => result.property);
 
-            // Check for active property-level listings (not unit-level)
-            const hasActive = await checkHasActiveListing(backendProperty, listingsCacheRef.current);
+      // Build selectable items list.
+      const items: SelectableItem[] = [];
 
-            return {
-              property: transformedProperty,
-              backendProperty,
-              isComplete,
-              hasActiveListing: hasActive
-            };
-          })
-        );
-
-        // Filter incomplete properties (for SINGLE properties or MULTI properties without units)
-        const newIncomplete = propertyChecks
-          .filter(result => {
-            // For MULTI properties, we'll show units separately, so exclude them from property list
-            if (result.backendProperty.propertyType === 'MULTI') {
-              return false;
-            }
-            return !result.isComplete && !result.hasActiveListing;
-          })
-          .map(result => result.property);
-
-        // Build selectable items list
-        const items: SelectableItem[] = [];
-
-        // Add SINGLE properties that are incomplete and don't have active listings
-        propertyChecks.forEach((result) => {
-          if (result.backendProperty.propertyType === 'SINGLE' && !result.isComplete && !result.hasActiveListing) {
-            const address = result.backendProperty.address
-              ? `${result.backendProperty.address.streetAddress}, ${result.backendProperty.address.city}, ${result.backendProperty.address.stateRegion} ${result.backendProperty.address.zipCode}, ${result.backendProperty.address.country}`
-              : 'Address not available';
-
-            items.push({
-              id: result.backendProperty.id,
-              name: result.backendProperty.propertyName,
-              address,
-              type: 'property',
-              propertyId: result.backendProperty.id,
-              propertyType: 'SINGLE',
-              image: result.backendProperty.coverPhotoUrl || result.backendProperty.photos?.[0]?.photoUrl || '',
-            });
-          }
-        });
-
-        // Add units from MULTI properties that don't have active listings
-        // For MULTI properties, we need to check each unit individually
-        // First, fetch and cache listings for all MULTI properties
-        const propertyListingsCache = new Map<string, any[]>();
-        const multiPropertyResults = propertyChecks.filter(
-          result => result.backendProperty.propertyType === 'MULTI' && !result.isComplete
-        );
-
-        // Fetch listings for all MULTI properties in parallel
-        await Promise.all(
-          multiPropertyResults.map(async (result) => {
-            try {
-              const listings = await listingService.getByPropertyId(result.backendProperty.id);
-              propertyListingsCache.set(result.backendProperty.id, listings);
-            } catch (err) {
-              console.error(`Error fetching listings for property ${result.backendProperty.id}:`, err);
-              // Cache empty array on error - treat as no active listings (include units as fallback)
-              propertyListingsCache.set(result.backendProperty.id, []);
-            }
-          })
-        );
-
-        // Now iterate units and check against cached listings
-        for (const result of multiPropertyResults) {
-          const units = unitsByPropertyId.get(result.backendProperty.id) || [];
-          const propertyAddress = result.backendProperty.address
+      // Add SINGLE properties that are incomplete and don't have active listings.
+      propertyChecks.forEach((result) => {
+        if (result.backendProperty.propertyType === 'SINGLE' && !result.isComplete && !result.hasActiveListing) {
+          const address = result.backendProperty.address
             ? `${result.backendProperty.address.streetAddress}, ${result.backendProperty.address.city}, ${result.backendProperty.address.stateRegion} ${result.backendProperty.address.zipCode}, ${result.backendProperty.address.country}`
             : 'Address not available';
 
-          // Get cached listings for this property
-          const propertyListings = propertyListingsCache.get(result.backendProperty.id) || [];
-
-          // Check each unit for active listings using cached data
-          for (const unit of units) {
-            // Check if unit has active listing from cached listings
-            const hasActiveUnitListing = propertyListings.some(
-              (listing: any) => listing.unitId === unit.id && listing.listingStatus === 'ACTIVE' && listing.isActive === true
-            );
-
-            if (!hasActiveUnitListing) {
-              const unitImage = unit.photos?.find((p: any) => p.isPrimary)?.photoUrl
-                || unit.photos?.[0]?.photoUrl
-                || unit.coverPhotoUrl
-                || result.backendProperty.coverPhotoUrl
-                || '';
-
-              items.push({
-                id: unit.id,
-                name: `${result.backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
-                address: propertyAddress,
-                type: 'unit',
-                propertyId: result.backendProperty.id,
-                unitId: unit.id,
-                propertyType: 'MULTI',
-                image: unitImage,
-              });
-            }
-          }
-        }
-
-        // Only update state if the list actually changed - use ref to avoid stale closure
-        if (!areSameById(incompletePropertiesRef.current, newIncomplete)) {
-          if (!mounted) return;
-          setIncompleteProperties(newIncomplete);
-        }
-
-        // Update selectable items
-        if (mounted) {
-          setSelectableItems(prev => {
-            // Simple JSON comparison to avoid infinite loop if data hasn't changed
-            // This works because SelectableItem is a simple object
-            if (JSON.stringify(prev) === JSON.stringify(items)) {
-              return prev;
-            }
-            return items;
+          items.push({
+            id: result.backendProperty.id,
+            name: result.backendProperty.propertyName,
+            address,
+            type: 'property',
+            propertyId: result.backendProperty.id,
+            propertyType: 'SINGLE',
+            image: result.backendProperty.coverPhotoUrl || result.backendProperty.photos?.[0]?.photoUrl || '',
           });
         }
-      } catch (err) {
-        // optionally handle/log error
-        console.error('filterIncompleteProperties failed', err);
-      }
-    })();
+      });
 
-    return () => { mounted = false; };
+      // Add units from incomplete MULTI properties that don't have an active listing,
+      // using the cached listings map (no fetch).
+      const multiPropertyResults = propertyChecks.filter(
+        (result) => result.backendProperty.propertyType === 'MULTI' && !result.isComplete
+      );
+
+      for (const result of multiPropertyResults) {
+        const units = unitsByPropertyId.get(result.backendProperty.id) || [];
+        const propertyAddress = result.backendProperty.address
+          ? `${result.backendProperty.address.streetAddress}, ${result.backendProperty.address.city}, ${result.backendProperty.address.stateRegion} ${result.backendProperty.address.zipCode}, ${result.backendProperty.address.country}`
+          : 'Address not available';
+
+        const propertyListings = listingsByPropertyId.get(result.backendProperty.id) || [];
+
+        for (const unit of units) {
+          const hasActiveUnitListing = propertyListings.some(
+            (listing: any) => listing.unitId === unit.id && listing.listingStatus === 'ACTIVE' && listing.isActive === true
+          );
+
+          if (!hasActiveUnitListing) {
+            const unitImage = unit.photos?.find((p: any) => p.isPrimary)?.photoUrl
+              || unit.photos?.[0]?.photoUrl
+              || unit.coverPhotoUrl
+              || result.backendProperty.coverPhotoUrl
+              || '';
+
+            items.push({
+              id: unit.id,
+              name: `${result.backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
+              address: propertyAddress,
+              type: 'unit',
+              propertyId: result.backendProperty.id,
+              unitId: unit.id,
+              propertyType: 'MULTI',
+              image: unitImage,
+            });
+          }
+        }
+      }
+
+      if (!areSameById(incompletePropertiesRef.current, newIncomplete)) {
+        setIncompleteProperties(newIncomplete);
+      }
+
+      setSelectableItems((prev) =>
+        JSON.stringify(prev) === JSON.stringify(items) ? prev : items
+      );
+    } catch (err) {
+      console.error('filterIncompleteProperties failed', err);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allBackendProperties, multiProperties, unitQueries]); // keep dependency on allBackendProperties, multiProperties, and unitQueries
+  }, [dataSignature]);
 
   // Clear selected property/unit if it's no longer in selectable list
   useEffect(() => {

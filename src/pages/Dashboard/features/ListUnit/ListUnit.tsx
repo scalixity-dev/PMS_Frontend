@@ -17,6 +17,7 @@ import PetDetails from './steps/PetDetails';
 import { leasingService } from '../../../../services/leasing.service';
 import { listingService } from '../../../../services/listing.service';
 import { useGetProperty, propertyQueryKeys, LISTING_FLOW_PROPERTY_CACHE } from '../../../../hooks/usePropertyQueries';
+import { listingQueryKeys } from '../../../../hooks/useListingQueries';
 import { useGetUnit } from '../../../../hooks/useUnitQueries';
 import { propertyService } from '../../../../services/property.service';
 import { useListUnitStore } from './store/listUnitStore';
@@ -448,6 +449,11 @@ const ListUnit: React.FC = () => {
         unitId: formData.unit || undefined, // Include unitId if a unit is selected
         // The backend will automatically populate listing data from property/unit and leasing
       });
+
+      // Refresh cached property + listing data so the listing page doesn't show
+      // stale "needs listing" entries when the user returns.
+      queryClient.invalidateQueries({ queryKey: propertyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: listingQueryKeys.all });
 
       // Show success modal
       setShowSuccessModal(true);
