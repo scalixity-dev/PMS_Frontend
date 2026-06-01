@@ -32,8 +32,11 @@ export const useGetProperty = (
     queryKey: propertyId ? [...propertyQueryKeys.detail(propertyId), includeFullUnitDetails] : ['properties', 'detail', 'null'] as const,
     queryFn: () => propertyService.getOne(propertyId!, includeFullUnitDetails),
     enabled: enabled && !!propertyId,
-    staleTime: options?.staleTime ?? 0, // Default: always stale (fresh fetch)
-    gcTime: options?.gcTime ?? 0, // Default: don't cache (prevent cross-user data leakage)
+    // Cache by default (2 min) so the same property isn't refetched on every
+    // mount/sibling. Writes invalidate the detail query, and login/logout clears
+    // the cache, so there's no stale/cross-user risk. Override via `options`.
+    staleTime: options?.staleTime ?? 2 * 60 * 1000,
+    gcTime: options?.gcTime ?? 5 * 60 * 1000,
     retry: 1,
   });
 };
@@ -122,8 +125,8 @@ export const useGetAllPropertiesTransformed = (enabled: boolean = true) => {
     queryKey: [...propertyQueryKeys.lists(), 'transformed'] as const,
     queryFn: () => propertyService.getAllTransformed(),
     enabled,
-    staleTime: 0, // Always consider data stale to ensure fresh fetch on mount
-    gcTime: 0, // Don't keep in cache to prevent cross-user data leakage
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes (invalidated on writes)
+    gcTime: 5 * 60 * 1000,
     retry: 1,
   });
 };

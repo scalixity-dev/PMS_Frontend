@@ -376,6 +376,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       if (propertyId) {
         // Edit: never change ownership (managerId) or property type via this
         // wizard — send everything else.
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { managerId: _omitManager, propertyType: _omitType, ...updateData } = payload;
         const updated = await updatePropertyMutation.mutateAsync({ propertyId, updateData });
         onSubmit(updated);

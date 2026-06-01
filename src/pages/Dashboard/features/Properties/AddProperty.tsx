@@ -8,6 +8,8 @@ import CustomDropdown from '../../components/CustomDropdown';
 import UnsavedChangesModal from '../../components/UnsavedChangesModal';
 import AIPropertyChat from './components/AIPropertyChat';
 import { propertyService } from '../../../../services/property.service';
+import { useQueryClient } from '@tanstack/react-query';
+import { propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
 
@@ -23,6 +25,7 @@ interface Unit {
 
 const AddProperty: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -789,6 +792,9 @@ const AddProperty: React.FC = () => {
         );
       }
       // Note: If no attachments are provided, no PropertyAttachment records are created (as expected)
+
+      // Refresh the properties cache so the new property shows immediately.
+      queryClient.invalidateQueries({ queryKey: propertyQueryKeys.all });
 
       // Step 6: Navigate to properties list
       navigate('/dashboard/properties');

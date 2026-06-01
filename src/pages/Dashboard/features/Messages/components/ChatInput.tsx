@@ -1,5 +1,8 @@
-import React, { useState, useRef, memo, useCallback, useEffect } from 'react';
-import EmojiPicker, { Theme, type EmojiClickData } from 'emoji-picker-react';
+import React, { useState, useRef, memo, useCallback, useEffect, lazy, Suspense } from 'react';
+import type { Theme, EmojiClickData } from 'emoji-picker-react';
+
+// Lazy-load the emoji picker (~150KB) — only fetched when the user opens it.
+const EmojiPicker = lazy(() => import('emoji-picker-react'));
 import { Smile, Paperclip, Send, Mic, Trash2, Loader2 } from 'lucide-react';
 
 interface ChatInputProps {
@@ -132,15 +135,17 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping, isUpload
                     ref={emojiPickerRef}
                     className="absolute bottom-24 right-8 z-50 shadow-2xl rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300"
                 >
-                    <EmojiPicker
-                        onEmojiClick={handleEmojiClick}
-                        autoFocusSearch={false}
-                        theme={Theme.LIGHT}
-                        width={320}
-                        height={400}
-                        lazyLoadEmojis={true}
-                        searchPlaceHolder="Search emoji..."
-                    />
+                    <Suspense fallback={<div style={{ width: 320, height: 400 }} />}>
+                        <EmojiPicker
+                            onEmojiClick={handleEmojiClick}
+                            autoFocusSearch={false}
+                            theme={'light' as Theme}
+                            width={320}
+                            height={400}
+                            lazyLoadEmojis={true}
+                            searchPlaceHolder="Search emoji..."
+                        />
+                    </Suspense>
                 </div>
             )}
 

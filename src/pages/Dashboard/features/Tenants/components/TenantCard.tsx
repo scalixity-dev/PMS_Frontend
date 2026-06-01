@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MoreHorizontal, MessageCircle, Phone, Mail, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
 import { tenantService } from '../../../../../services/tenant.service';
+import { tenantQueryKeys } from '../../../../../hooks/useTenantQueries';
 
 interface TenantCardProps {
     id: string | number;
@@ -27,6 +29,7 @@ const TenantCard: React.FC<TenantCardProps> = ({
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const queryClient = useQueryClient();
 
     // Initial generation logic if image is missing
     const getInitials = (name: string) => {
@@ -61,6 +64,8 @@ const TenantCard: React.FC<TenantCardProps> = ({
     const handleDelete = async () => {
         try {
             await tenantService.delete(String(id));
+            // Refresh tenant caches so the deleted tenant disappears immediately.
+            queryClient.invalidateQueries({ queryKey: tenantQueryKeys.all });
             setIsDeleteModalOpen(false);
             if (onDeleteSuccess) {
                 onDeleteSuccess();

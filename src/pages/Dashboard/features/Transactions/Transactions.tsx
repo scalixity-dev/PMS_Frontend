@@ -11,7 +11,6 @@ import ApplyCreditsModal from './components/ApplyCreditsModal';
 import AddDiscountModal from './components/AddDiscountModal';
 import MarkAsPaidModal from './components/MarkAsPaidModal';
 import VoidTransactionModal from './components/VoidTransactionModal';
-import { utils, writeFile } from 'xlsx';
 import { useGetTransactions, useMarkAsPaid, useDeleteTransaction, useUpdateTransaction } from '../../../../hooks/useTransactionQueries';
 import type { Transaction } from '../../../../services/transaction.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
@@ -274,7 +273,9 @@ const Transactions: React.FC = () => {
         }
     };
 
-    const handleExport = () => {
+    const handleExport = async () => {
+        // Load xlsx on demand so it isn't in the page bundle until export is used.
+        const { utils, writeFile } = await import('xlsx');
         // Create a cleaner version of the data for export
         const exportData = filteredTransactions.map(item => ({
             Status: item.status,

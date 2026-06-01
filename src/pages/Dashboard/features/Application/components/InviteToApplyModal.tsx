@@ -28,8 +28,10 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
     const [isPropertyDropdownOpen, setIsPropertyDropdownOpen] = useState(false);
     const [isSending, setIsSending] = useState(false);
 
-    // Fetch properties
-    const { data: properties = [], isLoading } = useGetAllProperties(true, false);
+    // Fetch properties only while the modal is open. This modal is always
+    // mounted (in the sidebar, rendered for both desktop + mobile), so an
+    // ungated query would fetch the full property list on every page.
+    const { data: properties = [], isLoading } = useGetAllProperties(isOpen, false);
 
     // Filter out properties that can be selected (e.g., must have units or be single family)
     // For now, listing all active properties
