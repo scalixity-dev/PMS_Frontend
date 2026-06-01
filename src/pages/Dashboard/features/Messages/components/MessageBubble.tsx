@@ -7,24 +7,39 @@ interface MessageBubbleProps {
     message: Message;
     activeChatName: string;
     isPending?: boolean;
+    isFailed?: boolean;
     isRead?: boolean;
 }
+
+// Only allow URLs we control the protocol of. Blocks javascript:, data: (for
+// links), vbscript:, etc. so a crafted message can't inject an XSS payload.
+const isSafeHttpUrl = (url: string): boolean => /^https?:\/\//i.test(url.trim());
+const isSafeImageUrl = (url: string): boolean =>
+    isSafeHttpUrl(url) || /^data:image\/(png|jpe?g|gif|webp|avif);base64,/i.test(url.trim());
 
 const renderMessageContent = (text: string) => {
     const parts = text.split(/(!?\[.*?\]\(.*?\))/g);
     return parts.map((part, i) => {
         const imgMatch = part.match(/^!\[(.*?)\]\((.*?)\)$/);
         if (imgMatch) {
+            const src = imgMatch[2];
+            if (!isSafeImageUrl(src)) {
+                return <span key={i} className="break-words">{part}</span>;
+            }
             return (
                 <div key={i} className="my-2">
-                    <img src={imgMatch[2]} alt={imgMatch[1]} className="max-w-full rounded-lg max-h-64 object-contain cursor-pointer hover:opacity-90 transition-opacity" onClick={() => window.open(imgMatch[2], '_blank')} />
+                    <img src={src} alt={imgMatch[1]} className="max-w-full rounded-lg max-h-64 object-contain cursor-pointer hover:opacity-90 transition-opacity" onClick={() => window.open(src, '_blank', 'noopener,noreferrer')} />
                 </div>
             );
         }
         const linkMatch = part.match(/^\[(.*?)\]\((.*?)\)$/);
         if (linkMatch) {
+            const href = linkMatch[2];
+            if (!isSafeHttpUrl(href)) {
+                return <span key={i} className="break-words">{part}</span>;
+            }
             return (
-                <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="text-current hover:opacity-80 underline inline-flex items-center gap-1 font-medium break-all">
+                <a key={i} href={href} target="_blank" rel="noopener noreferrer" className="text-current hover:opacity-80 underline inline-flex items-center gap-1 font-medium break-all">
                     📎 {linkMatch[1]}
                 </a>
             );
@@ -33,7 +48,7 @@ const renderMessageContent = (text: string) => {
     });
 };
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, activeChatName, isPending, isRead }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, activeChatName, isPending, isFailed, isRead }) => {
     const isMe = message.senderId === CURRENT_USER_ID;
 
     return (
@@ -57,7 +72,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, activeChatName, 
             {isMe && (
                 <>
                     <div className="flex items-center gap-2">
-                        {isPending ? (
+                        {isFailed ? (
+                            <span className="text-[10px] text-red-500 font-medium" title="Message failed to send">⚠ Not delivered</span>
+                        ) : isPending ? (
                             <span className="text-[10px] text-amber-600 font-medium">Sending...</span>
                         ) : isRead ? (
                             <div className="flex" title="Read">

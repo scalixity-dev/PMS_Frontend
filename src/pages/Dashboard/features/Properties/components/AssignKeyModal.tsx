@@ -51,13 +51,13 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
     const updateKeyMutation = useUpdateKey();
     const createKeyMutation = useCreateKey();
 
-    // Show every key the manager owns EXCEPT the ones already linked to this property.
-    // Keys linked to OTHER properties are still shown so the manager can re-link them
-    // — they get an "Assigned to: X" badge plus a confirmation step before reassigning.
+    // Only show UNASSIGNED keys — keys not yet linked to any property. Keys
+    // already assigned (to this or any other property) are hidden so the list
+    // is clean and there's no accidental reassignment.
     const candidateKeys = useMemo(() => {
         const list: any[] = Array.isArray(allKeys) ? allKeys : [];
-        return list.filter((k: any) => !propertyId || k.propertyId !== propertyId);
-    }, [allKeys, propertyId]);
+        return list.filter((k: any) => !k.propertyId && !k.property);
+    }, [allKeys]);
 
     const filteredKeys = useMemo(() => {
         if (!search.trim()) return candidateKeys;

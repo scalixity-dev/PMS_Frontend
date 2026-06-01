@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Undo2, Check } from 'lucide-react';
 import MultiSelectDropdown from '../../../../../components/MultiSelectDropdown';
-import { useGetProperty } from '../../../../../hooks/usePropertyQueries';
+import { useGetProperty, LISTING_FLOW_PROPERTY_CACHE } from '../../../../../hooks/usePropertyQueries';
 import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 import { useListUnitStore } from '../store/listUnitStore';
 
@@ -24,7 +24,7 @@ const PetDetails: React.FC<PetDetailsProps> = ({ propertyId }) => {
     };
 
     // Use React Query to fetch property data
-    const { data: property } = useGetProperty(propertyId || null, !!propertyId);
+    const { data: property } = useGetProperty(propertyId || null, !!propertyId, false, LISTING_FLOW_PROPERTY_CACHE);
 
     // Get currency symbol based on property's country
     const currencySymbol = useMemo(() => {

@@ -25,7 +25,7 @@ function saveQueue(queue: QueuedMessage[]): void {
   } catch {}
 }
 
-type SendFn = (content: string, convId?: string) => boolean;
+type SendFn = (content: string, convId?: string, clientId?: string) => boolean;
 
 export function useOfflineQueue(isConnected: boolean, sendMessage: SendFn) {
   const [queue, setQueue] = useState<QueuedMessage[]>(() => loadQueue());
@@ -43,8 +43,10 @@ export function useOfflineQueue(isConnected: boolean, sendMessage: SendFn) {
     if (toSend.length === 0) return;
 
     setQueue([]);
-    toSend.forEach(({ conversationId, content }) => {
-      sendRef.current(content, conversationId);
+    toSend.forEach(({ conversationId, content, id }) => {
+      // Reuse the stored id as the clientId so the server echo still reconciles
+      // with the optimistic message after a reconnect-driven flush.
+      sendRef.current(content, conversationId, id);
     });
   }, []);
 
@@ -54,16 +56,16 @@ export function useOfflineQueue(isConnected: boolean, sendMessage: SendFn) {
     }
   }, [isConnected, flush]);
 
-  const enqueue = useCallback((conversationId: string, content: string) => {
-    const id = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const enqueue = useCallback((conversationId: string, content: string, id: string) => {
     setQueue((prev) => [...prev, { conversationId, content, id }]);
   }, []);
 
   const trySend = useCallback(
-    (conversationId: string, content: string): boolean => {
-      const sent = sendRef.current(content, conversationId);
+    (conversationId: string, content: string, clientId?: string): boolean => {
+      const id = clientId ?? `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const sent = sendRef.current(content, conversationId, id);
       if (!sent) {
-        enqueue(conversationId, content);
+        enqueue(conversationId, content, id);
         return false;
       }
       return true;

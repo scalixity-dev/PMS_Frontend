@@ -68,6 +68,8 @@ const EditProperty: React.FC = () => {
   const [customFeatureInput, setCustomFeatureInput] = useState('');
   const [customAmenityInput, setCustomAmenityInput] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  // Errors stay hidden until the first submit attempt, then re-evaluate live.
+  const [submitted, setSubmitted] = useState(false);
   const [existingCoverPhotoUrl, setExistingCoverPhotoUrl] = useState<string | null>(null);
   const [existingGalleryPhotoUrls, setExistingGalleryPhotoUrls] = useState<string[]>([]);
   const [existingAttachments, setExistingAttachments] = useState<Array<{ id: string; fileUrl: string; fileName?: string | null; fileType?: string | null }>>([]);
@@ -720,6 +722,7 @@ const EditProperty: React.FC = () => {
     setLoading(true);
     setError(null);
     setValidationErrors({});
+    setSubmitted(true);
 
     // Validate form before submission
     if (!validateForm()) {
@@ -1043,9 +1046,9 @@ const EditProperty: React.FC = () => {
                   onChange={(e) => {
                     updateFormData('propertyName', e.target.value);
                   }}
-                  className={`bg-white border-gray-200 ${!formData.propertyName.trim() ? 'border-red-500' : ''}`}
+                  className={`bg-white border-gray-200 ${submitted && !formData.propertyName.trim() ? 'border-red-500' : ''}`}
                 />
-                {!formData.propertyName.trim() && (
+                {submitted && !formData.propertyName.trim() && (
                   <p className="text-red-500 text-xs mt-1 ml-1">Property name is required</p>
                 )}
               </div>
@@ -1060,9 +1063,9 @@ const EditProperty: React.FC = () => {
                     onChange={(e) => {
                       updateFormData('yearBuilt', e.target.value);
                     }}
-                    className={`bg-white border-gray-200 ${!formData.yearBuilt.trim() ? 'border-red-500' : ''}`}
+                    className={`bg-white border-gray-200 ${submitted && !formData.yearBuilt.trim() ? 'border-red-500' : ''}`}
                   />
-                  {!formData.yearBuilt.trim() && (
+                  {submitted && !formData.yearBuilt.trim() && (
                     <p className="text-red-500 text-xs mt-1 ml-1">Year built is required</p>
                   )}
                 </div>
@@ -1099,9 +1102,9 @@ const EditProperty: React.FC = () => {
                   onChange={(e) => {
                     updateFormData('streetAddress', e.target.value);
                   }}
-                  className={`bg-white border-gray-200 ${!formData.streetAddress.trim() ? 'border-red-500' : ''}`}
+                  className={`bg-white border-gray-200 ${submitted && !formData.streetAddress.trim() ? 'border-red-500' : ''}`}
                 />
-                {!formData.streetAddress.trim() && (
+                {submitted && !formData.streetAddress.trim() && (
                   <p className="text-red-500 text-xs mt-1 ml-1">Street address is required</p>
                 )}
               </div>
@@ -1121,9 +1124,9 @@ const EditProperty: React.FC = () => {
                     required
                     disabled={countryOptions.length === 0}
                     searchable={true}
-                    buttonClassName={`bg-white border-gray-200 ${!formData.country ? 'border-red-500' : ''}`}
+                    buttonClassName={`bg-white border-gray-200 ${submitted && !formData.country ? 'border-red-500' : ''}`}
                   />
-                  {!formData.country && (
+                  {submitted && !formData.country && (
                     <p className="text-red-500 text-xs mt-1 ml-1">Country is required</p>
                   )}
                 </div>
@@ -1140,9 +1143,9 @@ const EditProperty: React.FC = () => {
                     required
                     disabled={!formData.country || stateOptions.length === 0}
                     searchable={true}
-                    buttonClassName={`bg-white border-gray-200 ${!formData.stateRegion ? 'border-red-500' : ''}`}
+                    buttonClassName={`bg-white border-gray-200 ${submitted && !formData.stateRegion ? 'border-red-500' : ''}`}
                   />
-                  {!formData.stateRegion && (
+                  {submitted && !formData.stateRegion && (
                     <p className="text-red-500 text-xs mt-1 ml-1">State/Region is required</p>
                   )}
                 </div>
@@ -1163,9 +1166,9 @@ const EditProperty: React.FC = () => {
                     required
                     disabled={!formData.stateRegion || cityOptions.length === 0}
                     searchable={true}
-                    buttonClassName={`bg-white border-gray-200 ${!formData.city ? 'border-red-500' : ''}`}
+                    buttonClassName={`bg-white border-gray-200 ${submitted && !formData.city ? 'border-red-500' : ''}`}
                   />
-                  {!formData.city && (
+                  {submitted && !formData.city && (
                     <p className="text-red-500 text-xs mt-1 ml-1">City is required</p>
                   )}
                 </div>
@@ -1178,9 +1181,9 @@ const EditProperty: React.FC = () => {
                     onChange={(e) => {
                       updateFormData('zip', e.target.value);
                     }}
-                    className={`bg-white border-gray-200 ${!formData.zip.trim() ? 'border-red-500' : ''}`}
+                    className={`bg-white border-gray-200 ${submitted && !formData.zip.trim() ? 'border-red-500' : ''}`}
                   />
-                  {!formData.zip.trim() && (
+                  {submitted && !formData.zip.trim() && (
                     <p className="text-red-500 text-xs mt-1 ml-1">Zip code is required</p>
                   )}
                 </div>
@@ -1273,12 +1276,12 @@ const EditProperty: React.FC = () => {
                       onChange={(e) => {
                         updateFormData('size', e.target.value);
                       }}
-                      className={`bg-white border-gray-200 ${Number(formData.size) <= 0 && formData.size.trim() !== '' ? 'border-red-500' : ''}`}
+                      className={`bg-white border-gray-200 ${submitted && Number(formData.size) <= 0 ? 'border-red-500' : ''}`}
                     />
-                    {Number(formData.size) <= 0 && formData.size.trim() !== '' && (
+                    {submitted && Number(formData.size) <= 0 && formData.size.trim() !== '' && (
                       <p className="text-red-500 text-xs mt-1 ml-1">Size must be a positive number</p>
                     )}
-                    {formData.size.trim() === '' && (
+                    {submitted && formData.size.trim() === '' && (
                       <p className="text-red-500 text-xs mt-1 ml-1">Size is required</p>
                     )}
                   </div>
@@ -1300,13 +1303,13 @@ const EditProperty: React.FC = () => {
                         onChange={(e) => {
                           updateFormData('marketRent', e.target.value);
                         }}
-                        className={`bg-white border-gray-200 pl-8 ${Number(formData.marketRent) <= 0 && formData.marketRent.trim() !== '' ? 'border-red-500' : ''}`}
+                        className={`bg-white border-gray-200 pl-8 ${submitted && Number(formData.marketRent) <= 0 ? 'border-red-500' : ''}`}
                       />
                     </div>
-                    {Number(formData.marketRent) <= 0 && formData.marketRent.trim() !== '' && (
+                    {submitted && Number(formData.marketRent) <= 0 && formData.marketRent.trim() !== '' && (
                       <p className="text-red-500 text-xs mt-1 ml-1">Rent must be a positive number</p>
                     )}
-                    {formData.marketRent.trim() === '' && (
+                    {submitted && formData.marketRent.trim() === '' && (
                       <p className="text-red-500 text-xs mt-1 ml-1">Market rent is required</p>
                     )}
                   </div>
@@ -1325,13 +1328,13 @@ const EditProperty: React.FC = () => {
                         onChange={(e) => {
                           updateFormData('deposit', e.target.value);
                         }}
-                        className={`bg-white border-gray-200 pl-8 ${Number(formData.deposit) <= 0 && formData.deposit.trim() !== '' ? 'border-red-500' : ''}`}
+                        className={`bg-white border-gray-200 pl-8 ${submitted && Number(formData.deposit) <= 0 ? 'border-red-500' : ''}`}
                       />
                     </div>
-                    {Number(formData.deposit) <= 0 && formData.deposit.trim() !== '' && (
+                    {submitted && Number(formData.deposit) <= 0 && formData.deposit.trim() !== '' && (
                       <p className="text-red-500 text-xs mt-1 ml-1">Deposit must be a positive number</p>
                     )}
-                    {formData.deposit.trim() === '' && (
+                    {submitted && formData.deposit.trim() === '' && (
                       <p className="text-red-500 text-xs mt-1 ml-1">Deposit is required</p>
                     )}
                   </div>
@@ -1553,12 +1556,12 @@ const EditProperty: React.FC = () => {
                           onChange={(e) => {
                             updateUnit(index, 'size', e.target.value);
                           }}
-                          className={`bg-white border-gray-200 ${Number(unit.size) <= 0 && unit.size.trim() !== '' ? 'border-red-500' : ''}`}
+                          className={`bg-white border-gray-200 ${submitted && Number(unit.size) <= 0 ? 'border-red-500' : ''}`}
                         />
-                        {Number(unit.size) <= 0 && unit.size.trim() !== '' && (
+                        {submitted && Number(unit.size) <= 0 && unit.size.trim() !== '' && (
                           <p className="text-red-500 text-xs mt-1 ml-1">Size must be a positive number</p>
                         )}
-                        {unit.size.trim() === '' && (
+                        {submitted && unit.size.trim() === '' && (
                           <p className="text-red-500 text-xs mt-1 ml-1">Size is required</p>
                         )}
                       </div>
@@ -1604,13 +1607,13 @@ const EditProperty: React.FC = () => {
                             onChange={(e) => {
                               updateUnit(index, 'rent', e.target.value);
                             }}
-                            className={`bg-white border-gray-200 pl-8 ${Number(unit.rent) <= 0 && unit.rent.trim() !== '' ? 'border-red-500' : ''}`}
+                            className={`bg-white border-gray-200 pl-8 ${submitted && Number(unit.rent) <= 0 ? 'border-red-500' : ''}`}
                           />
                         </div>
-                        {Number(unit.rent) <= 0 && unit.rent.trim() !== '' && (
+                        {submitted && Number(unit.rent) <= 0 && unit.rent.trim() !== '' && (
                           <p className="text-red-500 text-xs mt-1 ml-1">Rent must be a positive number</p>
                         )}
-                        {unit.rent.trim() === '' && (
+                        {submitted && unit.rent.trim() === '' && (
                           <p className="text-red-500 text-xs mt-1 ml-1">Rent is required</p>
                         )}
                       </div>
@@ -1629,13 +1632,13 @@ const EditProperty: React.FC = () => {
                             onChange={(e) => {
                               updateUnit(index, 'deposit', e.target.value);
                             }}
-                            className={`bg-white border-gray-200 pl-8 ${Number(unit.deposit) <= 0 && unit.deposit.trim() !== '' ? 'border-red-500' : ''}`}
+                            className={`bg-white border-gray-200 pl-8 ${submitted && Number(unit.deposit) <= 0 ? 'border-red-500' : ''}`}
                           />
                         </div>
-                        {Number(unit.deposit) <= 0 && unit.deposit.trim() !== '' && (
+                        {submitted && Number(unit.deposit) <= 0 && unit.deposit.trim() !== '' && (
                           <p className="text-red-500 text-xs mt-1 ml-1">Deposit must be a positive number</p>
                         )}
-                        {unit.deposit.trim() === '' && (
+                        {submitted && unit.deposit.trim() === '' && (
                           <p className="text-red-500 text-xs mt-1 ml-1">Deposit is required</p>
                         )}
                         {validationErrors[`unit_${index}_deposit`] && (

@@ -11,17 +11,29 @@ export const propertyQueryKeys = {
   units: () => [...propertyQueryKeys.all, 'units'] as const,
 };
 
+// Cache preset for multi-step flows (e.g. List a Unit) that read the same
+// property from several components/steps. Opting in dedupes those reads into a
+// single network call and stops constant refetching from wiping pre-filled
+// fields. Safe because the flow purges property queries on entry.
+export const LISTING_FLOW_PROPERTY_CACHE = { staleTime: 5 * 60 * 1000, gcTime: 5 * 60 * 1000 };
+
 /**
  * Hook to get a single property by ID
  * @param includeFullUnitDetails - For MULTI properties, return full unit details instead of simplified data
+ * @param options - Optional staleTime/gcTime overrides (default: no caching). Pass LISTING_FLOW_PROPERTY_CACHE to fetch once and share.
  */
-export const useGetProperty = (propertyId: string | null | undefined, enabled: boolean = true, includeFullUnitDetails: boolean = false) => {
+export const useGetProperty = (
+  propertyId: string | null | undefined,
+  enabled: boolean = true,
+  includeFullUnitDetails: boolean = false,
+  options?: { staleTime?: number; gcTime?: number },
+) => {
   return useQuery({
     queryKey: propertyId ? [...propertyQueryKeys.detail(propertyId), includeFullUnitDetails] : ['properties', 'detail', 'null'] as const,
     queryFn: () => propertyService.getOne(propertyId!, includeFullUnitDetails),
     enabled: enabled && !!propertyId,
-    staleTime: 0, // Always consider data stale to ensure fresh fetch
-    gcTime: 0, // Don't keep in cache to prevent cross-user data leakage
+    staleTime: options?.staleTime ?? 0, // Default: always stale (fresh fetch)
+    gcTime: options?.gcTime ?? 0, // Default: don't cache (prevent cross-user data leakage)
     retry: 1,
   });
 };

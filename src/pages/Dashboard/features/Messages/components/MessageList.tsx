@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import type { Chat, Message } from '../types';
 import { CURRENT_USER_ID } from '../types';
 import MessageBubble from './MessageBubble';
+import Avatar from './Avatar';
 
 interface MessageListProps {
     activeChat: Chat;
@@ -35,22 +36,22 @@ const MessageList: React.FC<MessageListProps> = ({ activeChat, messagesEndRef })
                         message={msg}
                         activeChatName={activeChat.name}
                         isPending={Boolean((msg as { isPending?: boolean }).isPending)}
+                        isFailed={Boolean((msg as { isFailed?: boolean }).isFailed)}
                         isRead={isMessageRead(msg)}
                     />
                 ))}
 
                 {/* Typing indicator */}
                 {activeChat.typingText && (
-                    <div className="flex items-center gap-3">
-                        <div className="bg-[#EDF2F1] rounded-2xl rounded-tl-none px-4 py-2.5 shadow-sm">
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex gap-1">
-                                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                </div>
-                                <span className="text-[10px] text-gray-500 ml-1 italic">{activeChat.typingText}</span>
+                    <div className="flex items-end gap-4">
+                        <Avatar name={activeChat.name} size="sm" />
+                        <div className="flex flex-col gap-1.5 max-w-[70%]">
+                            <div className="typing-bubble bg-[#EDF2F1] rounded-2xl rounded-bl-none px-4 py-3 shadow-sm inline-flex items-center gap-1.5 w-fit">
+                                <span className="typing-dot" style={{ animationDelay: '0ms' }} />
+                                <span className="typing-dot" style={{ animationDelay: '200ms' }} />
+                                <span className="typing-dot" style={{ animationDelay: '400ms' }} />
                             </div>
+                            <span className="text-[10px] text-gray-500 italic pl-1">{activeChat.typingText}</span>
                         </div>
                     </div>
                 )}

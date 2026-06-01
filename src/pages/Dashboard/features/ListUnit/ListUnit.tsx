@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,7 +16,7 @@ import PetPolicy from './steps/PetPolicy';
 import PetDetails from './steps/PetDetails';
 import { leasingService } from '../../../../services/leasing.service';
 import { listingService } from '../../../../services/listing.service';
-import { useGetProperty, propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
+import { useGetProperty, propertyQueryKeys, LISTING_FLOW_PROPERTY_CACHE } from '../../../../hooks/usePropertyQueries';
 import { useGetUnit } from '../../../../hooks/useUnitQueries';
 import { propertyService } from '../../../../services/property.service';
 import { useListUnitStore } from './store/listUnitStore';
@@ -92,7 +92,7 @@ const ListUnit: React.FC = () => {
   }, []); // Only run once on mount
 
   // Use React Query to fetch property data when property is selected
-  const { data: propertyData } = useGetProperty(formData.property || null, !!formData.property);
+  const { data: propertyData } = useGetProperty(formData.property || null, !!formData.property, false, LISTING_FLOW_PROPERTY_CACHE);
 
   // Use React Query to fetch unit data when unit is selected
   const { data: unitData } = useGetUnit(formData.unit || null, !!formData.unit);
@@ -100,9 +100,12 @@ const ListUnit: React.FC = () => {
   // Get property display name (use property name if available, otherwise fallback to ID or "New Property")
   const propertyDisplay = propertyData?.propertyName || formData.property || "New Property";
 
-  // Load property contact info when property data is available
+  // Pre-fill the listing contact ONCE per property. Guarding by property id
+  // stops a refetch (same property) from overwriting the user's edits.
+  const contactLoadedForRef = useRef<string | null>(null);
   useEffect(() => {
-    if (propertyData) {
+    if (propertyData?.id && contactLoadedForRef.current !== propertyData.id) {
+      contactLoadedForRef.current = propertyData.id;
       updateFormData('contactName', propertyData.listingContactName || '');
       updateFormData('countryCode', propertyData.listingPhoneCountryCode || '+1');
       updateFormData('phoneNumber', propertyData.listingPhoneNumber || '');
@@ -145,10 +148,19 @@ const ListUnit: React.FC = () => {
 
   // Check if leasing exists for property/unit when property/unit is selected
   // Use propertyData.leasing or unitData.leasing if available (from backend), otherwise check via API only if needed
+  // Load existing leasing for a property/unit ONCE per selection. Without this
+  // guard the effect re-runs every time propertyData/unitData refetch and wipes
+  // the user's in-progress edits (e.g. monthly rent) back to the saved value.
+  const leasingLoadKeyRef = useRef<string | null>(null);
   useEffect(() => {
+    const selectionKey = `${formData.property || ''}|${formData.unit || ''}`;
+    // Already resolved this property/unit — don't clobber edits on refetch.
+    if (leasingLoadKeyRef.current === selectionKey) return;
+
     const checkExistingLeasing = async () => {
       if (!formData.property) {
         // Clear all leasing data when no property is selected
+        leasingLoadKeyRef.current = selectionKey;
         setLeasingId(null);
         updateFormData('rent', '');
         updateFormData('deposit', '');
@@ -167,6 +179,15 @@ const ListUnit: React.FC = () => {
         updateFormData('applicationFeeAmount', '');
         return;
       }
+
+      // Wait until the data we need to resolve leasing is loaded, so this runs
+      // once with complete information (and we don't fire a redundant fallback fetch).
+      if (formData.unit && !unitData) return;
+      if (!formData.unit && !propertyData) return;
+
+      // Commit this property/unit as resolved BEFORE loading, so any later
+      // refetch of propertyData/unitData won't re-run and overwrite edits.
+      leasingLoadKeyRef.current = selectionKey;
 
       // Clear all leasing data FIRST before loading new data to prevent data leakage
       setLeasingId(null);

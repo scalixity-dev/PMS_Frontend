@@ -5,7 +5,7 @@ import PropertyCard from '../components/PropertyCard';
 import { propertyService } from '../../../../../services/property.service';
 import { listingService } from '../../../../../services/listing.service';
 import { unitService } from '../../../../../services/unit.service';
-import { useGetAllProperties, useGetProperty } from '../../../../../hooks/usePropertyQueries';
+import { useGetAllProperties, useGetProperty, LISTING_FLOW_PROPERTY_CACHE } from '../../../../../hooks/usePropertyQueries';
 import { useGetUnit } from '../../../../../hooks/useUnitQueries';
 import { useListUnitStore } from '../store/listUnitStore';
 import type { Property, BackendProperty } from '../../../../../services/property.service';
@@ -266,7 +266,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   // Use React Query to fetch full property data when selected
   const {
     data: fullPropertyData
-  } = useGetProperty(formData.property || null, !!formData.property);
+  } = useGetProperty(formData.property || null, !!formData.property, false, LISTING_FLOW_PROPERTY_CACHE);
 
   // Fetch unit data if unitId is selected
   const selectedUnitId = formData.unit || null;
