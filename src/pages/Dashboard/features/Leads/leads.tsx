@@ -3,7 +3,6 @@ import { formatPhoneNumber } from '@/utils/phone.utils';
 
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, ChevronLeft, Download, MoreHorizontal, Edit2, Trash2, Check, X } from 'lucide-react';
-import { utils, writeFile } from 'xlsx';
 import { format } from 'date-fns';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import SearchableDropdown from '../../../../components/ui/SearchableDropdown';
@@ -286,7 +285,9 @@ const Leads = () => {
         }
     };
 
-    const handleExport = () => {
+    const handleExport = async () => {
+        // Load xlsx on demand so it isn't in the page bundle until export is used.
+        const { utils, writeFile } = await import('xlsx');
         // Create a cleaner version of the data for export
         const exportData = filteredLeads.map(lead => ({
             Status: lead.status,

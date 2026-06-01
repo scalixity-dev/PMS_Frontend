@@ -564,10 +564,13 @@ const ApplicationDetail = () => {
             : application.leasing.monthlyRent)
         : 0;
 
-    // Calculate total household income from income details
-    const totalHouseholdIncome = application.incomeDetails.reduce((sum, income) => {
-        return sum + (parseFloat(income.monthlyIncome) || 0);
-    }, 0);
+    // Calculate total household income from income details.
+    // NOTE: this sits after early returns, so it must NOT be a hook (useMemo
+    // here breaks the Rules of Hooks). A plain reduce over a few entries is cheap.
+    const totalHouseholdIncome = application.incomeDetails.reduce(
+        (sum, income) => sum + (parseFloat(income.monthlyIncome) || 0),
+        0
+    );
 
     // Calculate rent-income percentage
     const rentIncomePercentage = monthlyRent > 0 && totalHouseholdIncome > 0

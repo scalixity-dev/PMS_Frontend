@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,7 +16,8 @@ import PetPolicy from './steps/PetPolicy';
 import PetDetails from './steps/PetDetails';
 import { leasingService } from '../../../../services/leasing.service';
 import { listingService } from '../../../../services/listing.service';
-import { useGetProperty, propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
+import { useGetProperty, propertyQueryKeys, LISTING_FLOW_PROPERTY_CACHE } from '../../../../hooks/usePropertyQueries';
+import { listingQueryKeys } from '../../../../hooks/useListingQueries';
 import { useGetUnit } from '../../../../hooks/useUnitQueries';
 import { propertyService } from '../../../../services/property.service';
 import { useListUnitStore } from './store/listUnitStore';
@@ -92,7 +93,7 @@ const ListUnit: React.FC = () => {
   }, []); // Only run once on mount
 
   // Use React Query to fetch property data when property is selected
-  const { data: propertyData } = useGetProperty(formData.property || null, !!formData.property);
+  const { data: propertyData } = useGetProperty(formData.property || null, !!formData.property, false, LISTING_FLOW_PROPERTY_CACHE);
 
   // Use React Query to fetch unit data when unit is selected
   const { data: unitData } = useGetUnit(formData.unit || null, !!formData.unit);
@@ -100,9 +101,12 @@ const ListUnit: React.FC = () => {
   // Get property display name (use property name if available, otherwise fallback to ID or "New Property")
   const propertyDisplay = propertyData?.propertyName || formData.property || "New Property";
 
-  // Load property contact info when property data is available
+  // Pre-fill the listing contact ONCE per property. Guarding by property id
+  // stops a refetch (same property) from overwriting the user's edits.
+  const contactLoadedForRef = useRef<string | null>(null);
   useEffect(() => {
-    if (propertyData) {
+    if (propertyData?.id && contactLoadedForRef.current !== propertyData.id) {
+      contactLoadedForRef.current = propertyData.id;
       updateFormData('contactName', propertyData.listingContactName || '');
       updateFormData('countryCode', propertyData.listingPhoneCountryCode || '+1');
       updateFormData('phoneNumber', propertyData.listingPhoneNumber || '');
@@ -145,10 +149,19 @@ const ListUnit: React.FC = () => {
 
   // Check if leasing exists for property/unit when property/unit is selected
   // Use propertyData.leasing or unitData.leasing if available (from backend), otherwise check via API only if needed
+  // Load existing leasing for a property/unit ONCE per selection. Without this
+  // guard the effect re-runs every time propertyData/unitData refetch and wipes
+  // the user's in-progress edits (e.g. monthly rent) back to the saved value.
+  const leasingLoadKeyRef = useRef<string | null>(null);
   useEffect(() => {
+    const selectionKey = `${formData.property || ''}|${formData.unit || ''}`;
+    // Already resolved this property/unit — don't clobber edits on refetch.
+    if (leasingLoadKeyRef.current === selectionKey) return;
+
     const checkExistingLeasing = async () => {
       if (!formData.property) {
         // Clear all leasing data when no property is selected
+        leasingLoadKeyRef.current = selectionKey;
         setLeasingId(null);
         updateFormData('rent', '');
         updateFormData('deposit', '');
@@ -167,6 +180,15 @@ const ListUnit: React.FC = () => {
         updateFormData('applicationFeeAmount', '');
         return;
       }
+
+      // Wait until the data we need to resolve leasing is loaded, so this runs
+      // once with complete information (and we don't fire a redundant fallback fetch).
+      if (formData.unit && !unitData) return;
+      if (!formData.unit && !propertyData) return;
+
+      // Commit this property/unit as resolved BEFORE loading, so any later
+      // refetch of propertyData/unitData won't re-run and overwrite edits.
+      leasingLoadKeyRef.current = selectionKey;
 
       // Clear all leasing data FIRST before loading new data to prevent data leakage
       setLeasingId(null);
@@ -217,9 +239,15 @@ const ListUnit: React.FC = () => {
             return;
           }
         } else {
-          // Unit data exists but no leasing - leasing doesn't exist
+          // No existing unit-level leasing yet — pre-fill rent/deposit from the
+          // unit's own values so the form starts populated instead of blank.
           setLeasingId(null);
-          return;
+          if (unitData.rent !== undefined && unitData.rent !== null && String(unitData.rent) !== '') {
+            updateFormData('rent', String(unitData.rent));
+          }
+          if (unitData.deposit !== undefined && unitData.deposit !== null && String(unitData.deposit) !== '') {
+            updateFormData('deposit', String(unitData.deposit));
+          }
         }
         return; // Exit early for unit-level leasing
       }
@@ -241,8 +269,15 @@ const ListUnit: React.FC = () => {
             return;
           }
         } else {
-          // Property data exists but no leasing - leasing doesn't exist, no need to call API
+          // No existing property-level leasing yet — pre-fill rent/deposit from
+          // the property's market rent / deposit so the form starts populated.
           setLeasingId(null);
+          if (propertyData.marketRent !== undefined && propertyData.marketRent !== null && String(propertyData.marketRent) !== '') {
+            updateFormData('rent', String(propertyData.marketRent));
+          }
+          if (propertyData.depositAmount !== undefined && propertyData.depositAmount !== null && String(propertyData.depositAmount) !== '') {
+            updateFormData('deposit', String(propertyData.depositAmount));
+          }
           return;
         }
       } else {
@@ -285,10 +320,10 @@ const ListUnit: React.FC = () => {
     checkExistingLeasing();
   }, [formData.property, formData.unit, propertyData, unitData, updateFormData, setLeasingId]);
 
-  // Save pet policy when moving from leasingStep 2
-  const handleSavePetPolicy = async () => {
-    if (!formData.property || !leasingId) {
-      setError('Property and leasing information not available. Please start from step 1.');
+  // Validate pet policy and advance. No API call (persisted at the final step).
+  const handleSavePetPolicy = () => {
+    if (!formData.property) {
+      setError('Property is required. Please start from step 1.');
       return;
     }
 
@@ -297,35 +332,21 @@ const ListUnit: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(true);
     setError(null);
 
-    try {
-      const updateData: any = {
-        petsAllowed: formData.petsAllowed,
-      };
-
-      await leasingService.update(leasingId, updateData);
-
-      // Move to next step based on petsAllowed
-      if (formData.petsAllowed) {
-        setLeasingStep(3);
-      } else {
-        setCurrentStep(3);
-        setApplicationStep(1);
-      }
-    } catch (err) {
-      console.error('Error saving pet policy:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save pet policy. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    // Move to next step based on petsAllowed
+    if (formData.petsAllowed) {
+      setLeasingStep(3);
+    } else {
+      setCurrentStep(3);
+      setApplicationStep(1);
     }
   };
 
-  // Save application settings when moving from applicationStep 1 to 2
-  const handleSaveApplicationSettings = async () => {
-    if (!formData.property || !leasingId) {
-      setError('Property and leasing information not available. Please start from step 1.');
+  // Validate application settings and advance. No API call (persisted at the end).
+  const handleSaveApplicationSettings = () => {
+    if (!formData.property) {
+      setError('Property is required. Please start from step 1.');
       return;
     }
 
@@ -334,30 +355,14 @@ const ListUnit: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(true);
     setError(null);
-
-    try {
-      const updateData: any = {
-        onlineRentalApplication: formData.receiveApplicationsOnline,
-      };
-
-      await leasingService.update(leasingId, updateData);
-
-      // Move to next step
-      setApplicationStep(2);
-    } catch (err) {
-      console.error('Error saving application settings:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save application settings. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    setApplicationStep(2);
   };
 
-  // Save application fee preference when moving from applicationStep 2
-  const handleSaveApplicationFee = async () => {
-    if (!formData.property || !leasingId) {
-      setError('Property and leasing information not available. Please start from step 1.');
+  // Validate application-fee preference and advance. No API call (persisted at the end).
+  const handleSaveApplicationFee = () => {
+    if (!formData.property) {
+      setError('Property is required. Please start from step 1.');
       return;
     }
 
@@ -366,29 +371,13 @@ const ListUnit: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(true);
     setError(null);
 
-    try {
-      const updateData: any = {
-        requireApplicationFee: formData.applicationFee,
-        // If application fee is not required, set fee to null
-        applicationFee: formData.applicationFee ? (formData.applicationFeeAmount ? parseFloat(formData.applicationFeeAmount) : null) : null,
-      };
-
-      await leasingService.update(leasingId, updateData);
-
-      // Move to next step based on applicationFee
-      if (formData.applicationFee) {
-        setApplicationStep(3);
-      } else {
-        setApplicationStep(4);
-      }
-    } catch (err) {
-      console.error('Error saving application fee preference:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save application fee preference. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    // Move to next step based on applicationFee
+    if (formData.applicationFee) {
+      setApplicationStep(3);
+    } else {
+      setApplicationStep(4);
     }
   };
 
@@ -405,10 +394,53 @@ const ListUnit: React.FC = () => {
       return;
     }
 
+    // Leasing details were collected across earlier steps (kept in the store).
+    // They must be complete before we can persist the leasing here.
+    if (!formData.rent || !formData.availableDate || !formData.minLeaseDuration || !formData.maxLeaseDuration) {
+      setError('Please complete the leasing details before submitting.');
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
+      // Step 0: Persist the WHOLE leasing in a single call (create for a new
+      // listing, update when editing). All fields come from the store — the
+      // earlier steps no longer hit the API one-by-one.
+      const leasingData = {
+        propertyId: formData.property,
+        unitId: formData.unit || undefined,
+        monthlyRent: parseFloat(formData.rent),
+        securityDeposit: formData.deposit ? parseFloat(formData.deposit) : undefined,
+        amountRefundable: formData.refundable ? parseFloat(formData.refundable) : undefined,
+        dateAvailable: new Date(formData.availableDate).toISOString(),
+        minLeaseDuration: mapLeaseDuration(formData.minLeaseDuration),
+        maxLeaseDuration: mapLeaseDuration(formData.maxLeaseDuration),
+        description: formData.description || undefined,
+        petsAllowed: formData.petsAllowed ?? false,
+        petCategory: Array.isArray(formData.pets) ? formData.pets : [],
+        petDeposit: formData.petDeposit ? parseFloat(formData.petDeposit) : undefined,
+        petFee: formData.petRent ? parseFloat(formData.petRent) : undefined,
+        petDescription: formData.petDescription || undefined,
+        onlineRentalApplication: formData.receiveApplicationsOnline ?? false,
+        requireApplicationFee: formData.applicationFee ?? false,
+        applicationFee: formData.applicationFee && formData.applicationFeeAmount
+          ? parseFloat(formData.applicationFeeAmount)
+          : undefined,
+      };
+
+      // One leasing per property. If we already know its id (editing), update;
+      // otherwise create. `POST /leasing` is idempotent on the backend — it
+      // create-or-updates by property — so a first-time create with no id is
+      // always safe and returns the generated id.
+      if (leasingId) {
+        await leasingService.update(leasingId, leasingData);
+      } else {
+        const createdLeasing = await leasingService.create(leasingData);
+        setLeasingId(createdLeasing.id);
+      }
+
       // Step 1: Update property with listing contact information
       const updateData: any = {
         listingContactName: formData.contactName,
@@ -428,6 +460,11 @@ const ListUnit: React.FC = () => {
         // The backend will automatically populate listing data from property/unit and leasing
       });
 
+      // Refresh cached property + listing data so the listing page doesn't show
+      // stale "needs listing" entries when the user returns.
+      queryClient.invalidateQueries({ queryKey: propertyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: listingQueryKeys.all });
+
       // Show success modal
       setShowSuccessModal(true);
     } catch (err) {
@@ -438,10 +475,10 @@ const ListUnit: React.FC = () => {
     }
   };
 
-  // Save application fee details when moving from applicationStep 3 to 4
-  const handleSaveApplicationFeeDetails = async () => {
-    if (!formData.property || !leasingId) {
-      setError('Property and leasing information not available. Please start from step 1.');
+  // Validate application-fee amount and advance. No API call (persisted at the end).
+  const handleSaveApplicationFeeDetails = () => {
+    if (!formData.property) {
+      setError('Property is required. Please start from step 1.');
       return;
     }
 
@@ -450,59 +487,25 @@ const ListUnit: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(true);
     setError(null);
-
-    try {
-      const updateData: any = {
-        applicationFee: parseFloat(formData.applicationFeeAmount),
-      };
-
-      await leasingService.update(leasingId, updateData);
-
-      // Move to next step
-      setApplicationStep(4);
-    } catch (err) {
-      console.error('Error saving application fee details:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save application fee details. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    setApplicationStep(4);
   };
 
-  // Save pet details when moving from leasingStep 3
-  const handleSavePetDetails = async () => {
-    if (!formData.property || !leasingId) {
-      setError('Property and leasing information not available. Please start from step 1.');
+  // Validate pet details and advance. No API call (persisted at the final step).
+  const handleSavePetDetails = () => {
+    if (!formData.property) {
+      setError('Property is required. Please start from step 1.');
       return;
     }
 
-    setIsSubmitting(true);
     setError(null);
-
-    try {
-      const updateData: any = {
-        petCategory: Array.isArray(formData.pets) ? formData.pets : [],
-        petDeposit: formData.petDeposit ? parseFloat(formData.petDeposit) : null,
-        petFee: formData.petRent ? parseFloat(formData.petRent) : null,
-        petDescription: formData.petDescription || null,
-      };
-
-      await leasingService.update(leasingId, updateData);
-
-      // Move to next step
-      setCurrentStep(3);
-      setApplicationStep(1);
-    } catch (err) {
-      console.error('Error saving pet details:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save pet details. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    setCurrentStep(3);
+    setApplicationStep(1);
   };
 
-  // Save leasing details when moving from leasingStep 1 to 2
-  const handleSaveLeasingDetails = async () => {
+  // Validate leasing details and advance. No API call — the data stays in the
+  // store and the whole leasing is persisted once at the final step.
+  const handleSaveLeasingDetails = () => {
     if (!formData.property) {
       setError('Property is required. Please select a property first.');
       return;
@@ -520,41 +523,8 @@ const ListUnit: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(true);
     setError(null);
-
-    try {
-      const leasingData = {
-        propertyId: formData.property,
-        unitId: formData.unit || undefined, // Include unitId if a unit is selected (required for MULTI properties)
-        monthlyRent: parseFloat(formData.rent),
-        securityDeposit: parseFloat(formData.deposit),
-        amountRefundable: parseFloat(formData.refundable),
-        dateAvailable: new Date(formData.availableDate).toISOString(),
-        minLeaseDuration: mapLeaseDuration(formData.minLeaseDuration),
-        maxLeaseDuration: mapLeaseDuration(formData.maxLeaseDuration),
-        description: formData.description || undefined,
-        petsAllowed: formData.petsAllowed ?? false,
-        onlineRentalApplication: formData.receiveApplicationsOnline ?? false,
-      };
-
-      if (leasingId) {
-        // Update existing leasing
-        await leasingService.update(leasingId, leasingData);
-      } else {
-        // Create new leasing
-        const createdLeasing = await leasingService.create(leasingData);
-        setLeasingId(createdLeasing.id);
-      }
-
-      // Move to next step
-      setLeasingStep(2);
-    } catch (err) {
-      console.error('Error saving leasing details:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save leasing details. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    setLeasingStep(2);
   };
 
   const isStepValid = useMemo(() => {

@@ -21,6 +21,8 @@ interface LeadDetailState {
   setActivities: (activities: BackendActivity[]) => void;
   setCalls: (calls: BackendCall[]) => void;
   setMeetings: (meetings: BackendMeeting[]) => void;
+  // Set multiple slices in a single update (batches React Query data sync).
+  setAll: (data: Partial<Pick<LeadDetailState, 'notes' | 'tasks' | 'activities' | 'calls' | 'meetings'>>) => void;
 
   addNote: (note: BackendNote) => void;
   updateNote: (noteId: string, note: BackendNote) => void;
@@ -62,6 +64,7 @@ export const useLeadDetailStore = create<LeadDetailState>((set) => ({
   setActivities: (activities) => set({ activities }),
   setCalls: (calls) => set({ calls }),
   setMeetings: (meetings) => set({ meetings }),
+  setAll: (data) => set(data),
 
   addNote: (note) => set((s) => ({ notes: [note, ...s.notes] })),
   updateNote: (noteId, note) => set((s) => ({ notes: s.notes.map((n) => n.id === noteId ? note : n) })),

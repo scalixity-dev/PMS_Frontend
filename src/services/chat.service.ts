@@ -106,6 +106,12 @@ export interface ChatMessage {
     email: string;
     displayName: string;
   };
+  // Client-generated id used to reconcile an optimistic message with the
+  // server echo. `pending` marks a message shown before the server confirms.
+  // `failed` marks one the server could not persist.
+  clientId?: string;
+  pending?: boolean;
+  failed?: boolean;
 }
 
 export async function getConversations(token?: string): Promise<ChatConversation[]> {

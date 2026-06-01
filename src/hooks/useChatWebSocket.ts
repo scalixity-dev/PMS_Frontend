@@ -50,6 +50,10 @@ export function useChatWebSocket(
   const wsRef = useRef<WebSocket | null>(null);
   const tokenRef = useRef<string | null>(null);
   tokenRef.current = token;
+  // Kept in a ref so the stable connect()/reconnect logic always sees the
+  // currently-open conversation without being torn down on every switch.
+  const conversationIdRef = useRef<string | null>(conversationId);
+  conversationIdRef.current = conversationId;
   const reconnectAttemptRef = useRef(0);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
@@ -104,6 +108,82 @@ export function useChatWebSocket(
     [removeTypingUser]
   );
 
+  // Single, stable handler for every inbound frame. Bound directly on the
+  // socket the instant it is created (see connect) so no frame can arrive
+  // before a listener exists.
+  const handleSocketMessage = useCallback(
+    (ev: MessageEvent) => {
+      try {
+        const msg = JSON.parse(ev.data as string);
+        switch (msg.type) {
+          case 'new_message':
+            if (msg.data && onNewMessage) onNewMessage(msg.data);
+            break;
+          case 'user_typing':
+            if (msg.data) {
+              addTypingUser(msg.data.conversationId, {
+                userId: msg.data.userId,
+                email: msg.data.email,
+              });
+            }
+            break;
+          case 'user_typing_stop':
+            if (msg.data) removeTypingUser(msg.data.conversationId, msg.data.userId);
+            break;
+          case 'messages_read':
+            if (msg.data) {
+              queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
+            }
+            break;
+          case 'message_failed':
+            if (msg.data?.conversationId && (msg.data?.clientId || msg.data?.messageId)) {
+              queryClient.setQueryData<any[]>(
+                ['chat', 'messages', msg.data.conversationId],
+                (old) => {
+                  if (!old) return old;
+                  return old.map((x) =>
+                    x.clientId === msg.data.clientId || x.id === msg.data.messageId
+                      ? { ...x, pending: false, failed: true }
+                      : x
+                  );
+                }
+              );
+            }
+            useChatToastStore.getState().showError('Message failed to send. Please retry.');
+            break;
+          case 'message_retracted':
+            // The message was delivered in real time but ultimately could not be
+            // persisted — remove it everywhere so no client shows a phantom.
+            if (msg.data?.conversationId && (msg.data?.messageId || msg.data?.clientId)) {
+              let wasMine = false;
+              queryClient.setQueryData<any[]>(
+                ['chat', 'messages', msg.data.conversationId],
+                (old) => {
+                  if (!old) return old;
+                  return old.filter((x) => {
+                    const match = x.id === msg.data.messageId || x.clientId === msg.data.clientId;
+                    if (match && x.senderId === _currentUserId) wasMine = true;
+                    return !match;
+                  });
+                }
+              );
+              if (wasMine) {
+                useChatToastStore.getState().showError(msg.error || 'Message failed to send. Please retry.');
+              }
+            }
+            break;
+          case 'error':
+            if (msg.error) console.warn('[WS] Server error:', msg.error);
+            break;
+          // connected, joined, left are acknowledgements - no action needed
+        }
+      } catch {
+        // ignore parse errors
+      }
+    },
+    [onNewMessage, addTypingUser, removeTypingUser, queryClient, _currentUserId]
+  );
+
   const connect = useCallback(() => {
     const t = tokenRef.current;
     if (!t) return;
@@ -112,10 +192,23 @@ export function useChatWebSocket(
     const url = `${CHAT_WS_URL}/ws?token=${encodeURIComponent(t)}`;
     const ws = new WebSocket(url);
     wsRef.current = ws;
+    ws.onmessage = handleSocketMessage;
 
     ws.onopen = () => {
+      const wasReconnect = reconnectAttemptRef.current > 0;
       reconnectAttemptRef.current = 0;
       setIsConnected(true);
+
+      // After a dropped connection we may have missed broadcasts while offline.
+      // Backfill the active conversation and the list from the server.
+      if (wasReconnect) {
+        queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
+        if (conversationIdRef.current) {
+          queryClient.invalidateQueries({
+            queryKey: ['chat', 'messages', conversationIdRef.current],
+          });
+        }
+      }
     };
 
     ws.onclose = (ev) => {
@@ -145,7 +238,7 @@ export function useChatWebSocket(
     };
 
     ws.onerror = () => {};
-  }, [queryClient]);
+  }, [queryClient, handleSocketMessage]);
 
   useEffect(() => {
     if (token) connect();
@@ -179,57 +272,7 @@ export function useChatWebSocket(
     };
   }, [conversationId, isConnected]);
 
-  // Handle all incoming WebSocket messages
-  useEffect(() => {
-    const ws = wsRef.current;
-    if (!ws) return;
-    const handler = (ev: MessageEvent) => {
-      try {
-        const msg = JSON.parse(ev.data as string);
-        switch (msg.type) {
-          case 'new_message':
-            if (msg.data && onNewMessage) {
-              onNewMessage(msg.data);
-            }
-            break;
-          case 'user_typing':
-            if (msg.data) {
-              addTypingUser(msg.data.conversationId, {
-                userId: msg.data.userId,
-                email: msg.data.email,
-              });
-            }
-            break;
-          case 'user_typing_stop':
-            if (msg.data) {
-              removeTypingUser(msg.data.conversationId, msg.data.userId);
-            }
-            break;
-          case 'messages_read':
-            if (msg.data) {
-              // Read receipts live on the conversation participants, not on
-              // the messages — only the conversations query needs a refresh.
-              queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
-            }
-            break;
-          case 'error':
-            if (msg.error) {
-              console.warn('[WS] Server error:', msg.error);
-            }
-            break;
-          // connected, joined, left are acknowledgements - no action needed
-        }
-      } catch {
-        // ignore parse errors
-      }
-    };
-    ws.addEventListener('message', handler);
-    return () => ws.removeEventListener('message', handler);
-    // isConnected is in deps so the listener re-binds to the new socket
-    // after a reconnect (wsRef.current is replaced on each connect()).
-  }, [onNewMessage, addTypingUser, removeTypingUser, queryClient, isConnected]);
-
-  const sendMessage = useCallback((content: string, targetConvId?: string) => {
+  const sendMessage = useCallback((content: string, targetConvId?: string, clientId?: string) => {
     const convId = targetConvId ?? conversationId;
     if (!convId || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return false;
 
@@ -238,6 +281,7 @@ export function useChatWebSocket(
         type: 'message',
         conversationId: convId,
         content,
+        clientId,
         timestamp: Date.now(),
       })
     );

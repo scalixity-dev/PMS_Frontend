@@ -11,17 +11,32 @@ export const propertyQueryKeys = {
   units: () => [...propertyQueryKeys.all, 'units'] as const,
 };
 
+// Cache preset for multi-step flows (e.g. List a Unit) that read the same
+// property from several components/steps. Opting in dedupes those reads into a
+// single network call and stops constant refetching from wiping pre-filled
+// fields. Safe because the flow purges property queries on entry.
+export const LISTING_FLOW_PROPERTY_CACHE = { staleTime: 5 * 60 * 1000, gcTime: 5 * 60 * 1000 };
+
 /**
  * Hook to get a single property by ID
  * @param includeFullUnitDetails - For MULTI properties, return full unit details instead of simplified data
+ * @param options - Optional staleTime/gcTime overrides (default: no caching). Pass LISTING_FLOW_PROPERTY_CACHE to fetch once and share.
  */
-export const useGetProperty = (propertyId: string | null | undefined, enabled: boolean = true, includeFullUnitDetails: boolean = false) => {
+export const useGetProperty = (
+  propertyId: string | null | undefined,
+  enabled: boolean = true,
+  includeFullUnitDetails: boolean = false,
+  options?: { staleTime?: number; gcTime?: number },
+) => {
   return useQuery({
     queryKey: propertyId ? [...propertyQueryKeys.detail(propertyId), includeFullUnitDetails] : ['properties', 'detail', 'null'] as const,
     queryFn: () => propertyService.getOne(propertyId!, includeFullUnitDetails),
     enabled: enabled && !!propertyId,
-    staleTime: 0, // Always consider data stale to ensure fresh fetch
-    gcTime: 0, // Don't keep in cache to prevent cross-user data leakage
+    // Cache by default (2 min) so the same property isn't refetched on every
+    // mount/sibling. Writes invalidate the detail query, and login/logout clears
+    // the cache, so there's no stale/cross-user risk. Override via `options`.
+    staleTime: options?.staleTime ?? 2 * 60 * 1000,
+    gcTime: options?.gcTime ?? 5 * 60 * 1000,
     retry: 1,
   });
 };
@@ -110,8 +125,8 @@ export const useGetAllPropertiesTransformed = (enabled: boolean = true) => {
     queryKey: [...propertyQueryKeys.lists(), 'transformed'] as const,
     queryFn: () => propertyService.getAllTransformed(),
     enabled,
-    staleTime: 0, // Always consider data stale to ensure fresh fetch on mount
-    gcTime: 0, // Don't keep in cache to prevent cross-user data leakage
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes (invalidated on writes)
+    gcTime: 5 * 60 * 1000,
     retry: 1,
   });
 };

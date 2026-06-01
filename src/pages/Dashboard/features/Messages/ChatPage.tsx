@@ -120,11 +120,21 @@ const ChatPage: React.FC = () => {
       const m = data as ChatMessage;
       if (!m?.id || !m.conversationId) return;
 
-      // Append to the conversation's message list (dedup by id).
+      // Append to the conversation's message list. If this echo matches an
+      // optimistic message we already rendered (same clientId), replace it in
+      // place instead of appending a duplicate; otherwise dedup by id.
       qc.setQueryData<ChatMessage[]>(chatQueryKeys.messages(m.conversationId), (old) => {
         if (!old) return old;
+        if (m.clientId) {
+          const idx = old.findIndex((x) => x.clientId === m.clientId || x.id === m.clientId);
+          if (idx !== -1) {
+            const next = [...old];
+            next[idx] = { ...m, pending: false };
+            return next;
+          }
+        }
         if (old.some((x) => x.id === m.id)) return old;
-        return [...old, m];
+        return [...old, { ...m, pending: false }];
       });
 
       // Update the sidebar: set last message + move conversation to the top.
@@ -204,14 +214,15 @@ const ChatPage: React.FC = () => {
   }, [conversations, contacts, currentUserId, onlineSet]);
 
   const messages: (Message & { isPending?: boolean })[] = useMemo(() => {
-    const api = apiMessages.map((m: { id: string; sender: { id: string; displayName: string }; content: string; createdAt: string }) => ({
+    const api = apiMessages.map((m: { id: string; sender: { id: string; displayName: string }; content: string; createdAt: string; pending?: boolean; failed?: boolean }) => ({
       id: m.id,
       senderId: m.sender.id === currentUserId ? 'me' : m.sender.id,
       senderName: m.sender.id === currentUserId ? 'Me' : m.sender.displayName,
       text: m.content,
-      time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: m.pending ? '' : new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       createdAt: m.createdAt,
-      isPending: false,
+      isPending: m.pending ?? false,
+      isFailed: m.failed ?? false,
     }));
     const pending = (activeChatId ? pendingForConv(activeChatId) : []).map((q) => ({
       id: q.id ?? `pending-${q.conversationId}-${q.content.slice(0, 10)}`,
@@ -318,14 +329,39 @@ const ChatPage: React.FC = () => {
       }
       if (!finalText.trim() || !activeChatId) return;
       sendTypingStop();
-      const sent = trySend(activeChatId, finalText);
-      if (!sent) {
+
+      const clientId = `c-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const sent = trySend(activeChatId, finalText, clientId);
+      if (sent) {
+        // Render the message instantly (optimistically) so sending feels
+        // immediate. The server echo carries the same clientId and
+        // onNewMessage swaps this entry for the confirmed one in place.
+        const optimistic: ChatMessage = {
+          id: clientId,
+          clientId,
+          conversationId: activeChatId,
+          senderId: currentUserId,
+          content: finalText,
+          type: 'text',
+          createdAt: new Date().toISOString(),
+          sender: {
+            id: currentUserId,
+            email: user?.email ?? '',
+            displayName: 'Me',
+          },
+          pending: true,
+        };
+        qc.setQueryData<ChatMessage[]>(chatQueryKeys.messages(activeChatId), (old) => {
+          if (!old) return [optimistic];
+          return [...old, optimistic];
+        });
+      } else {
+        // Offline: the queued message is rendered from the offline queue and
+        // will flush (with this clientId) once the socket reconnects.
         useChatToastStore.getState().showInfo('Message saved. Will send when back online.');
       }
-      // When sent, the server echoes the message back over WebSocket and
-      // onNewMessage writes it into the cache — no refetch needed.
     },
-    [trySend, activeChatId, sendTypingStop]
+    [trySend, activeChatId, sendTypingStop, qc, currentUserId, user?.email]
   );
 
   const handleStartNewChat = useCallback(
@@ -364,7 +400,7 @@ const ChatPage: React.FC = () => {
 
   useEffect(() => {
     if (showMobileChat && activeChat) scrollToBottom();
-  }, [activeChat?.messages, scrollToBottom, showMobileChat]);
+  }, [activeChat?.messages, activeChat?.typingText, scrollToBottom, showMobileChat]);
 
   if (convLoading && conversations.length === 0) {
     return (

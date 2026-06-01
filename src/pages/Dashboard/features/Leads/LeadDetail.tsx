@@ -64,8 +64,16 @@ const LeadDetail = () => {
     const updateLeadMutation = useUpdateLead();
     const deleteLeadMutation = useDeleteLead();
 
-    // Zustand store for instant data display
-    const store = useLeadDetailStore();
+    // Zustand store — subscribe via selectors so the component only re-renders
+    // when a slice it actually reads changes (not on every unrelated store write).
+    const notes = useLeadDetailStore(s => s.notes);
+    const tasks = useLeadDetailStore(s => s.tasks);
+    const activities = useLeadDetailStore(s => s.activities);
+    const calls = useLeadDetailStore(s => s.calls);
+    const meetings = useLeadDetailStore(s => s.meetings);
+    const setLeadId = useLeadDetailStore(s => s.setLeadId);
+    const setAll = useLeadDetailStore(s => s.setAll);
+    const reset = useLeadDetailStore(s => s.reset);
 
     // Fetch notes, tasks, activities, calls, and meetings
     const { data: queryNotes } = useGetAllNotes(id || null, !!id);
@@ -74,20 +82,18 @@ const LeadDetail = () => {
     const { data: queryCalls } = useGetAllCalls(id || null, !!id);
     const { data: queryMeetings } = useGetAllMeetings(id || null, !!id);
 
-    // Sync React Query data into Zustand store
-    useEffect(() => { if (id) store.setLeadId(id); return () => { store.reset(); }; }, [id]);
-    useEffect(() => { if (queryNotes) store.setNotes(queryNotes); }, [queryNotes]);
-    useEffect(() => { if (queryTasks) store.setTasks(queryTasks); }, [queryTasks]);
-    useEffect(() => { if (queryActivities) store.setActivities(queryActivities); }, [queryActivities]);
-    useEffect(() => { if (queryCalls) store.setCalls(queryCalls); }, [queryCalls]);
-    useEffect(() => { if (queryMeetings) store.setMeetings(queryMeetings); }, [queryMeetings]);
-
-    // Read from store for rendering
-    const notes = store.notes;
-    const tasks = store.tasks;
-    const activities = store.activities;
-    const calls = store.calls;
-    const meetings = store.meetings;
+    // Sync React Query data into the store. One batched update instead of five
+    // separate effects/setters → at most one store write per data change.
+    useEffect(() => { if (id) setLeadId(id); return () => { reset(); }; }, [id, setLeadId, reset]);
+    useEffect(() => {
+        setAll({
+            ...(queryNotes ? { notes: queryNotes } : {}),
+            ...(queryTasks ? { tasks: queryTasks } : {}),
+            ...(queryActivities ? { activities: queryActivities } : {}),
+            ...(queryCalls ? { calls: queryCalls } : {}),
+            ...(queryMeetings ? { meetings: queryMeetings } : {}),
+        });
+    }, [queryNotes, queryTasks, queryActivities, queryCalls, queryMeetings, setAll]);
 
     // Mutations
     const createNoteMutation = useCreateNote();

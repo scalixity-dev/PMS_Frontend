@@ -6,37 +6,28 @@ import { authService } from '../../../../../../services/auth.service';
 import NextStepButton from '../../components/NextStepButton';
 import { getCurrencySymbol } from '../../../../../../utils/currency.utils';
 import { useCreatePropertyStore } from '../../store/createPropertyStore';
-import { useCreateProperty, useUpdateProperty } from '../../../../../../hooks/usePropertyQueries';
 
 interface GeneralInfoProps {
-    data?: any; 
-    updateData?: (key: string, value: any) => void; 
-    onPropertyCreated?: (propertyId: string) => void;
-    propertyId?: string; 
+    data?: any;
+    updateData?: (key: string, value: any) => void;
+    onContinue?: () => void;
+    propertyId?: string;
 }
 
-const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId: propPropertyId }) => {
-    const { 
-        formData: data, 
+const GeneralInfo: React.FC<GeneralInfoProps> = ({ onContinue }) => {
+    const {
+        formData: data,
         updateFormData,
         managerId: storeManagerId,
-        propertyId: storePropertyId,
         setManagerId,
-        setPropertyId
     } = useCreatePropertyStore();
 
-    // Use prop propertyId if provided, otherwise use store
-    const propertyId = propPropertyId || storePropertyId || undefined;
     const managerId = storeManagerId;
 
     const [countries, setCountries] = useState<ICountry[]>([]);
     const [states, setStates] = useState<IState[]>([]);
     const [cities, setCities] = useState<ICity[]>([]);
     const [saveError, setSaveError] = useState<string | null>(null);
-
-    // React Query hooks
-    const createPropertyMutation = useCreateProperty();
-    const updatePropertyMutation = useUpdateProperty();
 
     // Update function - use store's updateFormData or prop's updateData
     const updateData = (key: string, value: any) => {
@@ -172,42 +163,9 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
         );
     };
 
-    // Map GeneralInfo data to backend format
-    const mapGeneralInfoToBackend = () => {
-        const propertyType: 'SINGLE' | 'MULTI' = 'SINGLE'; // Default to SINGLE for GeneralInfo
-
-        const address = data.address && data.city && data.stateRegion && data.zip && data.country
-            ? {
-                streetAddress: data.address,
-                city: data.city,
-                stateRegion: data.stateRegion,
-                zipCode: data.zip,
-                country: data.country,
-            }
-            : undefined;
-
-        const singleUnitDetails = data.beds
-            ? {
-                beds: parseInt(data.beds) || 0,
-                baths: data.bathrooms ? parseFloat(data.bathrooms) : undefined,
-                marketRent: data.marketRent ? parseFloat(data.marketRent) : undefined,
-            }
-            : undefined;
-
-        return {
-            managerId: managerId!,
-            propertyName: data.propertyName,
-            propertyType,
-            yearBuilt: data.yearBuilt ? parseInt(data.yearBuilt) : undefined,
-            sizeSqft: data.sizeSquareFt ? parseFloat(data.sizeSquareFt) : undefined,
-            marketRent: data.marketRent ? parseFloat(data.marketRent) : undefined,
-            address,
-            singleUnitDetails,
-        };
-    };
-
-    // Handle save/create property
-    const handleSaveAndContinue = async () => {
+    // No API call here — just validate and advance. All data is kept in the
+    // store and the property is created/updated in one call at the final step.
+    const handleSaveAndContinue = () => {
         if (!isFormValid()) {
             setSaveError('Please fill in all required fields');
             return;
@@ -219,33 +177,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
         }
 
         setSaveError(null);
-
-        try {
-            if (propertyId) {
-                // Update existing property
-                const updateData = mapGeneralInfoToBackend();
-                await updatePropertyMutation.mutateAsync({
-                    propertyId,
-                    updateData,
-                });
-                if (onPropertyCreated) {
-                    onPropertyCreated(propertyId);
-                }
-            } else {
-                // Create new property
-                const createData = mapGeneralInfoToBackend();
-                const createdProperty = await createPropertyMutation.mutateAsync(createData);
-                if (createdProperty.id) {
-                    setPropertyId(createdProperty.id);
-                    if (onPropertyCreated) {
-                        onPropertyCreated(createdProperty.id);
-                    }
-                }
-            }
-        } catch (err) {
-            console.error('Error saving property:', err);
-            setSaveError(err instanceof Error ? err.message : 'Failed to save property. Please try again.');
-        }
+        onContinue?.();
     };
 
     return (
@@ -434,11 +366,11 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
 
                 {/* Save Button */}
                 <div className="flex justify-center pt-6">
-                    <NextStepButton 
-                        onClick={handleSaveAndContinue} 
-                        disabled={createPropertyMutation.isPending || updatePropertyMutation.isPending || !managerId || !isFormValid()}
+                    <NextStepButton
+                        onClick={handleSaveAndContinue}
+                        disabled={!managerId || !isFormValid()}
                     >
-                        {(createPropertyMutation.isPending || updatePropertyMutation.isPending) ? 'Saving...' : propertyId ? 'Update & Continue' : 'Save & Continue'}
+                        Continue
                     </NextStepButton>
                 </div>
             </div>

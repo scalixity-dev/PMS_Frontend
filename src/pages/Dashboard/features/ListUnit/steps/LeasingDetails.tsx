@@ -4,7 +4,7 @@ import { format, parseISO } from 'date-fns';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
 import Toggle from '../../../../../components/Toggle';
-import { useGetProperty } from '../../../../../hooks/usePropertyQueries';
+import { useGetProperty, LISTING_FLOW_PROPERTY_CACHE } from '../../../../../hooks/usePropertyQueries';
 import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 import { useListUnitStore } from '../store/listUnitStore';
 
@@ -19,7 +19,7 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
   const previousUnitIdRef = useRef<string | undefined>(unitId);
 
   // Use React Query to fetch property data
-  const { data: property } = useGetProperty(propertyId || null, !!propertyId);
+  const { data: property } = useGetProperty(propertyId || null, !!propertyId, false, LISTING_FLOW_PROPERTY_CACHE);
 
   // Update refs to track current propertyId and unitId
   useEffect(() => {

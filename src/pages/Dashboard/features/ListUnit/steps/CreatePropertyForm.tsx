@@ -11,7 +11,7 @@ import AddRibbon from './create-property/AddRibbon';
 import NextStepButton from '../components/NextStepButton';
 import { authService } from '../../../../../services/auth.service';
 import { useCreatePropertyStore } from '../store/createPropertyStore';
-import { useGetProperty, useUpdateProperty } from '../../../../../hooks/usePropertyQueries';
+import { useGetProperty, useUpdateProperty, useCreateProperty } from '../../../../../hooks/usePropertyQueries';
 
 interface CreatePropertyFormProps {
   onSubmit: (propertyData: any) => void;
@@ -34,6 +34,8 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
   } = useCreatePropertyStore();
 
   const [error, setError] = useState<string | null>(null);
+  // True while photo files are being uploaded to S3 (step 6).
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
 
   // Track if we've just created a property to prevent step reset
   const isNewlyCreatedRef = useRef(false);
@@ -57,6 +59,10 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
   // React Query hooks
   const { data: propertyData, isLoading: isLoadingProperty, error: propertyError } = useGetProperty(initialPropertyId || null, !!initialPropertyId);
   const updatePropertyMutation = useUpdateProperty();
+  const createPropertyMutation = useCreateProperty();
+
+  // The form is "busy" (block Next) while any save is in flight.
+  const isBusy = createPropertyMutation.isPending || updatePropertyMutation.isPending || isUploadingPhotos;
 
   // Get current user ID on mount
   useEffect(() => {
@@ -285,11 +291,13 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       }
       : undefined;
 
-    // Prepare photos
+    // Prepare photos. By the time we build the final payload the photo step has
+    // already uploaded any File objects and replaced them with URL strings.
     const photos: Array<{ photoUrl: string; isPrimary: boolean }> = [];
+    let coverPhotoUrl = '';
     if (formData.coverPhoto) {
       // Extract URL from coverPhoto (can be string or PhotoFile object)
-      const coverPhotoUrl = typeof formData.coverPhoto === 'string'
+      coverPhotoUrl = typeof formData.coverPhoto === 'string'
         ? formData.coverPhoto
         : formData.coverPhoto.previewUrl || '';
       if (coverPhotoUrl) {
@@ -317,6 +325,8 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       marketRent: formData.marketRent ? parseFloat(formData.marketRent) : undefined,
       address,
       description: formData.marketingDescription || undefined,
+      coverPhotoUrl: coverPhotoUrl || undefined,
+      youtubeUrl: formData.youtubeUrl || undefined,
       ribbonType: mapRibbonType(formData.ribbonType || 'none'),
       ribbonTitle: formData.ribbonTitle && formData.ribbonType !== 'none' ? formData.ribbonTitle : undefined,
       singleUnitDetails,
@@ -325,147 +335,90 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     };
   };
 
-  // Handle property creation from GeneralInfo
-  // This is called when GeneralInfo saves - move to step 2 (PropertySummaryMap)
-  const handlePropertyCreated = (id: string) => {
-    // Mark that we just created this property
-    isNewlyCreatedRef.current = true;
-    setPropertyId(id);
-    // Move to step 2 (PropertySummaryMap) after saving GeneralInfo
+  // Upload a single photo File to S3 WITHOUT a propertyId — the endpoint just
+  // returns the URL and creates no DB row (the final create/update persists the
+  // photo set). Existing photos are already URL strings and pass through.
+  const uploadPhotoFile = async (file: File): Promise<string> => {
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`${API_BASE_URL}/upload/image`, {
+      method: 'POST',
+      credentials: 'include',
+      body: fd,
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to upload image');
+    }
+    const data = await res.json();
+    return data.url;
+  };
+
+  const resolvePhotoToUrl = async (photo: any): Promise<string> => {
+    if (typeof photo === 'string') return photo;
+    if (photo && typeof photo === 'object' && 'file' in photo && photo.file) {
+      return uploadPhotoFile(photo.file as File);
+    }
+    throw new Error('Invalid photo');
+  };
+
+  // Single network call at the end: create a brand-new property (no propertyId)
+  // or update the existing one (edit flow). All form data lives in the store.
+  const finalSubmit = async () => {
+    if (!managerId) {
+      setError('User information not available. Please refresh the page.');
+      return;
+    }
+    setError(null);
+    try {
+      const payload = mapFormDataToBackend();
+      if (propertyId) {
+        // Edit: never change ownership (managerId) or property type via this
+        // wizard — send everything else.
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { managerId: _omitManager, propertyType: _omitType, ...updateData } = payload;
+        const updated = await updatePropertyMutation.mutateAsync({ propertyId, updateData });
+        onSubmit(updated);
+      } else {
+        const created = await createPropertyMutation.mutateAsync(payload);
+        if (created?.id) setPropertyId(created.id);
+        onSubmit(created);
+      }
+    } catch (err) {
+      console.error('Error saving property:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save property. Please try again.');
+    }
+  };
+
+  // Called when GeneralInfo (step 1) is valid. No API call anymore — just keep
+  // the data in the store and advance. The property is created at the very end.
+  const handleGeneralInfoContinue = () => {
+    setError(null);
     setCurrentStep(2);
-    // Clear the flag after a short delay to allow step update to complete
-    setTimeout(() => {
-      isNewlyCreatedRef.current = false;
-    }, 100);
   };
 
   const handleNext = async () => {
-    // Save basic amenities (parking, laundry, AC) when on step 3 (BasicAmenities)
-    if (currentStep === 3) {
-      if (!managerId || !propertyId) {
-        setError('Property information not available. Please start from step 1.');
-        return;
-      }
+    setError(null);
 
-      setError(null);
-
-      try {
-        // Prepare amenities with parking, laundry, and AC
-        // Always provide all three fields (required by DTO), using selected values or 'NONE' as default
-        const amenities = {
-          parking: mapParkingType(formData.parking || 'NONE'),
-          laundry: mapLaundryType(formData.laundry || 'NONE'),
-          airConditioning: mapACType(formData.ac || 'NONE'),
-          // Preserve existing extended amenities and features if any
-          propertyAmenities: Array.isArray(formData.extendedAmenities) ? formData.extendedAmenities : [],
-          propertyFeatures: Array.isArray(formData.features) ? formData.features : [],
-        };
-
-        const updateData: any = {
-          amenities: amenities,
-        };
-
-        await updatePropertyMutation.mutateAsync({
-          propertyId,
-          updateData,
-        });
-        setCurrentStep(currentStep + 1);
-      } catch (err) {
-        console.error('Error updating basic amenities:', err);
-        setError(err instanceof Error ? err.message : 'Failed to save amenities. Please try again.');
-      }
+    // Steps 2-5 (map, amenities, extended amenities, features): no API calls —
+    // their data is already in the store. Just advance.
+    if (currentStep >= 2 && currentStep <= 5) {
+      setCurrentStep(currentStep + 1);
       return;
     }
 
-    // Save extended amenities when on step 4 (BasicAmenitiesExtended)
-    if (currentStep === 4) {
-      if (!managerId || !propertyId) {
-        setError('Property information not available. Please start from step 1.');
-        return;
-      }
-
-      setError(null);
-
-      try {
-        // Prepare amenities with extended amenities for update
-        // Include parking, laundry, AC from previous step and add extended amenities
-        const amenities = {
-          parking: mapParkingType(formData.parking || 'NONE'),
-          laundry: mapLaundryType(formData.laundry || 'NONE'),
-          airConditioning: mapACType(formData.ac || 'NONE'),
-          propertyAmenities: Array.isArray(formData.extendedAmenities) ? formData.extendedAmenities : [],
-          // Preserve existing features if any
-          propertyFeatures: Array.isArray(formData.features) ? formData.features : [],
-        };
-
-        const updateData: any = {
-          amenities: amenities,
-        };
-
-        await updatePropertyMutation.mutateAsync({
-          propertyId,
-          updateData,
-        });
-        setCurrentStep(currentStep + 1);
-      } catch (err) {
-        console.error('Error updating extended amenities:', err);
-        setError(err instanceof Error ? err.message : 'Failed to save extended amenities. Please try again.');
-      }
-      return;
-    }
-
-    // Save features when on step 5 (PropertyFeatures)
-    if (currentStep === 5) {
-      if (!managerId || !propertyId) {
-        setError('Property information not available. Please start from step 1.');
-        return;
-      }
-
-      setError(null);
-
-      try {
-        // Prepare amenities with features for update
-        // Include parking, laundry, AC, extended amenities from previous steps and add features
-        // Always provide all three fields (required by DTO), using selected values or 'NONE' as default
-        const amenities = {
-          parking: mapParkingType(formData.parking || 'NONE'),
-          laundry: mapLaundryType(formData.laundry || 'NONE'),
-          airConditioning: mapACType(formData.ac || 'NONE'),
-          propertyAmenities: Array.isArray(formData.extendedAmenities) ? formData.extendedAmenities : [],
-          propertyFeatures: Array.isArray(formData.features) ? formData.features : [],
-        };
-
-        const updateData: any = {
-          amenities: amenities,
-        };
-
-        await updatePropertyMutation.mutateAsync({
-          propertyId,
-          updateData,
-        });
-        setCurrentStep(currentStep + 1);
-      } catch (err) {
-        console.error('Error updating property features:', err);
-        setError(err instanceof Error ? err.message : 'Failed to save features. Please try again.');
-      }
-      return;
-    }
-
-    // Save photos when on step 6 (PropertyPhotos)
+    // Step 6 (Photos): validate, then upload any new File objects to S3 to get
+    // URLs and store them back in the store. No property is touched here.
     if (currentStep === 6) {
-      // Validate cover photo (required)
       if (!formData.coverPhoto) {
         setError('Cover photo is required. Please upload a cover photo.');
         return;
       }
-
-      // Validate gallery photos (required - at least one)
       if (!formData.galleryPhotos || formData.galleryPhotos.length === 0) {
         setError('At least one gallery photo is required. Please add gallery photos.');
         return;
       }
-
-      // Validate YouTube URL format if provided (optional)
       if (formData.youtubeUrl && formData.youtubeUrl.trim()) {
         const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
         if (!youtubeRegex.test(formData.youtubeUrl.trim())) {
@@ -474,205 +427,46 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         }
       }
 
-      if (!managerId || !propertyId) {
-        setError('Property information not available. Please start from step 1.');
-        return;
-      }
-
-      setError(null);
-
       try {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+        setIsUploadingPhotos(true);
+        const { updateFormData } = useCreatePropertyStore.getState();
 
-        // Handle cover photo - can be a string URL (existing) or object with file (new upload)
-        let coverPhotoUrl: string;
+        // Resolve cover photo to a URL (upload if it's a new file).
+        const coverUrl = await resolvePhotoToUrl(formData.coverPhoto);
+        updateFormData('coverPhoto', coverUrl);
 
-        if (typeof formData.coverPhoto === 'string') {
-          // Existing cover photo URL - use it directly
-          coverPhotoUrl = formData.coverPhoto;
-        } else if (formData.coverPhoto && typeof formData.coverPhoto === 'object' && 'file' in formData.coverPhoto) {
-          // New cover photo upload
-          const coverPhotoFile = (formData.coverPhoto as { file: File; previewUrl: string }).file;
-          if (!coverPhotoFile) {
-            throw new Error('Cover photo file is missing');
-          }
-
-          const coverPhotoFormData = new FormData();
-          coverPhotoFormData.append('file', coverPhotoFile);
-          coverPhotoFormData.append('propertyId', propertyId);
-
-          const coverPhotoResponse = await fetch(`${API_BASE_URL}/upload/image`, {
-            method: 'POST',
-            credentials: 'include',
-            body: coverPhotoFormData,
-          });
-
-          if (!coverPhotoResponse.ok) {
-            const errorData = await coverPhotoResponse.json().catch(() => ({}));
-            throw new Error(errorData.message || 'Failed to upload cover photo');
-          }
-
-          const coverPhotoData = await coverPhotoResponse.json();
-          coverPhotoUrl = coverPhotoData.url;
-        } else {
-          throw new Error('Cover photo is invalid');
+        // Resolve every gallery photo to a URL.
+        const galleryUrls: string[] = [];
+        for (const galleryPhoto of formData.galleryPhotos) {
+          galleryUrls.push(await resolvePhotoToUrl(galleryPhoto));
         }
+        updateFormData('galleryPhotos', galleryUrls);
 
-        // Handle gallery photos - can be strings (existing URLs) or objects with files (new uploads)
-        const galleryPhotoUrls: string[] = [];
-        const galleryPhotos = formData.galleryPhotos || [];
-
-        for (const galleryPhoto of galleryPhotos) {
-          if (typeof galleryPhoto === 'string') {
-            // Existing gallery photo URL - use it directly
-            galleryPhotoUrls.push(galleryPhoto);
-          } else if (galleryPhoto && typeof galleryPhoto === 'object' && 'file' in galleryPhoto) {
-            // New gallery photo upload
-            const galleryPhotoFile = (galleryPhoto as { file: File; previewUrl: string }).file;
-            if (galleryPhotoFile) {
-              const galleryFormData = new FormData();
-              galleryFormData.append('file', galleryPhotoFile);
-              galleryFormData.append('propertyId', propertyId);
-
-              const galleryResponse = await fetch(`${API_BASE_URL}/upload/image`, {
-                method: 'POST',
-                credentials: 'include',
-                body: galleryFormData,
-              });
-
-              if (galleryResponse.ok) {
-                const galleryData = await galleryResponse.json();
-                galleryPhotoUrls.push(galleryData.url);
-              } else {
-                console.warn('Failed to upload gallery photo:', galleryPhoto);
-              }
-            }
-          }
-        }
-
-        // Prepare photos array for PropertyPhoto table
-        // The /upload/image endpoint already creates PropertyPhoto records,
-        // but we need to ensure the cover photo is marked as primary
-        const photos = [
-          { photoUrl: coverPhotoUrl, isPrimary: true },
-          ...galleryPhotoUrls.map(url => ({ photoUrl: url, isPrimary: false })),
-        ];
-
-        // Update property with coverPhotoUrl, photos (to set isPrimary correctly), and youtubeUrl
-        const updateData: any = {
-          coverPhotoUrl: coverPhotoUrl,
-          youtubeUrl: formData.youtubeUrl || null,
-          photos: photos,
-        };
-
-        await updatePropertyMutation.mutateAsync({
-          propertyId,
-          updateData,
-        });
-        setCurrentStep(currentStep + 1);
+        setCurrentStep(7);
       } catch (err) {
         console.error('Error uploading photos:', err);
         setError(err instanceof Error ? err.message : 'Failed to upload photos. Please try again.');
+      } finally {
+        setIsUploadingPhotos(false);
       }
       return;
     }
 
-    // Save marketing description when on step 7 (MarketingDescription)
+    // Step 7 (Marketing): data is in the store. When editing an existing
+    // property, allow finishing here; otherwise continue to the ribbon step.
     if (currentStep === 7) {
-      if (!managerId || !propertyId) {
-        setError('Property information not available. Please start from step 1.');
-        return;
-      }
-
-      setError(null);
-
-      try {
-        // Update property with marketing description
-        const updateData: any = {
-          description: formData.marketingDescription || null,
-        };
-
-        const updatedProperty = await updatePropertyMutation.mutateAsync({
-          propertyId,
-          updateData,
-        });
-
-        // If property is already complete (being edited), allow completing directly from step 7
-        // Otherwise, move to step 8 (AddRibbon)
-        if (initialPropertyId && propertyData) {
-          // Property is being edited and is already complete - complete the form
-          onSubmit(updatedProperty);
-        } else {
-          // New property or incomplete - move to step 8
-          setCurrentStep(currentStep + 1);
-        }
-      } catch (err) {
-        console.error('Error updating marketing description:', err);
-        setError(err instanceof Error ? err.message : 'Failed to save description. Please try again.');
+      if (initialPropertyId && propertyData) {
+        await finalSubmit();
+      } else {
+        setCurrentStep(8);
       }
       return;
     }
 
-    // Save ribbon data when on step 8 (AddRibbon)
+    // Step 8 (Ribbon) — final step: one create/update call with the whole form.
     if (currentStep === 8) {
-      if (!managerId || !propertyId) {
-        setError('Property information not available. Please start from step 1.');
-        return;
-      }
-
-      setError(null);
-
-      try {
-        // Map ribbon type to backend format
-        const ribbonType = mapRibbonType(formData.ribbonType || 'none');
-
-        // Update property with ribbon data
-        const updateData: any = {
-          ribbonType: ribbonType,
-          ribbonTitle: formData.ribbonTitle && formData.ribbonType !== 'none' ? formData.ribbonTitle : null,
-        };
-
-        // The mutation returns the updated property
-        const updatedProperty = await updatePropertyMutation.mutateAsync({
-          propertyId,
-          updateData,
-        });
-
-        // Call the onSubmit callback with the updated property
-        onSubmit(updatedProperty);
-      } catch (err) {
-        console.error('Error updating ribbon:', err);
-        setError(err instanceof Error ? err.message : 'Failed to save ribbon. Please try again.');
-      }
+      await finalSubmit();
       return;
-    }
-
-    if (currentStep < 8) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      // Update existing property with remaining data
-      if (!managerId || !propertyId) {
-        setError('Property information not available. Please start from step 1.');
-        return;
-      }
-
-      setError(null);
-
-      try {
-        const backendData = mapFormDataToBackend();
-        // Remove managerId and propertyName from update (they shouldn't change)
-        const { managerId: _, propertyName: __, ...updateData } = backendData;
-        const updatedProperty = await updatePropertyMutation.mutateAsync({
-          propertyId,
-          updateData,
-        });
-
-        // Call the onSubmit callback with the updated property
-        onSubmit(updatedProperty);
-      } catch (err) {
-        console.error('Error updating property:', err);
-        setError(err instanceof Error ? err.message : 'Failed to update property. Please try again.');
-      }
     }
   };
 
@@ -692,7 +486,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     switch (currentStep) {
       case 1:
         return <GeneralInfo
-          onPropertyCreated={handlePropertyCreated}
+          onContinue={handleGeneralInfoContinue}
           propertyId={propertyId || undefined}
         />;
       case 2:
@@ -745,16 +539,16 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           {/* Back Button */}
           <button
             onClick={handleBack}
-            disabled={updatePropertyMutation.isPending || currentStep === 1}
+            disabled={isBusy || currentStep === 1}
             className="flex items-center gap-2 px-4 md:px-6 py-3 border border-gray-300 text-gray-700 bg-white rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
           >
             <ArrowLeft className="w-4 h-4 md:w-[18px] md:h-[18px]" />
             Back
           </button>
           {/* Next Button */}
-          <NextStepButton onClick={handleNext} disabled={updatePropertyMutation.isPending || !managerId || !propertyId}>
-            {updatePropertyMutation.isPending
-              ? 'Updating...'
+          <NextStepButton onClick={handleNext} disabled={isBusy || !managerId}>
+            {isBusy
+              ? (isUploadingPhotos ? 'Uploading...' : 'Saving...')
               : currentStep === 8 || (currentStep === 7 && initialPropertyId && propertyData)
                 ? 'Complete Property'
                 : 'Next'}
