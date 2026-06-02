@@ -20,11 +20,12 @@ const CookiePolicy = lazy(() => import('./pages/basewebsite/legal/CookiePolicy')
 const AcceptInvitation = lazy(() => import('./pages/basewebsite/team/AcceptInvitation'));
 import { ToastProvider } from './components/common/Toast';
 import AIChatButton from './components/common/AIChatButton';
-const LoginPage = lazy(() => import('./pages/basewebsite/auth/login'));
-const SignUpPage = lazy(() => import('./pages/basewebsite/auth/signUp'));
-const Welcome = lazy(() => import('./pages/ServiceDashboard/pages/onboarding/Welcome'));
-const SelectProfession = lazy(() => import('./pages/ServiceDashboard/pages/onboarding/SelectProfession'));
-const ProfessionDetails = lazy(() => import('./pages/ServiceDashboard/pages/onboarding/ProfessionDetails'));
+import LoginPage from './pages/basewebsite/auth/login';
+import SignUpPage from './pages/basewebsite/auth/signUp';
+import { GlobalLoader } from './components/common/GlobalLoader';
+import Welcome from './pages/ServiceDashboard/pages/onboarding/Welcome';
+import SelectProfession from './pages/ServiceDashboard/pages/onboarding/SelectProfession';
+import ProfessionDetails from './pages/ServiceDashboard/pages/onboarding/ProfessionDetails';
 import ServiceDashboardLayout from './components/service-dashboard/layout/ServiceDashboardLayout';
 const ServiceDashboard = lazy(() => import('./pages/ServiceDashboard/pages/Dashboard/ServiceDashboard'));
 const ServiceDashboardSettings = lazy(() => import('./pages/ServiceDashboard/pages/Dashboard/Settings/ServiceDashboardSettings'));
@@ -228,6 +229,7 @@ const App: React.FC = () => {
         <BrowserRouter>
           <RoutedApp>
           <AutoLoginProvider>
+          <GlobalLoader />
           <AIChatButton />
           <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>Loading…</div>}>
           <Routes>

@@ -11,6 +11,8 @@ interface TemplateEditorProps {
     showPreviewButton?: boolean;
     showSignatureSection?: boolean;
     previewValues?: Record<string, string>;
+    isDefaultSignature?: boolean;
+    onSignatureToggle?: (enabled: boolean) => void;
 }
 
 const AUTO_FILL_MAPPINGS: Record<string, string> = {
@@ -34,13 +36,27 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     showPreviewButton = false,
     showSignatureSection = false,
     previewValues = {},
+    isDefaultSignature: isDefaultSignatureProp,
+    onSignatureToggle,
 }) => {
     const [activeTab, setActiveTab] = useState<'fields' | 'autoFill'>('fields');
     const [editorContent, setEditorContent] = useState(initialEditorContent);
-    const [isDefaultSignature, setIsDefaultSignature] = useState(true);
+    const [localDefaultSignature, setLocalDefaultSignature] = useState(true);
+    const isDefaultSignature = isDefaultSignatureProp !== undefined ? isDefaultSignatureProp : localDefaultSignature;
+
+    const handleSignatureToggle = () => {
+        const next = !isDefaultSignature;
+        setLocalDefaultSignature(next);
+        if (onSignatureToggle) onSignatureToggle(next);
+    };
+
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [, setEditor] = useState(null);
     const previewContentRef = useRef<HTMLDivElement | null>(null);
+
+    React.useEffect(() => {
+        setEditorContent(initialEditorContent);
+    }, [initialEditorContent]);
 
     const buildPreviewContent = (): string => {
         let content = editorContent;
@@ -291,7 +307,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                                     type="checkbox"
                                     className="sr-only peer"
                                     checked={isDefaultSignature}
-                                    onChange={() => setIsDefaultSignature(!isDefaultSignature)}
+                                    onChange={handleSignatureToggle}
                                 />
                                 <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-[#88D94C]"></div>
                             </label>

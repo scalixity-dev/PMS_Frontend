@@ -57,6 +57,7 @@ export interface RenderTemplateDto {
   tenantId?: string;
   leaseId?: string;
   sendToTenant?: boolean;
+  appendSignature?: boolean;
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {

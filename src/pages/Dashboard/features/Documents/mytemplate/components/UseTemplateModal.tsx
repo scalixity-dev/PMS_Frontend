@@ -39,21 +39,35 @@ const UseTemplateModal: React.FC<UseTemplateModalProps> = ({ isOpen, onClose, te
     }, [propertiesData]);
 
     const leaseOptions = useMemo(() => {
-        const arr = Array.isArray(leasesData) ? leasesData : [];
+        let arr = Array.isArray(leasesData) ? leasesData : [];
+        if (selectedProperty) {
+            arr = arr.filter((l: any) => l.property?.propertyName === selectedProperty);
+        }
         return arr.map((l: any) => {
             const propertyName = l.property?.propertyName || 'Property';
             const tenantName = l.tenant?.fullName || 'Tenant';
             return `${propertyName} - ${tenantName}`;
         }).filter(Boolean) as string[];
-    }, [leasesData]);
+    }, [leasesData, selectedProperty]);
 
     const tenantOptions = useMemo(() => {
         const arr = Array.isArray(tenantsData) ? tenantsData : [];
-        return arr.map((t: any) => {
+        let filtered = arr;
+        if (selectedLease) {
+            const lease = (Array.isArray(leasesData) ? leasesData : []).find((l: any) => {
+                const propertyName = l.property?.propertyName || 'Property';
+                const tenantName = l.tenant?.fullName || 'Tenant';
+                return `${propertyName} - ${tenantName}` === selectedLease;
+            });
+            if (lease && lease.tenantId) {
+                filtered = arr.filter((t: any) => t.id === lease.tenantId || t.userId === lease.tenantId);
+            }
+        }
+        return filtered.map((t: any) => {
             const name = [t.firstName, t.lastName].filter(Boolean).join(' ').trim() || t.user?.fullName || t.user?.email || '';
             return name;
         }).filter(Boolean) as string[];
-    }, [tenantsData]);
+    }, [tenantsData, selectedLease, leasesData]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -133,7 +147,12 @@ const UseTemplateModal: React.FC<UseTemplateModalProps> = ({ isOpen, onClose, te
                                 {isPropertyDropdownOpen && (
                                     <div className="absolute z-[200] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                         {propertyOptions.map((p) => (
-                                            <button key={p} onClick={() => { setSelectedProperty(p); setIsPropertyDropdownOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">{p}</button>
+                                            <button key={p} onClick={() => { 
+                                                setSelectedProperty(p); 
+                                                setIsPropertyDropdownOpen(false); 
+                                                setSelectedLease(''); 
+                                                setSelectedTenants(''); 
+                                            }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">{p}</button>
                                         ))}
                                     </div>
                                 )}
@@ -150,7 +169,11 @@ const UseTemplateModal: React.FC<UseTemplateModalProps> = ({ isOpen, onClose, te
                                 {isLeaseDropdownOpen && (
                                     <div className="absolute z-[200] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                         {leaseOptions.map((l) => (
-                                            <button key={l} onClick={() => { setSelectedLease(l); setIsLeaseDropdownOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">{l}</button>
+                                            <button key={l} onClick={() => { 
+                                                setSelectedLease(l); 
+                                                setIsLeaseDropdownOpen(false); 
+                                                setSelectedTenants(''); 
+                                            }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">{l}</button>
                                         ))}
                                     </div>
                                 )}
@@ -178,8 +201,8 @@ const UseTemplateModal: React.FC<UseTemplateModalProps> = ({ isOpen, onClose, te
                     <div className="flex justify-center mt-auto md:mt-0">
                         <button
                             onClick={handleUseTemplate}
-                            disabled={renderMutation.isPending}
-                            className="w-full md:w-auto bg-[#3A6D6C] text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors shadow-md disabled:opacity-60"
+                            disabled={renderMutation.isPending || !selectedProperty || !selectedLease || !selectedTenants}
+                            className="w-full md:w-auto bg-[#3A6D6C] text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {renderMutation.isPending ? 'Processing...' : 'Use Template'}
                         </button>

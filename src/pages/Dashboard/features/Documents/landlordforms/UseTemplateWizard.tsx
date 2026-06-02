@@ -6,6 +6,7 @@ import TemplateEditor from '../components/TemplateEditor';
 import { Dialog, Transition } from '@headlessui/react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import successAnimationUrl from '../../ListUnit/Success.lottie?url';
+import { useGetAllProperties } from '../../../../../hooks/usePropertyQueries';
 import { useGetAllLeases } from '../../../../../hooks/useLeaseQueries';
 import { useGetAllTenants } from '../../../../../hooks/useTenantQueries';
 import { useGetTemplates, useRenderTemplate } from '../../../../../hooks/useDocumentsQueries';
@@ -17,9 +18,10 @@ const FALLBACK_TENANTS: string[] = [];
 const FALLBACK_LEASES: string[] = [];
 
 const STEPS = [
-    { num: 1, label: 'Lease' },
-    { num: 2, label: 'Tenants' },
-    { num: 3, label: 'Templates & Signature' }
+    { num: 1, label: 'Property' },
+    { num: 2, label: 'Lease' },
+    { num: 3, label: 'Tenants' },
+    { num: 4, label: 'Templates & Signature' }
 ] as const;
 
 type StepNumber = typeof STEPS[number]['num'];
@@ -190,12 +192,22 @@ const UseTemplateWizard: React.FC = () => {
     const isAgreement = location.pathname.includes('send-agreement');
     const docTypeLabel = isAgreement ? 'Agreements' : 'Notices';
 
-    const [currentStep, setCurrentStep] = useState<StepNumber>(1);
-    const [selectedLease, setSelectedLease] = useState(state?.selectedLease || (id ? `Lease ${id}` : ''));
+    const [currentStep, setCurrentStep] = useState<StepNumber>(() => {
+        if (state?.selectedLease && state?.selectedTenants && state.selectedTenants.length > 0) return 4;
+        if (id) return 4;
+        return 1;
+    });
+    
+    const [selectedProperty, setSelectedProperty] = useState(state?.selectedProperty || '');
+    const [isPropertyDropdownOpen, setIsPropertyDropdownOpen] = useState(false);
+    const propertyDropdownRef = useRef<HTMLDivElement>(null);
+    
+    const [selectedLease, setSelectedLease] = useState(state?.selectedLease || '');
     const [selectedLeaseId, setSelectedLeaseId] = useState<string | undefined>(id);
     const [templateValues, setTemplateValues] = useState<Record<string, string>>({});
 
-    // Fetch leases, tenants
+    // Fetch properties, leases, tenants
+    const { data: propertiesData = [] } = useGetAllProperties(true, true);
     const { data: leasesData = [] } = useGetAllLeases(undefined, undefined, true);
     const { data: tenantsData = [] } = useGetAllTenants(undefined, true);
 
@@ -203,6 +215,11 @@ const UseTemplateWizard: React.FC = () => {
     const { data: apiTemplates = [] } = useGetTemplates({ category: 'LANDLORD_FORM', includeSystem: true });
 
     const renderMutation = useRenderTemplate();
+
+    const propertyOptions = useMemo(() => {
+        const arr = Array.isArray(propertiesData) ? propertiesData : [];
+        return arr.map((p: any) => p.propertyName).filter(Boolean) as string[];
+    }, [propertiesData]);
 
     const leaseLabelToId = useMemo(() => {
         const arr = Array.isArray(leasesData) ? leasesData : [];
@@ -217,9 +234,13 @@ const UseTemplateWizard: React.FC = () => {
     }, [leasesData]);
 
     const leaseOptions = useMemo(() => {
-        const labels = Object.keys(leaseLabelToId);
+        let arr = Array.isArray(leasesData) ? leasesData : [];
+        if (selectedProperty) {
+            arr = arr.filter((l: any) => l.property?.propertyName === selectedProperty);
+        }
+        const labels = arr.map((l: any) => `${l.property?.propertyName || 'Property'} - ${l.tenant?.fullName || 'Tenant'}`);
         return labels.length > 0 ? labels : FALLBACK_LEASES;
-    }, [leaseLabelToId]);
+    }, [leasesData, selectedProperty]);
 
     const selectedLeaseObj = useMemo(() => {
         const arr = Array.isArray(leasesData) ? leasesData : [];
@@ -266,12 +287,19 @@ const UseTemplateWizard: React.FC = () => {
 
     const tenantOptions = useMemo(() => {
         const arr = Array.isArray(tenantsData) ? tenantsData : [];
-        const mapped = arr.map((t: any) => {
+        let filtered = arr;
+        if (selectedLeaseId) {
+            const lease = (Array.isArray(leasesData) ? leasesData : []).find((l: any) => l.id === selectedLeaseId);
+            if (lease && lease.tenantId) {
+                filtered = arr.filter((t: any) => t.id === lease.tenantId || t.userId === lease.tenantId);
+            }
+        }
+        const mapped = filtered.map((t: any) => {
             const name = [t.firstName, t.lastName].filter(Boolean).join(' ').trim() || t.user?.fullName || t.user?.email || '';
             return name;
         }).filter(Boolean);
         return mapped.length > 0 ? mapped : FALLBACK_TENANTS;
-    }, [tenantsData]);
+    }, [tenantsData, selectedLeaseId, leasesData]);
 
     // Resolve initial template content from API or passed id
     const initialTemplate: DocumentTemplate | undefined = useMemo(() =>
@@ -297,24 +325,68 @@ const UseTemplateWizard: React.FC = () => {
     const leaseDropdownRef = useRef<HTMLDivElement>(null);
     const tenantsDropdownRef = useRef<HTMLDivElement>(null);
 
+    // Auto-resolve selectedLeaseId if we only have the string (e.g. from modal navigation)
+    useEffect(() => {
+        if (selectedLease && !selectedLeaseId && Object.keys(leaseLabelToId).length > 0) {
+            const resolvedId = leaseLabelToId[selectedLease];
+            if (resolvedId) {
+                setSelectedLeaseId(resolvedId);
+            }
+        }
+    }, [selectedLease, selectedLeaseId, leaseLabelToId]);
+
+    const hasAppliedInitialTemplate = useRef(false);
+
     // Update content + pre-fill values when initial template loads from API
     useEffect(() => {
-        if (initialTemplate) {
-            if (!templateContents[0]) {
-                setTemplateContents(prev => {
-                    const next = [...prev];
-                    next[0] = initialTemplate.content;
-                    return next;
-                });
-                if (initialTemplate.id) setActiveTemplateId(initialTemplate.id);
-            }
-            // Always refresh values when lease data or template changes
-            setTemplateValues(buildPrefilledValues(initialTemplate));
+        if (initialTemplate && !hasAppliedInitialTemplate.current) {
+            setTemplateContents(prev => {
+                const next = [...prev];
+                next[0] = initialTemplate.content;
+                return next;
+            });
+            if (initialTemplate.id) setActiveTemplateId(initialTemplate.id);
+            hasAppliedInitialTemplate.current = true;
         }
-    }, [initialTemplate, selectedLeaseObj]);
+    }, [initialTemplate]);
+
+    // Always refresh values when lease data or active template changes
+    useEffect(() => {
+        const tmpl = activeTemplateId 
+            ? apiTemplates.find((t: DocumentTemplate) => t.id === activeTemplateId)
+            : initialTemplate;
+            
+        if (tmpl) {
+            setTemplateValues(buildPrefilledValues(tmpl));
+        }
+    }, [selectedLeaseObj, activeTemplateId, initialTemplate, apiTemplates]);
+
+    // Pre-fill fields if navigating with an ID
+    useEffect(() => {
+        if (id && leasesData.length > 0) {
+            const lease = leasesData.find((l: any) => l.id === id);
+            if (lease) {
+                const pName = lease.property?.propertyName || 'Property';
+                const tName = lease.tenant?.fullName || 'Tenant';
+                if (!selectedProperty) setSelectedProperty(pName);
+                if (!selectedLease) setSelectedLease(`${pName} - ${tName}`);
+                
+                if (tenantsData.length > 0 && selectedTenants.length === 0 && !state?.selectedTenants) {
+                     const tenant = tenantsData.find((t: any) => t.id === lease.tenantId || t.userId === lease.tenantId);
+                     if (tenant) {
+                         const name = [tenant.firstName, tenant.lastName].filter(Boolean).join(' ').trim() || tenant.user?.fullName || tenant.user?.email || '';
+                         if (name) setSelectedTenants([name]);
+                     }
+                }
+            }
+        }
+    }, [id, leasesData, tenantsData, selectedProperty, selectedLease, selectedTenants.length, state?.selectedTenants]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
+            if (propertyDropdownRef.current && !propertyDropdownRef.current.contains(event.target as Node)) {
+                setIsPropertyDropdownOpen(false);
+            }
             if (leaseDropdownRef.current && !leaseDropdownRef.current.contains(event.target as Node)) {
                 setIsLeaseDropdownOpen(false);
             }
@@ -371,6 +443,8 @@ const UseTemplateWizard: React.FC = () => {
         setIsEditorMode(true);
     };
 
+    const [appendSignature, setAppendSignature] = useState(true);
+
     const handleSendToReview = async () => {
         if (activeTemplateId) {
             try {
@@ -380,6 +454,7 @@ const UseTemplateWizard: React.FC = () => {
                         values: templateValues,
                         leaseId: selectedLeaseId,
                         sendToTenant: true,
+                        appendSignature: appendSignature,
                     }
                 });
             } catch {
@@ -406,7 +481,30 @@ const UseTemplateWizard: React.FC = () => {
             case 1:
                 return (
                     <div className="w-full flex flex-col items-center">
-                        <StepHeader title="Lease" description="First, select the lease from the dropdown menu" />
+                        <StepHeader title="Property" description="First, select the property" />
+                        <WizardDropdown
+                            label="Property"
+                            placeholder="Search a Property"
+                            options={propertyOptions}
+                            selectedValue={selectedProperty}
+                            onSelect={(label) => {
+                                setSelectedProperty(label);
+                                setSelectedLease('');
+                                setSelectedLeaseId('');
+                                setSelectedTenants([]);
+                            }}
+                            isOpen={isPropertyDropdownOpen}
+                            setIsOpen={setIsPropertyDropdownOpen}
+                            dropdownRef={propertyDropdownRef}
+                            onNext={() => setCurrentStep(2)}
+                            disabled={!!id}
+                        />
+                    </div>
+                );
+            case 2:
+                return (
+                    <div className="w-full flex flex-col items-center">
+                        <StepHeader title="Lease" description="Select the lease from the dropdown menu" />
                         <WizardDropdown
                             label="Lease"
                             placeholder="Search a Lease"
@@ -415,16 +513,17 @@ const UseTemplateWizard: React.FC = () => {
                             onSelect={(label) => {
                                 setSelectedLease(label);
                                 setSelectedLeaseId(leaseLabelToId[label]);
+                                setSelectedTenants([]);
                             }}
                             isOpen={isLeaseDropdownOpen}
                             setIsOpen={setIsLeaseDropdownOpen}
                             dropdownRef={leaseDropdownRef}
-                            onNext={() => setCurrentStep(2)}
+                            onNext={() => setCurrentStep(3)}
                             disabled={!!id}
                         />
                     </div>
                 );
-            case 2:
+            case 3:
                 return (
                     <div className="w-full flex flex-col items-center">
                         <StepHeader title="Tenants" description="Select the tenants for this lease" />
@@ -441,12 +540,12 @@ const UseTemplateWizard: React.FC = () => {
                             isOpen={isTenantsDropdownOpen}
                             setIsOpen={setIsTenantsDropdownOpen}
                             dropdownRef={tenantsDropdownRef}
-                            onNext={() => setCurrentStep(3)}
+                            onNext={() => setCurrentStep(4)}
                             multiple={true}
                         />
                     </div>
                 );
-            case 3:
+            case 4:
                 return (
                     <div className="w-full">
                         {!isEditorMode ? (
@@ -558,6 +657,8 @@ const UseTemplateWizard: React.FC = () => {
                                         showPreviewButton={true}
                                         showSignatureSection={true}
                                         previewValues={templateValues}
+                                        isDefaultSignature={appendSignature}
+                                        onSignatureToggle={setAppendSignature}
                                     />
                                 </div>
 
@@ -585,7 +686,7 @@ const UseTemplateWizard: React.FC = () => {
     return (
         <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-2 md:px-6 overflow-y-auto">
             <div className="flex-1 flex items-start justify-center pt-4 md:pt-8 pb-10">
-                <div className={`bg-[#DFE5E3] rounded-3xl shadow-lg w-full ${currentStep >= 3 ? 'max-w-5xl' : 'max-w-2xl'} min-h-[500px] p-4 md:p-12 transition-all duration-300`}>
+                <div className={`bg-[#DFE5E3] rounded-3xl shadow-lg w-full ${currentStep >= 4 ? 'max-w-5xl' : 'max-w-2xl'} min-h-[500px] p-4 md:p-12 transition-all duration-300`}>
                     <button onClick={handleBack} className="flex items-center gap-2 text-[#20CC95] font-semibold text-sm mb-6 md:mb-12 hover:text-[#1db885] transition-colors">
                         <ChevronLeft size={18} />
                         BACK
@@ -593,10 +694,10 @@ const UseTemplateWizard: React.FC = () => {
 
                     <div className="w-full max-w-3xl mx-auto mb-8 md:mb-12">
                         <div className="relative">
-                            <div className="absolute top-4 left-[16.66%] right-[16.66%] h-[3px] bg-gray-200 -translate-y-1/2 z-0">
+                            <div className="absolute top-4 left-[12.5%] right-[12.5%] h-[3px] bg-gray-200 -translate-y-1/2 z-0">
                                 <div className="h-full bg-[#20CC95] transition-all duration-300 ease-in-out" style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }} />
                             </div>
-                            <div className="grid grid-cols-3 relative z-10">
+                            <div className="grid grid-cols-4 relative z-10">
                                 {STEPS.map((step) => (
                                     <div key={step.num} className="flex flex-col items-center gap-2 md:gap-3">
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-300 ${currentStep >= step.num ? 'bg-[#20CC95] text-white' : 'bg-[#6B7280] text-white'}`}>

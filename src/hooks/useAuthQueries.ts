@@ -63,7 +63,7 @@ export const useUpdateProfile = () => {
       return authService.updateProfile(data);
     },
     onSuccess: () => {
-      // Invalidate current user to refetch updated data
+      authService.invalidateCurrentUserCache();
       queryClient.invalidateQueries({ queryKey: authQueryKeys.currentUser() });
     },
   });

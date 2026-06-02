@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import logo from "../../assets/images/logo.png";
 import { authService } from "../../services/auth.service";
+import { useGetCurrentUser } from "../../hooks/useAuthQueries";
 import { propertyQueryKeys } from "../../hooks/usePropertyQueries";
 import AccountSwitcherModal from "../common/AccountSwitcherModal";
 
@@ -28,34 +29,17 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [userName, setUserName] = useState<string>("User");
-  const [userEmail, setUserEmail] = useState<string>("");
-  const [userRole, setUserRole] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Fetch current user data
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await authService.getCurrentUser();
-        setUserName(user.fullName || "User");
-        setUserEmail(user.email || "");
-        setUserRole(user.role || "");
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
-        setUserName("User");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
+  const { data: currentUser, isLoading } = useGetCurrentUser();
+  const userName = currentUser?.fullName || "User";
+  const userEmail = currentUser?.email || "";
+  const userRole = currentUser?.role || "";
+  const profilePhotoUrl = currentUser?.profilePhotoUrl || "";
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -334,7 +318,11 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
                   {isLoading ? "Loading..." : userName}
                 </span>
                 <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden">
-                  <User size={16} className="text-white" />
+                  {profilePhotoUrl ? (
+                    <img src={profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={16} className="text-white" />
+                  )}
                 </div>
               </div>
 
@@ -343,8 +331,12 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
                 <div className="absolute right-0 mt-4 w-80 bg-white rounded-b-2xl shadow-[0_20px_50px_rgba(15,23,42,0.18)] border border-gray-200 overflow-hidden z-50">
                   <div className="px-5 pt-5 pb-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-14 h-14 rounded-full bg-gray-900 flex items-center justify-center text-white self-start">
-                        <User size={28} />
+                      <div className="w-14 h-14 rounded-full bg-gray-900 flex items-center justify-center text-white self-start overflow-hidden">
+                        {profilePhotoUrl ? (
+                          <img src={profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <User size={28} />
+                        )}
                       </div>
                       <div className="flex flex-col items-start space-y-0.5">
                         <p className="text-xs text-gray-500">{userRole || "Landlord"}</p>
