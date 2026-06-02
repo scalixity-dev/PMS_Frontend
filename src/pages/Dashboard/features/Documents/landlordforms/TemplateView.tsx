@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, X, FileText } from 'lucide-react';
 import DOMPurify from 'dompurify';
@@ -58,10 +58,33 @@ const TemplateView: React.FC = () => {
 
     const propertyOptions: string[] = (Array.isArray(propertiesData) ? propertiesData : [])
         .map((p: any) => p.propertyName).filter(Boolean);
-    const leaseOptions: string[] = (Array.isArray(leasesData) ? leasesData : [])
-        .map((l: any) => `${l.property?.propertyName || 'Property'} - ${l.tenant?.fullName || 'Tenant'}`).filter(Boolean);
-    const tenantOptions: string[] = (Array.isArray(tenantsData) ? tenantsData : [])
-        .map((t: any) => [t.firstName, t.lastName].filter(Boolean).join(' ').trim() || t.user?.fullName || t.user?.email || '').filter(Boolean);
+        
+    const leaseOptions = useMemo(() => {
+        let arr = Array.isArray(leasesData) ? leasesData : [];
+        if (selectedProperty) {
+            arr = arr.filter((l: any) => l.property?.propertyName === selectedProperty);
+        }
+        return arr.map((l: any) => `${l.property?.propertyName || 'Property'} - ${l.tenant?.fullName || 'Tenant'}`).filter(Boolean);
+    }, [leasesData, selectedProperty]);
+
+    const tenantOptions = useMemo(() => {
+        const arr = Array.isArray(tenantsData) ? tenantsData : [];
+        let filtered = arr;
+        if (selectedLease) {
+            const lease = (Array.isArray(leasesData) ? leasesData : []).find((l: any) => {
+                const propertyName = l.property?.propertyName || 'Property';
+                const tenantName = l.tenant?.fullName || 'Tenant';
+                return `${propertyName} - ${tenantName}` === selectedLease;
+            });
+            if (lease && lease.tenantId) {
+                filtered = arr.filter((t: any) => t.id === lease.tenantId || t.userId === lease.tenantId);
+            }
+        }
+        return filtered.map((t: any) => {
+            const name = [t.firstName, t.lastName].filter(Boolean).join(' ').trim() || t.user?.fullName || t.user?.email || '';
+            return name;
+        }).filter(Boolean);
+    }, [tenantsData, selectedLease, leasesData]);
 
     useEffect(() => {
         if (state?.showSuccessPopup) {
@@ -201,7 +224,12 @@ const TemplateView: React.FC = () => {
                                         {isPropertyDropdownOpen && (
                                             <div className="absolute z-[200] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                                 {propertyOptions.map((p) => (
-                                                    <button key={p} onClick={() => { setSelectedProperty(p); setIsPropertyDropdownOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors truncate">{p}</button>
+                                                    <button key={p} onClick={() => { 
+                                                        setSelectedProperty(p); 
+                                                        setIsPropertyDropdownOpen(false); 
+                                                        setSelectedLease(''); 
+                                                        setSelectedTenants(''); 
+                                                    }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors truncate">{p}</button>
                                                 ))}
                                             </div>
                                         )}
@@ -218,7 +246,11 @@ const TemplateView: React.FC = () => {
                                         {isLeaseDropdownOpen && (
                                             <div className="absolute z-[200] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                                 {leaseOptions.map((l) => (
-                                                    <button key={l} onClick={() => { setSelectedLease(l); setIsLeaseDropdownOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors truncate">{l}</button>
+                                                    <button key={l} onClick={() => { 
+                                                        setSelectedLease(l); 
+                                                        setIsLeaseDropdownOpen(false); 
+                                                        setSelectedTenants(''); 
+                                                    }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors truncate">{l}</button>
                                                 ))}
                                             </div>
                                         )}
@@ -245,6 +277,7 @@ const TemplateView: React.FC = () => {
 
                             <div className="flex justify-center">
                                 <button
+                                    disabled={!selectedProperty || !selectedLease || !selectedTenants}
                                     onClick={() => {
                                         setIsUseTemplateModalOpen(false);
                                         navigate(`/dashboard/documents/landlord-forms/use-template/${encodeURIComponent(decodedTemplateName)}`, {
@@ -256,7 +289,11 @@ const TemplateView: React.FC = () => {
                                             }
                                         });
                                     }}
-                                    className="w-full md:w-auto bg-[#3A6D6C] text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors"
+                                    className={`w-full md:w-auto bg-[#3A6D6C] text-white px-8 py-3 rounded-lg text-sm font-medium transition-colors ${
+                                        !selectedProperty || !selectedLease || !selectedTenants
+                                            ? 'opacity-50 cursor-not-allowed'
+                                            : 'hover:bg-[#2d5650]'
+                                    }`}
                                 >
                                     Use Template
                                 </button>

@@ -23,39 +23,15 @@ interface FileData {
     sizeBytes?: number | null;
 }
 
-// Allowed hosts whitelist for external URLs
-const ALLOWED_HOSTS = [
-    'images.unsplash.com',
-    'pdfobject.com',
-    'amazonaws.com',
-    'localhost',
-    '127.0.0.1',
-];
-
-/**
- * Validates a URL for safe rendering in iframes/images.
- * Returns true if URL is:
- * - A valid absolute HTTPS URL (or HTTP for localhost development)
- * - From an allowed host whitelist
- */
 const isValidPreviewUrl = (url: string): boolean => {
     if (!url || typeof url !== 'string') return false;
 
     try {
         const parsedUrl = new URL(url);
 
-        // Allow only https (and http for localhost/127.0.0.1 during development)
+        // Allow https (and http for localhost)
         const isLocalhost = parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1';
-        const isSecureProtocol = parsedUrl.protocol === 'https:' || (isLocalhost && parsedUrl.protocol === 'http:');
-
-        if (!isSecureProtocol) return false;
-
-        // Check against allowed hosts whitelist
-        const isAllowedHost = ALLOWED_HOSTS.some(host =>
-            parsedUrl.hostname === host || parsedUrl.hostname.endsWith(`.${host}`)
-        );
-
-        return isAllowedHost;
+        return parsedUrl.protocol === 'https:' || (isLocalhost && parsedUrl.protocol === 'http:');
     } catch {
         // Invalid URL format
         return false;
@@ -105,10 +81,8 @@ const FilePreviewModal = ({ isOpen, file, onClose }: { isOpen: boolean; file: Fi
                             </button>
                             <iframe
                                 src={file.preview}
-                                className="w-full h-full rounded-lg"
+                                className="w-full h-full rounded-lg border-0"
                                 title="PDF Preview"
-                                sandbox="allow-scripts allow-popups"
-                                referrerPolicy="no-referrer"
                             />
                         </div>
                     ) : (

@@ -80,6 +80,7 @@ export interface CurrentUser {
   phoneCountryCode?: string;
   state?: string;
   pincode?: string;
+  profilePhotoUrl?: string;
 }
 
 export interface UpdateProfileRequest {

@@ -153,6 +153,12 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
         },
     });
 
+    React.useEffect(() => {
+        if (editor && content && content !== editor.getHTML()) {
+            editor.commands.setContent(content);
+        }
+    }, [content, editor]);
+
     return (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
             <style>{`
