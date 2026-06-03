@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Sparkles } from 'lucide-react';
 import ApplicationStepper from './components/ApplicationStepper';
@@ -160,6 +160,8 @@ const NewApplication: React.FC = () => {
     const [documentsNeedReupload, setDocumentsNeedReupload] = React.useState(false);
     const [showAIChat, setShowAIChat] = React.useState(false);
     const [showCancelModal, setShowCancelModal] = React.useState(false);
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const isSubmittingRef = useRef(false);
 
     const handleCancel = () => {
         if (isFormDirty) {
@@ -271,6 +273,9 @@ const NewApplication: React.FC = () => {
      * Usage: <ContactsStep onSubmit={handleSubmitSuccess} />
      */
     const handleSubmitSuccess = async () => {
+        if (isSubmittingRef.current) return;
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
         try {
             // Get leasingId from propertyId and unitId
             const { leasingService } = await import('../../../../services/leasing.service');
@@ -310,6 +315,9 @@ const NewApplication: React.FC = () => {
 
             setErrorMessages(errors);
             setShowErrorModal(true);
+        } finally {
+            isSubmittingRef.current = false;
+            setIsSubmitting(false);
         }
     };
 
@@ -354,7 +362,7 @@ const NewApplication: React.FC = () => {
             case 4:
                 return <EmergencyContactStep onNext={() => setCurrentStep(currentStep + 1)} />;
             case 5:
-                return <DocumentsStep onNext={handleSubmitSuccess} />;
+                return <DocumentsStep onNext={handleSubmitSuccess} isSubmitting={isSubmitting} />;
             default:
                 return null;
         }

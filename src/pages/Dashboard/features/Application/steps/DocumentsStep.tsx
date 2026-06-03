@@ -4,9 +4,10 @@ import { Upload, FileText, Trash2 } from 'lucide-react';
 
 interface DocumentsStepProps {
     onNext: () => void;
+    isSubmitting?: boolean;
 }
 
-const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
+const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext, isSubmitting = false }) => {
     const { formData, setFormData } = useApplicationStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -102,9 +103,10 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
             <div className="flex justify-center mt-8">
                 <button
                     onClick={onNext}
-                    className="px-8 sm:px-12 py-3 bg-[#3A6D6C] text-white rounded-xl font-bold hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 flex items-center justify-center gap-2 w-full sm:w-auto"
+                    disabled={isSubmitting}
+                    className="px-8 sm:px-12 py-3 bg-[#3A6D6C] text-white rounded-xl font-bold hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 flex items-center justify-center gap-2 w-full sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                    Submit Application
+                    {isSubmitting ? 'Submitting...' : 'Submit Application'}
                 </button>
             </div>
         </div>
