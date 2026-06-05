@@ -269,20 +269,17 @@ const App: React.FC = () => {
 
             <Route path="/preview/:id" element={<ListingPreview />} />
 
+            {/* Auth routes — no navbar/footer */}
+            <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
+            <Route path="/signup/tenant-onboarding-flow" element={<TenantOnboardingFlow />} />
+            <Route path="/otp" element={<OtpPage />} />
+            <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+            <Route path="/auth/mobile-login" element={<MobileAutoLogin />} />
             <Route element={<AppLayout />}>
-              <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/forgot-password" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
-              <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
-              <Route path="/signup/tenant-onboarding-flow" element={<TenantOnboardingFlow />} />
-              <Route path="/otp" element={<OtpPage />} />
-              <Route path="/auth/callback" element={<OAuthCallbackPage />} />
-              <Route path="/auth/mobile-login" element={<MobileAutoLogin />} />
-
-
-
-
+              <Route path="/" element={<HomePage />} />
               <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
               <Route path="/usecases/tenant" element={<TenantPage />} />
               <Route path="/usecases/servicepros" element={<ServiceProsPage />} />

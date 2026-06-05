@@ -31,6 +31,8 @@ interface MediaFile {
 }
 
 const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData, aiPrefillData }) => {
+    const [errors, setErrors] = useState<Partial<Record<keyof AdvancedRequestFormFields, string>>>({});
+
     const [formData, setFormData] = useState<AdvancedRequestFormFields>({
         category: initialData?.category || '',
         subCategory: initialData?.subCategory || '',
@@ -348,30 +350,36 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
 
             {/* Category & Sub-category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <CustomDropdown
-                    label="Category"
-                    value={formData.category}
-                    onChange={(val) => handleChange('category', val)}
-                    options={[
-                        { value: 'appliances', label: 'Appliances' },
-                        { value: 'electrical', label: 'Electrical' },
-                        { value: 'plumbing', label: 'Plumbing' },
-                        { value: 'other', label: 'Other' }
-                    ]}
-                    placeholder="Select Category"
-                    required
-                    buttonClassName="!bg-white !border-none !rounded-md !py-3"
-                />
-                <CustomDropdown
-                    label="Subcategory"
-                    value={formData.subCategory}
-                    onChange={(val) => handleChange('subCategory', val)}
-                    options={getSubCategoryOptions()}
-                    placeholder={formData.category ? "Select Subcategory" : "Select Category First"}
-                    required
-                    buttonClassName="!bg-white !border-none !rounded-md !py-3"
-                    disabled={!formData.category}
-                />
+                <div>
+                    <CustomDropdown
+                        label="Category*"
+                        value={formData.category}
+                        onChange={(val) => { handleChange('category', val); setErrors(e => ({ ...e, category: '' })); }}
+                        options={[
+                            { value: 'appliances', label: 'Appliances' },
+                            { value: 'electrical', label: 'Electrical' },
+                            { value: 'plumbing', label: 'Plumbing' },
+                            { value: 'other', label: 'Other' }
+                        ]}
+                        placeholder="Select Category"
+                        required
+                        buttonClassName={`!bg-white !border-none !rounded-md !py-3 ${errors.category ? '!ring-2 !ring-red-400' : ''}`}
+                    />
+                    {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
+                </div>
+                <div>
+                    <CustomDropdown
+                        label="Subcategory*"
+                        value={formData.subCategory}
+                        onChange={(val) => { handleChange('subCategory', val); setErrors(e => ({ ...e, subCategory: '' })); }}
+                        options={getSubCategoryOptions()}
+                        placeholder={formData.category ? "Select Subcategory" : "Select Category First"}
+                        required
+                        buttonClassName={`!bg-white !border-none !rounded-md !py-3 ${errors.subCategory ? '!ring-2 !ring-red-400' : ''}`}
+                        disabled={!formData.category}
+                    />
+                    {errors.subCategory && <p className="text-red-500 text-xs mt-1">{errors.subCategory}</p>}
+                </div>
             </div>
 
             {/* Issue & Sub-issue */}
@@ -411,10 +419,11 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                 <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => handleChange('title', e.target.value)}
+                    onChange={(e) => { handleChange('title', e.target.value); setErrors(err => ({ ...err, title: '' })); }}
                     placeholder="Title type here.."
-                    className="w-full px-4 py-3 bg-white rounded-md border-none outline-none placeholder-gray-400"
+                    className={`w-full px-4 py-3 bg-white rounded-md border-none outline-none placeholder-gray-400 ${errors.title ? 'ring-2 ring-red-400' : ''}`}
                 />
+                {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
             </div>
 
             {/* Details */}
@@ -533,6 +542,15 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                 </button>
                 <button
                     onClick={() => {
+                        const newErrors: Partial<Record<keyof AdvancedRequestFormFields, string>> = {};
+                        if (!formData.category) newErrors.category = 'Category is required.';
+                        if (!formData.subCategory) newErrors.subCategory = 'Subcategory is required.';
+                        if (!formData.title.trim()) newErrors.title = 'Title is required.';
+                        if (Object.keys(newErrors).length > 0) {
+                            setErrors(newErrors);
+                            return;
+                        }
+                        setErrors({});
                         const files = mediaFiles.map((media) => media.file);
                         setAdvanced({
                             category: formData.category,

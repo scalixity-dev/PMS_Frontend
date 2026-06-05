@@ -78,8 +78,20 @@ const NewRequest: React.FC = () => {
 
   const propertyOptions = useMemo(() => {
     if (leases.length > 0) {
-      return leases.map((l) => ({
+      // Deduplicate by property+unit combo, preferring active leases
+      const seen = new Map<string, typeof leases[0]>();
+      const sorted = [...leases].sort((a, b) => {
+        if (a.status === 'ACTIVE' && b.status !== 'ACTIVE') return -1;
+        if (a.status !== 'ACTIVE' && b.status === 'ACTIVE') return 1;
+        return 0;
+      });
+      for (const lease of sorted) {
+        const key = `${lease.propertyId}-${lease.unitId ?? 'no-unit'}`;
+        if (!seen.has(key)) seen.set(key, lease);
+      }
+      return Array.from(seen.values()).map((l) => ({
         id: l.id,
+        propertyId: l.propertyId,
         name: `${l.property?.propertyName ?? "Property"}${l.unit ? ` - ${l.unit.unitName}` : ""}`,
         address: l.property?.address
           ? `${l.property.address.streetAddress}, ${l.property.address.city}`

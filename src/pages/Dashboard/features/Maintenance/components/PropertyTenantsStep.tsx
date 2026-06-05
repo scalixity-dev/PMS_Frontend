@@ -1,6 +1,6 @@
 // Fixed implicit any
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import Toggle from '../../../../../components/Toggle';
@@ -13,7 +13,7 @@ import {
 import { useGetAllLeases } from '../../../../../hooks/useLeaseQueries';
 import type { BackendLease } from '../../../../../services/lease.service';
 import { useGetAllPropertiesIdName } from '../../../../../hooks/usePropertyQueries';
-import { useGetEquipmentByProperty } from '../../../../../hooks/useEquipmentQueries';
+import { useGetEquipmentByProperty, useCreateEquipment, useGetEquipmentCategories } from '../../../../../hooks/useEquipmentQueries';
 import type { BackendEquipment } from '../../../../../services/equipment.service';
 
 interface DateOption extends MaintenanceDateOption {}
@@ -46,7 +46,6 @@ interface PropertyTenantsStepProps {
 }
 
 const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBack, properties, initialData }) => {
-    const navigate = useNavigate();
     const [selectedProperty, setSelectedProperty] = useState(initialData?.selectedProperty || '');
     const [linkEquipment, setLinkEquipment] = useState(!!initialData?.selectedEquipment);
     const [selectedEquipment, setSelectedEquipment] = useState(initialData?.selectedEquipment || '');
@@ -63,6 +62,8 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     const [validationError, setValidationError] = useState('');
 
     const setProperty = useMaintenanceRequestFormStore((state) => state.setProperty);
+    const createEquipmentMutation = useCreateEquipment();
+    const { data: categories = [] } = useGetEquipmentCategories();
 
     // Primary source: properties owned by the current manager (always scoped server-side).
     // Fallback: properties derived from leases — kept for tenant/legacy flows.
@@ -113,8 +114,12 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     } = useGetEquipmentByProperty(selectedProperty || null, !!selectedProperty);
 
     const handleContinue = () => {
+        if (!selectedProperty) {
+            setValidationError('Please select a property before continuing.');
+            return;
+        }
         if (petsInResidence === 'yes' && selectedPets.length === 0) {
-            setValidationError('Please select at least one pet type');
+            setValidationError('Please select at least one pet type.');
             return;
         }
         setValidationError('');
@@ -169,10 +174,12 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
 
     // Create Equipment Form State
     const [newEquipment, setNewEquipment] = useState({
-        category: '',
+        categoryId: '',
         brand: '',
         model: '',
-        serial: ''
+        serial: '',
+        price: '',
+        dateOfInstallation: '',
     });
 
     const toggleTenantSelection = (id: number) => {
@@ -215,27 +222,32 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
         }));
     };
 
-    const handleCreateEquipment = () => {
+    const handleCreateEquipment = async () => {
         if (!selectedProperty) {
-            // Require a property before creating equipment so it can be linked
             setValidationError('Please select a property before creating equipment.');
             return;
         }
+        if (!newEquipment.categoryId || !newEquipment.brand || !newEquipment.model || !newEquipment.serial) {
+            setValidationError('Please fill in all required fields.');
+            return;
+        }
 
-        // Navigate to the full Create Equipment flow with the selected property preselected
-        navigate('/dashboard/equipments/add', {
-            state: {
+        try {
+            const created = await createEquipmentMutation.mutateAsync({
                 propertyId: selectedProperty,
-            },
-        });
-
-        setShowCreateEquipmentModal(false);
-        setNewEquipment({
-            category: '',
-            brand: '',
-            model: '',
-            serial: ''
-        });
+                categoryId: newEquipment.categoryId,
+                brand: newEquipment.brand,
+                model: newEquipment.model,
+                serialNumber: newEquipment.serial,
+                price: newEquipment.price ? parseFloat(newEquipment.price) : 0,
+                dateOfInstallation: newEquipment.dateOfInstallation || new Date().toISOString(),
+            });
+            setSelectedEquipment(created.id);
+            setShowCreateEquipmentModal(false);
+            setNewEquipment({ categoryId: '', brand: '', model: '', serial: '', price: '', dateOfInstallation: '' });
+        } catch {
+            setValidationError('Failed to create equipment. Please try again.');
+        }
     };
 
     const handleSelectEquipment = (equipmentId: string) => {
@@ -265,7 +277,9 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
             return;
         }
 
-        const leasesForProperty = (activeLeases as BackendLease[]).filter(
+        // Use all leases (not just active/pending) so tenants always appear
+        // regardless of lease status. The status label is shown in the table.
+        const leasesForProperty = (allLeases as BackendLease[]).filter(
             (lease) => lease.propertyId === selectedProperty,
         );
 
@@ -305,7 +319,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
         });
 
         setTenantList(items);
-    }, [selectedProperty, activeLeases, initialData?.tenantList]);
+    }, [selectedProperty, allLeases, initialData?.tenantList]);
 
     return (
         <div className="w-full max-w-5xl mx-auto pb-12">
@@ -321,12 +335,15 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                 <CustomDropdown
                     label="Property*"
                     value={selectedProperty}
-                    onChange={setSelectedProperty}
+                    onChange={(v) => { setSelectedProperty(v); if (validationError && v) setValidationError(''); }}
                     options={propertyOptions}
                     placeholder="Select Property"
                     required
-                    buttonClassName="!bg-white !border-none !rounded-md !py-3"
+                    buttonClassName={`!bg-white !border-none !rounded-md !py-3 ${!selectedProperty && validationError ? '!ring-2 !ring-red-400' : ''}`}
                 />
+                {!selectedProperty && validationError && (
+                    <p className="text-red-500 text-xs mt-1">{validationError}</p>
+                )}
             </div>
 
             {/* Equipment */}
@@ -442,34 +459,44 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                             <div>Share</div>
                         </div>
                         <div className="bg-white rounded-b-xl overflow-hidden">
-                            {tenantList.map((tenant: TenantListItem, index: number) => (
-                                <div key={tenant.id} className={`grid grid-cols-3 px-8 py-4 items-center ${index !== tenantList.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                                    <div className="flex items-center gap-4">
-                                        <button
-                                            onClick={() => toggleTenantSelection(tenant.id)}
-                                            className="flex items-center justify-center border border-gray-200 transition-colors cursor-pointer"
-                                        >
-                                            <div className={`w-5 h-5 border-2 rounded-sm flex items-center justify-center transition-colors ${tenant.selected ? 'bg-[#7BD747] border-[#7BD747]' : 'border-gray-400 bg-white'}`}>
-                                                {tenant.selected && (
-                                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                )}
-                                            </div>
-                                        </button>
-                                        <span className="font-medium text-gray-700">{tenant.name}</span>
-                                    </div>
-                                    <div className="text-[#2E6819] font-bold">{tenant.status}</div>
-                                    <div>
-                                        <Toggle
-                                            checked={tenant.share}
-                                            onChange={() => { }}
-                                            size="small"
-                                            disabled={true}
-                                        />
-                                    </div>
+                            {!selectedProperty ? (
+                                <div className="px-8 py-8 text-center text-gray-400 text-sm">
+                                    Select a property above to see associated tenants.
                                 </div>
-                            ))}
+                            ) : tenantList.length === 0 ? (
+                                <div className="px-8 py-8 text-center text-gray-400 text-sm">
+                                    No tenants found for this property.
+                                </div>
+                            ) : (
+                                tenantList.map((tenant: TenantListItem, index: number) => (
+                                    <div key={tenant.id} className={`grid grid-cols-3 px-8 py-4 items-center ${index !== tenantList.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                        <div className="flex items-center gap-4">
+                                            <button
+                                                onClick={() => toggleTenantSelection(tenant.id)}
+                                                className="flex items-center justify-center border border-gray-200 transition-colors cursor-pointer"
+                                            >
+                                                <div className={`w-5 h-5 border-2 rounded-sm flex items-center justify-center transition-colors ${tenant.selected ? 'bg-[#7BD747] border-[#7BD747]' : 'border-gray-400 bg-white'}`}>
+                                                    {tenant.selected && (
+                                                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                            </button>
+                                            <span className="font-medium text-gray-700">{tenant.name}</span>
+                                        </div>
+                                        <div className="text-[#2E6819] font-bold">{tenant.status}</div>
+                                        <div>
+                                            <Toggle
+                                                checked={tenant.share}
+                                                onChange={() => { }}
+                                                size="small"
+                                                disabled={true}
+                                            />
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
@@ -668,17 +695,16 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
 
                         {/* Modal Body */}
                         <div className="p-8 space-y-6">
+                            {validationError && (
+                                <p className="text-red-500 text-sm font-medium">{validationError}</p>
+                            )}
+
                             {/* Category Dropdown */}
                             <CustomDropdown
                                 label="Category*"
-                                value={newEquipment.category}
-                                onChange={(value) => setNewEquipment({ ...newEquipment, category: value })}
-                                options={[
-                                    { value: 'hvac', label: 'HVAC' },
-                                    { value: 'plumbing', label: 'Plumbing' },
-                                    { value: 'electrical', label: 'Electrical' },
-                                    { value: 'appliances', label: 'Appliances' }
-                                ]}
+                                value={newEquipment.categoryId}
+                                onChange={(value) => setNewEquipment({ ...newEquipment, categoryId: value })}
+                                options={(categories as Array<{ id: string; name: string }>).map(c => ({ value: c.id, label: c.name }))}
                                 placeholder="Choose Type"
                                 required
                                 buttonClassName="!bg-white !border-none !rounded-full !py-3 !px-6"
@@ -698,27 +724,48 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Model *</label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            placeholder="Type here"
-                                            value={newEquipment.model}
-                                            onChange={(e) => setNewEquipment({ ...newEquipment, model: e.target.value })}
-                                            className="w-full rounded-full border-none px-6 py-3 text-sm bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20"
-                                        />
-                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Type here"
+                                        value={newEquipment.model}
+                                        onChange={(e) => setNewEquipment({ ...newEquipment, model: e.target.value })}
+                                        className="w-full rounded-full border-none px-6 py-3 text-sm bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20"
+                                    />
                                 </div>
                             </div>
 
-                            {/* Serial */}
+                            {/* Serial and Price */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Serial *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Type here"
+                                        value={newEquipment.serial}
+                                        onChange={(e) => setNewEquipment({ ...newEquipment, serial: e.target.value })}
+                                        className="w-full rounded-full border-none px-6 py-3 text-sm bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Price</label>
+                                    <input
+                                        type="number"
+                                        placeholder="0.00"
+                                        value={newEquipment.price}
+                                        onChange={(e) => setNewEquipment({ ...newEquipment, price: e.target.value })}
+                                        className="w-full rounded-full border-none px-6 py-3 text-sm bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Date of Installation */}
                             <div className="w-full md:w-1/2">
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Serial*</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Date of Installation</label>
                                 <input
-                                    type="text"
-                                    placeholder="Type here"
-                                    value={newEquipment.serial}
-                                    onChange={(e) => setNewEquipment({ ...newEquipment, serial: e.target.value })}
-                                    className="w-full rounded-full border-none px-6 py-3 text-sm bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20"
+                                    type="date"
+                                    value={newEquipment.dateOfInstallation}
+                                    onChange={(e) => setNewEquipment({ ...newEquipment, dateOfInstallation: e.target.value })}
+                                    className="w-full rounded-full border-none px-6 py-3 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20"
                                 />
                             </div>
 
@@ -726,9 +773,10 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                             <div>
                                 <button
                                     onClick={handleCreateEquipment}
-                                    className="px-12 py-3 rounded-full bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity"
+                                    disabled={createEquipmentMutation.isPending}
+                                    className="px-12 py-3 rounded-full bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity disabled:opacity-60"
                                 >
-                                    Create
+                                    {createEquipmentMutation.isPending ? 'Creating...' : 'Create'}
                                 </button>
                             </div>
                         </div>

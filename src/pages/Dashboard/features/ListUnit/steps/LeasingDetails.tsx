@@ -1,5 +1,5 @@
-import React, { useMemo, useEffect, useRef } from 'react';
-import { Undo2 } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Undo2, Lock } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
@@ -15,36 +15,19 @@ interface LeasingDetailsProps {
 
 const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) => {
   const { formData, updateFormData } = useListUnitStore();
-  const previousPropertyIdRef = useRef<string | undefined>(propertyId);
-  const previousUnitIdRef = useRef<string | undefined>(unitId);
 
   // Use React Query to fetch property data
   const { data: property } = useGetProperty(propertyId || null, !!propertyId, false, LISTING_FLOW_PROPERTY_CACHE);
 
-  // Update refs to track current propertyId and unitId
-  useEffect(() => {
-    // Only clear if propertyId or unitId actually changed (not on initial mount with same property/unit)
-    if ((previousPropertyIdRef.current !== undefined && previousPropertyIdRef.current !== propertyId) ||
-      (previousUnitIdRef.current !== undefined && previousUnitIdRef.current !== unitId)) {
-      // Property or unit changed - clear all leasing fields to prevent showing data from previous property/unit
-      updateFormData('rent', '');
-      updateFormData('deposit', '');
-      updateFormData('refundable', '');
-      updateFormData('availableDate', '');
-      updateFormData('minLeaseDuration', '');
-      updateFormData('maxLeaseDuration', '');
-      updateFormData('description', '');
-    }
-    // Update refs to track current propertyId and unitId
-    previousPropertyIdRef.current = propertyId;
-    previousUnitIdRef.current = unitId;
-  }, [propertyId, unitId, updateFormData]);
+  // NOTE: Rent and deposit are auto-populated from property/unit data by ListUnit.tsx.
+  // They are read-only here to enforce the property as the single source of truth.
+  // The clearing/pre-filling logic lives in ListUnit.tsx's checkExistingLeasing effect.
 
   const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
 
   const validateField = (key: string, value: string) => {
     let error = '';
-    if (['rent', 'deposit', 'refundable'].includes(key)) {
+    if (['refundable'].includes(key)) {
       const numValue = parseFloat(value);
       if (value && (isNaN(numValue) || numValue < 0)) {
         error = 'Value must be a positive number';
@@ -54,6 +37,7 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
   };
 
   const inputClass = "w-full p-3 bg-[#84CC16] text-white placeholder-white/70 border-none rounded-lg focus:ring-2 focus:ring-white/50 outline-none text-center font-medium";
+  const readOnlyInputClass = "w-full p-3 bg-[#84CC16]/60 text-white placeholder-white/70 border-none rounded-lg outline-none text-center font-medium cursor-not-allowed";
   const labelClass = "block text-xs font-medium text-gray-700 mb-1 ml-1";
 
   // Get currency symbol based on property's country
@@ -67,49 +51,51 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
       {/* Main Lease Details Card */}
       <div className="bg-[#F3F4F6] p-4 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-sm w-full">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          {/* Monthly Rent */}
+          {/* Monthly Rent (Read-only — sourced from property/unit) */}
           <div>
             <label className={labelClass}>
-              Monthly rent* {currencySymbol && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+              <span className="flex items-center gap-1">
+                Monthly rent* {currencySymbol && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+                <span title="Auto-populated from property"><Lock size={12} className="text-gray-400" /></span>
+              </span>
             </label>
             <div className="relative">
               {currencySymbol && (
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white font-medium">{currencySymbol}</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 font-medium">{currencySymbol}</span>
               )}
               <input
                 type="number"
-                className={`${inputClass} ${currencySymbol ? 'pl-8' : ''} ${validationErrors.rent ? 'ring-2 ring-red-500' : ''}`}
+                className={`${readOnlyInputClass} ${currencySymbol ? 'pl-8' : ''}`}
                 value={formData.rent || ''}
-                onChange={(e) => {
-                  updateFormData('rent', e.target.value);
-                  validateField('rent', e.target.value);
-                }}
+                readOnly
+                tabIndex={-1}
                 placeholder={`${currencySymbol || '$'} 50,000`}
+                title="This value comes from the property/unit record. Edit the property to change it."
               />
-              {validationErrors.rent && <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.rent}</p>}
             </div>
           </div>
 
-          {/* Security Deposit */}
+          {/* Security Deposit (Read-only — sourced from property/unit) */}
           <div>
             <label className={labelClass}>
-              Security deposit* {currencySymbol && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+              <span className="flex items-center gap-1">
+                Security deposit* {currencySymbol && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+                <span title="Auto-populated from property"><Lock size={12} className="text-gray-400" /></span>
+              </span>
             </label>
             <div className="relative">
               {currencySymbol && (
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white font-medium">{currencySymbol}</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 font-medium">{currencySymbol}</span>
               )}
               <input
                 type="number"
-                className={`${inputClass} ${currencySymbol ? 'pl-8' : ''} ${validationErrors.deposit ? 'ring-2 ring-red-500' : ''}`}
+                className={`${readOnlyInputClass} ${currencySymbol ? 'pl-8' : ''}`}
                 value={formData.deposit || ''}
-                onChange={(e) => {
-                  updateFormData('deposit', e.target.value);
-                  validateField('deposit', e.target.value);
-                }}
+                readOnly
+                tabIndex={-1}
                 placeholder={`${currencySymbol || '$'} 0.00`}
+                title="This value comes from the property/unit record. Edit the property to change it."
               />
-              {validationErrors.deposit && <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.deposit}</p>}
             </div>
           </div>
 

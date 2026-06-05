@@ -24,6 +24,7 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
     const [priority, setPriority] = useState(initialData?.priority || '');
     const [chargeTo, setChargeTo] = useState<ChargeToOption>(initialData?.chargeTo || 'LANDLORD');
     const [materials, setMaterials] = useState<Material[]>(initialData?.materials || []);
+    const [errors, setErrors] = useState<{ priority?: string; materials?: string }>({});
 
     const setDue = useMaintenanceRequestFormStore((state) => state.setDue);
 
@@ -87,17 +88,18 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                     <CustomDropdown
                         label="Priority *"
                         value={priority}
-                        onChange={setPriority}
+                        onChange={(v) => { setPriority(v); setErrors(e => ({ ...e, priority: '' })); }}
                         options={[
                             { value: 'low', label: 'Low' },
                             { value: 'normal', label: 'Normal' },
                             { value: 'high', label: 'High' },
                             { value: 'urgent', label: 'Urgent' }
                         ]}
-                        placeholder="Normal"
+                        placeholder="Select Priority"
                         required
-                        buttonClassName="!bg-white !border-none !rounded-md !py-2.5"
+                        buttonClassName={`!bg-white !border-none !rounded-md !py-2.5 ${errors.priority ? '!ring-2 !ring-red-400' : ''}`}
                     />
+                    {errors.priority && <p className="text-red-500 text-xs mt-1">{errors.priority}</p>}
                 </div>
                 <div>
                     <CustomDropdown
@@ -130,6 +132,8 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                         <Plus size={18} className="bg-white text-[#3D7475] rounded-full p-0.5" />
                     </button>
                 </div>
+
+                {errors.materials && <p className="text-red-500 text-xs mb-2">{errors.materials}</p>}
 
                 {/* Materials List */}
                 {materials.length > 0 && (
@@ -194,13 +198,16 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                     </button>
                     <button
                         onClick={() => {
-                            setDue({
-                                dateInitiated,
-                                dateDue,
-                                priority,
-                                materials,
-                                chargeTo,
-                            });
+                            const newErrors: { priority?: string; materials?: string } = {};
+                            if (!priority) newErrors.priority = 'Priority is required.';
+                            const emptyMaterial = materials.find(m => !m.name.trim());
+                            if (emptyMaterial) newErrors.materials = 'All material items must have a name.';
+                            if (Object.keys(newErrors).length > 0) {
+                                setErrors(newErrors);
+                                return;
+                            }
+                            setErrors({});
+                            setDue({ dateInitiated, dateDue, priority, materials, chargeTo });
                             onNext({ dateInitiated, dateDue, priority, materials, chargeTo });
                         }}
                         className="flex-1 md:flex-none px-12 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"

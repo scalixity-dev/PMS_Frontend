@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, User } from 'lucide-react';
+import { Plus, Trash2, User, AlertCircle } from 'lucide-react';
 import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 import UserAddOccupantModal, { type OccupantFormData } from '../components/UserAddOccupantModal';
@@ -76,6 +76,13 @@ const OccupantsStep: React.FC<OccupantsStepProps> = ({ onNext }) => {
                     )}
                 </div>
 
+                {(formData.occupants?.length ?? 0) < 2 && (
+                    <div className="bg-[#7ED957]/10 border border-[#7ED957]/20 rounded-full py-3 px-6 mb-6 flex items-center gap-2 text-[#7ED957] text-sm font-medium">
+                        <AlertCircle size={16} />
+                        <span>A minimum of 2 occupants is required</span>
+                    </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row gap-4">
                     <button
                         onClick={handleAddClick}
@@ -87,8 +94,9 @@ const OccupantsStep: React.FC<OccupantsStepProps> = ({ onNext }) => {
 
                     <PrimaryActionButton
                         onClick={onNext}
+                        disabled={(formData.occupants?.length ?? 0) < 2}
                         text="Next"
-                        className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${true // It's never disabled currently, but keeping pattern
+                        className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${(formData.occupants?.length ?? 0) >= 2
                             ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
                             : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                             }`}

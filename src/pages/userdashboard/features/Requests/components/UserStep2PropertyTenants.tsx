@@ -23,7 +23,7 @@ interface Equipment {
 interface UserStep2PropertyTenantsProps {
     onNext: (data: any) => void;
     onBack: () => void;
-    properties: Array<{ id: string; name: string; address: string }>;
+    properties: Array<{ id: string; propertyId?: string; name: string; address: string }>;
     initialData?: any;
 }
 
@@ -90,9 +90,11 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
         serial: ''
     });
 
+    const selectedPropertyId = properties.find(p => p.id === selectedProperty)?.propertyId ?? selectedProperty;
+
     const {
         data: equipmentData = [],
-    } = useGetEquipmentByProperty(selectedProperty || null, !!selectedProperty);
+    } = useGetEquipmentByProperty(selectedPropertyId || null, !!selectedPropertyId);
 
     const equipmentList = useMemo<Equipment[]>(() => {
         return (equipmentData as BackendEquipment[]).map((eq) => ({
