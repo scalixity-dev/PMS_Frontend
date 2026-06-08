@@ -19,6 +19,7 @@ import { UserApplicationCard } from "./features/Applications/components/UserAppl
 import { useGetLeasesByTenant } from "../../hooks/useLeaseQueries";
 import { useGetTransactions } from "../../hooks/useTransactionQueries";
 import { useGetAllApplications } from "../../hooks/useApplicationQueries";
+import UserUtilityProviders from "./features/Utilities/UserUtilityProviders";
 
 
 
@@ -563,10 +564,8 @@ const UserDashboard = () => {
                                     leases={frontendLeases.length > 0 ? frontendLeases : []}
                                 />
                             )}
-                            {activeTab !== "Outstanding" && activeTab !== "Leases" && (
-                                <div className="bg-white rounded-[1rem] p-8 sm:p-12 text-center text-gray-400 font-medium shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-100">
-                                    Content for {activeTab} coming soon...
-                                </div>
+                            {activeTab === "Service providers" && (
+                                <UserUtilityProviders />
                             )}
                         </>
                     )}

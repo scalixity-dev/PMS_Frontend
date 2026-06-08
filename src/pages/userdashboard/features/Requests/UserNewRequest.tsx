@@ -259,16 +259,9 @@ const NewRequest: React.FC = () => {
           <UserStep2PropertyTenants
             onNext={(data) => {
               setProperty(data.property);
-              if (leases.length > 0) {
-                const selectedLease = leases.find((l) => l.id === data.property);
-                if (selectedLease) {
-                  setPropertyId(selectedLease.propertyId);
-                  setUnitId(selectedLease.unitId ?? undefined);
-                }
-              } else {
-                setPropertyId(undefined);
-                setUnitId(undefined);
-              }
+              const selectedLease = leases.find((l) => l.id === data.property);
+              setPropertyId(selectedLease?.propertyId);
+              setUnitId(selectedLease?.unitId ?? undefined);
               setSelectedEquipment(data.equipmentName);
               setEquipmentSerial(data.equipmentSerial || null);
               setEquipmentCondition('Good');

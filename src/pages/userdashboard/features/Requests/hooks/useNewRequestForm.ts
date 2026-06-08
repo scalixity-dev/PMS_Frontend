@@ -210,6 +210,17 @@ export const useNewRequestForm = () => {
     }, []);
 
     const handleSubmit = async (): Promise<boolean> => {
+        // Read fresh values from the store to avoid stale closure issues
+        // (Zustand store updates are synchronous but React closures capture
+        //  the snapshot from the last render, so we bypass that here)
+        const freshForm = useRequestStore.getState().newRequestForm;
+        const selectedCategory = freshForm.selectedCategory;
+        const priority = freshForm.priority;
+        const propertyId = freshForm.propertyId;
+        const unitId = freshForm.unitId;
+        const dateDue = freshForm.dateDue;
+        const chargeTo = freshForm.chargeTo;
+
         if (!selectedCategory || !priority) return false;
 
         setSubmissionError(null);

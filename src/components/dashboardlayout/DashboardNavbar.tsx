@@ -20,6 +20,7 @@ import { authService } from "../../services/auth.service";
 import { useGetCurrentUser } from "../../hooks/useAuthQueries";
 import { propertyQueryKeys } from "../../hooks/usePropertyQueries";
 import AccountSwitcherModal from "../common/AccountSwitcherModal";
+import DownloadsModal from "../common/DownloadsModal";
 
 interface NavbarProps {
   setSidebarOpen: (open: boolean) => void;
@@ -89,6 +90,7 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
   // Account switcher: list remembered accounts; switching signs current user
   // out and redirects to /login with email prefilled.
   const [isAccountSwitcherOpen, setIsAccountSwitcherOpen] = useState(false);
+  const [isDownloadsOpen, setIsDownloadsOpen] = useState(false);
 
   const handleAddAnotherAccount = () => {
     setIsProfileDropdownOpen(false);
@@ -218,7 +220,7 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
                       <span className="font-medium">Reports</span>
                     </button>
                     <button
-                      onClick={() => setIsMobileMenuOpen(false)}
+                      onClick={() => { setIsMobileMenuOpen(false); setIsDownloadsOpen(true); }}
                       className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
@@ -279,6 +281,7 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
               <button
                 aria-label="Downloads"
                 className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
+                onClick={() => setIsDownloadsOpen(true)}
               >
                 <Download size={18} className="text-gray-800" />
               </button>
@@ -378,6 +381,7 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
         </>
       )}
 
+      <DownloadsModal isOpen={isDownloadsOpen} onClose={() => setIsDownloadsOpen(false)} />
       <AccountSwitcherModal
         isOpen={isAccountSwitcherOpen}
         onClose={() => setIsAccountSwitcherOpen(false)}
