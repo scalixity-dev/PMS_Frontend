@@ -72,10 +72,10 @@ const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({ onNext }) =
             </div>
 
             <div className="min-h-[250px] flex flex-col items-center">
-                {contacts.length === 0 && (
+                {contacts.length < 2 && (
                     <div className="bg-[#7ED957]/10 border border-[#7ED957]/20 rounded-full py-3 px-6 mb-6 flex items-center gap-2 text-[#7ED957] text-sm font-medium">
                         <AlertCircle size={16} />
-                        <span>A minimum of 1 contact is required</span>
+                        <span>A minimum of 2 contacts is required</span>
                     </div>
                 )}
 
@@ -109,9 +109,9 @@ const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({ onNext }) =
 
                     <PrimaryActionButton
                         onClick={onNext}
-                        disabled={contacts.length === 0}
+                        disabled={contacts.length < 2}
                         text="Next"
-                        className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${contacts.length > 0
+                        className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${contacts.length >= 2
                             ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
                             : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                             }`}

@@ -5,7 +5,7 @@ import SearchableDropdown from '../../../../../components/ui/SearchableDropdown'
 import { useMoveInStore } from '../store/moveInStore';
 import { useCreateLease } from '../../../../../hooks/useLeaseQueries';
 import { useGetProperty } from '../../../../../hooks/usePropertyQueries';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
 
 interface MoveInRecurringRentSettingsProps {
     onNext: () => void;
@@ -150,21 +150,23 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
             <div className="w-full max-w-2xl bg-transparent">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
 
-                    {/* Amount * */}
+                    {/* Amount * (Read-only — sourced from property) */}
                     <div className="flex flex-col gap-2">
-                        <label className="text-sm font-bold text-gray-700">Amount *</label>
+                        <label className="text-sm font-bold text-gray-700 flex items-center gap-1">
+                            Amount *
+                            <span title="Auto-populated from property"><Lock size={12} className="text-gray-400" /></span>
+                        </label>
                         <div className="relative">
-                            <div className="w-full flex items-center bg-[#7BD747] text-white px-4 py-3 rounded-xl font-medium shadow-sm">
-                                <span className="mr-1 text-white">$</span>
+                            <div className="w-full flex items-center bg-[#7BD747]/60 text-white px-4 py-3 rounded-xl font-medium shadow-sm cursor-not-allowed">
+                                <span className="mr-1 text-white/70">$</span>
                                 <input
                                     type="number"
                                     placeholder="0.00"
                                     value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    min="0"
-                                    step="0.01"
-                                    required
-                                    className="bg-transparent text-white placeholder-white/70 outline-none w-full"
+                                    readOnly
+                                    tabIndex={-1}
+                                    className="bg-transparent text-white placeholder-white/70 outline-none w-full cursor-not-allowed"
+                                    title="This value comes from the property record. Edit the property to change it."
                                 />
                             </div>
                         </div>
