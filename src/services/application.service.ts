@@ -602,11 +602,17 @@ class ApplicationService {
       })) : undefined,
       backgroundQuestions: formData.backgroundQuestions && Object.keys(formData.backgroundQuestions).length > 0 ? {
         smoke: formData.backgroundQuestions.smoke === true,
+        smokeExplanation: formData.backgroundQuestions.smoke === true ? (formData.backgroundExplanations?.smoke || undefined) : undefined,
         militaryMember: formData.backgroundQuestions.military === true,
+        militaryExplanation: formData.backgroundQuestions.military === true ? (formData.backgroundExplanations?.military || undefined) : undefined,
         criminalRecord: formData.backgroundQuestions.crime === true,
+        crimeExplanation: formData.backgroundQuestions.crime === true ? (formData.backgroundExplanations?.crime || undefined) : undefined,
         bankruptcy: formData.backgroundQuestions.bankruptcy === true,
+        bankruptcyExplanation: formData.backgroundQuestions.bankruptcy === true ? (formData.backgroundExplanations?.bankruptcy || undefined) : undefined,
         refusedRent: formData.backgroundQuestions.refuseRent === true,
-        evicted: formData.backgroundQuestions.evicted === true
+        refusedRentExplanation: formData.backgroundQuestions.refuseRent === true ? (formData.backgroundExplanations?.refuseRent || undefined) : undefined,
+        evicted: formData.backgroundQuestions.evicted === true,
+        evictedExplanation: formData.backgroundQuestions.evicted === true ? (formData.backgroundExplanations?.evicted || undefined) : undefined,
       } : undefined,
       customBackgroundAnswers: formData.customBackgroundAnswers && formData.customBackgroundAnswers.length > 0
         ? formData.customBackgroundAnswers

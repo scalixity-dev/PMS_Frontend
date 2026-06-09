@@ -173,7 +173,12 @@ const FileManager: React.FC = () => {
             // Step 1: multipart upload to cloud via /upload/file
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('category', 'DOCUMENT');
+            
+            let category = 'DOCUMENT';
+            if (file.type.startsWith('image/')) category = 'IMAGE';
+            else if (file.type.startsWith('video/')) category = 'VIDEO';
+            
+            formData.append('category', category);
 
             const uploadRes = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
                 method: 'POST',

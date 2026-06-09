@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Search, FileText, Image, File, Video, MoreVertical, Download, Edit2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { Search, FileText, Image, File, Video, MoreVertical, Download, Edit2, Trash2, ChevronLeft, ChevronRight, UploadCloud, Loader2, Eye, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPortal } from "react-dom";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
-import { useGetFiles, useRenameFile, useDeleteFile } from "../../../../hooks/useFilesQueries";
+import { useGetFiles, useRenameFile, useDeleteFile, useUploadFile, useTrackDownload } from "../../../../hooks/useFilesQueries";
 import type { FileRecord } from "../../../../services/files.service";
+import { API_ENDPOINTS } from "../../../../config/api.config";
 
 interface FileItem {
   id: string;
@@ -27,6 +28,7 @@ interface ActionMenuProps {
   onDownload: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onPreview: () => void;
 }
 
 interface FileMobileCardProps {
@@ -34,6 +36,7 @@ interface FileMobileCardProps {
   onDownload: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onPreview: () => void;
   handleMenuClick: (e: React.MouseEvent, id: string) => void;
   activeMenuId: string | null;
   menuPosition: MenuPosition | null;
@@ -41,11 +44,68 @@ interface FileMobileCardProps {
   getFileIcon: (type: string) => React.ReactNode;
 }
 
+const isValidPreviewUrl = (url: string): boolean => {
+  if (!url || typeof url !== "string") return false;
+  try {
+    const parsed = new URL(url);
+    const isLocalhost = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    return parsed.protocol === "https:" || (isLocalhost && parsed.protocol === "http:");
+  } catch {
+    return false;
+  }
+};
+
+const FilePreviewModal = ({ isOpen, file, onClose }: { isOpen: boolean; file: FileItem | null; onClose: () => void }) => {
+  if (!isOpen || !file) return null;
+  const isPdf = file.type === "PDF";
+  const isUrlValid = isValidPreviewUrl(file.url);
+
+  const Blocked = () => (
+    <div className="w-full bg-white rounded-lg h-[85vh] relative flex flex-col items-center justify-center">
+      <button onClick={onClose} className="absolute -top-4 -right-4 bg-white rounded-full p-2 text-gray-800 shadow-lg hover:bg-gray-100 transition-colors z-50">
+        <X size={20} />
+      </button>
+      <div className="text-center p-8">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+          <X size={32} className="text-red-500" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-800 mb-2">Preview Blocked</h3>
+        <p className="text-gray-600 max-w-md">This file cannot be previewed because the source URL is not from an approved domain or does not meet security requirements.</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
+      <div className="relative w-full max-w-4xl max-h-[90vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+        {isPdf ? (
+          isUrlValid ? (
+            <div className="w-full bg-white rounded-lg h-[85vh] relative flex flex-col">
+              <button onClick={onClose} className="absolute -top-4 -right-4 bg-white rounded-full p-2 text-gray-800 shadow-lg hover:bg-gray-100 transition-colors z-50">
+                <X size={20} />
+              </button>
+              <iframe src={file.url} className="w-full h-full rounded-lg border-0" title="PDF Preview" />
+            </div>
+          ) : <Blocked />
+        ) : isUrlValid ? (
+          <div className="relative">
+            <img src={file.url} alt="Full preview" className="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain" referrerPolicy="no-referrer" />
+            <button onClick={onClose} className="absolute -top-4 -right-4 bg-white rounded-full p-2 text-gray-800 shadow-lg hover:bg-gray-100 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+        ) : <Blocked />}
+      </div>
+    </div>
+  );
+};
+
 const FileMobileCard: React.FC<FileMobileCardProps> = ({
   file,
   onDownload,
   onEdit,
   onDelete,
+  onPreview,
   handleMenuClick,
   activeMenuId,
   menuPosition,
@@ -80,6 +140,7 @@ const FileMobileCard: React.FC<FileMobileCardProps> = ({
             onDownload={onDownload}
             onEdit={onEdit}
             onDelete={onDelete}
+            onPreview={onPreview}
           />
         </div>
       </div>
@@ -110,6 +171,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
   onDownload,
   onEdit,
   onDelete,
+  onPreview,
 }) => {
   if (!isOpen || !position) return null;
 
@@ -125,22 +187,21 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
       >
         <div className="px-2 space-y-0.5">
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDownload();
-              onClose();
-            }}
+            onClick={(e) => { e.stopPropagation(); onPreview(); onClose(); }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <Eye size={16} className="text-gray-400" />
+            Preview
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDownload(); onClose(); }}
             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
           >
             <Download size={16} className="text-gray-400" />
             Download
           </button>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-              onClose();
-            }}
+            onClick={(e) => { e.stopPropagation(); onEdit(); onClose(); }}
             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
           >
             <Edit2 size={16} className="text-gray-400" />
@@ -148,11 +209,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
           </button>
           <div className="h-px bg-gray-100 my-1 mx-2" />
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-              onClose();
-            }}
+            onClick={(e) => { e.stopPropagation(); onDelete(); onClose(); }}
             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
             <Trash2 size={16} className="text-red-400" />
@@ -175,10 +232,17 @@ const FileManager: React.FC = () => {
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const { data: rawFiles = [] } = useGetFiles();
   const renameFileMutation = useRenameFile();
   const deleteFileMutation = useDeleteFile();
+  const uploadFileMutation = useUploadFile();
+  const trackDownloadMutation = useTrackDownload();
 
   const files = useMemo<FileItem[]>(() => {
     const inferType = (f: FileRecord): FileItem["type"] => {
@@ -234,6 +298,53 @@ const FileManager: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    trackDownloadMutation.mutate({
+      fileId: file.id,
+      fileName: file.name,
+      fileUrl: file.url,
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      let category = 'DOCUMENT';
+      if (file.type.startsWith('image/')) category = 'IMAGE';
+      else if (file.type.startsWith('video/')) category = 'VIDEO';
+      
+      formData.append('category', category);
+      const uploadRes = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        throw new Error(err?.message || `Upload failed: ${uploadRes.statusText}`);
+      }
+      const uploadData = await uploadRes.json();
+      const fileUrl = uploadData.url || uploadData.fileUrl;
+      if (!fileUrl) throw new Error('Upload succeeded but no URL returned');
+      await uploadFileMutation.mutateAsync({
+        url: fileUrl,
+        name: file.name,
+        originalName: file.name,
+        mimeType: file.type || undefined,
+        sizeBytes: file.size,
+      });
+    } catch (err: any) {
+      setUploadError(err?.message || 'Upload failed');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -331,7 +442,23 @@ const FileManager: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center pt-3 justify-between gap-4">
           <h1 className="text-2xl font-semibold text-gray-900">File manager</h1>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="flex items-center gap-2 px-4 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm disabled:opacity-50"
+          >
+            {isUploading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+            {isUploading ? 'Uploading...' : 'Upload File'}
+          </button>
+          <input ref={fileInputRef} type="file" onChange={handleFileUpload} className="hidden" />
         </div>
+
+        {uploadError && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700 flex items-center justify-between">
+            <span>{uploadError}</span>
+            <button onClick={() => setUploadError(null)} className="text-red-700 hover:text-red-900 font-bold">×</button>
+          </div>
+        )}
 
         <div className="border-t border-[#E5E7EB]"></div>
 
@@ -415,6 +542,7 @@ const FileManager: React.FC = () => {
                             onDownload={() => handleDownload(file)}
                             onEdit={() => handleEditInit(file)}
                             onDelete={() => handleDelete(file.id)}
+                            onPreview={() => setPreviewFile(file)}
                           />
                         </div>
                       </td>
@@ -480,6 +608,7 @@ const FileManager: React.FC = () => {
                 onDownload={() => handleDownload(file)}
                 onEdit={() => handleEditInit(file)}
                 onDelete={() => handleDelete(file.id)}
+                onPreview={() => setPreviewFile(file)}
                 handleMenuClick={handleMenuClick}
                 activeMenuId={activeMenuId}
                 menuPosition={menuPosition}
@@ -534,6 +663,8 @@ const FileManager: React.FC = () => {
           )}
         </div>
       </div>
+
+      <FilePreviewModal isOpen={previewFile !== null} file={previewFile} onClose={() => setPreviewFile(null)} />
 
       {/* Edit Modal */}
       {editingFileId !== null && (

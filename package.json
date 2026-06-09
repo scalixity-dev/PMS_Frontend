@@ -28,6 +28,7 @@
     "@tiptap/pm": "^3.14.0",
     "@tiptap/react": "^3.14.0",
     "@tiptap/starter-kit": "^3.14.0",
+    "@types/react-signature-canvas": "^1.0.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "country-state-city": "^3.2.1",
@@ -47,6 +48,7 @@
     "react-phone-input-2": "^2.15.1",
     "react-quill-new": "^3.7.0",
     "react-router-dom": "^7.9.5",
+    "react-signature-canvas": "^1.1.0-alpha.2",
     "recharts": "^2.15.4",
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
@@ -74,6 +76,8 @@
     "vite": "^7.1.7"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

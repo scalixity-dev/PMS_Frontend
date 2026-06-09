@@ -1937,10 +1937,10 @@ const ApplicationDetail = () => {
                                             labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
                                             valueClassName="w-1/3 flex justify-end"
                                         />
-                                        {application.backgroundQuestions.smoke && (application.backgroundQuestions as any).explanations?.smoke && (
+                                        {application.backgroundQuestions.smoke && (application.backgroundQuestions as any).smokeExplanation && (
                                             <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
                                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).explanations.smoke}"</p>
+                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).smokeExplanation}"</p>
                                             </div>
                                         )}
                                     </div>
@@ -1958,10 +1958,10 @@ const ApplicationDetail = () => {
                                             labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
                                             valueClassName="w-1/3 flex justify-end"
                                         />
-                                        {application.backgroundQuestions.militaryMember && (application.backgroundQuestions as any).explanations?.military && (
+                                        {application.backgroundQuestions.militaryMember && (application.backgroundQuestions as any).militaryExplanation && (
                                             <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
                                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).explanations.military}"</p>
+                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).militaryExplanation}"</p>
                                             </div>
                                         )}
                                     </div>
@@ -1979,10 +1979,10 @@ const ApplicationDetail = () => {
                                             labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
                                             valueClassName="w-1/3 flex justify-end"
                                         />
-                                        {application.backgroundQuestions.criminalRecord && (application.backgroundQuestions as any).explanations?.crime && (
+                                        {application.backgroundQuestions.criminalRecord && (application.backgroundQuestions as any).crimeExplanation && (
                                             <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
                                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).explanations.crime}"</p>
+                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).crimeExplanation}"</p>
                                             </div>
                                         )}
                                     </div>
@@ -2000,10 +2000,10 @@ const ApplicationDetail = () => {
                                             labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
                                             valueClassName="w-1/3 flex justify-end"
                                         />
-                                        {application.backgroundQuestions.bankruptcy && (application.backgroundQuestions as any).explanations?.bankruptcy && (
+                                        {application.backgroundQuestions.bankruptcy && (application.backgroundQuestions as any).bankruptcyExplanation && (
                                             <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
                                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).explanations.bankruptcy}"</p>
+                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).bankruptcyExplanation}"</p>
                                             </div>
                                         )}
                                     </div>
@@ -2021,10 +2021,10 @@ const ApplicationDetail = () => {
                                             labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
                                             valueClassName="w-1/3 flex justify-end"
                                         />
-                                        {application.backgroundQuestions.refusedRent && (application.backgroundQuestions as any).explanations?.refuseRent && (
+                                        {application.backgroundQuestions.refusedRent && (application.backgroundQuestions as any).refusedRentExplanation && (
                                             <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
                                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).explanations.refuseRent}"</p>
+                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).refusedRentExplanation}"</p>
                                             </div>
                                         )}
                                     </div>
@@ -2042,10 +2042,10 @@ const ApplicationDetail = () => {
                                             labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
                                             valueClassName="w-1/3 flex justify-end"
                                         />
-                                        {application.backgroundQuestions.evicted && (application.backgroundQuestions as any).explanations?.evicted && (
+                                        {application.backgroundQuestions.evicted && (application.backgroundQuestions as any).evictedExplanation && (
                                             <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
                                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).explanations.evicted}"</p>
+                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).evictedExplanation}"</p>
                                             </div>
                                         )}
                                     </div>

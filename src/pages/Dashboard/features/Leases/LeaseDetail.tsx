@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { formatPhoneNumber } from '@/utils/phone.utils';
 
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, CheckCircle, RefreshCw, XCircle, Edit, FileText, ChevronDown, SquarePen, Upload, Pencil, Clock, Plus, Trash2, Loader2 } from 'lucide-react';
+import { ChevronLeft, CheckCircle, RefreshCw, XCircle, Edit, FileText, ChevronDown, ChevronUp, SquarePen, Upload, Pencil, Clock, Plus, Trash2, Loader2, Eye, X } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import DetailTabs from '../../components/DetailTabs';
 import CustomTextBox from '../../components/CustomTextBox';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
@@ -11,11 +12,10 @@ import AddEditRecurringRentModal from './components/AddEditRecurringRentModal';
 import RentScheduleModal from './components/RentScheduleModal';
 import EditExtraFeesModal from './components/EditExtraFeesModal';
 import PropertyAttachmentsModal from './components/PropertyAttachmentsModal';
-import FinancialCard, { type FinancialRecord } from './components/FinancialCard';
-import AddInsuranceModal from '../Properties/components/AddInsuranceModal';
 import ResponsibilityModal, { type ResponsibilityItem } from '../Properties/components/ResponsibilityModal';
-import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useUpdateLeaseInsurances, useRenewLease } from '../../../../hooks/useLeaseQueries';
+import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useRenewLease } from '../../../../hooks/useLeaseQueries';
 import { useDeleteRecurringTransaction } from '../../../../hooks/useTransactionQueries';
+import { useGetRenderedDocuments } from '../../../../hooks/useDocumentsQueries';
 import { useGetTenantByUserId } from '../../../../hooks/useTenantQueries';
 import type { BackendLease } from '../../../../services/lease.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
@@ -23,31 +23,9 @@ import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 
 const LeaseDetail: React.FC = () => {
-    // Helper to map InsuranceData to FinancialRecord for display
-    const mapInsuranceToRecord = (data: any): FinancialRecord => {
-        return {
-            id: data.id,
-            headerPills: [
-                { label: 'Effective date', value: data.effectiveDate || '-' },
-                { label: 'Expiration date', value: data.expirationDate || '-' },
-                { label: 'Price', value: data.price ? `$${data.price} ` : '-' },
-            ],
-            details: [
-                { label: 'Company name', value: data.companyName },
-                { label: 'Email notification due to expiration', value: data.emailNotification ? 'Yes' : 'No' },
-                { label: 'Phone number', value: data.agentPhone ? formatPhoneNumber(data.agentPhone) : '-' },
-
-                { label: 'Website', value: data.companyWebsite },
-                { label: 'Policy', value: data.policyNumber || '-' },
-                { label: 'Details', value: data.details || '-' },
-                { label: 'Agent', value: data.agentName || '-' },
-                { label: 'Email', value: data.agentEmail || '-' },
-            ]
-        };
-    };
-
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('tenants');
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -70,13 +48,6 @@ const LeaseDetail: React.FC = () => {
     // Modal states for extra fees
     const [isEditExtraFeesModalOpen, setIsEditExtraFeesModalOpen] = useState(false);
 
-    // Modal states for insurance
-    const [isAddInsuranceModalOpen, setIsAddInsuranceModalOpen] = useState(false);
-    const [editingInsuranceId, setEditingInsuranceId] = useState<string | null>(null);
-    const [insurances, setInsurances] = useState<any[]>([]);
-    const [isDeleteInsuranceModalOpen, setIsDeleteInsuranceModalOpen] = useState(false);
-    const [insuranceToDelete, setInsuranceToDelete] = useState<string | null>(null);
-
     // Modal states for attachments
     const [isPropertyAttachmentsModalOpen, setIsPropertyAttachmentsModalOpen] = useState(false);
     const [attachments, setAttachments] = useState<{ shared: any[]; private: any[] }>({ shared: [], private: [] });
@@ -94,8 +65,19 @@ const LeaseDetail: React.FC = () => {
     const [renewNotes, setRenewNotes] = useState('');
     const [renewError, setRenewError] = useState('');
 
+    // Document & Notices states
+    const [isDocumentsExpanded, setIsDocumentsExpanded] = useState(true);
+    const [previewDoc, setPreviewDoc] = useState<any>(null);
+
     // Fetch lease data
     const { data: backendLease, isLoading, error } = useGetLease(id);
+
+    // Fetch rendered documents
+    const { data: allRenderedDocs } = useGetRenderedDocuments();
+    const leaseRenderedDocs = useMemo(() => {
+        if (!allRenderedDocs || !id) return [];
+        return allRenderedDocs.filter((doc: any) => doc.leaseId === id);
+    }, [allRenderedDocs, id]);
 
     // Fetch enriched tenant profile (pets, vehicles, emergency contacts, documents)
     const tenantUserId = backendLease?.tenant?.id || backendLease?.tenantId || null;
@@ -106,7 +88,6 @@ const LeaseDetail: React.FC = () => {
     const deleteLeaseMutation = useDeleteLease();
     const updateLeaseMutation = useUpdateLease();
     const updateUtilitiesMutation = useUpdateLeaseUtilities();
-    const updateInsurancesMutation = useUpdateLeaseInsurances();
     const renewLeaseMutation = useRenewLease();
 
     // Helper function to generate initials from name
@@ -249,27 +230,6 @@ const LeaseDetail: React.FC = () => {
         const transformed = transformLease(backendLease);
         // Reset image error state when lease data changes
         setTenantImageError(false);
-        // Sync insurance records from backend into local display state
-        if (backendLease.insurances) {
-            setInsurances(
-                backendLease.insurances.map((ins) => ({
-                    id: ins.id,
-                    companyName: ins.companyName,
-                    companyWebsite: ins.companyWebsite || '',
-                    agentName: ins.agentName || '',
-                    agentEmail: ins.agentEmail || '',
-                    agentPhone: ins.agentPhone || '',
-                    policyNumber: ins.policyNumber || '',
-                    price: ins.price ? String(ins.price) : '',
-                    effectiveDate: ins.effectiveDate || '',
-                    expirationDate: ins.expirationDate || '',
-                    details: ins.details || '',
-                    emailNotification: ins.emailNotification,
-                })),
-            );
-        } else {
-            setInsurances([]);
-        }
         // Sync utilities/responsibilities from backend into local state
         if (backendLease.utilities) {
             setResponsibilities(
@@ -283,6 +243,31 @@ const LeaseDetail: React.FC = () => {
             setResponsibilities([]);
         }
         return transformed;
+    }, [backendLease]);
+
+    // Initialize attachments state from backend lease documents
+    useEffect(() => {
+        if (backendLease && backendLease.documents) {
+            const shared = backendLease.documents
+                .filter((doc: any) => doc.visibility === 'SHARED')
+                .map((doc: any) => ({
+                    id: doc.id,
+                    name: doc.fileUrl?.split('/').pop() || doc.documentCategory,
+                    size: doc.fileSize || 0,
+                    type: doc.fileType,
+                    url: doc.fileUrl
+                }));
+            const privateDocs = backendLease.documents
+                .filter((doc: any) => doc.visibility === 'PRIVATE')
+                .map((doc: any) => ({
+                    id: doc.id,
+                    name: doc.fileUrl?.split('/').pop() || doc.documentCategory,
+                    size: doc.fileSize || 0,
+                    type: doc.fileType,
+                    url: doc.fileUrl
+                }));
+            setAttachments({ shared, private: privateDocs });
+        }
     }, [backendLease]);
 
     // Check if move-in is incomplete (lease status is PENDING)
@@ -470,58 +455,6 @@ const LeaseDetail: React.FC = () => {
         }
     };
 
-    // Handler for saving insurance
-    const handleSaveInsurance = async (data: any) => {
-        // Update local state optimistically
-        let nextInsurances: any[];
-        if (editingInsuranceId) {
-            nextInsurances = insurances.map(i => i.id === editingInsuranceId ? { ...i, ...data } : i);
-        } else {
-            const newInsurance = { id: `ins-${Date.now()}`, ...data };
-            nextInsurances = [...insurances, newInsurance];
-        }
-        setInsurances(nextInsurances);
-
-        if (!id) {
-            setIsAddInsuranceModalOpen(false);
-            setEditingInsuranceId(null);
-            return;
-        }
-
-        try {
-            await updateInsurancesMutation.mutateAsync({
-                id,
-                insurances: nextInsurances.map((item) => ({
-                    companyName: item.companyName,
-                    companyWebsite: item.companyWebsite,
-                    agentName: item.agentName,
-                    agentEmail: item.agentEmail,
-                    agentPhone: item.agentPhone,
-                    policyNumber: item.policyNumber,
-                    price: item.price,
-                    effectiveDate: item.effectiveDate,
-                    expirationDate: item.expirationDate,
-                    details: item.details,
-                    emailNotification: item.emailNotification,
-                })),
-            });
-            setIsAddInsuranceModalOpen(false);
-            setEditingInsuranceId(null);
-        } catch (error) {
-            console.error('Failed to update insurances:', error);
-            alert(error instanceof Error ? error.message : 'Failed to update insurances. Please try again.');
-        }
-    };
-
-    // Handler for deleting insurance
-    const handleDeleteInsurance = () => {
-        if (insuranceToDelete) {
-            setInsurances(prev => prev.filter(i => i.id !== insuranceToDelete));
-            setIsDeleteInsuranceModalOpen(false);
-            setInsuranceToDelete(null);
-        }
-    };
-
     // Handler for deleting attachment
     const handleDeleteAttachment = () => {
         if (attachmentToDelete) {
@@ -558,7 +491,6 @@ const LeaseDetail: React.FC = () => {
         { id: 'tenants', label: 'Tenants' },
         { id: 'transactions', label: 'Lease Transactions' },
         { id: 'agreements', label: 'Agreements & Notices' },
-        { id: 'insurance', label: 'Insurance' },
         { id: 'utilities', label: 'Utilities' }
     ];
 
@@ -1205,15 +1137,26 @@ const LeaseDetail: React.FC = () => {
                                                                 <p className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
                                                             </div>
                                                         </div>
-                                                        <button
-                                                            onClick={() => {
-                                                                setAttachmentToDelete({ type: 'shared', index });
-                                                                setIsDeleteAttachmentModalOpen(true);
-                                                            }}
-                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
+                                                        <div className="flex items-center gap-1">
+                                                            {file.url && (
+                                                                <button
+                                                                    onClick={() => window.open(file.url, '_blank')}
+                                                                    className="p-1.5 text-gray-400 hover:text-[#3A6D6C] hover:bg-green-50 rounded-full transition-colors"
+                                                                    title="View Attachment"
+                                                                >
+                                                                    <Eye size={16} />
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => {
+                                                                    setAttachmentToDelete({ type: 'shared', index });
+                                                                    setIsDeleteAttachmentModalOpen(true);
+                                                                }}
+                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
@@ -1234,15 +1177,26 @@ const LeaseDetail: React.FC = () => {
                                                                 <p className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
                                                             </div>
                                                         </div>
-                                                        <button
-                                                            onClick={() => {
-                                                                setAttachmentToDelete({ type: 'private', index });
-                                                                setIsDeleteAttachmentModalOpen(true);
-                                                            }}
-                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
+                                                        <div className="flex items-center gap-1">
+                                                            {file.url && (
+                                                                <button
+                                                                    onClick={() => window.open(file.url, '_blank')}
+                                                                    className="p-1.5 text-gray-400 hover:text-[#3A6D6C] hover:bg-green-50 rounded-full transition-colors"
+                                                                    title="View Attachment"
+                                                                >
+                                                                    <Eye size={16} />
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => {
+                                                                    setAttachmentToDelete({ type: 'private', index });
+                                                                    setIsDeleteAttachmentModalOpen(true);
+                                                                }}
+                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
@@ -1261,61 +1215,57 @@ const LeaseDetail: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                    </div>
-                )}
 
-                {/* Tab Content - Insurance */}
-                {activeTab === 'insurance' && (
-                    <div className="space-y-6">
-                        {/* Insurances Section */}
-                        <div>
-                            <div className="flex items-center justify-between gap-4 mb-4">
-                                <div className="flex items-center gap-2 cursor-pointer">
-                                    <h2 className="text-lg font-bold text-gray-800">Renters insurance</h2>
-                                    <ChevronDown className="w-5 h-5 text-gray-800" />
+                        {/* Rendered Documents (sent by property manager) */}
+                        <div className="bg-[#F7F7F7] rounded-lg border border-[#E5E7EB] overflow-hidden shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] mt-4">
+                            <button
+                                onClick={() => setIsDocumentsExpanded(!isDocumentsExpanded)}
+                                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <FileText size={20} className="text-gray-600" />
+                                    <h3 className="text-base font-semibold text-[#1A1A1A]">Documents & Notices</h3>
+                                    <span className="text-sm text-gray-500">({leaseRenderedDocs.length} record{leaseRenderedDocs.length !== 1 ? 's' : ''})</span>
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        setEditingInsuranceId(null);
-                                        setIsAddInsuranceModalOpen(true);
-                                    }}
-                                    className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
-                                >
-                                    <Plus className="w-3 h-3" />
-                                    Add
-                                </button>
-                            </div>
+                                {isDocumentsExpanded ? <ChevronUp size={20} className="text-gray-600" /> : <ChevronDown size={20} className="text-gray-600" />}
+                            </button>
 
-                            {insurances.length === 0 ? (
-                                <div className="bg-[#F0F2F5] rounded-[2rem] p-8 min-h-[300px] flex items-center justify-center">
-                                    <div className="bg-[#EAEAEA] w-full max-w-md rounded-2xl p-12 flex flex-col items-center justify-center">
-                                        <SquarePen className="w-8 h-8 text-[#3A6D6C] mb-3" />
-                                        <p className="text-[#3A6D6C] font-medium text-xs">No insurances</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="bg-[#F0F2F5] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 shadow-sm">
-                                    {insurances.map(item => (
-                                        <FinancialCard
-                                            key={item.id}
-                                            record={mapInsuranceToRecord(item)}
-                                            onEdit={() => {
-                                                setEditingInsuranceId(item.id);
-                                                setIsAddInsuranceModalOpen(true);
-                                            }}
-                                            onDelete={() => {
-                                                setInsuranceToDelete(item.id);
-                                                setIsDeleteInsuranceModalOpen(true);
-                                            }}
-                                        />
-                                    ))}
+                            {isDocumentsExpanded && (
+                                <div className="border-t border-[#E5E7EB]">
+                                    {leaseRenderedDocs.length > 0 ? (
+                                        <div className="divide-y divide-[#E5E7EB]">
+                                            {leaseRenderedDocs.map((doc: any) => (
+                                                <div key={doc.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors bg-white">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                                            <FileText size={20} className="text-green-600" />
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-medium text-[#1A1A1A]">{doc.title}</span>
+                                                            <span className="text-xs text-gray-500">
+                                                                {new Date(doc.createdAt).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setPreviewDoc(doc)}
+                                                        className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
+                                                    >
+                                                        <Eye size={16} />
+                                                        View
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center text-gray-500">No documents available</div>
+                                    )}
                                 </div>
                             )}
                         </div>
                     </div>
                 )}
 
-                {/* Tab Content - Utilities */}
                 {/* Tab Content - Utilities */}
                 {activeTab === 'utilities' && (
                     <div className="space-y-6">
@@ -1414,21 +1364,15 @@ const LeaseDetail: React.FC = () => {
                 onSave={handleSaveResponsibilities}
             />
 
-            <AddInsuranceModal
-                isOpen={isAddInsuranceModalOpen}
-                onClose={() => {
-                    setIsAddInsuranceModalOpen(false);
-                    setEditingInsuranceId(null);
-                }}
-                onAdd={handleSaveInsurance}
-                initialData={editingInsuranceId ? insurances.find(i => i.id === editingInsuranceId) : undefined}
-            />
-
             <PropertyAttachmentsModal
                 isOpen={isPropertyAttachmentsModalOpen}
                 onClose={() => setIsPropertyAttachmentsModalOpen(false)}
                 onUpdate={async (files) => {
-                    setAttachments(files);
+                    // Append new files to existing state for immediate UI feedback
+                    setAttachments(prev => ({
+                        shared: [...prev.shared, ...files.shared],
+                        private: [...prev.private, ...files.private]
+                    }));
                     setIsPropertyAttachmentsModalOpen(false);
 
                     if (!id) return;
@@ -1464,20 +1408,16 @@ const LeaseDetail: React.FC = () => {
                         for (const file of files.private) {
                             await uploadFile(file, 'PRIVATE');
                         }
+
+                        // Refresh backend data to get the permanent S3 URLs and IDs
+                        queryClient.invalidateQueries({ queryKey: ['lease', id] });
                     } catch (error) {
                         console.error('Failed to upload lease documents:', error);
                         alert(error instanceof Error ? error.message : 'Failed to upload documents. Please try again.');
+                        // On failure, refresh anyway to reset state to what's actually in DB
+                        queryClient.invalidateQueries({ queryKey: ['lease', id] });
                     }
                 }}
-            />
-
-            <DeleteConfirmationModal
-                isOpen={isDeleteInsuranceModalOpen}
-                onClose={() => setIsDeleteInsuranceModalOpen(false)}
-                onConfirm={handleDeleteInsurance}
-                title="Delete Insurance"
-                message="Are you sure you want to delete this insurance record?"
-                itemName={insuranceToDelete ? insurances.find(i => i.id === insuranceToDelete)?.companyName || 'Insurance' : 'Insurance'}
             />
 
             <DeleteConfirmationModal
@@ -1606,6 +1546,35 @@ const LeaseDetail: React.FC = () => {
                             >
                                 {renewLeaseMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                                 Renew Lease
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Document Preview Modal */}
+            {previewDoc && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                            <h2 className="text-lg font-semibold text-[#1A1A1A]">{previewDoc.title}</h2>
+                            <button
+                                onClick={() => setPreviewDoc(null)}
+                                className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-800"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div
+                            className="overflow-y-auto p-6 prose prose-sm max-w-none"
+                            dangerouslySetInnerHTML={{ __html: previewDoc.content }}
+                        />
+                        <div className="p-4 border-t border-gray-200 flex justify-end">
+                            <button
+                                onClick={() => setPreviewDoc(null)}
+                                className="px-4 py-2 rounded-lg bg-[#3A6D6C] text-white text-sm font-medium hover:bg-[#2a5251] transition-colors"
+                            >
+                                Close
                             </button>
                         </div>
                     </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, Home, User, ArrowLeft } from 'lucide-react';
 import type { Lease } from '../../utils/types';
@@ -7,7 +7,6 @@ import CustomActionDropdown from "../../../Dashboard/components/CustomActionDrop
 import { LeaseInfoCard } from "./components/LeaseInfoCard";
 import { TenantCard } from "./components/TenantCard";
 import { LeaseTransactionsTable } from "./components/LeaseTransactionsTable";
-import { LeaseInsurance } from "./components/LeaseInsurance";
 import { LeaseAgreementsNotices } from "./components/LeaseAgreementsNotices";
 import { useGetLease } from "../../../../hooks/useLeaseQueries";
 import { useGetTransactions } from "../../../../hooks/useTransactionQueries";
@@ -21,7 +20,6 @@ type LeaseTab =
     | "TENANTS"
     | "TRANSACTIONS"
     | "AGREEMENTS"
-    | "INSURANCE"
     | "UTILITIES";
 
 // Tab configuration
@@ -29,7 +27,6 @@ const LEASE_TABS: { key: LeaseTab; label: string }[] = [
     { key: "TENANTS", label: "Tenants" },
     { key: "TRANSACTIONS", label: "Leases Transactions" },
     { key: "AGREEMENTS", label: "Agreements & Notices" },
-    { key: "INSURANCE", label: "Insurance" },
     { key: "UTILITIES", label: "Utilities" },
 ];
 
@@ -43,8 +40,6 @@ const LeaseDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<LeaseTab>("TENANTS");
-    const insuranceRef = useRef<{ openModal: () => void }>(null);
-
     // Fetch lease data from backend
     const { data: backendLease, isLoading: leaseLoading, error: leaseError } = useGetLease(id, !!id);
     
@@ -249,13 +244,6 @@ const LeaseDetails = () => {
                         buttonLabel="Action"
                         options={[
                             {
-                                label: "Add own insurance",
-                                onClick: () => {
-                                    setActiveTab("INSURANCE");
-                                    setTimeout(() => insuranceRef.current?.openModal(), 100);
-                                }
-                            },
-                            {
                                 label: "Request repair",
                                 onClick: () => navigate(`${DASHBOARD_PATH}/new-request`)
                             }
@@ -309,15 +297,6 @@ const LeaseDetails = () => {
                 {/* Agreements & Notices */}
                 {activeTab === "AGREEMENTS" && (
                     <LeaseAgreementsNotices lease={lease} renderedDocuments={leaseRenderedDocs} />
-                )}
-
-                {/* Insurance Section */}
-                {activeTab === "INSURANCE" && (
-                    <LeaseInsurance
-                        ref={insuranceRef}
-                        leaseId={id ?? undefined}
-                        backendInsurances={backendLease?.insurances ?? []}
-                    />
                 )}
 
                 {/* Utilities Section */}

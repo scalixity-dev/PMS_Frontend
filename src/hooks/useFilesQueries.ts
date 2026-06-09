@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { filesService } from '../services/files.service';
-import type { CreateFolderDto, CreateFileDto } from '../services/files.service';
+import type { CreateFolderDto, CreateFileDto, TrackDownloadDto } from '../services/files.service';
 
 export const filesQueryKeys = {
   all: ['files'] as const,
   folders: (parentId?: string) => ['files', 'folders', parentId] as const,
   filesList: (folderId?: string) => ['files', 'list', folderId] as const,
+  downloads: ['files', 'downloads'] as const,
 };
 
 // ─── Folders ────────────────────────────────────────────────────────────────
@@ -91,6 +92,28 @@ export const useDeleteFile = () => {
     mutationFn: (id: string) => filesService.deleteFile(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', 'list'] });
+    },
+  });
+};
+
+// ─── Downloads ──────────────────────────────────────────────────────────────
+
+export const useGetDownloads = () => {
+  return useQuery({
+    queryKey: filesQueryKeys.downloads,
+    queryFn: () => filesService.getDownloads(),
+    staleTime: 1 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+};
+
+export const useTrackDownload = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: TrackDownloadDto) => filesService.trackDownload(dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: filesQueryKeys.downloads });
     },
   });
 };

@@ -690,12 +690,14 @@ class TenantService {
   async savePreferences(data: {
     location: { country: string; state: string; city: string };
     rentalTypes: string[];
+    lookingForPlace?: boolean;
     criteria: {
       beds?: string | null;
       baths?: string | null;
       minPrice?: number;
       maxPrice?: number;
       petsAllowed?: boolean;
+      size?: string | null;
     };
   }): Promise<any> {
     const response = await fetch(API_ENDPOINTS.TENANT.SAVE_PREFERENCES, {

@@ -46,6 +46,7 @@ const TenantPage = lazy(() => import('./pages/basewebsite/usecases/tenant'));
 const ServiceProsPage = lazy(() => import('./pages/basewebsite/usecases/servicepros'));
 const BecomeServiceProvider = lazy(() => import('./pages/basewebsite/features/BecomeServiceProvider'));
 const ListingPreview = lazy(() => import('./pages/Preview/ListingPreview'));
+const PublicRenterProfilePage = lazy(() => import('./pages/PublicRenterProfile'));
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
 const ListUnit = lazy(() => import('./pages/Dashboard/features/ListUnit'));
 const AddProperty = lazy(() => import('./pages/Dashboard/features/Properties/AddProperty'));
@@ -268,6 +269,7 @@ const App: React.FC = () => {
             </Route>
 
             <Route path="/preview/:id" element={<ListingPreview />} />
+            <Route path="/renter-profile/:slug" element={<PublicRenterProfilePage />} />
 
             {/* Auth routes — no navbar/footer */}
             <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
