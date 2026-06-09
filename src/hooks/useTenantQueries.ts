@@ -246,12 +246,14 @@ export const useSaveTenantPreferences = () => {
     mutationFn: (data: {
       location: { country: string; state: string; city: string };
       rentalTypes: string[];
+      lookingForPlace?: boolean;
       criteria: {
         beds?: string | null;
         baths?: string | null;
         minPrice?: number;
         maxPrice?: number;
         petsAllowed?: boolean;
+        size?: string | null;
       };
     }) => tenantService.savePreferences(data),
     onSuccess: () => {
