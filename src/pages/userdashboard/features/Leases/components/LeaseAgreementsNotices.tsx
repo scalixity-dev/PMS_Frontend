@@ -51,10 +51,9 @@ export const LeaseAgreementsNotices = ({ lease, renderedDocuments = [] }: LeaseA
                         {attachments.length > 0 ? (
                             <div className="divide-y divide-[#E5E7EB]">
                                 {attachments.map((attachment) => (
-                                    <button
+                                    <div
                                         key={attachment.id}
-                                        onClick={() => handleDownload(attachment)}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer group"
+                                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors group"
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -65,7 +64,19 @@ export const LeaseAgreementsNotices = ({ lease, renderedDocuments = [] }: LeaseA
                                                 <span className="text-xs text-gray-500">{attachment.size}</span>
                                             </div>
                                         </div>
-                                    </button>
+                                        <div className="flex items-center gap-2">
+                                            {attachment.url && attachment.url !== '#' && (
+                                                <button
+                                                    onClick={() => window.open(attachment.url, '_blank')}
+                                                    className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-blue-50"
+                                                    title="View Attachment"
+                                                >
+                                                    <Eye size={16} />
+                                                    View
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         ) : (

@@ -40,6 +40,25 @@ export interface CreateFileDto {
   propertyId?: string;
 }
 
+export interface TrackDownloadDto {
+  fileId?: string;
+  fileName: string;
+  fileUrl: string;
+  mimeType?: string;
+  sizeBytes?: number;
+}
+
+export interface DownloadRecord {
+  id: string;
+  userId: string;
+  fileId: string | null;
+  fileName: string;
+  fileUrl: string;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  downloadedAt: string;
+}
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     headers: { 'Content-Type': 'application/json' },
@@ -120,6 +139,17 @@ class FilesService {
     return request<{ message: string; url: string }>(API_ENDPOINTS.FILES.DELETE_FILE(id), {
       method: 'DELETE',
     });
+  }
+
+  async trackDownload(dto: TrackDownloadDto): Promise<DownloadRecord> {
+    return request<DownloadRecord>(API_ENDPOINTS.FILES.TRACK_DOWNLOAD, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  }
+
+  async getDownloads(): Promise<DownloadRecord[]> {
+    return request<DownloadRecord[]>(API_ENDPOINTS.FILES.GET_DOWNLOADS);
   }
 }
 

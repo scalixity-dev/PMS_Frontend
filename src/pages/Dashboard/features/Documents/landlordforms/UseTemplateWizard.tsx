@@ -444,6 +444,21 @@ const UseTemplateWizard: React.FC = () => {
     };
 
     const [appendSignature, setAppendSignature] = useState(true);
+    const [managerSigned, setManagerSigned] = useState(false);
+    const [managerSignatureUrl, setManagerSignatureUrl] = useState<string | undefined>(undefined);
+
+    const handleSignatureToggle = (enabled: boolean) => {
+        setAppendSignature(enabled);
+        if (!enabled) {
+            setManagerSigned(false);
+            setManagerSignatureUrl(undefined);
+        }
+    };
+
+    const handleManagerSign = (dataUrl: string) => {
+        setManagerSignatureUrl(dataUrl);
+        setManagerSigned(true);
+    };
 
     const handleSendToReview = async () => {
         if (activeTemplateId) {
@@ -455,6 +470,7 @@ const UseTemplateWizard: React.FC = () => {
                         leaseId: selectedLeaseId,
                         sendToTenant: true,
                         appendSignature: appendSignature,
+                        managerSignatureUrl: managerSignatureUrl,
                     }
                 });
             } catch {
@@ -658,7 +674,10 @@ const UseTemplateWizard: React.FC = () => {
                                         showSignatureSection={true}
                                         previewValues={templateValues}
                                         isDefaultSignature={appendSignature}
-                                        onSignatureToggle={setAppendSignature}
+                                        onSignatureToggle={handleSignatureToggle}
+                                        managerSigned={managerSigned}
+                                        managerSignatureUrl={managerSignatureUrl}
+                                        onManagerSign={handleManagerSign}
                                     />
                                 </div>
 
@@ -670,8 +689,9 @@ const UseTemplateWizard: React.FC = () => {
                                     />
                                     <PrimaryActionButton
                                         onClick={handleSendToReview}
-                                        text="Send to Review"
-                                        className="!bg-[#3A6D6C] !w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] hover:!bg-[#2d5650] transition-colors"
+                                        disabled={appendSignature && !managerSigned}
+                                        text={appendSignature && !managerSigned ? 'Sign document first' : 'Send to Review'}
+                                        className={`!w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] transition-colors ${appendSignature && !managerSigned ? '!bg-gray-300 !text-gray-500 cursor-not-allowed' : '!bg-[#3A6D6C] hover:!bg-[#2d5650]'}`}
                                     />
                                 </div>
                             </>

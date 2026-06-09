@@ -143,13 +143,13 @@ const Profile: React.FC = () => {
         await updateProfileMutation.mutateAsync({
           fullName: `${tempInfo.firstName || ''} ${tempInfo.lastName || ''}`.trim(),
           phoneNumber: tempInfo.phone,
+          dateOfBirth: tempInfo.dob || undefined,
         });
       } else if (editMode === 'address') {
         await updateProfileMutation.mutateAsync({
           country: tempInfo.country,
-          state: (tempInfo as any).state,
+          city: tempInfo.city,
           pincode: tempInfo.pincode,
-          address: (tempInfo as any).address,
         });
       }
       setUserInfo(tempInfo);

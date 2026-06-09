@@ -14,7 +14,9 @@ import {
 } from "react-icons/pi";
 import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import { Dialog, Transition } from '@headlessui/react';
+import { FileText, Download, Loader2 } from "lucide-react";
 import artworkImage from "../../assets/images/Artwork.png";
+import { useGetDownloads } from "../../hooks/useFilesQueries";
 
 const SidebarContext = React.createContext<{ collapsed: boolean }>({ collapsed: false });
 
@@ -95,32 +97,80 @@ interface DownloadPopupProps {
 }
 
 const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position, popupRef }) => {
+    const { data: downloads, isLoading } = useGetDownloads();
+
     if (!isOpen || !position) return null;
 
     return createPortal(
         <div
             ref={popupRef}
-            className="fixed z-[9999] bg-white rounded-lg shadow-[0px_4px_24px_rgba(0,0,0,0.12)] border border-gray-100 w-[450px] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            className="fixed z-[9999] bg-white rounded-lg shadow-[0px_4px_24px_rgba(0,0,0,0.12)] border border-gray-100 w-[450px] overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]"
             style={{
                 top: position.top,
                 left: position.left,
             }}
         >
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
                 <h3 className="text-base font-bold text-[#111827]">Downloads</h3>
             </div>
-            <div className="p-8 flex flex-col items-center justify-center text-center space-y-4 min-h-[250px]">
-                <div className="mb-2 p-4 bg-gray-50 rounded-full">
-                    <ListPlus size={40} className="text-[#566573]" />
-                </div>
-                <div>
-                    <h4 className="text-lg font-semibold text-[#111827] mb-2">No files downloaded yet</h4>
-                    <p className="text-sm text-[#7F8C8D] leading-relaxed max-w-[280px] mx-auto">
-                        There are no downloaded files. Once you export some files, they will appear here.
-                    </p>
-                </div>
+            
+            <div className="flex-1 overflow-y-auto min-h-[250px]">
+                {isLoading ? (
+                    <div className="p-8 flex flex-col items-center justify-center text-center h-full">
+                        <Loader2 className="animate-spin text-gray-400 mb-4" size={32} />
+                        <p className="text-sm text-[#7F8C8D]">Loading your downloads...</p>
+                    </div>
+                ) : downloads && downloads.length > 0 ? (
+                    <div className="divide-y divide-gray-100">
+                        {downloads.map((item) => (
+                            <div key={item.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                                        <FileText size={20} className="text-green-600" />
+                                    </div>
+                                    <div className="flex flex-col overflow-hidden">
+                                        <span className="text-sm font-medium text-gray-900 truncate" title={item.fileName}>
+                                            {item.fileName}
+                                        </span>
+                                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                                            <span>{new Date(item.downloadedAt).toLocaleDateString()}</span>
+                                            {item.sizeBytes ? (
+                                                <>
+                                                    <span>•</span>
+                                                    <span>{(item.sizeBytes / 1024 / 1024).toFixed(2)} MB</span>
+                                                </>
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                </div>
+                                <a
+                                    href={item.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors flex-shrink-0 ml-2"
+                                    title="Download again"
+                                >
+                                    <Download size={18} />
+                                </a>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="p-8 flex flex-col items-center justify-center text-center space-y-4 h-full">
+                        <div className="mb-2 p-4 bg-gray-50 rounded-full">
+                            <ListPlus size={40} className="text-[#566573]" />
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-semibold text-[#111827] mb-2">No files downloaded yet</h4>
+                            <p className="text-sm text-[#7F8C8D] leading-relaxed max-w-[280px] mx-auto">
+                                There are no downloaded files. Once you export some files, they will appear here.
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
-            <div className="p-3 border-t border-gray-100 flex justify-end">
+            
+            <div className="p-3 border-t border-gray-100 flex justify-end flex-shrink-0">
                 <PrimaryActionButton
                     onClick={onClose}
                     text="Close"

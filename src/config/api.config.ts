@@ -149,6 +149,7 @@ export const API_ENDPOINTS = {
     DELETE_DOCUMENT: (documentId: string) => `${API_BASE_URL}/tenant/documents/${documentId}`,
     SAVE_PREFERENCES: `${API_BASE_URL}/tenant/preferences`,
     GET_PREFERENCES: `${API_BASE_URL}/tenant/preferences`,
+    GET_PUBLIC_PROFILE: (slug: string) => `${API_BASE_URL}/tenant/public/${slug}`,
     MY_DASHBOARD: `${API_BASE_URL}/tenant/me/dashboard`,
     IMPORT_EXCEL: `${API_BASE_URL}/tenant/import-excel`,
     VALIDATE_EXCEL: `${API_BASE_URL}/tenant/validate-excel`,
@@ -416,6 +417,8 @@ export const API_ENDPOINTS = {
     UPLOAD: `${API_BASE_URL}/api/v1/files/upload`,
     RENAME_FILE: (id: string) => `${API_BASE_URL}/api/v1/files/${id}`,
     DELETE_FILE: (id: string) => `${API_BASE_URL}/api/v1/files/${id}`,
+    TRACK_DOWNLOAD: `${API_BASE_URL}/api/v1/files/downloads/track`,
+    GET_DOWNLOADS: `${API_BASE_URL}/api/v1/files/downloads`,
   },
   DOCUMENTS: {
     LIST_TEMPLATES: `${API_BASE_URL}/api/v1/documents/templates`,

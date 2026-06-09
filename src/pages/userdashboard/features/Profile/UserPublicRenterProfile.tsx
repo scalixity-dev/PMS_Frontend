@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Copy, Check, ExternalLink } from "lucide-react";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import Toggle from "../../../../components/Toggle";
 import CustomDropdown from "../../../Dashboard/components/CustomDropdown";
@@ -10,20 +11,27 @@ const PublicRenterProfile: React.FC = () => {
     const savePrefs = useSaveTenantPreferences();
 
     const [lookingForPlace, setLookingForPlace] = useState(true);
-    const [petsAllowed, setPetsAllowed] = useState(true);
+    const [petsAllowed, setPetsAllowed] = useState(false);
     const [location, setLocation] = useState("");
-    const [profileLink, setProfileLink] = useState("");
+    const [profileSlug, setProfileSlug] = useState<string | null>(null);
     const [beds, setBeds] = useState("Any");
     const [baths, setBaths] = useState("Any");
     const [minPrice, setMinPrice] = useState(0);
     const [maxPrice, setMaxPrice] = useState(10000);
     const [renterType, setRenterType] = useState("");
     const [size, setSize] = useState("");
+    const [copied, setCopied] = useState(false);
     const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+    const publicProfileUrl = profileSlug
+        ? `${window.location.origin}/renter-profile/${profileSlug}`
+        : null;
 
     // Load from API
     useEffect(() => {
         if (prefs) {
+            if (prefs.profileSlug) setProfileSlug(prefs.profileSlug);
+            if (typeof prefs.lookingForPlace === 'boolean') setLookingForPlace(prefs.lookingForPlace);
             const loc = prefs.location;
             if (loc) {
                 setLocation([loc.city, loc.state, loc.country].filter(Boolean).join(', '));
@@ -37,9 +45,18 @@ const PublicRenterProfile: React.FC = () => {
                 if (typeof prefs.criteria.minPrice === 'number') setMinPrice(prefs.criteria.minPrice);
                 if (typeof prefs.criteria.maxPrice === 'number') setMaxPrice(prefs.criteria.maxPrice);
                 if (typeof prefs.criteria.petsAllowed === 'boolean') setPetsAllowed(prefs.criteria.petsAllowed);
+                if (prefs.criteria.size) setSize(prefs.criteria.size);
             }
         }
     }, [prefs]);
+
+    const handleCopy = () => {
+        if (!publicProfileUrl) return;
+        navigator.clipboard.writeText(publicProfileUrl).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
 
     const bedsOptions = [
         { label: "Any", value: "Any" },
@@ -78,7 +95,6 @@ const PublicRenterProfile: React.FC = () => {
     const handleUpdate = async () => {
         setSaveStatus(null);
 
-        // Parse location "city, state, country" or fall back
         const parts = location.split(',').map(s => s.trim()).filter(Boolean);
         const locationObj = {
             city: parts[0] || '',
@@ -97,17 +113,20 @@ const PublicRenterProfile: React.FC = () => {
         }
 
         try {
-            await savePrefs.mutateAsync({
+            const result = await savePrefs.mutateAsync({
                 location: locationObj,
                 rentalTypes: [renterType],
+                lookingForPlace,
                 criteria: {
                     beds: beds === 'Any' ? null : beds,
                     baths: baths === 'Any' ? null : baths,
                     minPrice,
                     maxPrice,
                     petsAllowed,
+                    size: size || null,
                 },
             });
+            if (result?.profileSlug) setProfileSlug(result.profileSlug);
             setSaveStatus({ type: 'success', msg: 'Preferences saved' });
             setTimeout(() => setSaveStatus(null), 2000);
         } catch (err: any) {
@@ -129,7 +148,7 @@ const PublicRenterProfile: React.FC = () => {
                             <Link to="/userdashboard/settings" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Settings</Link>
                         </li>
                         <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
-                        <li className="text-[#1A1A1A]  font-medium" aria-current="page">Public renter profile</li>
+                        <li className="text-[#1A1A1A] font-medium" aria-current="page">Public renter profile</li>
                     </ol>
                 </nav>
 
@@ -141,12 +160,41 @@ const PublicRenterProfile: React.FC = () => {
 
                     {/* Content */}
                     <div className="px-4 sm:px-6 md:px-8 py-5 sm:py-6 md:py-8 space-y-6 sm:space-y-8">
+
+                        {/* Public Profile Link Banner */}
+                        {publicProfileUrl && (
+                            <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-[#6B7280] mb-1">Your public renter profile link</p>
+                                    <p className="text-sm font-medium text-[#1A1A1A] truncate">{publicProfileUrl}</p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    <button
+                                        onClick={handleCopy}
+                                        className="flex items-center gap-1.5 px-3 py-2 bg-[#F4F4F4] border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1A1A1A] hover:bg-gray-200 transition-colors"
+                                    >
+                                        {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                                        {copied ? 'Copied!' : 'Copy'}
+                                    </button>
+                                    <a
+                                        href={publicProfileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1.5 px-3 py-2 bg-[#3A6D6C] text-white rounded-lg text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                                    >
+                                        <ExternalLink size={14} />
+                                        View
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Search Preferences Section */}
                         <div className="space-y-4 sm:space-y-6">
                             <div>
                                 <h2 className="text-lg sm:text-xl font-semibold text-[#1A1A1A] mb-1">Search preferences</h2>
                                 <p className="text-xs sm:text-sm text-[#6B7280]">
-                                    Set the default number of days early to post the recurring transactions before the invoice due date.
+                                    Set your rental search preferences to help landlords find you.
                                 </p>
                             </div>
 
@@ -170,28 +218,28 @@ const PublicRenterProfile: React.FC = () => {
                                     <div>
                                         <input
                                             type="text"
-                                            placeholder="Location"
+                                            placeholder="Location (City, State, Country)"
                                             value={location}
                                             onChange={(e) => setLocation(e.target.value)}
                                             className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1A1A1A] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)] focus:border-transparent"
                                         />
                                     </div>
 
-                                    {/* Your public renter profile link */}
+                                    {/* Renter Type */}
                                     <div>
-                                        <input
-                                            type="text"
-                                            placeholder="Your public renter profile link"
-                                            value={profileLink}
-                                            onChange={(e) => setProfileLink(e.target.value)}
-                                            className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1A1A1A] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)] focus:border-transparent"
+                                        <CustomDropdown
+                                            value={renterType}
+                                            onChange={setRenterType}
+                                            options={renterTypeOptions}
+                                            searchable={false}
+                                            placeholder="Renter Type"
+                                            buttonClassName="w-full px-4 py-3 border-[#E5E7EB]"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Beds and Baths */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                    {/* Beds */}
                                     <div>
                                         <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Beds</label>
                                         <CustomDropdown
@@ -203,8 +251,6 @@ const PublicRenterProfile: React.FC = () => {
                                             buttonClassName="w-full px-4 py-3 border-[#E5E7EB]"
                                         />
                                     </div>
-
-                                    {/* Baths */}
                                     <div>
                                         <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Baths</label>
                                         <CustomDropdown
@@ -228,9 +274,7 @@ const PublicRenterProfile: React.FC = () => {
                                                 value={minPrice}
                                                 onChange={(e) => {
                                                     const value = Number(e.target.value);
-                                                    if (value >= MIN_VAL && value <= maxPrice) {
-                                                        setMinPrice(value);
-                                                    }
+                                                    if (value >= MIN_VAL && value <= maxPrice) setMinPrice(value);
                                                 }}
                                                 className="w-20 sm:w-24 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border-2 border-[#7BD747] rounded-lg text-xs sm:text-sm font-semibold text-[#7BD747] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]"
                                             />
@@ -242,11 +286,8 @@ const PublicRenterProfile: React.FC = () => {
                                                 value={maxPrice}
                                                 onChange={(e) => {
                                                     const value = Number(e.target.value);
-                                                    if (value >= minPrice && value <= MAX_VAL) {
-                                                        setMaxPrice(value);
-                                                    } else if (value > MAX_VAL) {
-                                                        setMaxPrice(MAX_VAL);
-                                                    }
+                                                    if (value >= minPrice && value <= MAX_VAL) setMaxPrice(value);
+                                                    else if (value > MAX_VAL) setMaxPrice(MAX_VAL);
                                                 }}
                                                 className="w-20 sm:w-24 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border-2 border-[#7BD747] rounded-lg text-xs sm:text-sm font-semibold text-[#7BD747] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]"
                                             />
@@ -264,50 +305,22 @@ const PublicRenterProfile: React.FC = () => {
                                             }}
                                         ></div>
                                         <input
-                                            type="range"
-                                            min={MIN_VAL}
-                                            max={MAX_VAL}
-                                            value={minPrice}
-                                            onChange={(e) => {
-                                                const value = Number(e.target.value);
-                                                if (value <= maxPrice) {
-                                                    setMinPrice(value);
-                                                }
-                                            }}
+                                            type="range" min={MIN_VAL} max={MAX_VAL} value={minPrice}
+                                            onChange={(e) => { const v = Number(e.target.value); if (v <= maxPrice) setMinPrice(v); }}
                                             className="absolute w-full h-2 appearance-none bg-transparent pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#7BD747] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
                                         />
                                         <input
-                                            type="range"
-                                            min={MIN_VAL}
-                                            max={MAX_VAL}
-                                            value={maxPrice}
-                                            onChange={(e) => {
-                                                const value = Number(e.target.value);
-                                                if (value >= minPrice) {
-                                                    setMaxPrice(value);
-                                                }
-                                            }}
+                                            type="range" min={MIN_VAL} max={MAX_VAL} value={maxPrice}
+                                            onChange={(e) => { const v = Number(e.target.value); if (v >= minPrice) setMaxPrice(v); }}
                                             className="absolute w-full h-2 appearance-none bg-transparent pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#7BD747] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
                                         />
                                     </div>
                                 </div>
 
-                                {/* Renter Type and Size */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                    {/* Renter Type */}
-                                    <div>
-                                        <CustomDropdown
-                                            value={renterType}
-                                            onChange={setRenterType}
-                                            options={renterTypeOptions}
-                                            searchable={false}
-                                            placeholder="Renter Type"
-                                            buttonClassName="w-full px-4 py-3 border-[#E5E7EB]"
-                                        />
-                                    </div>
-
-                                    {/* Size */}
-                                    <div>
+                                {/* Size */}
+                                <div className="mb-6">
+                                    <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Size (sqft)</label>
+                                    <div className="max-w-xs">
                                         <CustomDropdown
                                             value={size}
                                             onChange={setSize}
@@ -331,11 +344,11 @@ const PublicRenterProfile: React.FC = () => {
                                 </div>
 
                                 {saveStatus && (
-                                    <div className={`rounded-md p-2 text-xs ${saveStatus.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+                                    <div className={`rounded-md p-2 text-xs mb-4 ${saveStatus.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
                                         {saveStatus.msg}
                                     </div>
                                 )}
-                                {/* Update Button */}
+
                                 <PrimaryActionButton
                                     onClick={handleUpdate}
                                     text={savePrefs.isPending ? 'Saving...' : 'Update'}

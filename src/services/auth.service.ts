@@ -90,6 +90,7 @@ export interface UpdateProfileRequest {
   phoneNumber?: string;
   country?: string;
   state?: string;
+  city?: string;
   pincode?: string;
   address?: string;
   profilePhotoUrl?: string;
