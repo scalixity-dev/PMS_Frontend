@@ -352,7 +352,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                     <CustomDropdown
-                        label="Category*"
+                        label="Category"
                         value={formData.category}
                         onChange={(val) => { handleChange('category', val); setErrors(e => ({ ...e, category: '' })); }}
                         options={[
@@ -369,7 +369,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                 </div>
                 <div>
                     <CustomDropdown
-                        label="Subcategory*"
+                        label="Subcategory"
                         value={formData.subCategory}
                         onChange={(val) => { handleChange('subCategory', val); setErrors(e => ({ ...e, subCategory: '' })); }}
                         options={getSubCategoryOptions()}
@@ -384,23 +384,25 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
 
             {/* Issue & Sub-issue */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                <CustomDropdown
-                    label="Issue"
-                    value={formData.issue}
-                    onChange={(val) => handleChange('issue', val)}
-                    options={getIssueOptions()}
-                    placeholder={formData.subCategory ? "Select Issue" : "Select Subcategory First"}
-                    required
-                    buttonClassName="!bg-white !border-none !rounded-md !py-3"
-                    disabled={!formData.subCategory}
-                />
+                <div>
+                    <CustomDropdown
+                        label="Issue"
+                        value={formData.issue}
+                        onChange={(val) => { handleChange('issue', val); setErrors(e => ({ ...e, issue: '' })); }}
+                        options={getIssueOptions()}
+                        placeholder={formData.subCategory ? "Select Issue" : "Select Subcategory First"}
+                        required
+                        buttonClassName={`!bg-white !border-none !rounded-md !py-3 ${errors.issue ? '!ring-2 !ring-red-400' : ''}`}
+                        disabled={!formData.subCategory}
+                    />
+                    {errors.issue && <p className="text-red-500 text-xs mt-1">{errors.issue}</p>}
+                </div>
                 <CustomDropdown
                     label="Sub-Issue"
                     value={formData.subIssue}
                     onChange={(val) => handleChange('subIssue', val)}
                     options={getSubIssueOptions()}
                     placeholder={formData.issue ? "Select Sub-issue" : "Select Issue First"}
-                    required
                     buttonClassName="!bg-white !border-none !rounded-md !py-3"
                     disabled={!formData.issue}
                 />
@@ -545,6 +547,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                         const newErrors: Partial<Record<keyof AdvancedRequestFormFields, string>> = {};
                         if (!formData.category) newErrors.category = 'Category is required.';
                         if (!formData.subCategory) newErrors.subCategory = 'Subcategory is required.';
+                        if (!formData.issue) newErrors.issue = 'Issue is required.';
                         if (!formData.title.trim()) newErrors.title = 'Title is required.';
                         if (Object.keys(newErrors).length > 0) {
                             setErrors(newErrors);
