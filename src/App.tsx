@@ -19,6 +19,7 @@ const PrivacyPolicy = lazy(() => import('./pages/basewebsite/legal/PrivacyPolicy
 const CookiePolicy = lazy(() => import('./pages/basewebsite/legal/CookiePolicy'));
 const AcceptInvitation = lazy(() => import('./pages/basewebsite/team/AcceptInvitation'));
 import { ToastProvider } from './components/common/Toast';
+import { PushForegroundListener } from './components/PushForegroundListener';
 import AIChatButton from './components/common/AIChatButton';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
@@ -227,6 +228,7 @@ const App: React.FC = () => {
     <>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
+        <PushForegroundListener />
         <BrowserRouter>
           <RoutedApp>
           <AutoLoginProvider>

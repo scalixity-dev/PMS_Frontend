@@ -370,6 +370,9 @@ export const API_ENDPOINTS = {
     MARK_READ: (id: string) => `${API_BASE_URL}/notifications/${id}/read`,
     MARK_ALL_READ: `${API_BASE_URL}/notifications/read-all`,
     DELETE: (id: string) => `${API_BASE_URL}/notifications/${id}`,
+    PUSH_SUBSCRIBE: `${API_BASE_URL}/notifications/push/subscribe`,
+    PUSH_UNSUBSCRIBE: `${API_BASE_URL}/notifications/push/unsubscribe`,
+    PUSH_TEST: `${API_BASE_URL}/notifications/push/test`,
   },
   SETTINGS: {
     GET_SECTION: (section: string) => `${API_BASE_URL}/settings/${section}`,
