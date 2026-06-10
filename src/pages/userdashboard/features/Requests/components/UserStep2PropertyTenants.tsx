@@ -43,6 +43,14 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
     const [validationError, setValidationError] = useState('');
 
     const handleContinue = () => {
+        if (!selectedProperty) {
+            setValidationError('Please select a property to continue');
+            return;
+        }
+        if (linkEquipment && !selectedEquipment) {
+            setValidationError('Please select an equipment or disable the "Link equipment" toggle');
+            return;
+        }
         if (petsInResidence === 'yes' && selectedPets.length === 0) {
             setValidationError('Please select at least one pet type');
             return;
@@ -435,6 +443,10 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
                     </div>
                 </div>
             </div>
+
+            {validationError && petsInResidence !== 'yes' && (
+                <p className="text-red-500 text-sm font-medium mb-4">{validationError}</p>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-4">
                 <button

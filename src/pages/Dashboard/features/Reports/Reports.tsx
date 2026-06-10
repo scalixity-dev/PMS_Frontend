@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, Settings, X } from 'lucide-react';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+
+const SETTINGS_KEY = 'reports_hidden';
+
+function getHiddenReports(): string[] {
+    try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? '[]'); } catch { return []; }
+}
+function saveHiddenReports(hidden: string[]) {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(hidden));
+}
 
 interface ReportCardProps {
     title: string;
@@ -24,6 +33,16 @@ const ReportCard: React.FC<ReportCardProps> = ({ title, category, onClick }) => 
 const Reports: React.FC = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [hiddenReports, setHiddenReports] = useState<string[]>(getHiddenReports);
+
+    const toggleReportVisibility = (title: string) => {
+        setHiddenReports(prev => {
+            const next = prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title];
+            saveHiddenReports(next);
+            return next;
+        });
+    };
 
     const handleCardClick = (title: string) => {
         if (title === 'Rentability') {
@@ -53,7 +72,7 @@ const Reports: React.FC = () => {
         }
     };
 
-    const reportSections = [
+    const reportSections = useMemo(() => [
         {
             id: 'reports',
             title: 'Reports', // Renamed from Luxury Property
@@ -80,12 +99,23 @@ const Reports: React.FC = () => {
                 { title: 'Property Expenses', category: 'Financial' },
             ]
         }
-    ];
+    ], []);
 
-    const toggleSection = (id: string) => {
-        // Placeholder for collapse logic if needed
-        console.log('Toggle section', id);
-    };
+    const filteredSections = useMemo(() => {
+        const q = searchQuery.toLowerCase().trim();
+        return reportSections
+            .map(section => ({
+                ...section,
+                items: section.items.filter(item => {
+                    if (hiddenReports.includes(item.title)) return false;
+                    if (q && !item.title.toLowerCase().includes(q)) return false;
+                    return true;
+                }),
+            }))
+            .filter(section => section.items.length > 0);
+    }, [searchQuery, hiddenReports, reportSections]);
+
+    const toggleSection = (_id: string) => {};
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
@@ -98,7 +128,11 @@ const Reports: React.FC = () => {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <h1 className="text-2xl font-bold text-gray-800">Reports</h1>
-                    <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 w-full md:w-auto">
+                    <button
+                        onClick={() => setIsSettingsOpen(true)}
+                        className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 shadow-sm"
+                    >
+                        <Settings size={15} />
                         Settings
                     </button>
                 </div>
@@ -121,7 +155,12 @@ const Reports: React.FC = () => {
 
                 {/* Sections */}
                 <div className="space-y-8">
-                    {reportSections.map((section) => (
+                    {filteredSections.length === 0 && (
+                        <div className="text-center py-16 text-gray-500">
+                            No reports found matching &ldquo;{searchQuery}&rdquo;
+                        </div>
+                    )}
+                    {filteredSections.map((section) => (
                         <div key={section.id}>
                             {/* Section Header */}
                             <div className="mb-4 flex items-center">
@@ -159,6 +198,58 @@ const Reports: React.FC = () => {
                     ))}
                 </div>
             </div>
+
+        {/* Settings Modal */}
+        {isSettingsOpen && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+                    <div className="flex justify-between items-center px-6 py-4 bg-[#3A6D6C]">
+                        <h2 className="text-white font-semibold text-lg">Report Settings</h2>
+                        <button onClick={() => setIsSettingsOpen(false)} className="text-white hover:text-white/60 transition-colors">
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">
+                        <p className="text-sm text-gray-500 mb-4">Toggle which reports appear on this page.</p>
+                        {reportSections.map(section => (
+                            <div key={section.id} className="mb-5">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{section.title}</p>
+                                <div className="space-y-2">
+                                    {section.items.map(item => {
+                                        const isVisible = !hiddenReports.includes(item.title);
+                                        return (
+                                            <label key={item.title} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 cursor-pointer">
+                                                <span className="text-sm text-gray-700 font-medium">{item.title}</span>
+                                                <button
+                                                    onClick={() => toggleReportVisibility(item.title)}
+                                                    className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none ${isVisible ? 'bg-[#3A6D6C]' : 'bg-gray-300'}`}
+                                                >
+                                                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${isVisible ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                </button>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="px-6 py-4 border-t border-gray-100 flex justify-between items-center">
+                        <button
+                            onClick={() => { setHiddenReports([]); saveHiddenReports([]); }}
+                            className="text-sm text-[#3A6D6C] hover:underline"
+                        >
+                            Show all
+                        </button>
+                        <button
+                            onClick={() => setIsSettingsOpen(false)}
+                            className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                        >
+                            Done
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </div>
     );
 };

@@ -3,6 +3,7 @@ import { formatPhoneNumber } from '@/utils/phone.utils';
 
 import { useNavigate } from 'react-router-dom';
 import { ChevronUp, Download, LayoutTemplate, X, Check, ChevronLeft } from 'lucide-react';
+import { downloadCsv } from '../../../../utils/downloadCsv';
 import DashboardFilter from '../../components/DashboardFilter';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import type { FilterOption } from '../../components/DashboardFilter';
@@ -66,10 +67,10 @@ const Contacts: React.FC = () => {
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
                 const matchesSearch =
-                    contact.firstName.toLowerCase().includes(query) ||
-                    contact.lastName.toLowerCase().includes(query) ||
-                    contact.email.toLowerCase().includes(query) ||
-                    contact.company.toLowerCase().includes(query);
+                    (contact.firstName ?? '').toLowerCase().includes(query) ||
+                    (contact.lastName ?? '').toLowerCase().includes(query) ||
+                    (contact.email ?? '').toLowerCase().includes(query) ||
+                    (contact.company ?? '').toLowerCase().includes(query);
                 if (!matchesSearch) return false;
             }
             if (selectedFilters.category.length > 0 && contact.category && !selectedFilters.category.includes(contact.category)) return false;
@@ -82,6 +83,12 @@ const Contacts: React.FC = () => {
 
     const activeColumns = ALL_COLUMNS.filter(col => visibleColumns.includes(col.id));
     const gridTemplateColumns = activeColumns.map(col => col.width).join(' ');
+
+    const handleDownload = () => {
+        const headers = activeColumns.map(col => col.label);
+        const rows = filteredContacts.map(contact => activeColumns.map(col => contact[col.id as keyof ContactItem] ?? ''));
+        downloadCsv('contacts', headers, rows);
+    };
 
     const renderCellContent = (contact: ContactItem, columnId: ColumnId) => {
         switch (columnId) {
@@ -117,7 +124,7 @@ const Contacts: React.FC = () => {
                             <LayoutTemplate size={16} />
                             Columns
                         </button>
-                        <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 flex items-center gap-2">
+                        <button onClick={handleDownload} className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 flex items-center gap-2">
                             <Download size={16} />
                             Download Report
                         </button>

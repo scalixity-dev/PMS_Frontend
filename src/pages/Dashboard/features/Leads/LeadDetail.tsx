@@ -56,6 +56,21 @@ interface DayActivity {
     items: ActivityItem[];
 }
 
+async function uploadFile(file: File): Promise<string | undefined> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/upload/file`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+    });
+    if (res.ok) {
+        const data = await res.json();
+        return data.url || data.fileUrl || data.path;
+    }
+    return undefined;
+}
+
 const LeadDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -193,7 +208,7 @@ const LeadDetail = () => {
                 time: time,
                 type: 'Note',
                 text: note.content,
-                image: note.attachmentUrl || undefined,
+                image: note.fileUrl || undefined,
                 timestamp: timestamp,
                 originalData: { type: 'note', id: note.id, leadId: note.leadId }
             });
@@ -228,10 +243,11 @@ const LeadDetail = () => {
 
             dayMap.get(dateKey)!.push({
                 id: task.id, // Use UUID directly
-                user: task.assignee || currentUserName,
+                user: (task as any).assigneeLabel || currentUserName,
                 time: time,
                 type: 'Task',
                 text: taskText,
+                image: (task as any).fileUrl || undefined,
                 timestamp: timestamp,
                 originalData: {
                     type: 'task',
@@ -239,7 +255,7 @@ const LeadDetail = () => {
                     leadId: task.leadId,
                     details: task.title || task.description || '', // Use title if available, fallback to description
                     date: formattedDueDate, // Store formatted date for datetime-local input
-                    assignee: task.assignee || currentUserName,
+                    assignee: (task as any).assigneeLabel || '',
                     description: task.description,
                     title: task.title
                 }
@@ -294,6 +310,7 @@ const LeadDetail = () => {
                 time: time,
                 type: 'Call',
                 text: callText,
+                image: (call as any).fileUrl || undefined,
                 timestamp: timestamp,
                 originalData: {
                     type: 'call',
@@ -337,6 +354,7 @@ const LeadDetail = () => {
                 time: time,
                 type: 'Meeting',
                 text: meeting.details,
+                image: (meeting as any).fileUrl || undefined,
                 timestamp: timestamp,
                 originalData: {
                     type: 'meeting',
@@ -406,23 +424,10 @@ const LeadDetail = () => {
         if (!id) return;
 
         try {
-            let attachmentUrl: string | undefined;
-            if (_file) {
-                const formData = new FormData();
-                formData.append('file', _file);
-                const uploadRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/upload/file`, {
-                    method: 'POST',
-                    credentials: 'include',
-                    body: formData,
-                });
-                if (uploadRes.ok) {
-                    const uploadData = await uploadRes.json();
-                    attachmentUrl = uploadData.url || uploadData.fileUrl || uploadData.path;
-                }
-            }
+            const fileUrl = _file ? await uploadFile(_file) : undefined;
             const noteData = {
                 content: noteText,
-                attachmentUrl,
+                ...(fileUrl ? { fileUrl } : {}),
             };
 
             if (editingItem && editingItem.item.originalData?.type === 'note') {
@@ -470,9 +475,13 @@ const LeadDetail = () => {
                 return;
             }
 
+            const fileUrl = _file ? await uploadFile(_file) : undefined;
+
             const taskDto = {
                 description: taskData.details.trim(),
                 dueDate: dueDate.toISOString(),
+                assigneeLabel: taskData.assignee || undefined,
+                ...(fileUrl ? { fileUrl } : {}),
             };
 
             if (editingItem && editingItem.item.originalData?.type === 'task') {
@@ -480,10 +489,7 @@ const LeadDetail = () => {
                 await updateTaskMutation.mutateAsync({
                     leadId: id,
                     taskId: editingItem.item.originalData.id,
-                    taskData: {
-                        description: taskData.details.trim(),
-                        dueDate: dueDate.toISOString(),
-                    }
+                    taskData: taskDto
                 });
             } else {
                 // Create new task
@@ -534,6 +540,8 @@ const LeadDetail = () => {
             }
             const isoDate = dateObj.toISOString();
 
+            const fileUrl = _file ? await uploadFile(_file) : undefined;
+
             if (editingItem && editingItem.item.originalData?.type === 'call') {
                 // Update existing call
                 await updateCallMutation.mutateAsync({
@@ -542,7 +550,8 @@ const LeadDetail = () => {
                     callData: {
                         details: logData.details.trim(),
                         dateTime: isoDate,
-                        callResult: logData.results.trim()
+                        callResult: logData.results.trim(),
+                        ...(fileUrl ? { fileUrl } : {}),
                     }
                 });
             } else {
@@ -552,7 +561,8 @@ const LeadDetail = () => {
                     callData: {
                         details: logData.details.trim(),
                         dateTime: isoDate,
-                        callResult: logData.results.trim()
+                        callResult: logData.results.trim(),
+                        ...(fileUrl ? { fileUrl } : {}),
                     }
                 });
             }
@@ -593,6 +603,8 @@ const LeadDetail = () => {
             }
             const isoDate = dateObj.toISOString();
 
+            const fileUrl = _file ? await uploadFile(_file) : undefined;
+
             if (editingItem && editingItem.item.originalData?.type === 'meeting') {
                 // Update existing meeting
                 await updateMeetingMutation.mutateAsync({
@@ -600,7 +612,8 @@ const LeadDetail = () => {
                     meetingId: editingItem.item.originalData.id,
                     meetingData: {
                         details: meetingData.details.trim(),
-                        dateTime: isoDate
+                        dateTime: isoDate,
+                        ...(fileUrl ? { fileUrl } : {}),
                     }
                 });
             } else {
@@ -609,7 +622,8 @@ const LeadDetail = () => {
                     leadId: id,
                     meetingData: {
                         details: meetingData.details.trim(),
-                        dateTime: isoDate
+                        dateTime: isoDate,
+                        ...(fileUrl ? { fileUrl } : {}),
                     }
                 });
             }

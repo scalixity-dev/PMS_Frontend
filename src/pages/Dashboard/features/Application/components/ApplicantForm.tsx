@@ -255,9 +255,10 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         return { isValid: Object.keys(newErrors).length === 0, firstErrorField };
     };
 
-    const handleBlur = (key: keyof FormData) => {
+    const handleBlur = (key: keyof FormData, overrideValue?: any) => {
         setTouched(prev => ({ ...prev, [key]: true }));
-        const error = validateField(key, data[key]);
+        const valueToValidate = overrideValue !== undefined ? overrideValue : data[key];
+        const error = validateField(key, valueToValidate);
         setErrors(prev => ({ ...prev, [key]: error }));
     };
 
@@ -558,7 +559,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                     onChange={(date) => {
                                         handleFieldChange('dob', date);
                                         if (!touched.dob) {
-                                            handleBlur('dob');
+                                            handleBlur('dob', date);
                                         }
                                     }}
                                     placeholder="DD/MM/YYYY"
@@ -601,7 +602,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                     onChange={(date) => {
                                         handleFieldChange('moveInDate', date);
                                         if (!touched.moveInDate) {
-                                            handleBlur('moveInDate');
+                                            handleBlur('moveInDate', date);
                                         }
                                     }}
                                     placeholder="DD/MM/YYYY"

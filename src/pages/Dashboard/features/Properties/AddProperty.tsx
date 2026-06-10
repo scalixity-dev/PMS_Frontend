@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Upload, Trash2, Plus, X, Check, FileText, Undo2, ChevronLeft, Sparkles } from 'lucide-react';
 import { Country, State, City } from 'country-state-city';
@@ -662,8 +663,7 @@ const AddProperty: React.FC = () => {
     return true;
   }, [formData]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitForm = useDebouncedCallback(async () => {
     setLoading(true);
     setError(null);
     setValidationErrors({});
@@ -804,8 +804,12 @@ const AddProperty: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitForm();
+  };
 
   const handleNavigation = (path: string) => {
     if (isDirty) {

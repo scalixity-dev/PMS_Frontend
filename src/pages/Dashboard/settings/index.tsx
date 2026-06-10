@@ -34,8 +34,7 @@ const SETTING_CARDS: SettingCardData[] = [
     icon: CreditCard,
     links: [
       { label: "Profile", path: "/dashboard/settings/profile" },
-      { label: "Security", path: "/dashboard/settings/security" },
-      { label: "Integration", path: "/dashboard/settings/integrations" },
+{ label: "Integration", path: "/dashboard/settings/integrations" },
       { label: "Notifications", path: "/dashboard/settings/notifications" },
     ],
   },

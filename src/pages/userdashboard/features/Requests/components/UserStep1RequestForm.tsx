@@ -26,6 +26,7 @@ const User__AdvancedRequestForm: React.FC<UserAdvancedRequestFormProps> = ({ onN
     });
 
     const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     // Track if user has edited the form to avoid clobbering their changes
     const formTouchedRef = useRef(false);
@@ -247,27 +248,32 @@ const User__AdvancedRequestForm: React.FC<UserAdvancedRequestFormProps> = ({ onN
 
             {/* Category & Sub-category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
                 <CustomDropdown
                     label="Category"
                     value={formData.category}
-                    onChange={(val) => handleChange('category', val)}
+                    onChange={(val) => { handleChange('category', val); setErrors(p => ({ ...p, category: '' })); }}
                     options={[
                         { value: 'appliances', label: 'Appliances' },
                         { value: 'electrical', label: 'Electrical' },
+                        { value: 'exterior', label: 'Exterior' },
+                        { value: 'households', label: 'Households' },
+                        { value: 'outdoors', label: 'Outdoors' },
                         { value: 'plumbing', label: 'Plumbing' },
                         { value: 'other', label: 'Other' }
                     ]}
                     placeholder="Select Category"
                     required
-                    buttonClassName="!bg-white !border-none !rounded-md !py-3"
+                    buttonClassName={`!bg-white !border-none !rounded-md !py-3 ${errors.category ? '!ring-2 !ring-red-400' : ''}`}
                 />
+                {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
+                </div>
                 <CustomDropdown
                     label="Subcategory"
                     value={formData.subCategory}
                     onChange={(val) => handleChange('subCategory', val)}
                     options={getSubCategoryOptions()}
                     placeholder={formData.category ? "Select Subcategory" : "Select Category First"}
-                    required
                     buttonClassName="!bg-white !border-none !rounded-md !py-3"
                     disabled={!formData.category}
                 />
@@ -310,10 +316,11 @@ const User__AdvancedRequestForm: React.FC<UserAdvancedRequestFormProps> = ({ onN
                 <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => handleChange('title', e.target.value)}
+                    onChange={(e) => { handleChange('title', e.target.value); setErrors(p => ({ ...p, title: '' })); }}
                     placeholder="Title type here.."
-                    className="w-full px-4 py-3 bg-white rounded-md border-none outline-none placeholder-gray-400"
+                    className={`w-full px-4 py-3 bg-white rounded-md border-none outline-none placeholder-gray-400 ${errors.title ? 'ring-2 ring-red-400' : ''}`}
                 />
+                {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
             </div>
 
             {/* Details */}
@@ -418,7 +425,17 @@ const User__AdvancedRequestForm: React.FC<UserAdvancedRequestFormProps> = ({ onN
                     Discard
                 </button>
                 <button
-                    onClick={() => onNext({ ...formData, files: mediaFiles.map(m => m.file) })}
+                    onClick={() => {
+                        const newErrors: Record<string, string> = {};
+                        if (!formData.category) newErrors.category = 'Category is required';
+                        if (!formData.title.trim()) newErrors.title = 'Title is required';
+                        if (Object.keys(newErrors).length > 0) {
+                            setErrors(newErrors);
+                            return;
+                        }
+                        setErrors({});
+                        onNext({ ...formData, files: mediaFiles.map(m => m.file) });
+                    }}
                     className="flex-1 md:flex-none px-8 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
                 >
                     Continue

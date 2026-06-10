@@ -7,6 +7,7 @@ import PrimaryActionButton from '../../../../components/common/buttons/PrimaryAc
 import { useCreateLead, useCreateActivity } from '../../../../hooks/useLeadQueries';
 import type { LeadType } from '../../../../services/lead.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 
 const AddLead = () => {
     const navigate = useNavigate();
@@ -52,7 +53,7 @@ const AddLead = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleCreate = async () => {
+    const handleCreate = useDebouncedCallback(async () => {
         if (validateForm() && !isSubmitting) {
             setIsSubmitting(true);
             try {
@@ -99,7 +100,7 @@ const AddLead = () => {
                 setIsSubmitting(false);
             }
         }
-    };
+    });
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">

@@ -43,9 +43,10 @@ interface PropertyTenantsStepProps {
     onBack: () => void;
     properties?: Array<{ id: string; name: string; address: string }>;
     initialData?: Partial<PropertyTenantsStepData>;
+    canCreateEquipment?: boolean;
 }
 
-const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBack, properties, initialData }) => {
+const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBack, properties, initialData, canCreateEquipment = true }) => {
     const [selectedProperty, setSelectedProperty] = useState(initialData?.selectedProperty || '');
     const [linkEquipment, setLinkEquipment] = useState(!!initialData?.selectedEquipment);
     const [selectedEquipment, setSelectedEquipment] = useState(initialData?.selectedEquipment || '');
@@ -393,18 +394,20 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                         {showEquipmentDropdown && (
                             <div className="absolute z-50 mt-2 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-hidden">
                                 {/* Create Equipment Button */}
-                                <div className="px-3 py-6 bg-[var(--color-primary)] border-b border-gray-200">
-                                    <button
-                                        onClick={() => {
-                                            setShowCreateEquipmentModal(true);
-                                            setShowEquipmentDropdown(false);
-                                        }}
-                                        className="w-auto flex items-center justify-between px-4 py-3 bg-[#7BD747] text-white font-bold rounded-full hover:opacity-90 transition-opacity"
-                                    >
-                                        <span>Create equipment</span>
-                                        <Plus className="w-5 h-5 bg-white ml-2 text-[#7BD747] rounded-full p-0.5" />
-                                    </button>
-                                </div>
+                                {canCreateEquipment && (
+                                    <div className="px-3 py-6 bg-[var(--color-primary)] border-b border-gray-200">
+                                        <button
+                                            onClick={() => {
+                                                setShowCreateEquipmentModal(true);
+                                                setShowEquipmentDropdown(false);
+                                            }}
+                                            className="w-auto flex items-center justify-between px-4 py-3 bg-[#7BD747] text-white font-bold rounded-full hover:opacity-90 transition-opacity"
+                                        >
+                                            <span>Create equipment</span>
+                                            <Plus className="w-5 h-5 bg-white ml-2 text-[#7BD747] rounded-full p-0.5" />
+                                        </button>
+                                    </div>
+                                )}
 
                                 {/* Search Bar */}
                                 <div className="p-3">
@@ -671,7 +674,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
             </div>
 
             {/* Create Equipment Modal */}
-            {showCreateEquipmentModal && (
+            {canCreateEquipment && showCreateEquipmentModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-[#D9E0E0] rounded-2xl shadow-xl w-full max-w-xl mx-4 overflow-hidden">
                         {/* Modal Header */}

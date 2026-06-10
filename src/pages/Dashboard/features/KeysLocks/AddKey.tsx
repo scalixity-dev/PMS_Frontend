@@ -8,6 +8,7 @@ import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
 import { useGetUnitsByProperty } from '../../../../hooks/useUnitQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import type { KeyType } from '../../../../services/keys.service';
+import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 
 // Map display key type to backend enum
 const mapKeyTypeToBackend = (displayType: string): KeyType => {
@@ -202,7 +203,7 @@ const AddKey = () => {
         label: u.unitName || 'Unit',
     }));
 
-    const handleSubmit = async () => {
+    const handleSubmit = useDebouncedCallback(async () => {
         if (!keyName || !keyType || !propertyId) {
             alert('Please fill in all required fields');
             return;
@@ -240,7 +241,7 @@ const AddKey = () => {
             console.error('Error saving key:', error);
             alert(error instanceof Error ? error.message : 'Failed to save key');
         }
-    };
+    });
 
     if (isEditMode && isLoadingKey) {
         return (

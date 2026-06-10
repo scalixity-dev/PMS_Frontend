@@ -76,7 +76,7 @@ export interface BackendNote {
   id: string;
   leadId: string;
   content: string;
-  attachmentUrl?: string | null;
+  fileUrl?: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -84,12 +84,12 @@ export interface BackendNote {
 
 export interface CreateNoteDto {
   content: string;
-  attachmentUrl?: string;
+  fileUrl?: string;
 }
 
 export interface UpdateNoteDto {
   content?: string;
-  attachmentUrl?: string;
+  fileUrl?: string;
 }
 
 // Task interfaces
@@ -109,11 +109,15 @@ export interface BackendTask {
 export interface CreateTaskDto {
   description: string; // Required
   dueDate: string; // Required, must be a valid date
+  assigneeLabel?: string;
+  fileUrl?: string;
 }
 
 export interface UpdateTaskDto {
   description?: string;
   dueDate?: string;
+  assigneeLabel?: string;
+  fileUrl?: string;
 }
 
 // Activity interfaces
@@ -149,12 +153,14 @@ export interface CreateCallDto {
   details: string; // Required, max 5000 characters, must be string
   dateTime: string; // Required, must be valid ISO 8601 date string
   callResult: string; // Required, must be valid value (enum)
+  fileUrl?: string;
 }
 
 export interface UpdateCallDto {
   details?: string; // Max 5000 characters, must be string
   dateTime?: string; // Must be valid ISO 8601 date string
   callResult?: string; // Must be valid value (enum)
+  fileUrl?: string;
 }
 
 // Meeting interfaces
@@ -171,11 +177,13 @@ export interface BackendMeeting {
 export interface CreateMeetingDto {
   details: string; // Required, max 5000 characters, must be string
   dateTime: string; // Required, must be valid ISO 8601 date string
+  fileUrl?: string;
 }
 
 export interface UpdateMeetingDto {
   details?: string; // Max 5000 characters, must be string
   dateTime?: string; // Must be valid ISO 8601 date string
+  fileUrl?: string;
 }
 
 class LeadService {

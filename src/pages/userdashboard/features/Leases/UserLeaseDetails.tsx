@@ -1,9 +1,15 @@
 import { useState, useMemo } from 'react';
+
+const fmtDate = (iso: string) => {
+    if (!iso) return '';
+    try {
+        return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    } catch { return iso; }
+};
 import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, Home, User, ArrowLeft } from 'lucide-react';
 import type { Lease } from '../../utils/types';
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
-import CustomActionDropdown from "../../../Dashboard/components/CustomActionDropdown";
 import { LeaseInfoCard } from "./components/LeaseInfoCard";
 import { TenantCard } from "./components/TenantCard";
 import { LeaseTransactionsTable } from "./components/LeaseTransactionsTable";
@@ -214,7 +220,7 @@ const LeaseDetails = () => {
                     {/* Lease Date Card */}
                     <LeaseInfoCard
                         icon={Calendar}
-                        label={`${lease.startDate} - ${lease.endDate}`}
+                        label={`${fmtDate(lease.startDate)} – ${lease.endDate ? fmtDate(lease.endDate) : 'Present'}`}
                         value={`Lease #${lease.number}`}
                         className="min-w-[280px]"
                     />
@@ -240,15 +246,12 @@ const LeaseDetails = () => {
                         text="Pay Online"
                         className="bg-[var(--dashboard-secondary)] hover:opacity-90 rounded-lg font-bold"
                     />
-                    <CustomActionDropdown
-                        buttonLabel="Action"
-                        options={[
-                            {
-                                label: "Request repair",
-                                onClick: () => navigate(`${DASHBOARD_PATH}/new-request`)
-                            }
-                        ]}
-                    />
+                    <button
+                        onClick={() => navigate(`${DASHBOARD_PATH}/new-request`)}
+                        className="bg-[#7ED957] hover:opacity-90 text-white rounded-lg font-bold px-5 py-2.5 text-sm transition-opacity"
+                    >
+                        Request Repair
+                    </button>
                 </div>
             </div>
 

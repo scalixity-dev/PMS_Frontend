@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, LayoutTemplate, X, Check, ChevronUp, ChevronLeft } from 'lucide-react';
+import { downloadCsv } from '../../../../utils/downloadCsv';
 import DashboardFilter from '../../components/DashboardFilter';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import type { FilterOption } from '../../components/DashboardFilter';
@@ -80,9 +81,9 @@ const RentersInsurance: React.FC = () => {
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
                 const matchesSearch =
-                    item.tenant.toLowerCase().includes(query) ||
-                    item.property.toLowerCase().includes(query) ||
-                    item.policy.toLowerCase().includes(query);
+                    (item.tenant ?? '').toLowerCase().includes(query) ||
+                    (item.property ?? '').toLowerCase().includes(query) ||
+                    (item.policy ?? '').toLowerCase().includes(query);
                 if (!matchesSearch) return false;
             }
             if (selectedFilters.propertyUnits.length > 0 && !selectedFilters.propertyUnits.includes(item.property)) return false;
@@ -103,6 +104,12 @@ const RentersInsurance: React.FC = () => {
 
     const activeColumns = ALL_COLUMNS.filter(col => visibleColumns.includes(col.id));
     const gridTemplateColumns = activeColumns.map(col => col.width).join(' ');
+
+    const handleDownload = () => {
+        const headers = activeColumns.map(col => col.label);
+        const rows = filteredItems.map(item => activeColumns.map(col => item[col.id as keyof RentersInsuranceItem] ?? ''));
+        downloadCsv('renters_insurance', headers, rows);
+    };
 
     const renderCellContent = (item: RentersInsuranceItem, columnId: ColumnId) => {
         switch (columnId) {
@@ -135,7 +142,7 @@ const RentersInsurance: React.FC = () => {
                             <LayoutTemplate size={16} />
                             Columns
                         </button>
-                        <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 flex items-center gap-2">
+                        <button onClick={handleDownload} className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 flex items-center gap-2">
                             <Download size={16} />
                             Download Report
                         </button>
