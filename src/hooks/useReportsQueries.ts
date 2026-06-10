@@ -121,3 +121,12 @@ export function useRentabilityReport(params: { startDate?: string; endDate?: str
     retry: 1,
   });
 }
+
+export function useProviderStatementReport(params: { startDate?: string; endDate?: string; serviceProId?: string } = {}) {
+  return useQuery({
+    queryKey: [...reportQueryKeys.all, 'provider-statement', params] as const,
+    queryFn: () => reportsService.getProviderStatement(params),
+    staleTime: 2 * 60 * 1000,
+    retry: 1,
+  });
+}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Sparkles } from 'lucide-react';
 import ApplicationStepper from './components/ApplicationStepper';
@@ -272,7 +273,7 @@ const NewApplication: React.FC = () => {
      * Call this function after successful form submission to clear saved data
      * Usage: <ContactsStep onSubmit={handleSubmitSuccess} />
      */
-    const handleSubmitSuccess = async () => {
+    const handleSubmitSuccess = useDebouncedCallback(async () => {
         if (isSubmittingRef.current) return;
         isSubmittingRef.current = true;
         setIsSubmitting(true);
@@ -319,7 +320,7 @@ const NewApplication: React.FC = () => {
             isSubmittingRef.current = false;
             setIsSubmitting(false);
         }
-    };
+    });
 
     const renderContent = () => {
         switch (currentStep) {

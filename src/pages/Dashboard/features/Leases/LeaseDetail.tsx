@@ -14,7 +14,7 @@ import EditExtraFeesModal from './components/EditExtraFeesModal';
 import PropertyAttachmentsModal from './components/PropertyAttachmentsModal';
 import ResponsibilityModal, { type ResponsibilityItem } from '../Properties/components/ResponsibilityModal';
 import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useRenewLease } from '../../../../hooks/useLeaseQueries';
-import { useDeleteRecurringTransaction } from '../../../../hooks/useTransactionQueries';
+import { useDeleteRecurringTransaction, useGetRecurringTransactions, useCreateRecurringIncome } from '../../../../hooks/useTransactionQueries';
 import { useGetRenderedDocuments } from '../../../../hooks/useDocumentsQueries';
 import { useGetTenantByUserId } from '../../../../hooks/useTenantQueries';
 import type { BackendLease } from '../../../../services/lease.service';
@@ -43,8 +43,6 @@ const LeaseDetail: React.FC = () => {
     // Modal states for transactions
     const [isDeleteTransactionModalOpen, setIsDeleteTransactionModalOpen] = useState(false);
     const [transactionToDelete, setTransactionToDelete] = useState<any>(null);
-    const [recurringTransactions, setRecurringTransactions] = useState<any[]>([]);
-
     // Modal states for extra fees
     const [isEditExtraFeesModalOpen, setIsEditExtraFeesModalOpen] = useState(false);
 
@@ -89,6 +87,14 @@ const LeaseDetail: React.FC = () => {
     const updateLeaseMutation = useUpdateLease();
     const updateUtilitiesMutation = useUpdateLeaseUtilities();
     const renewLeaseMutation = useRenewLease();
+    const createRecurringIncomeMutation = useCreateRecurringIncome();
+
+    // Fetch recurring transactions
+    const { data: allRecurringTransactions } = useGetRecurringTransactions();
+    const activeRecurringTransactions = useMemo(() => {
+        if (!allRecurringTransactions || !id) return [];
+        return allRecurringTransactions.filter((rt: any) => rt.leaseId === id && rt.enabled);
+    }, [allRecurringTransactions, id]);
 
     // Helper function to generate initials from name
     const getInitials = (name: string): string => {
@@ -359,21 +365,49 @@ const LeaseDetail: React.FC = () => {
     };
 
     // Handler for saving recurring transactions
-    const handleSaveRecurringTransaction = (data: any) => {
-        if (recurringRentModalMode === 'add') {
-            const newTransaction = {
-                id: `trans-${Date.now()}`,
-                ...data,
-                totalAmount: data.tenants.reduce((sum: number, t: any) => sum + t.amount, 0)
-            };
-            setRecurringTransactions(prev => [...prev, newTransaction]);
-        } else if (recurringRentToEdit) {
-            setRecurringTransactions(prev =>
-                prev.map(t => t.id === recurringRentToEdit.id ? { ...t, ...data, totalAmount: data.tenants.reduce((sum: number, tenant: any) => sum + tenant.amount, 0) } : t)
-            );
+    const handleSaveRecurringTransaction = async (data: any) => {
+        try {
+            if (recurringRentModalMode === 'add') {
+                await createRecurringIncomeMutation.mutateAsync({
+                    scope: 'PROPERTY' as any,
+                    category: data.category || 'Rent',
+                    subcategory: data.subcategory || undefined,
+                    startDate: data.firstInvoiceDate ? data.firstInvoiceDate.toISOString() : new Date().toISOString(),
+                    frequency: data.frequency.toUpperCase() as any, // 'MONTHLY' or 'WEEKLY'
+                    amount: parseFloat(data.totalAmount || 0),
+                    leaseId: id as string,
+                    propertyId: backendLease?.propertyId as string,
+                    payerId: backendLease?.tenantId as string,
+                } as any);
+            } else if (recurringRentModalMode === 'edit') {
+                if (recurringRentToEdit && recurringRentToEdit.id && recurringRentToEdit.id.startsWith('trans-')) {
+                     // In case it's a dummy transaction, we just skip it for now since there's no update endpoint.
+                     // A real transaction from DB would not have an id starting with trans-
+                     console.warn('Editing other recurring transactions is currently not supported via the API');
+                } else {
+                    // Update main recurring rent
+                    await updateLeaseMutation.mutateAsync({
+                        id: id as string,
+                        data: {
+                            recurringRent: {
+                                enabled: data.isEnabled,
+                                amount: parseFloat(data.totalAmount || 0),
+                                invoiceSchedule: data.frequency, // E.g. 'Monthly'
+                                startOn: data.firstInvoiceDate ? data.firstInvoiceDate.toISOString() : (backendLease?.recurringRent?.startOn || new Date().toISOString()),
+                                isMonthToMonth: backendLease?.recurringRent?.isMonthToMonth ?? false,
+                                markPastPaid: backendLease?.recurringRent?.markPastPaid ?? false,
+                            }
+                        } as any
+                    });
+                }
+            }
+            setIsAddEditRecurringRentModalOpen(false);
+            queryClient.invalidateQueries({ queryKey: ['lease', id] });
+            queryClient.invalidateQueries({ queryKey: ['transactions', 'recurring'] });
+        } catch (error) {
+            console.error('Failed to save recurring transaction:', error);
+            alert(error instanceof Error ? error.message : 'Failed to save recurring transaction');
         }
-        setIsAddEditRecurringRentModalOpen(false);
-        setRecurringRentToEdit(null);
     };
 
     const deleteRecurringTxnMutation = useDeleteRecurringTransaction();
@@ -390,7 +424,6 @@ const LeaseDetail: React.FC = () => {
             if (looksLikeBackendId) {
                 await deleteRecurringTxnMutation.mutateAsync(txnId);
             }
-            setRecurringTransactions(prev => prev.filter(t => t.id !== txnId));
             setIsDeleteTransactionModalOpen(false);
             setTransactionToDelete(null);
         } catch (error) {
@@ -985,7 +1018,7 @@ const LeaseDetail: React.FC = () => {
                                     </div>
                                     <button
                                         onClick={() => {
-                                            const defaultTenants = [{ name: lease.tenant.name, amount: 0 }];
+                                            const defaultTenants = [{ name: lease?.tenant?.name || 'Tenant', amount: 0 }];
                                             setRecurringRentToEdit({ tenants: defaultTenants });
                                             setRecurringRentModalMode('add');
                                             setIsAddEditRecurringRentModalOpen(true);
@@ -997,7 +1030,7 @@ const LeaseDetail: React.FC = () => {
                                     </button>
                                 </div>
                                 <div className="space-y-4">
-                                    {recurringTransactions.length === 0 ? (
+                                    {activeRecurringTransactions.length === 0 ? (
                                         <div className="bg-[#F0F2F5] rounded-[2rem] p-12 flex flex-col items-center justify-center text-center">
                                             <div className="bg-[#EAEAEA] p-8 rounded-xl flex flex-col items-center mb-0">
                                                 <SquarePen className="w-8 h-8 text-[#3A6D6C] mb-3" />
@@ -1005,7 +1038,7 @@ const LeaseDetail: React.FC = () => {
                                             </div>
                                         </div>
                                     ) : (
-                                        recurringTransactions.map((transaction) => (
+                                        activeRecurringTransactions.map((transaction: any) => (
                                             <div key={transaction.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                                 <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-4 sm:gap-0">
                                                     <div>
@@ -1043,7 +1076,7 @@ const LeaseDetail: React.FC = () => {
                                                             </button>
                                                         </div>
                                                         <div className="text-right">
-                                                            <div className="text-[#3A6D6C] font-bold text-lg">${transaction.totalAmount?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}</div>
+                                                            <div className="text-[#3A6D6C] font-bold text-lg">${parseFloat(transaction.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
                                                             <div className="text-gray-400 text-xs">Total Amount</div>
                                                         </div>
                                                     </div>
@@ -1052,12 +1085,10 @@ const LeaseDetail: React.FC = () => {
                                                 <div className="border-t border-gray-100 pt-4">
                                                     <div className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide text-left">Tenants Split</div>
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                        {transaction.tenants?.map((tenant: any, idx: number) => (
-                                                            <div key={idx} className="flex justify-between items-center bg-gray-50 p-2 rounded-lg">
-                                                                <span className="text-gray-700 font-medium text-sm">{tenant.name}</span>
-                                                                <span className="text-gray-900 font-bold text-sm">${tenant.amount?.toLocaleString() || '0'}</span>
-                                                            </div>
-                                                        ))}
+                                                        <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg">
+                                                            <span className="text-gray-700 font-medium text-sm">{lease?.tenant?.name || 'Tenant'}</span>
+                                                            <span className="text-gray-900 font-bold text-sm">${parseFloat(transaction.amount || 0).toLocaleString()}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

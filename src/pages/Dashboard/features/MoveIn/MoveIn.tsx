@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -140,7 +141,7 @@ const MoveIn: React.FC = () => {
         setCurrentStep(9);
     }
 
-    const handleCompleteMoveIn = async () => {
+    const handleCompleteMoveIn = useDebouncedCallback(async () => {
         // Validate required fields
         if (!formData.tenantId || !formData.propertyId) {
             alert('Please complete all required fields (Property and Tenant)');
@@ -220,7 +221,7 @@ const MoveIn: React.FC = () => {
             console.error('Failed to create/update lease:', error);
             alert(error instanceof Error ? error.message : 'Failed to create/update lease. Please try again.');
         }
-    }
+    });
 
     return (
         <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">

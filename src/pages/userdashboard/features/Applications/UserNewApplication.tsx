@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 import { ChevronLeft } from "lucide-react";
 import { useNavigate, useLocation, UNSAFE_NavigationContext } from "react-router-dom";
 import ApplicationStepper from "./components/ApplicationStepper";
@@ -416,7 +417,7 @@ const UserNewApplication: React.FC = () => {
         localStorage.setItem(APPLICATIONS_KEY, JSON.stringify([newApp, ...filteredApps]));
     };
 
-    const handleSubmitSuccess = async () => {
+    const handleSubmitSuccess = useDebouncedCallback(async () => {
         if (isSubmittingRef.current) return;
         isSubmittingRef.current = true;
         setIsSubmitting(true);
@@ -457,7 +458,7 @@ const UserNewApplication: React.FC = () => {
             isSubmittingRef.current = false;
             setIsSubmitting(false);
         }
-    };
+    });
 
     const renderStep = () => {
         const state = location.state as { propertyId?: string };

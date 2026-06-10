@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { maintenanceRequestQueryKeys } from "../../../../../hooks/useMaintenanceRequestQueries";
 import { useRequestStore } from "../store/requestStore";
 import type { AvailabilityOption, ServiceRequest } from "../../../utils/types";
 import { categories, propertiesList } from "../constants/requestData";
@@ -28,6 +30,7 @@ const PRIORITY_TO_API: Record<string, MaintenancePriority> = {
 
 export const useNewRequestForm = () => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { addRequest, newRequestForm, setNewRequestForm, resetNewRequestForm } = useRequestStore();
 
     const {
@@ -287,6 +290,7 @@ export const useNewRequestForm = () => {
                 };
 
                 const created = await maintenanceRequestService.create(apiPayload);
+                await queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.list() });
                 resetNewRequestForm();
                 setIsSubmitting(false);
                 navigate("/userdashboard/requests", {

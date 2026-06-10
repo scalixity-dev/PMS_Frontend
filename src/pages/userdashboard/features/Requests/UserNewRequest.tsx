@@ -1,393 +1,264 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { ChevronLeft } from "lucide-react";
-import { useLocation, useNavigate, UNSAFE_NavigationContext } from "react-router-dom";
-import { useNewRequestForm } from "./hooks/useNewRequestForm";
-import Stepper from "./components/new-request/Stepper";
-import UnsavedChangesModal from "../../../Dashboard/components/UnsavedChangesModal";
-import User__AdvancedRequestForm from "./components/UserStep1RequestForm";
-import UserStep2PropertyTenants from "./components/UserStep2PropertyTenants";
-import UserStep3DueDateMaterials from "./components/UserStep3DueDateMaterials";
-import { propertiesList } from "./constants/requestData";
-import { useGetCurrentUser } from "../../../../hooks/useAuthQueries";
-import { useGetLeasesByTenant } from "../../../../hooks/useLeaseQueries";
+import React, { useState, useMemo } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
+import MaintenanceStepper from '../../../Dashboard/features/Maintenance/components/MaintenanceStepper';
+import MaintenanceSuccessModal from '../../../Dashboard/features/Maintenance/components/MaintenanceSuccessModal';
+import AdvancedRequestForm from '../../../Dashboard/features/Maintenance/components/AdvancedRequestForm';
+import PropertyTenantsStep from '../../../Dashboard/features/Maintenance/components/PropertyTenantsStep';
+import DueDateMaterialsStep from '../../../Dashboard/features/Maintenance/components/DueDateMaterialsStep';
+import { useMaintenanceRequestFormStore } from '../../../Dashboard/features/Maintenance/store/maintenanceRequestStore';
+import {
+    maintenanceRequestService,
+    type CreateMaintenanceRequestInput,
+    type MaintenanceCategory,
+    type MaintenancePriority,
+    type UploadCategory,
+    type FileType,
+} from '../../../../services/maintenance-request.service';
+import { useCreateMaintenanceRequest } from '../../../../hooks/useMaintenanceRequestQueries';
+import { useGetCurrentUser } from '../../../../hooks/useAuthQueries';
+import { useGetLeasesByTenant } from '../../../../hooks/useLeaseQueries';
 
+const mapCategory = (category: string): MaintenanceCategory => {
+    const normalized = category.toLowerCase();
+    if (normalized === 'appliances') return 'APPLIANCES';
+    if (normalized === 'electrical') return 'ELECTRICAL';
+    if (normalized === 'plumbing') return 'PLUMBING';
+    return 'HOUSEHOLD';
+};
 
+const mapPriority = (priority: string): MaintenancePriority => {
+    const normalized = priority.toLowerCase();
+    if (normalized === 'low') return 'LOW';
+    if (normalized === 'high') return 'HIGH';
+    if (normalized === 'urgent') return 'URGENT';
+    return 'MEDIUM';
+};
+
+const getUploadCategoryForFile = (file: File): UploadCategory => {
+    if (file.type.startsWith('image/')) return 'IMAGE';
+    if (file.type.startsWith('video/')) return 'VIDEO';
+    return 'DOCUMENT';
+};
+
+const steps = [
+    { id: 1, label: 'General Details' },
+    { id: 2, label: 'Property & Tenants' },
+    { id: 3, label: 'Due date & Materials' },
+];
 
 const NewRequest: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [shouldAllowNavigation, setShouldAllowNavigation] = useState(false);
-  const [nextLocation, setNextLocation] = useState<string | null>(null);
+    const navigate = useNavigate();
+    const { advanced, property, due, reset } = useMaintenanceRequestFormStore();
+    const { mutateAsync: createRequest } = useCreateMaintenanceRequest();
+    const { data: currentUser } = useGetCurrentUser();
+    const { data: leases = [] } = useGetLeasesByTenant(currentUser?.userId ?? null);
 
-  const {
-    currentStep,
-    prevStep,
-    nextStep,
-    selectedCategory,
-    setSelectedCategory,
-    selectedSubCategory,
-    setSelectedSubCategory,
-    selectedProblem,
-    setSelectedProblem,
-    finalDetail,
-    setFinalDetail,
-    title,
-    setTitle,
-    description,
-    setDescription,
-    authorization,
-    setAuthorization,
-    authCode,
-    setAuthCode,
-    pets,
-    setPets,
-    availability,
-    setAvailability,
-    dateDue,
-    setDateDue,
-    priority,
-    setPriority,
-    materials,
-    setMaterials,
-    submissionError,
-    setSubmissionError,
-    handleSubmit,
-    hasFormData,
-    property,
-    setProperty,
-    attachments,
-    setAttachments,
-    video,
-    setVideo,
-    selectedEquipment,
-    setSelectedEquipment,
-    setEquipmentSerial,
-    setEquipmentCondition,
-    amount,
-    setAmount,
-    chargeTo,
-    setChargeTo,
-    setPropertyId,
-    setUnitId,
-  } = useNewRequestForm();
+    const [mainStep, setMainStep] = useState(1);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [createdRequestId, setCreatedRequestId] = useState('');
+    const [submitError, setSubmitError] = useState('');
 
-  const { data: currentUser } = useGetCurrentUser();
-  const { data: leases = [] } = useGetLeasesByTenant(currentUser?.userId ?? null);
+    // Derive property options from tenant's leases as a fallback for PropertyTenantsStep
+    const propertyOptions = useMemo(() => {
+        const seen = new Map<string, { id: string; name: string; address: string }>();
+        const sorted = [...leases].sort((a, b) => {
+            if (a.status === 'ACTIVE' && b.status !== 'ACTIVE') return -1;
+            if (a.status !== 'ACTIVE' && b.status === 'ACTIVE') return 1;
+            return 0;
+        });
+        for (const lease of sorted) {
+            const propId = lease.propertyId;
+            if (!propId || seen.has(propId)) continue;
+            seen.set(propId, {
+                id: propId,
+                name: `${lease.property?.propertyName ?? 'Property'}${lease.unit ? ` - ${lease.unit.unitName}` : ''}`,
+                address: lease.property?.address
+                    ? `${(lease.property.address as any).streetAddress ?? ''}, ${(lease.property.address as any).city ?? ''}`
+                    : '',
+            });
+        }
+        return Array.from(seen.values());
+    }, [leases]);
 
-  const propertyOptions = useMemo(() => {
-    if (leases.length > 0) {
-      // Deduplicate by property+unit combo, preferring active leases
-      const seen = new Map<string, typeof leases[0]>();
-      const sorted = [...leases].sort((a, b) => {
-        if (a.status === 'ACTIVE' && b.status !== 'ACTIVE') return -1;
-        if (a.status !== 'ACTIVE' && b.status === 'ACTIVE') return 1;
-        return 0;
-      });
-      for (const lease of sorted) {
-        const key = `${lease.propertyId}-${lease.unitId ?? 'no-unit'}`;
-        if (!seen.has(key)) seen.set(key, lease);
-      }
-      return Array.from(seen.values()).map((l) => ({
-        id: l.id,
-        propertyId: l.propertyId,
-        name: `${l.property?.propertyName ?? "Property"}${l.unit ? ` - ${l.unit.unitName}` : ""}`,
-        address: l.property?.address
-          ? `${l.property.address.streetAddress}, ${l.property.address.city}`
-          : "",
-      }));
-    }
-    return propertiesList;
-  }, [leases]);
+    const handleSubmitRequest = async () => {
+        setSubmitError('');
 
+        const missing: string[] = [];
+        if (!property.propertyId) missing.push('Property');
+        if (!advanced.category) missing.push('Category');
+        if (!advanced.subCategory?.trim()) missing.push('Subcategory');
+        if (!advanced.title?.trim()) missing.push('Title');
 
+        if (missing.length > 0) {
+            setSubmitError(`Please fill required field(s): ${missing.join(', ')}`);
+            if (!property.propertyId) setMainStep(2);
+            else setMainStep(1);
+            return;
+        }
 
+        try {
+            const matchedLease = leases.find((l) => l.propertyId === property.propertyId);
+            const unitId = matchedLease?.unitId ?? undefined;
 
-  // Access the navigation context to intercept navigation
-  const navigationContext = React.useContext(UNSAFE_NavigationContext);
+            // Upload attachments first (without maintenanceRequestId) so tenant permissions
+            // are not blocked by the manager-only upload-to-request check on the backend.
+            const filesToUpload = advanced.files ?? [];
+            const attachmentDtos: { fileUrl: string; fileType: FileType }[] = [];
+            if (filesToUpload.length > 0) {
+                const uploaded = await Promise.all(
+                    filesToUpload.map((file) =>
+                        maintenanceRequestService.uploadFile({
+                            file,
+                            category: getUploadCategoryForFile(file),
+                            propertyId: property.propertyId || undefined,
+                        }),
+                    ),
+                );
+                uploaded.forEach((result, i) => {
+                    const file = filesToUpload[i];
+                    const fileType: FileType = file.type.startsWith('video/') ? 'OTHER' : 'IMAGE';
+                    attachmentDtos.push({ fileUrl: result.url, fileType });
+                });
+            }
 
-  /* Use a ref to track navigation allowance synchronously, 
-     preventing race conditions between state updates and navigation events */
-  const shouldAllowNavigationRef = React.useRef(false);
+            const payload: CreateMaintenanceRequestInput = {
+                propertyId: property.propertyId,
+                unitId,
+                category: mapCategory(advanced.category),
+                subcategory: advanced.subCategory,
+                issue: advanced.issue || undefined,
+                subissue: advanced.subIssue || undefined,
+                title: advanced.title,
+                problemDetails: advanced.details || undefined,
+                priority: due.priority ? mapPriority(due.priority) : undefined,
+                dueDate: due.dateDue ? due.dateDue.toISOString() : undefined,
+                equipmentLinked: property.linkEquipment,
+                equipmentId: property.linkEquipment && property.selectedEquipment ? property.selectedEquipment : undefined,
+                tenantMeta: {
+                    tenantAuthorization: property.tenantAuthorization,
+                    accessCode: property.accessCode || undefined,
+                    petsInResidence: property.petsInResidence || undefined,
+                    selectedPets: property.selectedPets,
+                    dateOptions: property.dateOptions.map((option) => ({
+                        date: option.date ? option.date.toISOString() : undefined,
+                        timeSlots: option.timeSlots,
+                    })),
+                },
+                chargeTo: 'PENDING',
+                materials: due.materials.map((m) => ({
+                    materialName: m.name,
+                    quantity: m.quantity,
+                })),
+                attachments: attachmentDtos.length > 0 ? attachmentDtos : undefined,
+            };
 
-  // Block navigation when form has unsaved changes
-  useEffect(() => {
-    // Sync ref with state when state changes (for other cases)
-    shouldAllowNavigationRef.current = shouldAllowNavigation;
-
-    if (!hasFormData || shouldAllowNavigation) return;
-
-    const { navigator } = navigationContext;
-    const originalPush = navigator.push;
-    const originalReplace = navigator.replace;
-
-    // Intercept push navigation
-    navigator.push = (...args: Parameters<typeof originalPush>) => {
-      // Check ref directly for immediate feedback during submission
-      if (shouldAllowNavigationRef.current) {
-        return originalPush(...args);
-      }
-
-      const [to] = args;
-      const targetPath = typeof to === 'string' ? to : to.pathname;
-
-      if (targetPath !== location.pathname) {
-        setNextLocation(targetPath || '');
-        setIsModalOpen(true);
-      } else {
-        originalPush(...args);
-      }
+            const created = await createRequest(payload);
+            setCreatedRequestId(created.id);
+            setShowSuccessModal(true);
+            reset();
+        } catch (error) {
+            setSubmitError(error instanceof Error ? error.message : 'Failed to create maintenance request');
+        }
     };
 
-    // Intercept replace navigation
-    navigator.replace = (...args: Parameters<typeof originalReplace>) => {
-      // Check ref directly
-      if (shouldAllowNavigationRef.current) {
-        return originalReplace(...args);
-      }
-
-      const [to] = args;
-      const targetPath = typeof to === 'string' ? to : to.pathname;
-
-      if (targetPath !== location.pathname) {
-        setNextLocation(targetPath || '');
-        setIsModalOpen(true);
-      } else {
-        originalReplace(...args);
-      }
+    const handleNext = () => setMainStep((prev) => Math.min(prev + 1, 3));
+    const handleBack = () => {
+        if (mainStep === 1) navigate(-1);
+        else setMainStep((prev) => prev - 1);
     };
 
-    // Cleanup
-    return () => {
-      navigator.push = originalPush;
-      navigator.replace = originalReplace;
-    };
-  }, [hasFormData, shouldAllowNavigation, location.pathname, navigationContext]);
+    return (
+        <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">
+            <div className="flex-1 flex items-start justify-center pt-8">
+                <div className="bg-[#DFE5E3] rounded-[2rem] p-6 md:p-12 flex flex-col items-center w-full shadow-sm min-h-[80vh] relative max-w-6xl">
 
-  // Handle browser navigation (refresh, close tab, etc.)
-  useEffect(() => {
-    // For browser native events, the state is sufficient usually, 
-    // but the ref is consistent.
-    if (!hasFormData || shouldAllowNavigation) return;
+                    <div className="w-full flex items-center mb-4 md:mb-0 md:absolute md:top-8 md:left-8">
+                        <button
+                            onClick={handleBack}
+                            className="flex items-center gap-2 text-[#3D7475] font-bold hover:opacity-80 transition-opacity uppercase tracking-wide"
+                        >
+                            <ArrowLeft size={20} strokeWidth={2.5} />
+                            Back
+                        </button>
+                    </div>
 
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (shouldAllowNavigationRef.current) return;
-      e.preventDefault();
-      e.returnValue = '';
-      return '';
-    };
+                    <div className="w-full mt-8 mb-6">
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-6">
+                            Add Maintenance Request
+                        </h1>
+                        <MaintenanceStepper currentStep={mainStep} steps={steps} />
+                        {submitError && (
+                            <div className="mt-4 mx-auto max-w-2xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm flex items-start justify-between gap-3">
+                                <span>{submitError}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setSubmitError('')}
+                                    className="text-red-500 hover:text-red-700 font-bold"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasFormData, shouldAllowNavigation]);
+                    {mainStep === 1 && (
+                        <AdvancedRequestForm
+                            onNext={() => handleNext()}
+                            onDiscard={() => navigate('/userdashboard/requests')}
+                            initialData={advanced}
+                        />
+                    )}
 
-  const handleConfirmLeave = useCallback(() => {
-    setIsModalOpen(false);
-    shouldAllowNavigationRef.current = true;
-    setShouldAllowNavigation(true);
+                    {mainStep === 2 && (
+                        <PropertyTenantsStep
+                            onNext={() => handleNext()}
+                            onBack={handleBack}
+                            canCreateEquipment={false}
+                            properties={propertyOptions}
+                            initialData={{
+                                selectedProperty: property.propertyId,
+                                linkEquipment: property.linkEquipment,
+                                selectedEquipment: property.selectedEquipment,
+                                tenantAuthorization: property.tenantAuthorization,
+                                dateOptions: property.dateOptions,
+                                tenantList: property.tenantList,
+                                accessCode: property.accessCode,
+                                petsInResidence: property.petsInResidence,
+                                selectedPets: property.selectedPets,
+                            }}
+                        />
+                    )}
 
-    // Navigate to the target location
-    if (nextLocation) {
-      setTimeout(() => {
-        navigate(nextLocation);
-      }, 0);
-    }
-  }, [nextLocation, navigate]);
+                    {mainStep === 3 && (
+                        <DueDateMaterialsStep
+                            onNext={async () => {
+                                await handleSubmitRequest();
+                            }}
+                            onBack={handleBack}
+                            initialData={{
+                                dateInitiated: due.dateInitiated,
+                                dateDue: due.dateDue,
+                                priority: due.priority,
+                                materials: due.materials,
+                                chargeTo: due.chargeTo,
+                            }}
+                        />
+                    )}
 
-  const handleCancelLeave = useCallback(() => {
-    setIsModalOpen(false);
-    setNextLocation(null);
-  }, []);
-
-  // Wrap handleSubmit to allow navigation after successful submission
-  const handleFormSubmit = async () => {
-    // Temporarily allow navigation for the submission-triggered redirect
-    shouldAllowNavigationRef.current = true;
-    setShouldAllowNavigation(true);
-
-    const success = await handleSubmit();
-
-    // If submission failed, we should restore navigation blocking to prevent data loss
-    if (!success) {
-      shouldAllowNavigationRef.current = false;
-      setShouldAllowNavigation(false);
-    }
-  };
-
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <User__AdvancedRequestForm
-            onNext={(data) => {
-              console.log('Advanced Data:', data);
-              setSelectedCategory(data.category);
-              setSelectedSubCategory(data.subCategory);
-              setSelectedProblem(data.issue);
-              setFinalDetail(data.subIssue);
-              setTitle(data.title);
-              setDescription(data.details);
-              setAmount(data.amount);
-
-              // Correctly handle files from step 1
-              if (data.files && Array.isArray(data.files)) {
-                const newAttachments = data.files.filter((f: File) => !f.type.startsWith('video/'));
-                const newVideo = data.files.find((f: File) => f.type.startsWith('video/')) || null;
-                setAttachments(newAttachments);
-                setVideo(newVideo);
-              }
-
-              nextStep(2);
-            }}
-            onDiscard={() => navigate('/userdashboard/requests')}
-            initialData={{
-              category: selectedCategory,
-              subCategory: selectedSubCategory,
-              issue: selectedProblem,
-              subIssue: finalDetail,
-              title: title,
-              details: description,
-              amount: amount,
-              attachments: attachments,
-              video: video
-            }}
-          />
-        );
-      case 2:
-        return (
-          <UserStep2PropertyTenants
-            onNext={(data) => {
-              setProperty(data.property);
-              const selectedLease = leases.find((l) => l.id === data.property);
-              setPropertyId(selectedLease?.propertyId);
-              setUnitId(selectedLease?.unitId ?? undefined);
-              setSelectedEquipment(data.equipmentName);
-              setEquipmentSerial(data.equipmentSerial || null);
-              setEquipmentCondition('Good');
-              setAuthorization(data.tenantAuthorization ? 'yes' : 'no');
-              setAuthCode(data.accessCode);
-              setPets(data.selectedPets);
-              const mappedAvailability = data.dateOptions.map((opt: { id: string; date?: Date; timeSlots?: string[] }) => ({
-                id: opt.id,
-                date: opt.date ? opt.date.toISOString() : '',
-                timeSlots: opt.timeSlots ?? [],
-              }));
-              setAvailability(mappedAvailability);
-              nextStep(3);
-            }}
-            onBack={prevStep}
-            properties={propertyOptions}
-            initialData={{
-              property: property,
-              equipment: selectedEquipment,
-
-              tenantAuthorization: authorization === 'yes',
-              accessCode: authCode,
-              selectedPets: pets,
-              petsInResidence: pets.length > 0 ? 'yes' : (authorization ? 'no' : ''),
-              dateOptions: availability.map(opt => ({
-                id: opt.id.toString(),
-                date: opt.date ? new Date(opt.date) : undefined,
-                timeSlots: opt.timeSlots
-              })),
-            }}
-          />
-        );
-      case 3:
-        return (
-          <UserStep3DueDateMaterials
-            onNext={(data) => {
-              setDateDue(data.dateDue ? data.dateDue.toISOString() : null);
-              setMaterials(data.materials);
-              const priorityMap: Record<string, "Critical" | "Normal" | "Low"> = {
-                low: 'Low',
-                normal: 'Normal',
-                high: 'Critical',
-                urgent: 'Critical'
-              };
-              setPriority(priorityMap[data.priority] ?? 'Normal');
-              if (data.chargeTo) setChargeTo(data.chargeTo === 'TENANT' ? 'TENANT' : 'LANDLORD');
-              handleFormSubmit();
-            }}
-            onBack={prevStep}
-            initialData={{
-              dateDue: dateDue ? new Date(dateDue) : undefined,
-              priority: priority?.toLowerCase() ?? 'normal',
-              materials: materials,
-              chargeTo: chargeTo === 'TENANT' ? 'TENANT' : 'LANDLORD',
-            }}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-[#F9FAFB] p-2 sm:p-4 md:p-10 relative">
-      <div className="max-w-5xl mx-auto">
-        <div className="bg-[#F5F5F5] rounded-xl shadow-[0px_3.9px_3.9px_0px_#00000040] border border-gray-100 p-4 sm:p-6 md:p-8 relative">
-          <button
-            onClick={prevStep}
-            className="flex items-center gap-1 text-[#004D40] font-bold text-sm mb-6 hover:opacity-80 transition-opacity"
-          >
-            <ChevronLeft size={18} />
-            BACK
-          </button>
-
-          <Stepper currentStep={currentStep} />
-
-          {/* Error Message Display */}
-          {submissionError && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                <div>
-                  <h3 className="text-sm font-semibold text-red-800">Submission Error</h3>
-                  <p className="text-sm text-red-700 mt-1">{submissionError}</p>
+                    <MaintenanceSuccessModal
+                        isOpen={showSuccessModal}
+                        onClose={() => setShowSuccessModal(false)}
+                        onBackToList={() => navigate('/userdashboard/requests')}
+                        onAssignPro={() => navigate('/userdashboard/requests')}
+                        requestId={createdRequestId}
+                        propertyName={property.propertyId || 'Property'}
+                    />
                 </div>
-              </div>
-              <button
-                onClick={() => setSubmissionError(null)}
-                className="text-red-600 hover:text-red-800 transition-colors"
-                aria-label="Dismiss error"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
             </div>
-          )}
-
-          <div className="step-content">
-            {renderStep()}
-          </div>
         </div>
-      </div>
-
-      {/* Modal positioned relative to content area */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={handleCancelLeave} />
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200 overflow-hidden relative z-10">
-            <UnsavedChangesModal
-              isOpen={isModalOpen}
-              onClose={handleCancelLeave}
-              onConfirm={handleConfirmLeave}
-              title="You're about to leave"
-              message="Are you sure you want to leave without saving? You will lose any changes made."
-              cancelText="No"
-              confirmText="Yes, I'm sure"
-              noBlur={true}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default NewRequest;

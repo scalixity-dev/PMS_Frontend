@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
+import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -614,7 +615,7 @@ const ListUnit: React.FC = () => {
     }
   };
 
-  const handleNext = async () => {
+  const handleNext = useDebouncedCallback(async () => {
     if (currentStep === 1) {
       setCurrentStep(2);
       setLeasingStep(1);
@@ -651,7 +652,7 @@ const ListUnit: React.FC = () => {
         // handleSaveListingContact will show success modal on success
       }
     }
-  };
+  });
 
   const handleBackToList = () => {
     setShowSuccessModal(false);

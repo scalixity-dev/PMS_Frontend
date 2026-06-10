@@ -443,5 +443,6 @@ export const API_ENDPOINTS = {
     MAINTENANCE_REQUESTS: (params: string) => `${API_BASE_URL}/api/v1/reports/maintenance-requests${params}`,
     CONTACTS: `${API_BASE_URL}/api/v1/reports/contacts`,
     RENTABILITY: (params: string) => `${API_BASE_URL}/api/v1/reports/rentability${params}`,
+    PROVIDER_STATEMENT: (params: string) => `${API_BASE_URL}/api/v1/reports/provider-statement${params}`,
   },
 };

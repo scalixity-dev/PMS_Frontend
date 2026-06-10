@@ -2,6 +2,13 @@ import type { Lease } from "../../../utils/types";
 import { StatusPill } from "./StatusPill";
 import { useNavigate } from "react-router-dom";
 
+const fmtDate = (iso: string) => {
+    if (!iso) return '';
+    try {
+        return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    } catch { return iso; }
+};
+
 export const LeaseCard = ({ lease }: { lease: Lease }) => {
     const navigate = useNavigate();
     return (
@@ -9,7 +16,7 @@ export const LeaseCard = ({ lease }: { lease: Lease }) => {
             <div className="flex flex-col gap-1.5 w-full sm:w-auto">
                 <h3 className="text-xl sm:text-[22px] font-medium text-[#1A1A1A]">Lease #{lease.number}</h3>
                 <p className="text-[#4B5563] text-sm sm:text-[15px] font-medium leading-none">
-                    {lease.startDate} - {lease.endDate}
+                    {fmtDate(lease.startDate)} – {lease.endDate ? fmtDate(lease.endDate) : 'Present'}
                 </p>
             </div>
 

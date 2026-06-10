@@ -7,7 +7,7 @@ import { useMaintenanceRequestFormStore, type MaintenanceMaterial, type ChargeTo
 interface Material extends MaintenanceMaterial {}
 
 interface DueDateMaterialsStepProps {
-    onNext: (data: { dateInitiated: Date | undefined; dateDue: Date | undefined; priority: string; materials: Material[]; chargeTo: ChargeToOption }) => void;
+    onNext: (data: { dateInitiated: Date | undefined; dateDue: Date | undefined; priority: string; materials: Material[]; chargeTo: ChargeToOption }) => void | Promise<void>;
     onBack: () => void;
     initialData?: {
         dateInitiated?: Date;
@@ -25,6 +25,7 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
     const [chargeTo, setChargeTo] = useState<ChargeToOption>(initialData?.chargeTo || 'LANDLORD');
     const [materials, setMaterials] = useState<Material[]>(initialData?.materials || []);
     const [errors, setErrors] = useState<{ priority?: string; materials?: string }>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const setDue = useMaintenanceRequestFormStore((state) => state.setDue);
 
@@ -197,7 +198,8 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                         Back
                     </button>
                     <button
-                        onClick={() => {
+                        disabled={isSubmitting}
+                        onClick={async () => {
                             const newErrors: { priority?: string; materials?: string } = {};
                             if (!priority) newErrors.priority = 'Priority is required.';
                             const emptyMaterial = materials.find(m => !m.name.trim());
@@ -208,11 +210,22 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                             }
                             setErrors({});
                             setDue({ dateInitiated, dateDue, priority, materials, chargeTo });
-                            onNext({ dateInitiated, dateDue, priority, materials, chargeTo });
+                            setIsSubmitting(true);
+                            try {
+                                await onNext({ dateInitiated, dateDue, priority, materials, chargeTo });
+                            } finally {
+                                setIsSubmitting(false);
+                            }
                         }}
-                        className="flex-1 md:flex-none px-12 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
+                        className="flex-1 md:flex-none px-12 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        Create Request
+                        {isSubmitting && (
+                            <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                        )}
+                        {isSubmitting ? 'Submitting...' : 'Create Request'}
                     </button>
                 </div>
             </div>
