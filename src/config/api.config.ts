@@ -167,6 +167,7 @@ export const API_ENDPOINTS = {
     INVITE: `${API_BASE_URL}/application/invite`,
     GET_ATTACHMENTS: (id: string) => `${API_BASE_URL}/application/${id}/attachments`,
     DELETE_ATTACHMENT: (id: string, attachmentId: string) => `${API_BASE_URL}/application/${id}/attachments/${attachmentId}`,
+    REQUEST_FEE: (id: string) => `${API_BASE_URL}/application/${id}/request-fee`,
   },
   SERVICE_PROVIDER: {
     GET_ALL: `${API_BASE_URL}/service-provider`,

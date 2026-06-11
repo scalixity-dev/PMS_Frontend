@@ -86,11 +86,7 @@ const Payments: React.FC = () => {
         setSelectedPayment,
         setRefundModalOpen,
         setEditInvoiceOpen,
-        setApplyDepositsOpen,
-        setApplyCreditsOpen,
-        setAddDiscountOpen,
         setMarkAsPaidOpen,
-        setVoidModalOpen
     } = useTransactionStore();
 
     // Filter State
@@ -268,36 +264,16 @@ const Payments: React.FC = () => {
                 }}
                 isLoading={deletePaymentMutation.isPending || deleteTransactionMutation.isPending}
             />
-            <ApplyDepositsModal
-                onConfirm={(data) => {
-                    console.log('Apply Deposits data:', data);
-                    setApplyDepositsOpen(false);
-                }}
-            />
-            <ApplyCreditsModal
-                onConfirm={(data) => {
-                    console.log('Apply Credits data:', data);
-                    setApplyCreditsOpen(false);
-                }}
-            />
-            <AddDiscountModal
-                onConfirm={(data) => {
-                    console.log('Add Discount data:', data);
-                    setAddDiscountOpen(false);
-                }}
-            />
+            <ApplyDepositsModal />
+            <ApplyCreditsModal />
+            <AddDiscountModal />
             <MarkAsPaidModal
                 onConfirm={(data) => {
                     console.log('Mark As Paid data:', data);
                     setMarkAsPaidOpen(false);
                 }}
             />
-            <VoidTransactionModal
-                onConfirm={(reason) => {
-                    console.log('Voiding transaction with reason:', reason);
-                    setVoidModalOpen(false);
-                }}
-            />
+            <VoidTransactionModal />
             <EditPaymentModal
                 onConfirm={async (data) => {
                     if (!selectedPayment?.transactionId || !selectedPayment?.paymentId) {

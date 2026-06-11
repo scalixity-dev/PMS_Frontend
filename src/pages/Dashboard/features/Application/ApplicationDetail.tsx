@@ -16,7 +16,7 @@ import {
     Eye,
     X as XIcon,
 } from 'lucide-react';
-import { useGetApplication, useUpdateApplication, useGetApplicationAttachments, useDeleteApplicationAttachment, applicationQueryKeys } from '../../../../hooks/useApplicationQueries';
+import { useGetApplication, useUpdateApplication, useDeleteApplication, useRequestApplicationFee, useGetApplicationAttachments, useDeleteApplicationAttachment, applicationQueryKeys } from '../../../../hooks/useApplicationQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import AddOccupantModal from './components/AddOccupantModal';
 import AddPetModal from './components/AddPetModal';
@@ -524,6 +524,8 @@ const ApplicationDetail = () => {
 
     const { data: application, isLoading, error } = useGetApplication(id);
     const updateApplication = useUpdateApplication();
+    const deleteApplication = useDeleteApplication();
+    const requestFeeMutation = useRequestApplicationFee();
     const { data: persistedAttachments = [] } = useGetApplicationAttachments(id);
     const deleteAttachmentMutation = useDeleteApplicationAttachment();
     const queryClient = useQueryClient();
@@ -726,7 +728,9 @@ const ApplicationDetail = () => {
                 pet.id === editingPet.id ? newPet : {
                     type: pet.type,
                     name: pet.name,
-                    weight: pet.weight,
+                    weight: pet.weight !== null && pet.weight !== undefined
+                        ? parseFloat(String(pet.weight))
+                        : undefined,
                     breed: pet.breed,
                     ...(petPhotoUrls(pet).length > 0 ? { photoUrls: petPhotoUrls(pet) } : {}),
                 }
@@ -1128,6 +1132,100 @@ const ApplicationDetail = () => {
         });
     };
 
+    const handleExportApplication = () => {
+        const fmt = (d?: string | Date | null) =>
+            d ? new Date(d as string).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+        const money = (v?: string | number | null) =>
+            v ? `£${parseFloat(String(v)).toLocaleString('en-GB', { minimumFractionDigits: 2 })}` : '—';
+        const row = (label: string, value: string) =>
+            `<tr><td style="padding:6px 12px;font-weight:600;color:#555;width:35%;border-bottom:1px solid #f0f0f0">${label}</td><td style="padding:6px 12px;color:#222;border-bottom:1px solid #f0f0f0">${value}</td></tr>`;
+        const section = (title: string, content: string) =>
+            `<div style="margin-bottom:24px"><h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#3A6D6C;border-bottom:2px solid #3A6D6C;padding-bottom:4px;margin-bottom:12px">${title}</h3>${content}</div>`;
+        const tbl = (rows: string) =>
+            `<table style="width:100%;border-collapse:collapse;font-size:13px">${rows}</table>`;
+        const badge = (text: string, color = '#3A6D6C') =>
+            `<span style="background:${color};color:#fff;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">${text}</span>`;
+        const statusColors: Record<string, string> = {
+            APPROVED: '#16a34a', REVIEWING: '#d97706', REJECTED: '#dc2626',
+            SUBMITTED: '#2563eb', DRAFT: '#6b7280', CANCELLED: '#6b7280',
+        };
+        const yesNo = (v: boolean) => v
+            ? `<span style="color:#dc2626;font-weight:700">Yes</span>`
+            : `<span style="color:#16a34a;font-weight:700">No</span>`;
+
+        const occupantsHtml = application.occupants.length
+            ? application.occupants.map((o, i) => section(`Co-Occupant ${i + 1}`,
+                tbl([row('Name', `${o.firstName ?? ''} ${o.lastName ?? ''}`.trim() || o.name),
+                    row('Relationship', o.relationship), row('Date of Birth', fmt(o.dateOfBirth)),
+                    row('Email', o.email ?? '—'), row('Phone', o.phoneNumber ?? '—')].join('')))).join('')
+            : '<p style="color:#888;font-size:13px">No additional occupants</p>';
+
+        const residencesHtml = application.residenceHistory.length
+            ? application.residenceHistory.map((r, i) => section(`Residence ${i + 1}`,
+                tbl([row('Address', `${r.address}, ${r.city}, ${r.state} ${r.zipCode}, ${r.country}`),
+                    row('Type', r.residenceType), row('Status', r.isCurrent ? 'Current' : 'Previous'),
+                    row('Move-in', fmt(r.moveInDate)), row('Monthly Rent', r.monthlyRent ? `£${r.monthlyRent}` : '—'),
+                    row('Landlord', r.landlordName ?? '—'), row('Landlord Phone', r.landlordPhone ?? '—')].join('')))).join('')
+            : '<p style="color:#888;font-size:13px">No residential history</p>';
+
+        const incomesHtml = application.incomeDetails.length
+            ? application.incomeDetails.map((inc, i) => section(`Income Source ${i + 1}`,
+                tbl([row('Type', inc.incomeType), row('Company', inc.companyName),
+                    row('Position', inc.positionTitle), row('Monthly Income', money(inc.monthlyIncome)),
+                    row('Current Employment', inc.currentEmployment ? 'Yes' : 'No'),
+                    row('Start Date', fmt(inc.startDate)), row('Supervisor', inc.supervisorName ?? '—')].join('')))).join('')
+            : '<p style="color:#888;font-size:13px">No income history</p>';
+
+        const bq = application.backgroundQuestions;
+        const bgHtml = bq ? tbl([row('Smokes', yesNo(bq.smoke)), row('Military member', yesNo(bq.militaryMember)),
+            row('Criminal record', yesNo(bq.criminalRecord)), row('Bankruptcy', yesNo(bq.bankruptcy)),
+            row('Refused rent', yesNo(bq.refusedRent)), row('Evicted', yesNo(bq.evicted))].join(''))
+            : '<p style="color:#888;font-size:13px">Not answered</p>';
+
+        const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>Application – ${applicantName}</title>
+<style>
+  body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:24px 32px;color:#222;background:#fff}
+  @media print{body{padding:0 16px}@page{margin:18mm 14mm;size:A4}}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #3A6D6C}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:0 32px}
+  .print-btn{display:inline-block;margin-bottom:20px;padding:8px 20px;background:#3A6D6C;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  @media print{.print-btn{display:none}}
+</style></head><body>
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+<div class="header">
+  <div>
+    <h1 style="font-size:20px;margin:0 0 2px">${applicantName}</h1>
+    <div style="font-size:11px;color:#777;margin-top:4px">${primaryApplicant?.email ?? ''} &nbsp;|&nbsp; ID: ${application.id.slice(0, 8)}…</div>
+    <div style="margin-top:8px">${badge(statusDisplay, statusColors[application.status] ?? '#6b7280')}</div>
+  </div>
+  <div style="text-align:right;font-size:12px;color:#555;line-height:1.8">
+    <div><strong>Property:</strong> ${property?.propertyName ?? '—'}</div>
+    <div><strong>Submitted:</strong> ${fmt(application.createdAt)}</div>
+    <div><strong>Preferred Move-in:</strong> ${fmt(application.moveInDate)}</div>
+  </div>
+</div>
+${section('Applicant Information', tbl([
+    row('Date of Birth', fmt(primaryApplicant?.dateOfBirth)),
+    row('Phone', primaryApplicant?.phoneNumber ?? '—'),
+    row('Email', primaryApplicant?.email ?? '—'),
+    row('Short Bio', application.bio ?? '—'),
+    row('Monthly Rent', money(monthlyRent)),
+    row('Household Income', money(totalHouseholdIncome)),
+    row('Rent–Income Ratio', rentIncomePercentage > 0 ? `${rentIncomePercentage}%` : '—'),
+].join('')))}
+<div class="two-col">
+  <div>${section('Additional Occupants', occupantsHtml)}</div>
+  <div>${section('Background Questions', bgHtml)}</div>
+</div>
+${section('Residential History', residencesHtml)}
+${section('Income History', incomesHtml)}
+</body></html>`;
+
+        const win = window.open('', '_blank');
+        if (win) { win.document.write(html); win.document.close(); }
+    };
+
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-20 transition-all duration-300`}>
             {/* Breadcrumb - Matches design style */}
@@ -1322,8 +1420,8 @@ const ApplicationDetail = () => {
                                         <div className="border-b border-gray-100 my-1" />
                                         <button
                                             onClick={() => {
-                                                window.print();
                                                 setIsActionDropdownOpen(false);
+                                                handleExportApplication();
                                             }}
                                             className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors"
                                         >
@@ -1535,7 +1633,7 @@ const ApplicationDetail = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
                                             <CustomTextBox
                                                 label="Pet name"
                                                 value={pet.name}
@@ -1554,12 +1652,13 @@ const ApplicationDetail = () => {
                                             <CustomTextBox
                                                 label="Weight"
                                                 value={pet.weight ? (() => {
-                                                    const w = typeof pet.weight === 'string' ? parseFloat(pet.weight) : pet.weight;
+                                                    const w = typeof pet.weight === 'string' ? parseFloat(pet.weight) : Number(pet.weight);
+                                                    if (isNaN(w)) return String(pet.weight);
                                                     if (w < 5) return '< 5kg';
                                                     if (w >= 5 && w < 10) return '5-10kg';
                                                     if (w >= 10 && w <= 20) return '10-20kg';
                                                     return '> 20kg';
-                                                })() : ''}
+                                                })() : '-'}
                                                 className="w-full"
                                             />
                                         </div>
@@ -2379,15 +2478,23 @@ const ApplicationDetail = () => {
             <RequestApplicationFeeModal
                 isOpen={isRequestFeeModalOpen}
                 onClose={() => setIsRequestFeeModalOpen(false)}
-                onSend={(amount, currency) => {
-                    console.log('Requesting application fee:', { amount, currency });
+                onSend={async (amount, currency) => {
+                    if (!id) return;
+                    try {
+                        await requestFeeMutation.mutateAsync({ id, amount, currency });
+                        toast.success('Fee request sent to applicant');
+                    } catch (err: any) {
+                        toast.error(err?.message ?? 'Failed to send fee request');
+                    }
                 }}
             />
             <DeleteApplicationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
-                onDelete={() => {
-                    console.log('Deleting application...');
+                onDelete={async () => {
+                    if (!id) return;
+                    await deleteApplication.mutateAsync(id);
+                    navigate('/dashboard/leasing/applications');
                 }}
             />
             {

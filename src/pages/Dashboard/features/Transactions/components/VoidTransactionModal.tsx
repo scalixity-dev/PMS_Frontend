@@ -1,23 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
-
 import { useTransactionStore } from '../store/transactionStore';
+import { useVoidTransaction } from '../../../../../hooks/useTransactionQueries';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface VoidTransactionModalProps {
-    onConfirm?: (reason: string) => void;
+    transactionId?: string;
 }
 
-const VoidTransactionModal: React.FC<VoidTransactionModalProps> = ({ onConfirm }) => {
-    const { isVoidModalOpen, setVoidModalOpen } = useTransactionStore();
+const VoidTransactionModal: React.FC<VoidTransactionModalProps> = ({ transactionId: propTransactionId }) => {
+    const { isVoidModalOpen, setVoidModalOpen, selectedTransactionId } = useTransactionStore();
+    const toast = useToast();
     const isOpen = isVoidModalOpen;
     const onClose = () => setVoidModalOpen(false);
+    const transactionId = propTransactionId || (selectedTransactionId ? String(selectedTransactionId) : undefined);
     const [reason, setReason] = useState('');
     const [reasonError, setReasonError] = useState('');
+    const [apiError, setApiError] = useState('');
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+    const voidMutation = useVoidTransaction();
 
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            setReason('');
+            setReasonError('');
+            setApiError('');
         } else {
             document.body.style.overflow = 'unset';
         }
@@ -27,21 +36,30 @@ const VoidTransactionModal: React.FC<VoidTransactionModalProps> = ({ onConfirm }
     }, [isOpen]);
 
     const handleConfirm = () => {
-        // Validate reason is not empty
         const trimmedReason = reason.trim();
-        if (!trimmedReason || trimmedReason === '') {
+        if (!trimmedReason) {
             setReasonError('Please provide a reason for voiding this transaction');
             textareaRef.current?.focus();
             return;
         }
-
-        // Clear any previous errors
+        if (!transactionId) {
+            setReasonError('Transaction ID is missing');
+            return;
+        }
         setReasonError('');
 
-        if (onConfirm) {
-            onConfirm(trimmedReason);
-        }
-        onClose();
+        voidMutation.mutate(
+            { transactionId, reason: trimmedReason },
+            {
+                onSuccess: () => {
+                    toast.success('Transaction voided successfully');
+                    onClose();
+                },
+                onError: (error: any) => {
+                    setApiError(error.message || 'Failed to void transaction');
+                },
+            }
+        );
     };
 
     if (!isOpen) return null;
@@ -77,6 +95,7 @@ const VoidTransactionModal: React.FC<VoidTransactionModalProps> = ({ onConfirm }
                             onChange={(e) => {
                                 setReason(e.target.value);
                                 if (reasonError) setReasonError('');
+                                if (apiError) setApiError('');
                             }}
                         />
                         {reasonError && (
@@ -84,16 +103,29 @@ const VoidTransactionModal: React.FC<VoidTransactionModalProps> = ({ onConfirm }
                         )}
                     </div>
 
-                    <p className="text-gray-700 text-sm mb-8 leading-relaxed">
+                    <p className="text-gray-700 text-sm mb-4 leading-relaxed">
                         Voiding a transaction does not delete the invoice or initiate a refund, but it will remove it from your financial statements.
                     </p>
+
+                    {apiError && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg text-red-700 text-sm">
+                            {apiError}
+                        </div>
+                    )}
 
                     <div className="border-t border-gray-100 -mx-4 px-4 sm:-mx-8 sm:px-8 pt-6 flex justify-end">
                         <button
                             onClick={handleConfirm}
-                            className="w-full sm:w-auto bg-[#3A6D6C] text-white px-10 py-3 rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg"
+                            disabled={voidMutation.isPending}
+                            className="w-full sm:w-auto bg-[#3A6D6C] text-white px-10 py-3 rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            Confirm
+                            {voidMutation.isPending && (
+                                <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                            )}
+                            {voidMutation.isPending ? 'Voiding...' : 'Confirm'}
                         </button>
                     </div>
                 </div>

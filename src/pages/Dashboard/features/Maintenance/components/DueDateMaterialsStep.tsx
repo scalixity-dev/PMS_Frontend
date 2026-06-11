@@ -91,10 +91,10 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                         value={priority}
                         onChange={(v) => { setPriority(v); setErrors(e => ({ ...e, priority: '' })); }}
                         options={[
-                            { value: 'low', label: 'Low' },
-                            { value: 'normal', label: 'Normal' },
-                            { value: 'high', label: 'High' },
-                            { value: 'urgent', label: 'Urgent' }
+                            { value: 'LOW', label: 'Low' },
+                            { value: 'MEDIUM', label: 'Normal' },
+                            { value: 'HIGH', label: 'High' },
+                            { value: 'URGENT', label: 'Urgent' }
                         ]}
                         placeholder="Select Priority"
                         required

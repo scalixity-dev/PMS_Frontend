@@ -13,7 +13,7 @@ import RentScheduleModal from './components/RentScheduleModal';
 import EditExtraFeesModal from './components/EditExtraFeesModal';
 import PropertyAttachmentsModal from './components/PropertyAttachmentsModal';
 import ResponsibilityModal, { type ResponsibilityItem } from '../Properties/components/ResponsibilityModal';
-import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useRenewLease } from '../../../../hooks/useLeaseQueries';
+import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useRenewLease, leaseQueryKeys } from '../../../../hooks/useLeaseQueries';
 import { useDeleteRecurringTransaction, useGetRecurringTransactions, useCreateRecurringIncome } from '../../../../hooks/useTransactionQueries';
 import { useGetRenderedDocuments } from '../../../../hooks/useDocumentsQueries';
 import { useGetTenantByUserId } from '../../../../hooks/useTenantQueries';
@@ -21,6 +21,17 @@ import type { BackendLease } from '../../../../services/lease.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
+
+const INVOICE_SCHEDULE_TO_DISPLAY: Record<string, string> = {
+    'DAILY': 'Daily',
+    'WEEKLY': 'Weekly',
+    'EVERY_TWO_WEEKS': 'Every two weeks',
+    'EVERY_FOUR_WEEKS': 'Every four weeks',
+    'MONTHLY': 'Monthly',
+    'EVERY_TWO_MONTHS': 'Every two months',
+    'QUARTERLY': 'Quarterly',
+    'YEARLY': 'Yearly',
+};
 
 const LeaseDetail: React.FC = () => {
     const navigate = useNavigate();
@@ -402,7 +413,7 @@ const LeaseDetail: React.FC = () => {
                 }
             }
             setIsAddEditRecurringRentModalOpen(false);
-            queryClient.invalidateQueries({ queryKey: ['lease', id] });
+            queryClient.invalidateQueries({ queryKey: leaseQueryKeys.detail(id as string) });
             queryClient.invalidateQueries({ queryKey: ['transactions', 'recurring'] });
         } catch (error) {
             console.error('Failed to save recurring transaction:', error);
@@ -932,11 +943,12 @@ const LeaseDetail: React.FC = () => {
                                     <div className="flex items-center gap-3">
                                         <button
                                             onClick={() => {
+                                                const rrData = backendLease?.recurringRent;
                                                 const existingData = {
-                                                    tenants: [{ name: lease.tenant.name, amount: lease.rentAmount || 0 }],
-                                                    frequency: 'Monthly',
-                                                    dueDay: '1st',
-                                                    isEnabled: true
+                                                    tenants: [{ name: lease.tenant.name, amount: rrData ? parseFloat(rrData.amount || '0') : (lease.rentAmount || 0) }],
+                                                    frequency: INVOICE_SCHEDULE_TO_DISPLAY[rrData?.invoiceSchedule || ''] || 'Monthly',
+                                                    isEnabled: rrData?.enabled ?? true,
+                                                    firstInvoiceDate: rrData?.startOn ? new Date(rrData.startOn) : undefined,
                                                 };
                                                 setRecurringRentToEdit(existingData);
                                                 setRecurringRentModalMode('edit');
@@ -1044,13 +1056,13 @@ const LeaseDetail: React.FC = () => {
                                                     <div>
                                                         <div className="flex items-center gap-2 mb-1">
                                                             <span className="font-bold text-gray-800 text-lg">{transaction.category || 'Rent'}</span>
-                                                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${transaction.isEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                                {transaction.isEnabled ? 'Active' : 'Inactive'}
+                                                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${transaction.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                                {transaction.enabled ? 'Active' : 'Inactive'}
                                                             </span>
                                                         </div>
                                                         <div className="text-gray-500 text-xs text-left">
                                                             {transaction.subcategory ? <span className="block font-medium text-gray-700">{transaction.subcategory}</span> : null}
-                                                            {transaction.frequency} • Due on {transaction.dueDay}
+                                                            {transaction.frequency} • Starts {transaction.startDate ? new Date(transaction.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
@@ -1441,12 +1453,12 @@ const LeaseDetail: React.FC = () => {
                         }
 
                         // Refresh backend data to get the permanent S3 URLs and IDs
-                        queryClient.invalidateQueries({ queryKey: ['lease', id] });
+                        queryClient.invalidateQueries({ queryKey: leaseQueryKeys.detail(id as string) });
                     } catch (error) {
                         console.error('Failed to upload lease documents:', error);
                         alert(error instanceof Error ? error.message : 'Failed to upload documents. Please try again.');
                         // On failure, refresh anyway to reset state to what's actually in DB
-                        queryClient.invalidateQueries({ queryKey: ['lease', id] });
+                        queryClient.invalidateQueries({ queryKey: leaseQueryKeys.detail(id as string) });
                     }
                 }}
             />
@@ -1487,9 +1499,32 @@ const LeaseDetail: React.FC = () => {
             <RentScheduleModal
                 isOpen={isRentScheduleModalOpen}
                 onClose={() => setIsRentScheduleModalOpen(false)}
-                onConfirm={(schedules) => {
-                    console.log('Rent schedules confirmed:', schedules);
-                    setIsRentScheduleModalOpen(false);
+                onConfirm={async (schedules) => {
+                    const first = schedules[0];
+                    if (!first?.startDate || !first?.newRentAmount) {
+                        setIsRentScheduleModalOpen(false);
+                        return;
+                    }
+                    try {
+                        const rrData = backendLease?.recurringRent;
+                        await updateLeaseMutation.mutateAsync({
+                            id: id as string,
+                            data: {
+                                recurringRent: {
+                                    enabled: rrData?.enabled ?? true,
+                                    amount: first.newRentAmount,
+                                    invoiceSchedule: INVOICE_SCHEDULE_TO_DISPLAY[rrData?.invoiceSchedule || ''] || 'Monthly',
+                                    startOn: first.startDate.toISOString(),
+                                    isMonthToMonth: rrData?.isMonthToMonth ?? false,
+                                    markPastPaid: rrData?.markPastPaid ?? false,
+                                }
+                            } as any
+                        });
+                        setIsRentScheduleModalOpen(false);
+                    } catch (error) {
+                        console.error('Failed to update rent schedule:', error);
+                        alert(error instanceof Error ? error.message : 'Failed to update rent schedule');
+                    }
                 }}
                 currentRent={typeof lease.rentAmount === 'number' ? lease.rentAmount : 12000}
                 initialTenants={[{ name: lease.tenant.name }]}

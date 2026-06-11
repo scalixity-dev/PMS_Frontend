@@ -233,6 +233,11 @@ const RecurringIncome: React.FC = () => {
             return;
         }
 
+        if (parseFloat(amount) > 99999999.99) {
+            setError('Amount cannot exceed 99,999,999.99');
+            return;
+        }
+
         if (!startDate) {
             setError('Start date is required');
             return;

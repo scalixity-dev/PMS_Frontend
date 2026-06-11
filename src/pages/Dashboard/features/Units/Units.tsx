@@ -108,12 +108,10 @@ const Units: React.FC = () => {
 
         return properties
             .filter(property => {
-                // Only include properties that have units (MULTI) or single unit details (SINGLE)
+                // Only show MULTI properties that have actual units
                 if (property.propertyType === 'MULTI') {
                     const units = unitsByPropertyId.get(property.id);
                     return units && units.length > 0;
-                } else if (property.propertyType === 'SINGLE') {
-                    return property.singleUnitDetails !== null && property.singleUnitDetails !== undefined;
                 }
                 return false;
             })
@@ -217,53 +215,6 @@ const Units: React.FC = () => {
                             status = 'Partially Occupied';
                         }
                     }
-                } else if (property.propertyType === 'SINGLE' && property.singleUnitDetails) {
-                    // Transform SINGLE property to a unit
-                    const singleUnit = property.singleUnitDetails;
-
-                    // Determine status for single unit - only Occupied if there's an active lease/tenant
-                    let unitStatus: 'Occupied' | 'Vacant' = 'Vacant';
-
-                    // Primary source: propertyLeasing.occupancyStatus (set by lease CRUD)
-                    const singleLeasingStatus = property.leasing?.occupancyStatus;
-                    if (singleLeasingStatus === 'OCCUPIED' || singleLeasingStatus === 'PARTIALLY_OCCUPIED') {
-                        unitStatus = 'Occupied';
-                    } else {
-                        // Fallback: check listings
-                        const activeListing = listingsMap.activePropertyListingsMap.get(property.id);
-                        if (activeListing && (activeListing.occupancyStatus === 'OCCUPIED' || activeListing.occupancyStatus === 'PARTIALLY_OCCUPIED')) {
-                            unitStatus = 'Occupied';
-                        } else if (property.listings && Array.isArray(property.listings) && property.listings.length > 0) {
-                            const propertyListing = property.listings.find((l: any) =>
-                                l.listingStatus === 'ACTIVE' &&
-                                l.isActive &&
-                                (l.occupancyStatus === 'OCCUPIED' || l.occupancyStatus === 'PARTIALLY_OCCUPIED')
-                            );
-                            if (propertyListing) {
-                                unitStatus = 'Occupied';
-                            }
-                        }
-                    }
-
-                    // Check if property has an active listing
-                    const hasActiveListing = listingsMap.activePropertyListingsMap.has(property.id);
-                    const hasDraftListing = listingsMap.draftPropertyListingsMap.has(property.id);
-
-                    units = [{
-                        id: property.id,
-                        name: property.propertyName,
-                        type: 'Single-Family',
-                        status: unitStatus,
-                        rent: property.marketRent ? (typeof property.marketRent === 'string' ? parseFloat(property.marketRent) : Number(property.marketRent)) : 0,
-                        beds: singleUnit.beds || 0,
-                        baths: singleUnit.baths ? (typeof singleUnit.baths === 'string' ? parseFloat(singleUnit.baths) : Number(singleUnit.baths)) : 0,
-                        sqft: property.sizeSqft ? (typeof property.sizeSqft === 'string' ? parseFloat(property.sizeSqft) : Number(property.sizeSqft)) : 0,
-                        image: image,
-                        hasActiveListing,
-                        hasDraftListing,
-                    }];
-
-                    status = unitStatus;
                 }
 
                 // Calculate total monthly rent for balance category

@@ -360,24 +360,9 @@ const Transactions: React.FC = () => {
                 }}
                 isLoading={deleteTransactionMutation.isPending}
             />
-            <ApplyDepositsModal
-                onConfirm={(data) => {
-                    console.log('Apply Deposits data:', data);
-                    setApplyDepositsOpen(false);
-                }}
-            />
-            <ApplyCreditsModal
-                onConfirm={(data) => {
-                    console.log('Apply Credits data:', data);
-                    setApplyCreditsOpen(false);
-                }}
-            />
-            <AddDiscountModal
-                onConfirm={(data) => {
-                    console.log('Add Discount data:', data);
-                    setAddDiscountOpen(false);
-                }}
-            />
+            <ApplyDepositsModal />
+            <ApplyCreditsModal />
+            <AddDiscountModal />
             <MarkAsPaidModal
                 onConfirm={async (data) => {
                     const transactionId = selectedTransactionId;
@@ -407,12 +392,7 @@ const Transactions: React.FC = () => {
                     }
                 }}
             />
-            <VoidTransactionModal
-                onConfirm={(reason) => {
-                    console.log('Voiding transaction with reason:', reason);
-                    setVoidModalOpen(false);
-                }}
-            />
+            <VoidTransactionModal />
 
             {/* Breadcrumb */}
             <Breadcrumb

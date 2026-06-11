@@ -13,7 +13,7 @@ import VoidTransactionModal from './components/VoidTransactionModal';
 import { useTransactionStore } from './store/transactionStore';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
-import { useGetTransaction, useUpdateTransaction, useDeleteTransaction, useVoidTransaction, useUpdateDiscount, useDeletePayment, useMarkAsPaid, useUpdatePayment } from '../../../../hooks/useTransactionQueries';
+import { useGetTransaction, useUpdateTransaction, useDeleteTransaction, useDeletePayment, useMarkAsPaid, useUpdatePayment } from '../../../../hooks/useTransactionQueries';
 import { formatMoney } from '../../../../utils/currency.utils';
 import { useToast } from '../../../../components/common/Toast';
 
@@ -53,8 +53,7 @@ const TransactionDetail: React.FC = () => {
     const { data: transactionData, isLoading, error, refetch } = useGetTransaction(id);
     const updateTransactionMutation = useUpdateTransaction();
     const deleteTransactionMutation = useDeleteTransaction();
-    const voidTransactionMutation = useVoidTransaction();
-    const updateDiscountMutation = useUpdateDiscount();
+
     const deletePaymentMutation = useDeletePayment();
     const markAsPaidMutation = useMarkAsPaid();
     const updatePaymentMutation = useUpdatePayment();
@@ -203,27 +202,6 @@ const TransactionDetail: React.FC = () => {
         });
     };
 
-    // Handle void transaction
-    const handleVoidTransaction = (reason: string) => {
-        if (!id) return;
-        voidTransactionMutation.mutate(
-            {
-                transactionId: id,
-                reason,
-            },
-            {
-                onSuccess: () => {
-                    toast.success('Transaction voided successfully');
-                    setVoidModalOpen(false);
-                    refetch();
-                },
-                onError: (error: any) => {
-                    toast.error(error.message || 'Failed to void transaction');
-                },
-            }
-        );
-    };
-
     // Handle delete payment
     const handleDeletePayment = () => {
         if (!id || !selectedPayment?.paymentId) return;
@@ -270,28 +248,6 @@ const TransactionDetail: React.FC = () => {
                 },
                 onError: (error: any) => {
                     toast.error(error.message || 'Failed to mark transaction as paid');
-                },
-            }
-        );
-    };
-
-    // Handle update discount
-    const handleUpdateDiscount = (data: any) => {
-        if (!id) return;
-        updateDiscountMutation.mutate(
-            {
-                transactionId: id,
-                discount: parseFloat(data.discount),
-                file: data.selectedFile || undefined,
-            },
-            {
-                onSuccess: () => {
-                    toast.success('Discount updated successfully');
-                    setAddDiscountOpen(false);
-                    refetch();
-                },
-                onError: (error: any) => {
-                    toast.error(error.message || 'Failed to update discount');
                 },
             }
         );
@@ -380,19 +336,20 @@ const TransactionDetail: React.FC = () => {
                 onConfirm={handleMarkAsPaid}
             />
             <ApplyDepositsModal
-                onConfirm={() => {
-                    // ApplyDepositsModal will handle the API call internally
-                    setApplyDepositsOpen(false);
-                }}
+                transactionId={id}
+                payerId={transaction?.payerId}
+                contactId={transaction?.contactId}
+                leaseId={transaction?.leaseId}
+                amountOwned={transaction ? formatMoney(parseFloat(transaction.balance), transaction.currency || 'USD') : undefined}
             />
             <ApplyCreditsModal
-                onConfirm={() => {
-                    // ApplyCreditsModal will handle the API call internally
-                    setApplyCreditsOpen(false);
-                }}
+                transactionId={id}
+                payerId={transaction?.payerId}
+                contactId={transaction?.contactId}
+                leaseId={transaction?.leaseId}
+                amountOwed={transaction ? formatMoney(parseFloat(transaction.balance), transaction.currency || 'USD') : undefined}
             />
             <AddDiscountModal
-                onConfirm={handleUpdateDiscount}
                 transactionId={id}
                 transactionAmount={transaction ? parseFloat(transaction.amount) : undefined}
                 currency={transaction?.currency || 'USD'}
@@ -415,7 +372,7 @@ const TransactionDetail: React.FC = () => {
                 onConfirm={handleEditInvoice}
             />
             <VoidTransactionModal
-                onConfirm={handleVoidTransaction}
+                transactionId={id}
             />
 
             {/* Breadcrumb */}
@@ -500,6 +457,18 @@ const TransactionDetail: React.FC = () => {
                                                 details: transaction.details || '',
                                                 date: formatDate(transaction.transactionDate),
                                                 amount: transaction.amount,
+                                                category: transaction.category || '',
+                                                subcategory: transaction.subcategory || '',
+                                                rawType: transaction.type as any,
+                                                rawScope: transaction.scope as any,
+                                                rawCurrency: transaction.currency,
+                                                rawPayerId: transaction.payerId || undefined,
+                                                rawPayeeId: transaction.payeeId || undefined,
+                                                rawContactId: transaction.contactId || undefined,
+                                                rawPropertyId: transaction.propertyId || undefined,
+                                                rawUnitId: transaction.unitId || undefined,
+                                                rawLeaseId: transaction.leaseId || undefined,
+                                                rawDueDate: transaction.dueDate || undefined,
                                             });
                                             navigate('/dashboard/accounting/transactions/clone');
                                         }}

@@ -34,9 +34,16 @@ const STATUS_MAP: Record<string, ServiceRequest["status"]> = {
 
 const PRIORITY_MAP: Record<string, ServiceRequest["priority"]> = {
   LOW: "Low",
+  low: "Low",
   MEDIUM: "Normal",
+  medium: "Normal",
+  normal: "Normal",
   HIGH: "Critical",
+  high: "Critical",
   URGENT: "Critical",
+  urgent: "Critical",
+  critical: "Critical",
+  CRITICAL: "Critical",
 };
 
 const CATEGORY_DISPLAY: Record<string, string> = {

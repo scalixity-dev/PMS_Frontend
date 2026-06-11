@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
+import { useNavigate, useParams, useOutletContext, useLocation } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronDown, ChevronRight, Edit, Trash2, Plus, Repeat, Printer, Paperclip, FileText } from 'lucide-react';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
@@ -45,6 +45,7 @@ const CollapsibleSection = ({ title, children, defaultOpen = false, action }: { 
 const MaintenanceRequestsDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const location = useLocation();
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed?: boolean }>() || {}; const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
@@ -190,6 +191,12 @@ const MaintenanceRequestsDetail: React.FC = () => {
             alert(`Failed to update status: ${err?.message || 'Unknown error'}`);
         }
     };
+
+    useEffect(() => {
+        if (location.state?.openAssigneeModal) {
+            setIsAssigneeModalOpen(true);
+        }
+    }, [location.state]);
 
     const handleAssigneeSuccess = () => {
         queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.all });

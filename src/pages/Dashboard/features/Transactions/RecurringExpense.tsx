@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 import DatePicker from '../../../../components/ui/DatePicker';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
@@ -11,6 +12,9 @@ import { TRANSACTION_CATEGORIES } from '../../../../utils/transactionCategories'
 import { useTransactionStore } from './store/transactionStore';
 import { validateFile } from '../../../../utils/fileValidation';
 import { useCreateRecurringIncome } from '../../../../hooks/useTransactionQueries';
+import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
+import { useGetAllApplications } from '../../../../hooks/useApplicationQueries';
+import { serviceProviderService, type BackendServiceProvider } from '../../../../services/service-provider.service';
 import { CURRENCY_OPTIONS } from '../../../../utils/currency.utils';
 
 
@@ -18,6 +22,17 @@ import { CURRENCY_OPTIONS } from '../../../../utils/currency.utils';
 const RecurringExpense: React.FC = () => {
     const navigate = useNavigate();
     const createRecurring = useCreateRecurringIncome();
+
+    const { data: tenants = [] } = useGetAllTenants();
+    const { data: applications = [] } = useGetAllApplications();
+    const { data: serviceProviders = [] } = useQuery({
+        queryKey: ['service-providers'],
+        queryFn: () => serviceProviderService.getAll(true),
+        staleTime: 2 * 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+        retry: 1,
+    });
+
     const [expenseType, setExpenseType] = useState<'property' | 'general'>('property');
     const [startDate, setStartDate] = useState<Date | undefined>(undefined);
     const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -28,7 +43,40 @@ const RecurringExpense: React.FC = () => {
     const [frequency, setFrequency] = useState<string>('');
     const [currency, setCurrency] = useState<string>('USD');
     const [payerId, setPayerId] = useState<string>('');
+    const [contactId, setContactId] = useState<string>('');
     const [tags, setTags] = useState<string[]>([]);
+
+    const payerPayeeOptions = useMemo(() => {
+        const options: Array<{ id: string; label: string; type: 'Service Pro' | 'tenant' | 'other' }> = [];
+
+        tenants.forEach((tenant) => {
+            const name = `${tenant.firstName}${tenant.middleName ? ` ${tenant.middleName}` : ''} ${tenant.lastName}`.trim();
+            const tenantId = tenant.userId || tenant.id;
+            options.push({ id: tenantId, label: name, type: 'tenant' });
+        });
+
+        serviceProviders.forEach((provider: BackendServiceProvider) => {
+            const name = `${provider.firstName}${provider.middleName ? ` ${provider.middleName}` : ''} ${provider.lastName}`.trim();
+            options.push({ id: provider.id, label: name, type: 'Service Pro' });
+        });
+
+        const addedEmails = new Set<string>();
+        applications.forEach((application: any) => {
+            if (application?.applicants && Array.isArray(application.applicants)) {
+                application.applicants.forEach((applicant: any) => {
+                    if (!applicant?.email || (!applicant?.firstName && !applicant?.lastName)) return;
+                    if (addedEmails.has(applicant.email)) return;
+                    const name = `${applicant.firstName || ''}${applicant.middleName ? ` ${applicant.middleName}` : ''} ${applicant.lastName || ''}`.trim();
+                    if (name) {
+                        options.push({ id: applicant.email, label: `${name} (Applicant)`, type: 'other' });
+                        addedEmails.add(applicant.email);
+                    }
+                });
+            }
+        });
+
+        return options;
+    }, [tenants, serviceProviders, applications]);
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
@@ -66,6 +114,11 @@ const RecurringExpense: React.FC = () => {
             return;
         }
 
+        if (parsedAmount > 99999999.99) {
+            setSubmitError('Amount cannot exceed 99,999,999.99');
+            return;
+        }
+
         // Map form frequency values to backend enum values
         const freqMap: Record<string, string> = {
             daily: 'DAILY',
@@ -88,6 +141,7 @@ const RecurringExpense: React.FC = () => {
             amount: parsedAmount,
             currency: currency || undefined,
             payerId: payerId || undefined,
+            contactId: contactId || undefined,
             tags: tags.length > 0 ? tags : undefined,
             details: details || undefined,
         };
@@ -205,12 +259,16 @@ const RecurringExpense: React.FC = () => {
                                 value={payerPayee}
                                 onChange={(value) => {
                                     setPayerPayee(value);
-                                    setPayerId(value);
+                                    const selected = payerPayeeOptions.find(opt => opt.id === value);
+                                    if (selected?.type === 'Service Pro') {
+                                        setContactId(value);
+                                        setPayerId('');
+                                    } else {
+                                        setPayerId(value);
+                                        setContactId('');
+                                    }
                                 }}
-                                options={[
-                                    { id: '1', label: 'Service Pro', type: 'Service Pro' },
-                                    { id: '2', label: 'Tenant', type: 'tenant' },
-                                ]}
+                                options={payerPayeeOptions}
                                 onAddTenant={() => setIsAddTenantModalOpen(true)}
                                 placeholder="Paye"
                             />

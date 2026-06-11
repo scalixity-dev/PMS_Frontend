@@ -50,11 +50,10 @@ const mapBackendCategoryToUi = (category?: MaintenanceCategory): string => {
 
 const mapBackendPriorityToUi = (priority?: MaintenancePriority): string => {
     if (!priority) return '';
-    if (priority === 'LOW') return 'low';
-    if (priority === 'HIGH') return 'high';
-    if (priority === 'URGENT') return 'urgent';
-    // Treat MEDIUM as "normal" in UI
-    return 'normal';
+    if (priority === 'LOW') return 'LOW';
+    if (priority === 'HIGH') return 'HIGH';
+    if (priority === 'URGENT') return 'URGENT';
+    return 'MEDIUM';
 };
 
 const getUploadCategoryForFile = (file: File): UploadCategory => {
@@ -162,6 +161,8 @@ const AddMaintenanceRequest: React.FC = () => {
 
     const handleSubmitRequest = async () => {
         setSubmitError('');
+
+        const { advanced, property, due } = useMaintenanceRequestFormStore.getState();
 
         const missing: string[] = [];
         if (!property.propertyId || !property.propertyId.trim()) missing.push('Property');
@@ -414,7 +415,10 @@ const AddMaintenanceRequest: React.FC = () => {
                         onClose={() => setShowSuccessModal(false)}
                         onBackToList={() => navigate('/dashboard/maintenance/requests')}
                         onAssignPro={() => {
-                            navigate('/dashboard/contacts/service-pros');
+                            setShowSuccessModal(false);
+                            navigate(`/dashboard/maintenance/requests/${createdRequestId}`, {
+                                state: { openAssigneeModal: true },
+                            });
                         }}
                         requestId={createdRequestId}
                         propertyName={property.propertyId || 'Property'}
