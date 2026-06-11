@@ -6,15 +6,12 @@ import {
     Edit,
     Trash2,
     MapPin,
-    Users,
-    Landmark,
     BedDouble,
     Bath,
     Maximize,
     Loader2,
 } from 'lucide-react';
 import SpecsTab from './components/SpecsTab';
-import FinancialsTab from './components/FinancialsTab';
 import ServiceProvidersTab from './components/ServiceProvidersTab';
 import PhotoGalleryModal from './components/PhotoGalleryModal';
 import DeletePropertyModal from './components/DeletePropertyModal';
@@ -492,72 +489,12 @@ const PropertyDetail: React.FC = () => {
                             {property?.address || 'Address not available'}
                         </div>
 
-                        {/* Quick Stats Pills */}
-                        <div className="flex gap-2 md:gap-4 mb-6 md:mb-8 flex-wrap justify-center">
-                            <div className="flex items-center bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-[#82D64D] shadow-sm">
-                                <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-[10px] md:text-xs font-bold mr-1.5 md:mr-2">
-                                    {property.stats.equipment}
-                                </div>
-                                <span className="text-gray-700 text-xs md:text-sm font-medium">Equipment</span>
-                            </div>
-                            <div className="flex items-center bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-[#82D64D] shadow-sm">
-                                <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-[10px] md:text-xs font-bold mr-1.5 md:mr-2">
-                                    {property.stats.recurringRequests}
-                                </div>
-                                <span className="text-gray-700 text-xs md:text-sm font-medium">Recurring</span>
-                            </div>
-                            <div className="flex items-center bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-[#82D64D] shadow-sm">
-                                <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-[10px] md:text-xs font-bold mr-1.5 md:mr-2">
-                                    {property.stats.tenants}
-                                </div>
-                                <span className="text-gray-700 text-xs md:text-sm font-medium">Tenants</span>
-                            </div>
-                            <div className="flex items-center bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-[#82D64D] shadow-sm">
-                                <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-[10px] md:text-xs font-bold mr-1.5 md:mr-2">
-                                    {property.stats.maintenance}
-                                </div>
-                                <span className="text-gray-700 text-xs md:text-sm font-medium">Maintenance</span>
-                            </div>
-                        </div>
-
-                        {/* Assigned Team & Bank */}
-                        <div className="flex flex-col md:flex-row gap-8 md:gap-12 mt-5 w-full justify-center items-center">
-                            {/* Assigned Team — hidden until team management wired
-                            <div className="relative w-full max-w-xs md:w-80">
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#3d7475] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
-                                    <Users className="w-5 h-5" strokeWidth={2.5} />
-                                    <span>Assigned Team</span>
-                                </div>
-                                <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-4 pt-10 flex flex-col items-center justify-center h-auto w-full">
-                                    <p className="text-[#5C6B7F] text-center font-medium mb-4">No assigned members</p>
-                                    <button
-                                        onClick={() => setIsAssignTeamModalOpen(true)}
-                                        className="py-2 px-6 rounded-full cursor-pointer bg-[#BEFB9B] text-[#2E6819] border border-2 border-[#2E6819] font-bold text-sm hover:opacity-80 transition-opacity"
-                                    >
-                                        Assign
-                                    </button>
-                                </div>
-                            </div>
-                            */}
-                            <div className="relative w-full max-w-xs md:w-80">
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#3d7475] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
-                                    <Landmark className="w-5 h-5" strokeWidth={2.5} />
-                                    <span>Bank Account</span>
-                                </div>
-                                <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-4 pt-10 flex flex-col items-center justify-center h-auto w-full">
-                                    <p className="text-[#5C6B7F] text-center font-medium mb-4">No bank account assigned</p>
-                                    <button className="py-2 px-6 rounded-full cursor-pointer bg-[#BEFB9B] text-[#2E6819] border border-2 border-[#2E6819] font-bold text-sm hover:opacity-80 transition-opacity">
-                                        Assign
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
                 {/* Tabs */}
                 <DetailTabs
-                    tabs={property.isUnitView ? ['Profile', 'Specs', 'Service Providers'] : ['Profile', 'Specs', 'Financials', 'Service Providers']}
+                    tabs={['Profile', 'Specs', 'Service Providers']}
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                 />
@@ -934,7 +871,6 @@ const PropertyDetail: React.FC = () => {
                 }
 
                 {activeTab === 'specs' && id && <SpecsTab propertyId={id} />}
-                {activeTab === 'financials' && !property.isUnitView && id && <FinancialsTab propertyId={id} />}
                 {activeTab === 'service providers' && id && <ServiceProvidersTab propertyId={id} />}
 
                 <PhotoGalleryModal

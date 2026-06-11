@@ -85,6 +85,8 @@ const NewRequest: React.FC = () => {
     const handleSubmitRequest = async () => {
         setSubmitError('');
 
+        const { advanced, property, due } = useMaintenanceRequestFormStore.getState();
+
         const missing: string[] = [];
         if (!property.propertyId) missing.push('Property');
         if (!advanced.category) missing.push('Category');
@@ -254,6 +256,7 @@ const NewRequest: React.FC = () => {
                         onAssignPro={() => navigate('/userdashboard/requests')}
                         requestId={createdRequestId}
                         propertyName={property.propertyId || 'Property'}
+                        hidePro
                     />
                 </div>
             </div>

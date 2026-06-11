@@ -93,6 +93,10 @@ const AddEditServicePro = () => {
     const [stateSearch, setStateSearch] = useState('');
     const stateRef = useRef<HTMLDivElement>(null);
 
+    const [isCityOpen, setIsCityOpen] = useState(false);
+    const [citySearch, setCitySearch] = useState('');
+    const cityRef = useRef<HTMLDivElement>(null);
+
     const [formData, setFormData] = useState({
         general: {
             firstName: '',
@@ -217,6 +221,13 @@ const AddEditServicePro = () => {
         );
     }, [stateSearch, states]);
 
+    // Filter cities based on search
+    const filteredCities = useMemo(() => {
+        if (!citySearch) return cities;
+        const searchLower = citySearch.toLowerCase();
+        return cities.filter(city => city.name.toLowerCase().includes(searchLower));
+    }, [citySearch, cities]);
+
     // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -235,6 +246,10 @@ const AddEditServicePro = () => {
             if (stateRef.current && !stateRef.current.contains(event.target as Node)) {
                 setIsStateOpen(false);
                 setStateSearch('');
+            }
+            if (cityRef.current && !cityRef.current.contains(event.target as Node)) {
+                setIsCityOpen(false);
+                setCitySearch('');
             }
         };
 
@@ -1151,20 +1166,64 @@ const AddEditServicePro = () => {
                         {/* City */}
                         <div>
                             <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">City <span className="text-red-500">*</span></label>
-                            <select
-                                name="city"
-                                value={formData.address.city}
-                                onChange={(e) => handleAddressChange(e as any)}
-                                disabled={!formData.address.state || cities.length === 0}
-                                className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium placeholder:text-gray-400 appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <option value="">{cities.length === 0 && formData.address.state ? 'No cities available' : 'Select City'}</option>
-                                {cities.map((city) => (
-                                    <option key={city.name} value={city.name}>
-                                        {city.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="relative" ref={cityRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => !(!formData.address.state || cities.length === 0) && setIsCityOpen(!isCityOpen)}
+                                    disabled={!formData.address.state || cities.length === 0}
+                                    className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <span className={formData.address.city ? 'text-gray-900' : 'text-gray-400'}>
+                                        {formData.address.city || (cities.length === 0 && formData.address.state ? 'No cities available' : 'Select City')}
+                                    </span>
+                                    <ChevronDown size={16} className={`text-gray-500 transition-transform ${isCityOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {isCityOpen && formData.address.state && cities.length > 0 && (
+                                    <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
+                                        <div className="p-2 border-b border-gray-200">
+                                            <div className="relative">
+                                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search city..."
+                                                    value={citySearch}
+                                                    onChange={(e) => setCitySearch(e.target.value)}
+                                                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] text-sm"
+                                                    autoFocus
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="overflow-y-auto max-h-64">
+                                            {filteredCities.length > 0 ? (
+                                                filteredCities.map((city) => (
+                                                    <button
+                                                        key={city.name}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                address: { ...prev.address, city: city.name }
+                                                            }));
+                                                            setIsCityOpen(false);
+                                                            setCitySearch('');
+                                                        }}
+                                                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.address.city === city.name ? 'bg-[#3A6D6C]/10' : ''}`}
+                                                    >
+                                                        <span className="flex-1 text-sm font-medium text-gray-900">{city.name}</span>
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <div className="px-4 py-8 text-center text-sm text-gray-500">
+                                                    No cities found
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            {errors.city && <span className="text-xs text-red-500 mt-1 ml-1">{errors.city}</span>}
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

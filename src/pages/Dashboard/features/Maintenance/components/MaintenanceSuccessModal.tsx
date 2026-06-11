@@ -12,6 +12,7 @@ interface MaintenanceSuccessModalProps {
     onAssignPro: () => void;
     requestId: string;
     propertyName: string;
+    hidePro?: boolean;
 }
 
 const MaintenanceSuccessModal: React.FC<MaintenanceSuccessModalProps> = ({
@@ -21,6 +22,7 @@ const MaintenanceSuccessModal: React.FC<MaintenanceSuccessModalProps> = ({
     onAssignPro,
     requestId,
     propertyName,
+    hidePro = false,
 }) => {
     const navigate = useNavigate();
     const [isClosing, setIsClosing] = useState(false);
@@ -141,22 +143,26 @@ const MaintenanceSuccessModal: React.FC<MaintenanceSuccessModalProps> = ({
                                             </p>
                                         </div>
 
-                                        <div className="w-full flex items-center gap-4 mb-2">
-                                            <div className="h-[1px] bg-gray-200 flex-1"></div>
-                                            <span className="text-gray-400 font-medium">or</span>
-                                            <div className="h-[1px] bg-gray-200 flex-1"></div>
-                                        </div>
+                                        {!hidePro && (
+                                            <>
+                                                <div className="w-full flex items-center gap-4 mb-2">
+                                                    <div className="h-[1px] bg-gray-200 flex-1"></div>
+                                                    <span className="text-gray-400 font-medium">or</span>
+                                                    <div className="h-[1px] bg-gray-200 flex-1"></div>
+                                                </div>
 
-                                        {/* Find Service Pro Card */}
-                                        <div className="w-full border border-gray-200 rounded-xl p-4 text-left mb-8">
-                                            <h4 className="font-bold text-gray-900 mb-2">Find a Service Pro</h4>
-                                            <p className="text-gray-500 text-sm mb-3">
-                                                You have created a new Maintenance request #{requestId} for {propertyName}
-                                            </p>
-                                            <button className="text-[#3D7475] font-bold text-sm hover:underline">
-                                                Find a Service Pro
-                                            </button>
-                                        </div>
+                                                {/* Find Service Pro Card */}
+                                                <div className="w-full border border-gray-200 rounded-xl p-4 text-left mb-8">
+                                                    <h4 className="font-bold text-gray-900 mb-2">Find a Service Pro</h4>
+                                                    <p className="text-gray-500 text-sm mb-3">
+                                                        You have created a new Maintenance request #{requestId} for {propertyName}
+                                                    </p>
+                                                    <button className="text-[#3D7475] font-bold text-sm hover:underline">
+                                                        Find a Service Pro
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
 
                                         {/* Buttons */}
                                         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full justify-center">
@@ -167,13 +173,15 @@ const MaintenanceSuccessModal: React.FC<MaintenanceSuccessModalProps> = ({
                                             >
                                                 Back to list
                                             </button>
-                                            <button
-                                                type="button"
-                                                className="w-full sm:flex-1 justify-center rounded-lg border border-transparent bg-[#3D7475] px-6 py-3 text-sm font-medium text-white hover:bg-[#2c5556] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D7475] focus-visible:ring-offset-2 shadow-md"
-                                                onClick={() => animateAndThen(onAssignPro)}
-                                            >
-                                                Assign Service Pro
-                                            </button>
+                                            {!hidePro && (
+                                                <button
+                                                    type="button"
+                                                    className="w-full sm:flex-1 justify-center rounded-lg border border-transparent bg-[#3D7475] px-6 py-3 text-sm font-medium text-white hover:bg-[#2c5556] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D7475] focus-visible:ring-offset-2 shadow-md"
+                                                    onClick={() => animateAndThen(onAssignPro)}
+                                                >
+                                                    Assign Service Pro
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

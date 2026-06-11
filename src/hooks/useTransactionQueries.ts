@@ -286,6 +286,8 @@ export const useCreateRecurringIncome = () => {
     onSuccess: () => {
       // Invalidate and refetch transactions list
       queryClient.invalidateQueries({ queryKey: transactionQueryKeys.lists() });
+      // Invalidate recurring transactions list
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'recurring'] });
       // Invalidate tags to refresh suggestions
       queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'tags'] });
     },

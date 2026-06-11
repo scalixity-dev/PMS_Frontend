@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { applicationService } from '../services/application.service';
+import { API_ENDPOINTS } from '../config/api.config';
 
 // Query keys for React Query
 export const applicationQueryKeys = {
@@ -88,12 +89,35 @@ export const useUpdateApplication = () => {
     mutationFn: ({ id, updateData }: { id: string; updateData: Partial<any> }) =>
       applicationService.update(id, updateData),
     onSuccess: async (data, variables) => {
-      // Write the freshly returned application into the detail cache so screens
-      // reading from it update immediately (no flicker waiting for refetch).
+      // Write the freshly returned application into the detail cache immediately.
       if (data) {
         queryClient.setQueryData(applicationQueryKeys.detail(variables.id), data);
       }
-      // Force-refetch any active list/detail/byLeasing queries so card status flips right away.
+
+      // Optimistically patch the new status into every cached list snapshot
+      // (active or inactive) so the card flips instantly when the user navigates
+      // back to the list — no waiting for a background refetch.
+      if (variables.updateData.status) {
+        queryClient.setQueriesData(
+          { queryKey: applicationQueryKeys.lists() },
+          (oldData: any) => {
+            if (!oldData) return oldData;
+            const patchItem = (app: any) =>
+              app.id === variables.id ? { ...app, status: variables.updateData.status } : app;
+            if (oldData.data && Array.isArray(oldData.data)) {
+              return { ...oldData, data: oldData.data.map(patchItem) };
+            }
+            if (Array.isArray(oldData)) {
+              return oldData.map(patchItem);
+            }
+            return oldData;
+          }
+        );
+      }
+
+      // Invalidate to ensure server truth is eventually reflected.
+      // refetchType:'all' covers inactive (unmounted) list queries too,
+      // so the cache is fresh by the time the user navigates back.
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: applicationQueryKeys.detail(variables.id),
@@ -101,13 +125,34 @@ export const useUpdateApplication = () => {
         }),
         queryClient.invalidateQueries({
           queryKey: applicationQueryKeys.lists(),
-          refetchType: 'active',
+          refetchType: 'all',
         }),
         queryClient.invalidateQueries({
           queryKey: [...applicationQueryKeys.all, 'leasing'],
-          refetchType: 'active',
+          refetchType: 'all',
         }),
       ]);
+    },
+  });
+};
+
+/**
+ * Hook to request an application fee from the applicant
+ */
+export const useRequestApplicationFee = () => {
+  return useMutation({
+    mutationFn: async ({ id, amount, currency }: { id: string; amount: string; currency: string }) => {
+      const res = await fetch(API_ENDPOINTS.APPLICATION.REQUEST_FEE(id), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ amount, currency }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to send fee request');
+      }
+      return res.json();
     },
   });
 };
@@ -120,11 +165,12 @@ export const useDeleteApplication = () => {
 
   return useMutation({
     mutationFn: (id: string) => applicationService.delete(id),
-    onSuccess: (_data, id) => {
-      // Remove the deleted application from cache
-      queryClient.removeQueries({ queryKey: applicationQueryKeys.detail(id) });
-      // Invalidate the list to refetch
-      queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
+    onSuccess: async (_data, id) => {
+      await queryClient.cancelQueries({ queryKey: applicationQueryKeys.detail(id) });
+      await queryClient.invalidateQueries({
+        queryKey: applicationQueryKeys.lists(),
+        refetchType: 'all',
+      });
     },
   });
 };

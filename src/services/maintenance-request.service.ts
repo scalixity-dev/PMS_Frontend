@@ -127,8 +127,12 @@ export interface MaintenanceRequestApplicant {
 }
 
 class MaintenanceRequestService {
-  async getAll(): Promise<unknown[]> {
-    const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.GET_ALL, {
+  async getAll(filters?: { tenantUserId?: string }): Promise<unknown[]> {
+    let url = API_ENDPOINTS.MAINTENANCE_REQUEST.GET_ALL;
+    if (filters?.tenantUserId) {
+      url += `?tenantUserId=${encodeURIComponent(filters.tenantUserId)}`;
+    }
+    const response = await fetch(url, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

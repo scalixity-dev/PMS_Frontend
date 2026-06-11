@@ -4,30 +4,31 @@ import CustomDropdown from '../../../components/CustomDropdown';
 import CustomTextBox from '../../../components/CustomTextBox';
 import DatePicker from '@/components/ui/DatePicker';
 import { validateFile } from '@/utils/fileValidation';
-
 import { useTransactionStore } from '../store/transactionStore';
+import { useGetAvailableDepositsAndCredits, useApplyDepositCredit } from '../../../../../hooks/useTransactionQueries';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface ApplyDepositsModalProps {
-    onConfirm?: (data: ApplyDepositsFormData) => void;
+    transactionId?: string;
+    payerId?: string | null;
+    contactId?: string | null;
+    leaseId?: string | null;
     amountOwned?: string;
 }
 
-interface ApplyDepositsFormData {
-    applyFrom: string;
-    dateApplied: Date | undefined;
-    applyAmount: string;
-    details: string;
-    selectedFile: File | null;
-}
-
 const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
-    onConfirm,
+    transactionId,
+    payerId,
+    contactId,
+    leaseId,
     amountOwned = '$45,000.00'
 }) => {
     const { isApplyDepositsOpen, setApplyDepositsOpen } = useTransactionStore();
+    const toast = useToast();
     const isOpen = isApplyDepositsOpen;
     const onClose = () => setApplyDepositsOpen(false);
-    const [applyFrom, setApplyFrom] = useState('');
+
+    const [selectedDepositId, setSelectedDepositId] = useState('');
     const [dateApplied, setDateApplied] = useState<Date | undefined>(undefined);
     const [applyAmount, setApplyAmount] = useState('');
     const [details, setDetails] = useState('');
@@ -35,15 +36,32 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
     const [uploadError, setUploadError] = useState<string>('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [fieldErrors, setFieldErrors] = useState<{
-        applyFrom?: string;
+        selectedDepositId?: string;
         dateApplied?: string;
         applyAmount?: string;
         details?: string;
     }>({});
 
+    const { data: depositsAndCredits = [], isLoading: isLoadingDeposits } = useGetAvailableDepositsAndCredits(
+        payerId,
+        contactId,
+        leaseId,
+    );
+
+    const availableDeposits = depositsAndCredits.filter(item => item.type === 'DEPOSIT');
+
+    const applyMutation = useApplyDepositCredit();
+
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            setSelectedDepositId('');
+            setDateApplied(undefined);
+            setApplyAmount('');
+            setDetails('');
+            setSelectedFile(null);
+            setUploadError('');
+            setFieldErrors({});
         } else {
             document.body.style.overflow = 'unset';
         }
@@ -60,58 +78,77 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         const validation = validateFile(file);
         if (!validation.isValid) {
             setUploadError(validation.error || 'Invalid file');
             return;
         }
-
         setSelectedFile(file);
         setUploadError('');
     };
 
     const handleConfirm = () => {
-        // Reset field errors
         const errors: typeof fieldErrors = {};
 
-        // Validate applyFrom
-        if (!applyFrom || applyFrom.trim() === '') {
-            errors.applyFrom = 'Please select where to apply from';
+        if (!selectedDepositId) {
+            errors.selectedDepositId = 'Please select a deposit to apply from';
         }
-
-        // Validate dateApplied
-        if (!dateApplied || !(dateApplied instanceof Date) || isNaN(dateApplied.getTime())) {
+        if (!dateApplied || isNaN(dateApplied.getTime())) {
             errors.dateApplied = 'Please select a valid date';
         }
-
-        // Validate applyAmount
         const amountNum = parseFloat(applyAmount);
         if (!applyAmount || applyAmount.trim() === '') {
             errors.applyAmount = 'Please enter an amount';
         } else if (isNaN(amountNum) || amountNum <= 0) {
             errors.applyAmount = 'Amount must be a positive number';
+        } else {
+            const selectedDeposit = availableDeposits.find(d => d.id === selectedDepositId);
+            if (selectedDeposit && amountNum > selectedDeposit.balance) {
+                errors.applyAmount = `Amount exceeds available balance ($${selectedDeposit.balance})`;
+            }
         }
-
-        // Validate details
         if (!details || details.trim() === '') {
             errors.details = 'Please provide details';
         }
 
-        // If there are errors, set them and don't proceed
         if (Object.keys(errors).length > 0) {
             setFieldErrors(errors);
             return;
         }
-
-        // Clear any previous errors
         setFieldErrors({});
 
-        // All validation passed, proceed with confirm
-        if (onConfirm) {
-            onConfirm({ applyFrom, dateApplied, applyAmount, details, selectedFile });
+        if (!transactionId) {
+            toast.error('Transaction ID is missing');
+            return;
         }
-        onClose();
+
+        applyMutation.mutate(
+            {
+                applyData: {
+                    payerId: payerId || undefined,
+                    contactId: contactId || undefined,
+                    leaseId: leaseId || undefined,
+                    applications: [
+                        {
+                            sourceTransactionId: selectedDepositId,
+                            targetTransactionId: transactionId,
+                            amount: parseFloat(applyAmount),
+                            notes: details,
+                        },
+                    ],
+                },
+                file: selectedFile || undefined,
+            },
+            {
+                onSuccess: () => {
+                    toast.success('Deposit applied successfully');
+                    onClose();
+                },
+                onError: (error: any) => {
+                    toast.error(error.message || 'Failed to apply deposit');
+                },
+            }
+        );
     };
 
     if (!isOpen) return null;
@@ -119,7 +156,15 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
     const inputClasses = "w-full bg-white p-4 rounded-lg border border-gray-200 outline-none text-gray-700 placeholder-gray-400 font-medium";
     const labelClasses = "block text-sm font-bold text-[#2c3e50] mb-2";
 
-    
+    const depositOptions = isLoadingDeposits
+        ? [{ value: '', label: 'Loading deposits...' }]
+        : availableDeposits.length === 0
+            ? [{ value: '', label: 'No deposits available' }]
+            : availableDeposits.map(d => ({
+                value: d.id,
+                label: `${d.transactionId} — Balance: $${d.balance.toFixed(2)}`,
+            }));
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200 p-4">
             <div className="bg-[#dfe5e3] rounded-[1.5rem] w-full max-w-2xl shadow-2xl animate-in slide-in-from-bottom-4 duration-300 relative overflow-hidden flex flex-col max-h-[90vh]">
@@ -153,26 +198,17 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
                     <div className="mb-4">
                         <CustomDropdown
                             label="Apply From*"
-                            value={applyFrom}
-                            onChange={setApplyFrom}
-                            placeholder="Choose Type"
-                            options={[
-                                { value: 'security_deposit', label: 'Security Deposit' },
-                                { value: 'advance_payment', label: 'Advance Payment' },
-                                { value: 'other', label: 'Other' },
-                            ]}
+                            value={selectedDepositId}
+                            onChange={setSelectedDepositId}
+                            placeholder="Select deposit"
+                            options={depositOptions}
                             buttonClassName={inputClasses}
                             dropdownClassName="z-50"
                         />
-                        {fieldErrors.applyFrom && (
-                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.applyFrom}</p>
+                        {fieldErrors.selectedDepositId && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.selectedDepositId}</p>
                         )}
                     </div>
-
-                    {/* Help text */}
-                    <p className="text-gray-600 text-sm mb-6">
-                        No deposit available. Click <span className="text-[#3A6D6C] font-semibold cursor-pointer hover:underline">here</span> to add deposit.
-                    </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         {/* Date Applied */}
@@ -250,9 +286,16 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
                         </button>
                         <button
                             onClick={handleConfirm}
-                            className="w-full sm:flex-1 py-3 px-6 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg"
+                            disabled={applyMutation.isPending}
+                            className="w-full sm:flex-1 py-3 px-6 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            Confirm
+                            {applyMutation.isPending && (
+                                <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                            )}
+                            {applyMutation.isPending ? 'Applying...' : 'Confirm'}
                         </button>
                     </div>
                 </div>

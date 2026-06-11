@@ -6,7 +6,6 @@ import DetailTabs from '../../components/DetailTabs';
 import TenantProfileSection from './components/TenantProfileSection';
 import TenantLeasesSection from './components/TenantLeasesSection';
 import TenantTransactionsSection from './components/TenantTransactionsSection';
-import TenantInsuranceSection from './components/TenantInsuranceSection';
 import TenantApplicationsSection from './components/TenantApplicationsSection';
 import TenantRequestsSection from './components/TenantRequestsSection';
 import { useGetTenant, useDeleteTenant } from '../../../../hooks/useTenantQueries';
@@ -138,7 +137,6 @@ const TenantDetail = () => {
         { label: 'Send connection', action: () => { } },
         { label: 'Move in', action: () => navigate(`/dashboard/movein?tenantId=${id}`) },
         { label: 'Add invoice', action: () => navigate(`/dashboard/accounting/transactions/income/add?tenantId=${id}`) },
-        { label: 'Add insurance', action: () => { } },
         { label: 'Archive', action: () => { } },
         {
             label: 'Delete',
@@ -162,7 +160,6 @@ const TenantDetail = () => {
         { id: 'profile', label: 'Profile' },
         { id: 'leases', label: 'Leases' },
         { id: 'transactions', label: 'Transactions' },
-        { id: 'insurance', label: 'Insurance' },
         { id: 'applications', label: 'Applications' },
         { id: 'requests', label: 'Requests' }
     ];
@@ -367,19 +364,16 @@ const TenantDetail = () => {
                     </div>
                 )}
                 {activeTab === 'leases' && (
-                    <TenantLeasesSection tenantId={id || ''} tenant={tenant} />
+                    <TenantLeasesSection tenantId={id || ''} tenant={tenant} tenantUserId={backendTenant?.userId ?? null} />
                 )}
                 {activeTab === 'transactions' && (
                     <TenantTransactionsSection tenantId={id || ''} tenant={tenant} />
-                )}
-                {activeTab === 'insurance' && (
-                    <TenantInsuranceSection tenantId={id || ''} />
                 )}
                 {activeTab === 'applications' && (
                     <TenantApplicationsSection tenantId={id || ''} tenantUserId={backendTenant?.userId || null} />
                 )}
                 {activeTab === 'requests' && (
-                    <TenantRequestsSection tenantId={id || ''} />
+                    <TenantRequestsSection tenantId={id || ''} tenantUserId={backendTenant?.userId ?? null} />
                 )}
             </div>
         </div>

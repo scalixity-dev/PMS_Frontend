@@ -11,23 +11,36 @@ export interface TransactionData {
     amount?: string;
     date?: string;
     status?: string;
-    
+
     // Parties involved
     user?: string;
     payer?: string;
     payee?: string;
-    
+
     // Classification
     category?: string;
+    subcategory?: string;
     type?: string;
-    
+
     // Related entities
     property?: string;
     lease?: string;
     tags?: string;
-    
+
     // Additional information
     details?: string;
+
+    // Raw backend IDs (used for cloning/creating)
+    rawType?: 'INCOME' | 'EXPENSE' | 'DEPOSIT' | 'CREDIT' | 'INVOICE';
+    rawScope?: 'PROPERTY' | 'GENERAL';
+    rawCurrency?: string;
+    rawPayerId?: string;
+    rawPayeeId?: string;
+    rawContactId?: string;
+    rawPropertyId?: string;
+    rawUnitId?: string;
+    rawLeaseId?: string;
+    rawDueDate?: string;
 }
 
 /**
