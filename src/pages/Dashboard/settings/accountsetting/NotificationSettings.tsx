@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
 import { useGetNotificationSettings, useUpdateNotificationSettings } from "../../../../hooks/useNotificationQueries";
+import { usePushNotifications } from "../../../../hooks/usePushNotifications";
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -74,6 +75,7 @@ function CheckboxRow({ label, description, checked, onToggle }: CheckboxRowProps
 export default function NotificationSettings() {
   const { data: settings, isLoading, isError } = useGetNotificationSettings();
   const updateSettingsMutation = useUpdateNotificationSettings();
+  const push = usePushNotifications();
 
   const [emailNotification, setEmailNotification] = useState(true);
   const [moreActivity, setMoreActivity] = useState(true);
@@ -185,6 +187,62 @@ export default function NotificationSettings() {
                 patchSetting({ feedbackNotification: next });
               }}
             />
+          </section>
+
+          {/* Push notifications (this device) */}
+          <section className="border-t-[0.5px] border-[#201F23] pt-8">
+            <div className="mb-3">
+              <h3 className="text-[17px] font-semibold text-[#1F2933]">Push notifications</h3>
+              <p className="text-[13px] text-gray-500 mt-1">
+                Get instant alerts on this device — even when the app is closed — for maintenance,
+                applications, leases, and payments.
+              </p>
+            </div>
+
+            {!push.supported ? (
+              <p className="text-[13px] text-gray-400 mt-3">
+                Push isn't available in this browser{push.permission === 'unsupported' ? '' : ' yet'}.
+                Use a supported browser (Chrome, Edge, Firefox) or install the app to your home screen.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <ToggleSwitch
+                    checked={push.enabled}
+                    onChange={() => {
+                      if (push.busy) return;
+                      if (push.enabled) {
+                        push.disable();
+                      } else {
+                        push.enable().then((ok) => {
+                          if (ok) {
+                            setNotificationChannel(true);
+                          }
+                        });
+                      }
+                    }}
+                  />
+                  <span className="text-sm font-semibold text-[#1F2933]">
+                    {push.busy ? 'Working…' : push.enabled ? 'On' : 'Off'}
+                  </span>
+                  {push.enabled && (
+                    <button
+                      type="button"
+                      onClick={() => push.sendTest()}
+                      className="ml-2 rounded-md border border-[#E4E4E4] px-3 py-1.5 text-xs font-semibold text-[#1F2933] hover:bg-gray-50 transition-colors"
+                    >
+                      Send test
+                    </button>
+                  )}
+                </div>
+                {push.permission === 'denied' && (
+                  <p className="text-[13px] text-red-500">
+                    Notifications are blocked for this site. Allow them in your browser's site
+                    settings, then toggle this on again.
+                  </p>
+                )}
+              </div>
+            )}
           </section>
 
           {/* New Leads */}
