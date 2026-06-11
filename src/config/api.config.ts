@@ -301,6 +301,7 @@ export const API_ENDPOINTS = {
     GET_ONE: (id: string) => `${API_BASE_URL}/transactions/${id}`,
     GET_RECURRING: `${API_BASE_URL}/transactions/recurring`,
     GET_RECURRING_ONE: (id: string) => `${API_BASE_URL}/transactions/recurring/${id}`,
+    UPDATE_RECURRING: (id: string) => `${API_BASE_URL}/transactions/recurring/${id}`,
     DELETE_RECURRING: (id: string) => `${API_BASE_URL}/transactions/recurring/${id}`,
     END_RECURRING: (id: string) => `${API_BASE_URL}/transactions/recurring/${id}/end`,
     POST_NEXT_INVOICE: (id: string) => `${API_BASE_URL}/transactions/recurring/${id}/post-next-invoice`,

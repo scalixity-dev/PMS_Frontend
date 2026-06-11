@@ -48,14 +48,13 @@ const AddEditRecurringRentModal: React.FC<AddEditRecurringRentModalProps> = ({ i
                 setSubcategory('');
                 setFirstInvoiceDate(undefined);
             } else if (mode === 'edit' && initialData) {
-                // For Edit mode, populate state from initialData
-                if (initialData.tenants) setTenants(initialData.tenants);
-                if (initialData.frequency) setFrequency(initialData.frequency);
-                if (initialData.dueDay) setDueDay(initialData.dueDay);
-                if (initialData.isEnabled !== undefined) setIsEnabled(initialData.isEnabled);
-                if (initialData.category) setCategory(initialData.category);
-                if (initialData.subcategory) setSubcategory(initialData.subcategory);
-                if (initialData.firstInvoiceDate) setFirstInvoiceDate(new Date(initialData.firstInvoiceDate));
+                setTenants(initialData.tenants || [{ name: '', amount: 0 }]);
+                setFrequency(initialData.frequency || 'Monthly');
+                setDueDay(initialData.dueDay || '1st');
+                setIsEnabled(initialData.isEnabled !== undefined ? initialData.isEnabled : true);
+                setCategory(initialData.category || '');
+                setSubcategory(initialData.subcategory || '');
+                setFirstInvoiceDate(initialData.firstInvoiceDate ? new Date(initialData.firstInvoiceDate) : undefined);
             }
         } else {
             document.body.style.overflow = 'unset';

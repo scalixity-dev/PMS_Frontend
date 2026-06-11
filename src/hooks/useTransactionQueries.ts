@@ -185,6 +185,18 @@ export const useDeleteRecurringTransaction = () => {
   });
 };
 
+export const useUpdateRecurringTransaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Record<string, any> }) =>
+      transactionService.updateRecurringTransaction(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'recurring'] });
+    },
+  });
+};
+
 /**
  * Hook to end a recurring transaction (disable it)
  */

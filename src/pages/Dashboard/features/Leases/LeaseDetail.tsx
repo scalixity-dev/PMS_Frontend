@@ -14,7 +14,7 @@ import EditExtraFeesModal from './components/EditExtraFeesModal';
 import PropertyAttachmentsModal from './components/PropertyAttachmentsModal';
 import ResponsibilityModal, { type ResponsibilityItem } from '../Properties/components/ResponsibilityModal';
 import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useRenewLease, leaseQueryKeys } from '../../../../hooks/useLeaseQueries';
-import { useDeleteRecurringTransaction, useGetRecurringTransactions, useCreateRecurringIncome } from '../../../../hooks/useTransactionQueries';
+import { useDeleteRecurringTransaction, useGetRecurringTransactions, useCreateRecurringIncome, useUpdateRecurringTransaction } from '../../../../hooks/useTransactionQueries';
 import { useGetRenderedDocuments } from '../../../../hooks/useDocumentsQueries';
 import { useGetTenantByUserId } from '../../../../hooks/useTenantQueries';
 import type { BackendLease } from '../../../../services/lease.service';
@@ -99,6 +99,7 @@ const LeaseDetail: React.FC = () => {
     const updateUtilitiesMutation = useUpdateLeaseUtilities();
     const renewLeaseMutation = useRenewLease();
     const createRecurringIncomeMutation = useCreateRecurringIncome();
+    const updateRecurringTransactionMutation = useUpdateRecurringTransaction();
 
     // Fetch recurring transactions
     const { data: allRecurringTransactions } = useGetRecurringTransactions();
@@ -391,26 +392,17 @@ const LeaseDetail: React.FC = () => {
                     payerId: backendLease?.tenantId as string,
                 } as any);
             } else if (recurringRentModalMode === 'edit') {
-                if (recurringRentToEdit && recurringRentToEdit.id && recurringRentToEdit.id.startsWith('trans-')) {
-                     // In case it's a dummy transaction, we just skip it for now since there's no update endpoint.
-                     // A real transaction from DB would not have an id starting with trans-
-                     console.warn('Editing other recurring transactions is currently not supported via the API');
-                } else {
-                    // Update main recurring rent
-                    await updateLeaseMutation.mutateAsync({
-                        id: id as string,
-                        data: {
-                            recurringRent: {
-                                enabled: data.isEnabled,
-                                amount: parseFloat(data.totalAmount || 0),
-                                invoiceSchedule: data.frequency, // E.g. 'Monthly'
-                                startOn: data.firstInvoiceDate ? data.firstInvoiceDate.toISOString() : (backendLease?.recurringRent?.startOn || new Date().toISOString()),
-                                isMonthToMonth: backendLease?.recurringRent?.isMonthToMonth ?? false,
-                                markPastPaid: backendLease?.recurringRent?.markPastPaid ?? false,
-                            }
-                        } as any
-                    });
-                }
+                await updateRecurringTransactionMutation.mutateAsync({
+                    id: recurringRentToEdit.id,
+                    updates: {
+                        enabled: data.isEnabled,
+                        amount: parseFloat(data.totalAmount || 0),
+                        frequency: data.frequency.toUpperCase(),
+                        category: data.category || undefined,
+                        subcategory: data.subcategory || undefined,
+                        startDate: data.firstInvoiceDate ? data.firstInvoiceDate.toISOString() : undefined,
+                    },
+                });
             }
             setIsAddEditRecurringRentModalOpen(false);
             queryClient.invalidateQueries({ queryKey: leaseQueryKeys.detail(id as string) });
@@ -500,16 +492,33 @@ const LeaseDetail: React.FC = () => {
     };
 
     // Handler for deleting attachment
-    const handleDeleteAttachment = () => {
-        if (attachmentToDelete) {
-            const { type, index } = attachmentToDelete;
-            setAttachments(prev => ({
-                ...prev,
-                [type]: prev[type].filter((_, i) => i !== index)
-            }));
-            setIsDeleteAttachmentModalOpen(false);
-            setAttachmentToDelete(null);
+    const handleDeleteAttachment = async () => {
+        if (!attachmentToDelete) return;
+        const { type, index } = attachmentToDelete;
+        const file = attachments[type][index];
+        if (file?.url) {
+            try {
+                const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ fileUrl: file.url }),
+                });
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.message || 'Failed to delete attachment');
+                }
+            } catch (error) {
+                alert(error instanceof Error ? error.message : 'Failed to delete attachment');
+                return;
+            }
         }
+        setAttachments(prev => ({
+            ...prev,
+            [type]: prev[type].filter((_, i) => i !== index)
+        }));
+        setIsDeleteAttachmentModalOpen(false);
+        setAttachmentToDelete(null);
     };
 
     // Handler for saving utilities/responsibilities
@@ -1069,7 +1078,19 @@ const LeaseDetail: React.FC = () => {
                                                         <div className="flex items-center gap-2">
                                                             <button
                                                                 onClick={() => {
-                                                                    setRecurringRentToEdit(transaction);
+                                                                    const freq = transaction.frequency
+                                                                        ? transaction.frequency.charAt(0) + transaction.frequency.slice(1).toLowerCase()
+                                                                        : 'Monthly';
+                                                                    setRecurringRentToEdit({
+                                                                        ...transaction,
+                                                                        isEnabled: transaction.enabled ?? true,
+                                                                        firstInvoiceDate: transaction.startDate,
+                                                                        frequency: freq,
+                                                                        tenants: [{
+                                                                            name: lease?.tenant?.name || '',
+                                                                            amount: parseFloat(transaction.amount || '0'),
+                                                                        }],
+                                                                    });
                                                                     setRecurringRentModalMode('edit');
                                                                     setIsAddEditRecurringRentModalOpen(true);
                                                                 }}

@@ -507,6 +507,28 @@ class TransactionService {
     }
   }
 
+  async updateRecurringTransaction(recurringTransactionId: string, updates: {
+    enabled?: boolean;
+    amount?: number;
+    frequency?: string;
+    category?: string;
+    subcategory?: string;
+    startDate?: string;
+  }): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.UPDATE_RECURRING(recurringTransactionId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update recurring transaction');
+    }
+    return response.json();
+  }
+
   /**
    * End a recurring transaction (disable it)
    */
