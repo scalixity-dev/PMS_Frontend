@@ -22,6 +22,7 @@ const Transactions: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [moreMenuOpenId, setMoreMenuOpenId] = useState<string | null>(null);
+    const [selectedTransactionForModal, setSelectedTransactionForModal] = useState<Transaction | null>(null);
     const moreMenuRef = useRef<HTMLDivElement>(null);
 
     // Fetch transactions from backend
@@ -360,8 +361,20 @@ const Transactions: React.FC = () => {
                 }}
                 isLoading={deleteTransactionMutation.isPending}
             />
-            <ApplyDepositsModal />
-            <ApplyCreditsModal />
+            <ApplyDepositsModal
+                transactionId={selectedTransactionForModal?.id}
+                payerId={selectedTransactionForModal?.payerId}
+                contactId={selectedTransactionForModal?.contactId}
+                leaseId={selectedTransactionForModal?.leaseId}
+                amountOwned={selectedTransactionForModal ? `$${selectedTransactionForModal.balance.toLocaleString()}` : undefined}
+            />
+            <ApplyCreditsModal
+                transactionId={selectedTransactionForModal?.id}
+                payerId={selectedTransactionForModal?.payerId}
+                contactId={selectedTransactionForModal?.contactId}
+                leaseId={selectedTransactionForModal?.leaseId}
+                amountOwed={selectedTransactionForModal ? `$${selectedTransactionForModal.balance.toLocaleString()}` : undefined}
+            />
             <AddDiscountModal />
             <MarkAsPaidModal
                 onConfirm={async (data) => {
@@ -651,6 +664,7 @@ const Transactions: React.FC = () => {
                                                                     e.stopPropagation();
                                                                     setMoreMenuOpenId(null);
                                                                     setSelectedTransactionId(item.id);
+                                                                    setSelectedTransactionForModal(item);
                                                                     setApplyDepositsOpen(true);
                                                                 }}
                                                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
@@ -662,6 +676,7 @@ const Transactions: React.FC = () => {
                                                                     e.stopPropagation();
                                                                     setMoreMenuOpenId(null);
                                                                     setSelectedTransactionId(item.id);
+                                                                    setSelectedTransactionForModal(item);
                                                                     setApplyCreditsOpen(true);
                                                                 }}
                                                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
@@ -837,6 +852,7 @@ const Transactions: React.FC = () => {
                                                                 e.stopPropagation();
                                                                 setMoreMenuOpenId(null);
                                                                 setSelectedTransactionId(item.id);
+                                                                setSelectedTransactionForModal(item);
                                                                 setApplyDepositsOpen(true);
                                                             }}
                                                             className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
@@ -848,6 +864,7 @@ const Transactions: React.FC = () => {
                                                                 e.stopPropagation();
                                                                 setMoreMenuOpenId(null);
                                                                 setSelectedTransactionId(item.id);
+                                                                setSelectedTransactionForModal(item);
                                                                 setApplyCreditsOpen(true);
                                                             }}
                                                             className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"

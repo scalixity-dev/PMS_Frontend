@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
 import CustomTextBox from '../../../components/CustomTextBox';
+import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '@/components/ui/DatePicker';
 import { validateFile } from '@/utils/fileValidation';
 import { useTransactionStore } from '../store/transactionStore';
@@ -196,18 +197,14 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
                     {/* Apply From */}
                     <div className="mb-4">
                         <label className={labelClasses}>Apply From*</label>
-                        <select
+                        <CustomDropdown
+                            options={creditOptions}
                             value={selectedCreditId}
-                            onChange={(e) => setSelectedCreditId(e.target.value)}
-                            className={inputClasses}
-                        >
-                            <option value="">Select credit</option>
-                            {creditOptions.map(opt => (
-                                <option key={opt.value} value={opt.value} disabled={opt.value === ''}>
-                                    {opt.label}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={setSelectedCreditId}
+                            placeholder="Select credit"
+                            className="w-full"
+                            dropdownClassName="z-50"
+                        />
                         {fieldErrors.selectedCreditId && (
                             <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.selectedCreditId}</p>
                         )}

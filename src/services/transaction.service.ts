@@ -1250,6 +1250,9 @@ export interface Transaction {
   transactionType: string;
   currency: string;
   isOverdue?: boolean; // Flag to indicate if transaction is overdue
+  payerId?: string | null;
+  contactId?: string | null;
+  leaseId?: string | null;
 }
 
 export interface Payment {
