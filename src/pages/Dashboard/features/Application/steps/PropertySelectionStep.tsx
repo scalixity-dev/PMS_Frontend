@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronDown, Building, Loader2 } from 'lucide-react';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import PropertyCard from '../../ListUnit/components/PropertyCard';
 import { unitService } from '../../../../../services/unit.service';
+import { leasingService } from '../../../../../services/leasing.service';
 import { useGetAllProperties, useGetProperty } from '../../../../../hooks/usePropertyQueries';
 import { useGetUnit } from '../../../../../hooks/useUnitQueries';
 import type { BackendUnit } from '../../../../../services/unit.service';
@@ -41,6 +42,17 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
         error: queryError,
     } = useGetAllProperties(true, false);
 
+    // Fetch all leasings to know which properties are listed
+    const { data: allLeasings = [] } = useQuery({
+        queryKey: ['leasings', 'all'],
+        queryFn: () => leasingService.getAll(),
+        staleTime: 2 * 60 * 1000,
+    });
+
+    // Build sets of listed property IDs and unit IDs
+    const listedPropertyIds = useMemo(() => new Set(allLeasings.map(l => l.propertyId)), [allLeasings]);
+    const listedUnitIds = useMemo(() => new Set(allLeasings.filter(l => l.unitId).map(l => l.unitId!)), [allLeasings]);
+
     // Get all MULTI properties to fetch their units
     const multiProperties = useMemo(() => {
         return allBackendProperties.filter(p => p.propertyType === 'MULTI') || [];
@@ -66,7 +78,7 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
     // Fetch unit data if unitId is selected
     const { data: selectedUnitData } = useGetUnit(selectedUnitId || null, !!selectedUnitId);
 
-    // Build selectable items list
+    // Build selectable items list — only include properties/units that have an active leasing
     const selectableItems = useMemo(() => {
         if (!allBackendProperties || allBackendProperties.length === 0) {
             return [];
@@ -83,6 +95,8 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
         });
 
         allBackendProperties.forEach((backendProperty) => {
+            if (!listedPropertyIds.has(backendProperty.id)) return;
+
             const address = backendProperty.address
                 ? `${backendProperty.address.streetAddress}, ${backendProperty.address.city}, ${backendProperty.address.stateRegion} ${backendProperty.address.zipCode}, ${backendProperty.address.country}`
                 : 'Address not available';
@@ -98,9 +112,8 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
                     image: backendProperty.coverPhotoUrl || backendProperty.photos?.[0]?.photoUrl || '',
                 });
             } else if (backendProperty.propertyType === 'MULTI') {
-                // Add units for MULTI property
                 const units = unitsByPropertyId.get(backendProperty.id) || [];
-                units.forEach(unit => {
+                units.filter(unit => listedUnitIds.has(unit.id)).forEach(unit => {
                     const unitImage = unit.photos?.find((p: any) => p.isPrimary)?.photoUrl
                         || unit.photos?.[0]?.photoUrl
                         || unit.coverPhotoUrl
@@ -122,7 +135,7 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
         });
 
         return items;
-    }, [allBackendProperties, multiProperties, unitQueries]);
+    }, [allBackendProperties, multiProperties, unitQueries, listedPropertyIds, listedUnitIds]);
 
     // Click outside handler
     useEffect(() => {
@@ -266,7 +279,7 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
                                 <div className="max-h-60 overflow-y-auto">
                                     {selectableItems.length === 0 ? (
                                         <div className="p-4 text-center text-gray-500 text-sm">
-                                            No properties found.
+                                            No listed properties found. Please list a unit first.
                                         </div>
                                     ) : (
                                         selectableItems.map((item) => (
