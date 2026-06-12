@@ -38,12 +38,11 @@ export interface CreateRecurringMaintenanceInput {
 }
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
-  const token = localStorage.getItem('accessToken');
   const res = await fetch(url, {
+    credentials: 'include',
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options?.headers ?? {}),
     },
   });
