@@ -772,7 +772,7 @@ const LeaseDetail: React.FC = () => {
                                 onClick={() => navigate(`/dashboard/leasing/leases/${id}/send-agreement`)}
                                 className="bg-[#2B5251] text-white text-xs py-1.5 px-4 rounded-full hover:bg-opacity-90 transition-colors mb-4"
                             >
-                                Request
+                                Send
                             </button>
                             <div className="bg-white/90 rounded-full px-4 py-2 flex justify-between items-center text-xs text-gray-700">
                                 <span className="font-medium">Lease agreements requested</span>
