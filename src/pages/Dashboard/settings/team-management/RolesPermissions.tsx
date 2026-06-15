@@ -1,34 +1,154 @@
-import { useState, useCallback, memo, useMemo } from "react";
+import { useState, useCallback, memo, useMemo, useEffect } from "react";
 import { TeamManagementSettingsLayout } from "../../../../components/common/TeamManagementSettingsLayout";
-import { X, Mail, Trash2, RefreshCw, CheckCircle, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { X, Mail, Trash2, RefreshCw, CheckCircle, Clock, AlertCircle, Loader2, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
 import {
     useGetTeamMembers,
     useInviteTeamMember,
     useDeleteTeamMember,
     useResendInvitation,
     useRevokeTeamMember,
+    useUpdateTeamMember,
 } from "../../../../hooks/useTeamQueries";
 import { useToast } from "../../../../components/common/Toast";
 import { formatPhoneNumber } from '@/utils/phone.utils';
 
-import type { TeamRole } from "../../../../services/team.service";
 
 const INPUT_CLASS = "w-full px-4 py-3 border-b border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors";
+
+const TEAM_LIMIT = 10;
+
+interface PermissionMap {
+    [module: string]: { view: boolean; manage: boolean };
+}
+
+const PERMISSION_MODULES: { key: string; label: string }[] = [
+    { key: 'settings', label: 'Settings' },
+    { key: 'rental-applications', label: 'Rental Applications' },
+    { key: 'accounting-settings', label: 'Accounting Settings' },
+    { key: 'listing-website', label: 'Listing Website' },
+    { key: 'maintenance', label: 'Maintenance Requests' },
+    { key: 'online-payments', label: 'Online Payments' },
+    { key: 'calendar', label: 'Calendar' },
+    { key: 'property-units', label: 'Property & Units' },
+    { key: 'contacts', label: 'Contacts' },
+    { key: 'accounting', label: 'Accounting' },
+    { key: 'reports', label: 'Reports' },
+    { key: 'communication', label: 'Communication' },
+    { key: 'listing', label: 'Listing' },
+    { key: 'rental-screenings', label: 'Rental Applications & Screenings' },
+    { key: 'leads', label: 'Leads' },
+    { key: 'document-templates', label: 'Document Templates' },
+];
+
+const DEFAULT_PERMISSIONS: PermissionMap = PERMISSION_MODULES.reduce((acc, m) => {
+    acc[m.key] = { view: false, manage: false };
+    return acc;
+}, {} as PermissionMap);
+
+function permissionsToStrings(map: PermissionMap): string[] {
+    const result: string[] = [];
+    for (const [key, val] of Object.entries(map)) {
+        if (val.view) result.push(`${key}:view`);
+        if (val.manage) result.push(`${key}:manage`);
+    }
+    return result;
+}
 
 interface InviteFormData {
     name: string;
     phoneNumber: string;
     email: string;
-    role: TeamRole;
+    permissions: PermissionMap;
 }
 
-const ROLE_OPTIONS: { value: TeamRole; label: string; description: string }[] = [
-    { value: 'ADMIN', label: 'Admin', description: 'Full access to everything' },
-    { value: 'MANAGER', label: 'Manager', description: 'Manage properties + tenants' },
-    { value: 'ACCOUNTANT', label: 'Accountant', description: 'Financial reports + transactions' },
-    { value: 'MAINTENANCE', label: 'Maintenance', description: 'Work orders + maintenance only' },
-    { value: 'VIEWER', label: 'Viewer', description: 'Read-only access' },
-];
+const PermissionsSection = memo(({
+    permissions,
+    onChange,
+    disabled,
+}: {
+    permissions: PermissionMap;
+    onChange: (updated: PermissionMap) => void;
+    disabled: boolean;
+}) => {
+    const [expanded, setExpanded] = useState(false);
+
+    const toggleView = (key: string) => {
+        const current = permissions[key];
+        onChange({
+            ...permissions,
+            [key]: {
+                view: !current.view,
+                manage: !current.view ? current.manage : false,
+            },
+        });
+    };
+
+    const toggleManage = (key: string) => {
+        const current = permissions[key];
+        const newManage = !current.manage;
+        onChange({
+            ...permissions,
+            [key]: {
+                view: newManage ? true : current.view,
+                manage: newManage,
+            },
+        });
+    };
+
+    const activeCount = Object.values(permissions).filter(p => p.view || p.manage).length;
+
+    return (
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <button
+                type="button"
+                onClick={() => setExpanded(!expanded)}
+                disabled={disabled}
+                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-semibold text-gray-700"
+            >
+                <span>Permissions {activeCount > 0 && <span className="text-[#3D7475] font-normal">({activeCount} modules enabled)</span>}</span>
+                {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+            </button>
+
+            {expanded && (
+                <div className="p-3">
+                    <div className="grid grid-cols-[1fr_60px_70px] gap-x-2 mb-2 px-2">
+                        <span className="text-xs text-gray-400">Module</span>
+                        <span className="text-xs text-gray-400 text-center">View</span>
+                        <span className="text-xs text-gray-400 text-center">Manage</span>
+                    </div>
+                    <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
+                        {PERMISSION_MODULES.map((m) => (
+                            <div key={m.key} className="grid grid-cols-[1fr_60px_70px] items-center gap-x-2 px-2 py-1.5 rounded hover:bg-gray-50">
+                                <span className="text-xs text-gray-700 truncate">{m.label}</span>
+                                <div className="flex justify-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={permissions[m.key]?.view ?? false}
+                                        onChange={() => toggleView(m.key)}
+                                        disabled={disabled}
+                                        className="w-4 h-4 accent-[#3D7475] cursor-pointer"
+                                    />
+                                </div>
+                                <div className="flex justify-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={permissions[m.key]?.manage ?? false}
+                                        onChange={() => toggleManage(m.key)}
+                                        disabled={disabled}
+                                        className="w-4 h-4 accent-[#3D7475] cursor-pointer"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2 px-2">Enabling "Manage" automatically enables "View".</p>
+                </div>
+            )}
+        </div>
+    );
+});
+
+PermissionsSection.displayName = 'PermissionsSection';
 
 const InviteModal = memo(({
     isOpen,
@@ -45,7 +165,7 @@ const InviteModal = memo(({
         name: '',
         phoneNumber: '',
         email: '',
-        role: 'VIEWER',
+        permissions: { ...DEFAULT_PERMISSIONS },
     });
     const [error, setError] = useState<string | null>(null);
 
@@ -67,22 +187,17 @@ const InviteModal = memo(({
             aria-modal="true"
         >
             <div
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-md"
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
                     <h2 className="text-lg font-semibold text-gray-900">Invite Team Member</h2>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                        aria-label="Close"
-                    >
+                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="px-6 py-6 space-y-4">
+                <div className="px-6 py-6 space-y-4 overflow-y-auto flex-1">
                     <input
                         type="text"
                         placeholder="Full Name *"
@@ -108,31 +223,11 @@ const InviteModal = memo(({
                         disabled={isSubmitting}
                     />
 
-
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-2">Role</label>
-                        <div className="space-y-2">
-                            {ROLE_OPTIONS.map((opt) => (
-                                <label
-                                    key={opt.value}
-                                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${data.role === opt.value ? 'bg-[#E8F0EE] border-[#3D7475]' : 'border-gray-200 hover:bg-gray-50'}`}
-                                >
-                                    <input
-                                        type="radio"
-                                        name="role"
-                                        checked={data.role === opt.value}
-                                        onChange={() => setData({ ...data, role: opt.value })}
-                                        className="mt-0.5 accent-[#3D7475]"
-                                        disabled={isSubmitting}
-                                    />
-                                    <div>
-                                        <div className="font-medium text-sm text-gray-900">{opt.label}</div>
-                                        <div className="text-xs text-gray-500">{opt.description}</div>
-                                    </div>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
+                    <PermissionsSection
+                        permissions={data.permissions}
+                        onChange={(updated) => setData({ ...data, permissions: updated })}
+                        disabled={isSubmitting}
+                    />
 
                     {error && (
                         <div className="bg-red-50 border border-red-200 rounded-md p-2 text-xs text-red-700">
@@ -141,7 +236,7 @@ const InviteModal = memo(({
                     )}
                 </div>
 
-                <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+                <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2 shrink-0">
                     <button
                         type="button"
                         onClick={onClose}
@@ -167,6 +262,122 @@ const InviteModal = memo(({
 
 InviteModal.displayName = 'InviteModal';
 
+function stringsToPermissions(perms: string[]): PermissionMap {
+    const map: PermissionMap = { ...DEFAULT_PERMISSIONS };
+    for (const p of perms) {
+        const [key, level] = p.split(':');
+        if (map[key] && (level === 'view' || level === 'manage')) {
+            map[key] = { ...map[key], [level]: true };
+        }
+    }
+    return map;
+}
+
+const EditPermissionsModal = memo(({
+    isOpen,
+    onClose,
+    onSubmit,
+    isSubmitting,
+    currentPermissions,
+    memberName,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (permissions: string[]) => void;
+    isSubmitting: boolean;
+    currentPermissions: string[];
+    memberName: string;
+}) => {
+    const [perms, setPerms] = useState<PermissionMap>(() => stringsToPermissions(currentPermissions));
+
+    // reset when opened or member changes
+    useEffect(() => {
+        if (isOpen) setPerms(stringsToPermissions(currentPermissions));
+    }, [isOpen, currentPermissions]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div
+            className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4"
+            onClick={onClose}
+            role="dialog"
+            aria-modal="true"
+        >
+            <div
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+                    <div>
+                        <h2 className="text-lg font-semibold text-gray-900">Edit Permissions</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">{memberName}</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="px-6 py-4 overflow-y-auto flex-1">
+                    <div className="grid grid-cols-[1fr_60px_70px] gap-x-2 mb-2 px-2">
+                        <span className="text-xs text-gray-400">Module</span>
+                        <span className="text-xs text-gray-400 text-center">View</span>
+                        <span className="text-xs text-gray-400 text-center">Manage</span>
+                    </div>
+                    <div className="space-y-1">
+                        {PERMISSION_MODULES.map((m) => {
+                            const val = perms[m.key] ?? { view: false, manage: false };
+                            const toggleView = () => {
+                                const newView = !val.view;
+                                setPerms(prev => ({
+                                    ...prev,
+                                    [m.key]: { view: newView, manage: newView ? val.manage : false },
+                                }));
+                            };
+                            const toggleManage = () => {
+                                const newManage = !val.manage;
+                                setPerms(prev => ({
+                                    ...prev,
+                                    [m.key]: { view: newManage ? true : val.view, manage: newManage },
+                                }));
+                            };
+                            return (
+                                <div key={m.key} className="grid grid-cols-[1fr_60px_70px] items-center gap-x-2 px-2 py-1.5 rounded hover:bg-gray-50">
+                                    <span className="text-xs text-gray-700 truncate">{m.label}</span>
+                                    <div className="flex justify-center">
+                                        <input type="checkbox" checked={val.view} onChange={toggleView} disabled={isSubmitting} className="w-4 h-4 accent-[#3D7475] cursor-pointer" />
+                                    </div>
+                                    <div className="flex justify-center">
+                                        <input type="checkbox" checked={val.manage} onChange={toggleManage} disabled={isSubmitting} className="w-4 h-4 accent-[#3D7475] cursor-pointer" />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-3 px-2">Enabling "Manage" automatically enables "View".</p>
+                </div>
+
+                <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2 shrink-0">
+                    <button type="button" onClick={onClose} disabled={isSubmitting} className="px-4 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50">
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onSubmit(permissionsToStrings(perms))}
+                        disabled={isSubmitting}
+                        className="px-6 py-2 rounded-lg text-white font-medium text-sm bg-[#3D7475] hover:bg-[#2c5556] transition-colors disabled:opacity-50 flex items-center gap-2"
+                    >
+                        {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {isSubmitting ? 'Saving...' : 'Save Permissions'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+});
+
+EditPermissionsModal.displayName = 'EditPermissionsModal';
+
 const StatusBadge = ({ status }: { status: string }) => {
     const config: Record<string, { color: string; icon: React.ComponentType<{ className?: string }>; label: string }> = {
         INVITED: { color: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: Clock, label: 'Invited' },
@@ -190,9 +401,11 @@ export default function RolesPermissions() {
     const deleteMutation = useDeleteTeamMember();
     const resendMutation = useResendInvitation();
     const revokeMutation = useRevokeTeamMember();
+    const updateMutation = useUpdateTeamMember();
     const toast = useToast();
 
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [editingMember, setEditingMember] = useState<{ id: string; name: string; permissions: string[] } | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
     const filteredMembers = useMemo(() => {
@@ -211,7 +424,7 @@ export default function RolesPermissions() {
                 name: data.name,
                 email: data.email,
                 phoneNumber: data.phoneNumber || undefined,
-                role: data.role,
+                permissions: permissionsToStrings(data.permissions),
             });
             toast.success(`Invitation sent to ${data.email}`);
             setIsInviteModalOpen(false);
@@ -249,6 +462,17 @@ export default function RolesPermissions() {
         }
     }, [deleteMutation, toast]);
 
+    const handleEditPermissions = useCallback(async (permissions: string[]) => {
+        if (!editingMember) return;
+        try {
+            await updateMutation.mutateAsync({ id: editingMember.id, dto: { permissions } });
+            toast.success('Permissions updated');
+            setEditingMember(null);
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to update permissions');
+        }
+    }, [editingMember, updateMutation, toast]);
+
     const headerActions = (
         <button
             type="button"
@@ -266,6 +490,14 @@ export default function RolesPermissions() {
                 onClose={() => setIsInviteModalOpen(false)}
                 onSubmit={handleInvite}
                 isSubmitting={inviteMutation.isPending}
+            />
+            <EditPermissionsModal
+                isOpen={!!editingMember}
+                onClose={() => setEditingMember(null)}
+                onSubmit={handleEditPermissions}
+                isSubmitting={updateMutation.isPending}
+                currentPermissions={editingMember?.permissions ?? []}
+                memberName={editingMember?.name ?? ''}
             />
 
             <TeamManagementSettingsLayout
@@ -305,7 +537,6 @@ export default function RolesPermissions() {
                                             {member.phoneNumber && (
                                                 <p className="text-xs text-gray-400 truncate">{formatPhoneNumber(member.phoneNumber)}</p>
                                             )}
-
                                         </div>
                                     </div>
 
@@ -318,39 +549,57 @@ export default function RolesPermissions() {
                                         )}
                                     </div>
 
-                                    <div className="flex gap-2 pt-3 border-t border-gray-100">
-                                        {member.status === 'INVITED' && (
-                                            <button
-                                                onClick={() => handleResend(member.id, member.email)}
-                                                disabled={resendMutation.isPending}
-                                                className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-[#3D7475] bg-[#E8F0EE] rounded-md hover:bg-[#d7e5e1] transition-colors disabled:opacity-50"
-                                            >
-                                                <RefreshCw className="w-3 h-3" />
-                                                Resend
-                                            </button>
-                                        )}
+                                    <div className="flex flex-col gap-2 pt-3 border-t border-gray-100">
                                         {member.status === 'ACTIVE' && (
                                             <button
-                                                onClick={() => handleRevoke(member.id, member.name)}
-                                                disabled={revokeMutation.isPending}
-                                                className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-orange-700 bg-orange-50 rounded-md hover:bg-orange-100 transition-colors disabled:opacity-50"
+                                                onClick={() => setEditingMember({ id: member.id, name: member.name, permissions: member.permissions })}
+                                                className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-[#3D7475] bg-[#E8F0EE] rounded-md hover:bg-[#d7e5e1] transition-colors"
                                             >
-                                                <AlertCircle className="w-3 h-3" />
-                                                Revoke
+                                                <ShieldCheck className="w-3 h-3" />
+                                                Edit Permissions
                                             </button>
                                         )}
-                                        <button
-                                            onClick={() => handleDelete(member.id, member.name)}
-                                            disabled={deleteMutation.isPending}
-                                            className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 transition-colors disabled:opacity-50"
-                                        >
-                                            <Trash2 className="w-3 h-3" />
-                                            Delete
-                                        </button>
+                                        <div className="flex gap-2">
+                                            {member.status === 'INVITED' && (
+                                                <button
+                                                    onClick={() => handleResend(member.id, member.email)}
+                                                    disabled={resendMutation.isPending}
+                                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-[#3D7475] bg-[#E8F0EE] rounded-md hover:bg-[#d7e5e1] transition-colors disabled:opacity-50"
+                                                >
+                                                    <RefreshCw className="w-3 h-3" />
+                                                    Resend
+                                                </button>
+                                            )}
+                                            {member.status === 'ACTIVE' && (
+                                                <button
+                                                    onClick={() => handleRevoke(member.id, member.name)}
+                                                    disabled={revokeMutation.isPending}
+                                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-orange-700 bg-orange-50 rounded-md hover:bg-orange-100 transition-colors disabled:opacity-50"
+                                                >
+                                                    <AlertCircle className="w-3 h-3" />
+                                                    Revoke
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => handleDelete(member.id, member.name)}
+                                                disabled={deleteMutation.isPending}
+                                                className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 transition-colors disabled:opacity-50"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                                Delete
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Team limit */}
+                {!isLoading && (
+                    <div className="mt-6 text-center text-sm text-gray-500">
+                        Team limit: <span className="font-semibold text-gray-700">{members.length} of {TEAM_LIMIT}</span>
                     </div>
                 )}
             </TeamManagementSettingsLayout>

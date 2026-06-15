@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { authService } from '../services/auth.service';
+import { API_ENDPOINTS } from '../config/api.config';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -23,29 +24,35 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           isEmailVerified: user.isEmailVerified
         });
 
-        // Verify user is property manager (or has property manager role) and account is active
-        // Role might be 'PROPERTY_MANAGER', 'property_manager', or similar variations
-        const isPropertyManager = user.role && (
-          user.role.toUpperCase() === 'PROPERTY_MANAGER' ||
-          user.role.toLowerCase() === 'property_manager' ||
-          user.role === 'property_manager'
-        );
+        const role = user.role?.toUpperCase();
+        const isPropertyManager = role === 'PROPERTY_MANAGER';
+        const isTeamMember = role === 'TEAM_MEMBER';
 
         console.log('ProtectedRoute: Validation results:', {
-          isPropertyManager,
+          role,
           isActive: user.isActive,
           isEmailVerified: user.isEmailVerified
         });
 
-        // User must be:
-        // 1. Property manager
-        // 2. Account must be active (isActive = true)
-        // 3. Email must be verified (isEmailVerified = true)
-        // Note: Backend JwtAuthGuard already checks for active subscription,
-        // so if getCurrentUser succeeds, user has an active subscription
-        if (isPropertyManager && user.isActive && user.isEmailVerified) {
+        // Property managers need active + email verified
+        // Team members only need active (email verified via invite flow)
+        if ((isPropertyManager && user.isActive && user.isEmailVerified) ||
+            (isTeamMember && user.isActive)) {
           console.log('ProtectedRoute: Authentication successful');
           setIsAuthenticated(true);
+        } else if (isPropertyManager && user.isActive) {
+          // May be a team member (email verified via invite flow, no subscription)
+          try {
+            const teamsRes = await fetch(API_ENDPOINTS.TEAM.MY_TEAMS, { credentials: 'include' });
+            if (teamsRes.ok) {
+              const teams = await teamsRes.json();
+              if (Array.isArray(teams) && teams.length > 0) {
+                setIsAuthenticated(true);
+                return;
+              }
+            }
+          } catch { /* fall through */ }
+          setIsAuthenticated(false);
         } else {
           console.warn('ProtectedRoute: Authentication failed - user does not meet requirements');
           setIsAuthenticated(false);

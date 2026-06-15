@@ -84,8 +84,19 @@ export const useDeleteTeamMember = () => {
   });
 };
 
+export const useGetInvitation = (token: string | null) => {
+  return useQuery({
+    queryKey: [...teamQueryKeys.all, 'invitation', token],
+    queryFn: () => teamService.getInvitation(token!),
+    enabled: !!token,
+    retry: false,
+    staleTime: Infinity,
+  });
+};
+
 export const useAcceptInvitation = () => {
   return useMutation({
-    mutationFn: (token: string) => teamService.acceptInvitation(token),
+    mutationFn: ({ token, password }: { token: string; password: string }) =>
+      teamService.acceptInvitation(token, password),
   });
 };

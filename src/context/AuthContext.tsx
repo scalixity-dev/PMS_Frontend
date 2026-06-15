@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
-export type AuthUserRole = 'PROPERTY_MANAGER' | 'TENANT' | 'SERVICE_PRO';
+export type AuthUserRole = 'PROPERTY_MANAGER' | 'TENANT' | 'SERVICE_PRO' | 'TEAM_MEMBER';
 
 export interface AuthUser {
   id: string;

@@ -39,6 +39,14 @@ const OAuthCallbackPage = lazy(() => import('./pages/basewebsite/auth/oauth-call
 const OAuthCompletePage = lazy(() => import('./pages/basewebsite/auth/signUp/oauth-complete'));
 const MobileAutoLogin = lazy(() => import('./pages/basewebsite/auth/mobile-auto-login/MobileAutoLogin'));
 import AutoLoginProvider from './components/AutoLoginProvider';
+import { TeamPermissionProvider, useTeamPermissions } from './context/TeamPermissionContext';
+import { Navigate } from 'react-router-dom';
+
+const TeamPermissionGuard: React.FC<{ module: string; children: React.ReactNode }> = ({ module, children }) => {
+  const { isTeamMember, canView } = useTeamPermissions();
+  if (isTeamMember && !canView(module)) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+};
 const TenantOnboardingFlow = lazy(() => import('./pages/basewebsite/auth/signUp/sections/TenantOnboardingFlow').then((mod) => ({ default: mod.TenantOnboardingFlow })));
 const TeamPage = lazy(() => import('./pages/basewebsite/features/team/index'));
 const LandlordUseCasesPage = lazy(() => import('./pages/basewebsite/usecases/landlord'));
@@ -232,6 +240,7 @@ const App: React.FC = () => {
         <BrowserRouter>
           <RoutedApp>
           <AutoLoginProvider>
+          <TeamPermissionProvider>
           <GlobalLoader />
           <AIChatButton />
           <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>Loading…</div>}>
@@ -298,8 +307,8 @@ const App: React.FC = () => {
               <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/cookie-policy" element={<CookiePolicy />} />
-              <Route path="/team/accept-invitation" element={<AcceptInvitation />} />
             </Route>
+            <Route path="/team/accept-invitation" element={<AcceptInvitation />} />
             <Route element={<DashboardLayout />}>
               <Route
                 path="/dashboard"
@@ -326,7 +335,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
               <Route path="/dashboard/portfolio/listing" element={<Listing />} />
               <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
-              <Route path="/dashboard/calendar" element={<Calendar />} />
+              <Route path="/dashboard/calendar" element={<TeamPermissionGuard module="calendar"><Calendar /></TeamPermissionGuard>} />
               <Route path="/dashboard/tasks" element={<Tasks />} />
               <Route path="/dashboard/equipments" element={<Equipments />} />
               <Route path="/dashboard/equipments/add" element={<CreateEquipment />} />
@@ -862,6 +871,7 @@ const App: React.FC = () => {
             <Route path="*" element={<HomePage />} />
           </Routes>
           </Suspense>
+          </TeamPermissionProvider>
           </AutoLoginProvider>
           </RoutedApp>
         </BrowserRouter>

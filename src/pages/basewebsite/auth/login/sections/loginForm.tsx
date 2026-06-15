@@ -149,9 +149,16 @@ const LoginForm: React.FC = () => {
                     return;
                 }
 
+                // Team members go straight to the dashboard
+                if (userRole === 'TEAM_MEMBER') {
+                    console.log('Navigating team member to dashboard');
+                    navigate('/dashboard', { replace: true });
+                    return;
+                }
+
                 // Wait a bit more to ensure cookie is fully propagated
                 await new Promise(resolve => setTimeout(resolve, 500));
-                
+
                 // Check if user is a tenant and needs onboarding
                 if (userRole === 'TENANT') {
                     try {

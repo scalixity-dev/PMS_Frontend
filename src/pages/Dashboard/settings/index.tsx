@@ -8,8 +8,10 @@ import {
   Home,
   PaintRoller,
   Settings as Cog,
+  Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTeamPermissions } from "../../../context/TeamPermissionContext";
 
 interface SettingLink {
   label: string;
@@ -21,20 +23,21 @@ interface SettingCardData {
   description: string;
   icon: LucideIcon;
   links: SettingLink[];
+  pmOnly?: boolean;
 }
 
 interface DashboardContext {
   sidebarCollapsed: boolean;
 }
 
-const SETTING_CARDS: SettingCardData[] = [
+const ALL_SETTING_CARDS: (SettingCardData & { teamMemberOnly?: boolean; pmOnly?: boolean })[] = [
   {
     title: "Account settings",
     description: "Lets you control and update account information and enable other products.",
     icon: CreditCard,
     links: [
       { label: "Profile", path: "/dashboard/settings/profile" },
-{ label: "Integration", path: "/dashboard/settings/integrations" },
+      { label: "Integration", path: "/dashboard/settings/integrations" },
       { label: "Notifications", path: "/dashboard/settings/notifications" },
     ],
   },
@@ -42,6 +45,7 @@ const SETTING_CARDS: SettingCardData[] = [
     title: "Subscription",
     description: "Lets you control and update account information and enable other products.",
     icon: Gift,
+    pmOnly: true,
     links: [
       { label: "My Plan", path: "/dashboard/settings/subscription/my-plan" },
       { label: "My Card", path: "/dashboard/settings/subscription/my-card" },
@@ -51,6 +55,7 @@ const SETTING_CARDS: SettingCardData[] = [
     title: "Accounting Settings",
     description: "Lets you control and update account information and enable other products.",
     icon: Cog,
+    pmOnly: true,
     links: [
       { label: "Invoice", path: "/dashboard/settings/accounting/invoice" },
       { label: "Tags", path: "/dashboard/settings/accounting/tags" },
@@ -60,6 +65,7 @@ const SETTING_CARDS: SettingCardData[] = [
     title: "Online Payment",
     description: "Lets you control and update account information and enable other products.",
     icon: DollarSign,
+    pmOnly: true,
     links: [
       { label: "Configurations", path: "/dashboard/settings/online-payments/configurations" },
     ],
@@ -68,6 +74,7 @@ const SETTING_CARDS: SettingCardData[] = [
     title: "Rental Application",
     description: "Lets you control and update account information and enable other products.",
     icon: Home,
+    pmOnly: true,
     links: [
       { label: "Online Application", path: "/dashboard/settings/rental-application/online-application" },
       { label: "Form Configuration", path: "/dashboard/settings/rental-application/form-configuration" },
@@ -77,9 +84,19 @@ const SETTING_CARDS: SettingCardData[] = [
     title: "Request Settings",
     description: "Lets you control and update account information and enable other products.",
     icon: PaintRoller,
+    pmOnly: true,
     links: [
       { label: "Request Settings", path: "/dashboard/settings/request-settings/request-settings" },
       { label: "Automation Settings", path: "/dashboard/settings/request-settings/automation-settings" },
+    ],
+  },
+  {
+    title: "Team Management",
+    description: "Invite and manage team members, assign roles and module permissions.",
+    icon: Users,
+    pmOnly: true,
+    links: [
+      { label: "Roles & Permissions", path: "/dashboard/settings/team-management/roles-permissions" },
     ],
   },
 ];
@@ -146,6 +163,7 @@ const SettingCard = ({
 
 export default function Settings() {
   const [openCardTitle, setOpenCardTitle] = useState<string | null>(null);
+  const { isTeamMember } = useTeamPermissions();
 
   // Safe context access
   const context = useOutletContext<DashboardContext>();
@@ -155,6 +173,16 @@ export default function Settings() {
   const toggleCard = (title: string) => {
     setOpenCardTitle((prev) => (prev === title ? null : title));
   };
+
+  const visibleCards = ALL_SETTING_CARDS
+    .filter((card) => !isTeamMember || !card.pmOnly)
+    .map((card) => {
+      // Strip Integration link for team members — it's a PM-only feature
+      if (isTeamMember && card.title === "Account settings") {
+        return { ...card, links: card.links.filter((l) => l.label !== "Integration") };
+      }
+      return card;
+    });
 
   return (
     <div className={`min-h-screen bg-[#f5f5f5] transition-all duration-300 mx-auto ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}>
@@ -167,7 +195,7 @@ export default function Settings() {
           <h1 className="text-2xl font-semibold text-gray-800 mb-4">Settings</h1>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-            {SETTING_CARDS.map((card) => (
+            {visibleCards.map((card) => (
               <SettingCard
                 key={card.title}
                 card={card}
