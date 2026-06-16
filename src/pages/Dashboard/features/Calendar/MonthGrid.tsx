@@ -22,9 +22,10 @@ import { X, AlertTriangle, Loader2 } from 'lucide-react';
 interface MonthGridProps {
     month: Date;
     reminders: Reminder[];
+    canEdit?: boolean;
 }
 
-const MonthGrid: React.FC<MonthGridProps> = ({ month, reminders }) => {
+const MonthGrid: React.FC<MonthGridProps> = ({ month, reminders, canEdit = true }) => {
     const monthStart = startOfMonth(month);
     const monthEnd = endOfMonth(monthStart);
     const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday start
@@ -163,8 +164,8 @@ const MonthGrid: React.FC<MonthGridProps> = ({ month, reminders }) => {
                 isOpen={isDetailModalOpen}
                 onClose={() => setIsDetailModalOpen(false)}
                 reminder={selectedReminder}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
+                onEdit={canEdit ? handleEdit : undefined}
+                onDelete={canEdit ? handleDelete : undefined}
             />
 
             {/* Day Detail Modal (for overflow) */}

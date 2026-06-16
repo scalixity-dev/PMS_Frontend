@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { ChevronLeft, Plus, Check, MessageSquare, MoreHorizontal, Edit, Repeat, Printer, Trash2, UserPlus } from 'lucide-react';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import MakeRecurringModal from './components/MakeRecurringModal';
 import AssigneeModal from './components/AssigneeModal';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
@@ -18,6 +19,7 @@ interface RowActionDropdownProps {
     onMakeRecurring: () => void;
     onPrint: () => void;
     onDelete: () => void;
+    canEdit?: boolean;
 }
 
 const RowActionDropdown: React.FC<RowActionDropdownProps> = ({
@@ -27,6 +29,7 @@ const RowActionDropdown: React.FC<RowActionDropdownProps> = ({
     onMakeRecurring,
     onPrint,
     onDelete,
+    canEdit = true,
 }) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -54,28 +57,32 @@ const RowActionDropdown: React.FC<RowActionDropdownProps> = ({
             onMouseDown={(e) => e.stopPropagation()}
             className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-lg border border-gray-100 py-2 z-50"
         >
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit();
-                    onClose();
-                }}
-                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors font-medium border-b border-gray-100 flex items-center gap-2"
-            >
-                <Edit size={16} className="text-[#3A6D6C]" />
-                Edit
-            </button>
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onMakeRecurring();
-                    onClose();
-                }}
-                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors font-medium border-b border-gray-100 flex items-center gap-2"
-            >
-                <Repeat size={16} className="text-[#3A6D6C]" />
-                Make Recurring
-            </button>
+            {canEdit && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit();
+                        onClose();
+                    }}
+                    className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors font-medium border-b border-gray-100 flex items-center gap-2"
+                >
+                    <Edit size={16} className="text-[#3A6D6C]" />
+                    Edit
+                </button>
+            )}
+            {canEdit && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onMakeRecurring();
+                        onClose();
+                    }}
+                    className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors font-medium border-b border-gray-100 flex items-center gap-2"
+                >
+                    <Repeat size={16} className="text-[#3A6D6C]" />
+                    Make Recurring
+                </button>
+            )}
             <button
                 onClick={(e) => {
                     e.stopPropagation();
@@ -87,17 +94,19 @@ const RowActionDropdown: React.FC<RowActionDropdownProps> = ({
                 <Printer size={16} className="text-[#3A6D6C]" />
                 Print
             </button>
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete();
-                    onClose();
-                }}
-                className="w-full px-4 py-3 text-left text-red-500 hover:bg-gray-50 transition-colors font-medium flex items-center gap-2"
-            >
-                <Trash2 size={16} />
-                Delete
-            </button>
+            {canEdit && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete();
+                        onClose();
+                    }}
+                    className="w-full px-4 py-3 text-left text-red-500 hover:bg-gray-50 transition-colors font-medium flex items-center gap-2"
+                >
+                    <Trash2 size={16} />
+                    Delete
+                </button>
+            )}
         </div>
     );
 };
@@ -107,6 +116,9 @@ const PROPERTIES_PER_PAGE = 5;
 const Requests: React.FC = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('maintenance');
+    const canViewSettings = !isTeamMember || canManage('settings');
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -371,20 +383,24 @@ const Requests: React.FC = () => {
                     </button>
 
                     <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">
-                        <button
-                            onClick={() => navigate('/dashboard/maintenance/request')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2 flex-grow md:flex-grow-0 justify-center"
-                        >
-                            Add Requests
-                            <Plus className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => navigate('/dashboard/settings/request-settings/request-settings')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2 flex-grow md:flex-grow-0 justify-center"
-                        >
-                            Settings
-                        </button>
-                        {selectedItems.length > 0 && (
+                        {canEdit && (
+                            <button
+                                onClick={() => navigate('/dashboard/maintenance/request')}
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2 flex-grow md:flex-grow-0 justify-center"
+                            >
+                                Add Requests
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        )}
+                        {canViewSettings && (
+                            <button
+                                onClick={() => navigate('/dashboard/settings/request-settings/request-settings')}
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2 flex-grow md:flex-grow-0 justify-center"
+                            >
+                                Settings
+                            </button>
+                        )}
+                        {canEdit && selectedItems.length > 0 && (
                             <button
                                 onClick={handleBulkDeleteClick}
                                 className="px-6 py-2 bg-red-500 text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors shadow-sm flex items-center gap-2 flex-grow md:flex-grow-0 justify-center"
@@ -500,7 +516,7 @@ const Requests: React.FC = () => {
                                                         <span className="text-gray-400 text-xs">Assignee:</span>
                                                         {item.assignee ? (
                                                             <span className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</span>
-                                                        ) : (
+                                                        ) : canEdit ? (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
@@ -511,7 +527,7 @@ const Requests: React.FC = () => {
                                                                 <UserPlus className="w-4 h-4" />
                                                                 Assign
                                                             </button>
-                                                        )}
+                                                        ) : null}
                                                     </div>
                                                     {item.applicantCount > 0 && (
                                                         <button
@@ -555,6 +571,7 @@ const Requests: React.FC = () => {
                                                             onMakeRecurring={() => handleMakeRecurring(item.id)}
                                                             onPrint={() => handlePrint(item.id)}
                                                             onDelete={() => handleDeleteClick(item.id)}
+                                                            canEdit={canEdit}
                                                         />
                                                     </div>
                                                 </div>

@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { usePageTracking } from './hooks/usePageTracking';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools as TanStackDevtools } from '@tanstack/react-query-devtools';
@@ -364,11 +364,13 @@ const App: React.FC = () => {
               <Route path="/dashboard/accounting/recurring" element={<ProtectedRoute><Recurring /></ProtectedRoute>} />
               <Route path="/dashboard/accounting/transactions/recurring-clone" element={<ProtectedRoute><RecurringClone /></ProtectedRoute>} />
               <Route path="/dashboard/accounting/recurring/:id" element={<ProtectedRoute><RecurringDetail /></ProtectedRoute>} />
-              <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
-              <Route path="/dashboard/maintenance/requests" element={<Requests />} />
-              <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />
-              <Route path="/dashboard/maintenance/recurring" element={<MaintenanceRecurring />} />
-              <Route path="/dashboard/maintenance/recurring/:id" element={<MaintenanceRecurringDetail />} />
+              <Route element={<TeamPermissionGuard module="maintenance"><Outlet /></TeamPermissionGuard>}>
+                <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
+                <Route path="/dashboard/maintenance/requests" element={<Requests />} />
+                <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />
+                <Route path="/dashboard/maintenance/recurring" element={<MaintenanceRecurring />} />
+                <Route path="/dashboard/maintenance/recurring/:id" element={<MaintenanceRecurringDetail />} />
+              </Route>
               <Route path="/dashboard/movein" element={<MoveIn />} />
               <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
               <Route path="/dashboard/contacts/tenants/import" element={<ImportTenants />} />
@@ -448,146 +450,148 @@ const App: React.FC = () => {
               />
 
               {/* Settings Routes */}
-              <Route
-                path="/dashboard/settings"
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
+              <Route element={<TeamPermissionGuard module="settings"><Outlet /></TeamPermissionGuard>}>
+                <Route
+                  path="/dashboard/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Account Settings */}
-              <Route
-                path="/dashboard/settings/profile"
-                element={
-                  <ProtectedRoute>
-                    <ProfileSettings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/security"
-                element={
-                  <ProtectedRoute>
-                    <SecuritySettings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/integrations"
-                element={
-                  <ProtectedRoute>
-                    <IntegrationSettings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/notifications"
-                element={
-                  <ProtectedRoute>
-                    <NotificationSettings />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Account Settings */}
+                <Route
+                  path="/dashboard/settings/profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfileSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/settings/security"
+                  element={
+                    <ProtectedRoute>
+                      <SecuritySettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/settings/integrations"
+                  element={
+                    <ProtectedRoute>
+                      <IntegrationSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/settings/notifications"
+                  element={
+                    <ProtectedRoute>
+                      <NotificationSettings />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Subscription Settings */}
-              <Route
-                path="/dashboard/settings/subscription/my-plan"
-                element={
-                  <ProtectedRoute>
-                    <MyPlanSettings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/subscription/my-card"
-                element={
-                  <ProtectedRoute>
-                    <MyCardSettings />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Subscription Settings */}
+                <Route
+                  path="/dashboard/settings/subscription/my-plan"
+                  element={
+                    <ProtectedRoute>
+                      <MyPlanSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/settings/subscription/my-card"
+                  element={
+                    <ProtectedRoute>
+                      <MyCardSettings />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Accounting Settings */}
-              <Route
-                path="/dashboard/settings/accounting/invoice"
-                element={
-                  <ProtectedRoute>
-                    <InvoiceSettings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/accounting/tags"
-                element={
-                  <ProtectedRoute>
-                    <TagsSettings />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Accounting Settings */}
+                <Route
+                  path="/dashboard/settings/accounting/invoice"
+                  element={
+                    <ProtectedRoute>
+                      <InvoiceSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/settings/accounting/tags"
+                  element={
+                    <ProtectedRoute>
+                      <TagsSettings />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Online Payments Settings */}
-              <Route
-                path="/dashboard/settings/online-payments/configurations"
-                element={
-                  <ProtectedRoute>
-                    <OnlinePaymentsConfigurations />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Online Payments Settings */}
+                <Route
+                  path="/dashboard/settings/online-payments/configurations"
+                  element={
+                    <ProtectedRoute>
+                      <OnlinePaymentsConfigurations />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Rental Application Settings */}
-              <Route path="/dashboard/settings/rental-application" element={
-                <ProtectedRoute>
-                  <RentalApplicationSettingsLayout />
-                </ProtectedRoute>
-              }>
-                <Route path="online-application" element={<OnlineApplication />} />
-                <Route path="form-configuration" element={<FormConfiguration />} />
+                {/* Rental Application Settings */}
+                <Route path="/dashboard/settings/rental-application" element={
+                  <ProtectedRoute>
+                    <RentalApplicationSettingsLayout />
+                  </ProtectedRoute>
+                }>
+                  <Route path="online-application" element={<OnlineApplication />} />
+                  <Route path="form-configuration" element={<FormConfiguration />} />
+                </Route>
+
+                <Route path="/dashboard/settings/rental-application/background-questions" element={
+                  <ProtectedRoute>
+                    <BackgroundQuestions />
+                  </ProtectedRoute>
+                } />
+
+                {/* Team Management Settings */}
+                <Route
+                  path="/dashboard/settings/team-management/roles-permissions"
+                  element={
+                    <ProtectedRoute>
+                      <RolesPermissions />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/settings/team-management/property-permissions"
+                  element={
+                    <ProtectedRoute>
+                      <PropertyPermissions />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Request Settings */}
+                <Route
+                  path="/dashboard/settings/request-settings/request-settings"
+                  element={
+                    <ProtectedRoute>
+                      <RequestSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/settings/request-settings/automation-settings"
+                  element={
+                    <ProtectedRoute>
+                      <AutomationSettings />
+                    </ProtectedRoute>
+                  }
+                />
               </Route>
-
-              <Route path="/dashboard/settings/rental-application/background-questions" element={
-                <ProtectedRoute>
-                  <BackgroundQuestions />
-                </ProtectedRoute>
-              } />
-
-              {/* Team Management Settings */}
-              <Route
-                path="/dashboard/settings/team-management/roles-permissions"
-                element={
-                  <ProtectedRoute>
-                    <RolesPermissions />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/team-management/property-permissions"
-                element={
-                  <ProtectedRoute>
-                    <PropertyPermissions />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Request Settings */}
-              <Route
-                path="/dashboard/settings/request-settings/request-settings"
-                element={
-                  <ProtectedRoute>
-                    <RequestSettings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/request-settings/automation-settings"
-                element={
-                  <ProtectedRoute>
-                    <AutomationSettings />
-                  </ProtectedRoute>
-                }
-              />
 
               <Route
                 path="/portfolio"
@@ -726,110 +730,112 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/dashboard/reports"
-                element={
-                  <ProtectedRoute>
-                    <Reports />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/rentability"
-                element={
-                  <ProtectedRoute>
-                    <Rentability />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/statement"
-                element={
-                  <ProtectedRoute>
-                    <ProviderStatement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/contacts"
-                element={
-                  <ProtectedRoute>
-                    <Contacts />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/maintenance-requests"
-                element={
-                  <ProtectedRoute>
-                    <MaintenanceRequestsReport />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/rent-roll"
-                element={
-                  <ProtectedRoute>
-                    <RentRoll />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/renters-insurance"
-                element={
-                  <ProtectedRoute>
-                    <RentersInsurance />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/tenant-statement"
-                element={
-                  <ProtectedRoute>
-                    <TenantStatement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/vacant-rentals"
-                element={
-                  <ProtectedRoute>
-                    <VacantRentals />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/general-expenses"
-                element={
-                  <ProtectedRoute>
-                    <GeneralExpenses />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/general-income"
-                element={
-                  <ProtectedRoute>
-                    <GeneralIncome />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/property-expenses"
-                element={
-                  <ProtectedRoute>
-                    <PropertyExpenses />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports/property-statement"
-                element={
-                  <ProtectedRoute>
-                    <PropertyStatement />
-                  </ProtectedRoute>
-                }
-              />
+              <Route element={<TeamPermissionGuard module="reports"><Outlet /></TeamPermissionGuard>}>
+                <Route
+                  path="/dashboard/reports"
+                  element={
+                    <ProtectedRoute>
+                      <Reports />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/rentability"
+                  element={
+                    <ProtectedRoute>
+                      <Rentability />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/statement"
+                  element={
+                    <ProtectedRoute>
+                      <ProviderStatement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/contacts"
+                  element={
+                    <ProtectedRoute>
+                      <Contacts />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/maintenance-requests"
+                  element={
+                    <ProtectedRoute>
+                      <MaintenanceRequestsReport />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/rent-roll"
+                  element={
+                    <ProtectedRoute>
+                      <RentRoll />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/renters-insurance"
+                  element={
+                    <ProtectedRoute>
+                      <RentersInsurance />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/tenant-statement"
+                  element={
+                    <ProtectedRoute>
+                      <TenantStatement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/vacant-rentals"
+                  element={
+                    <ProtectedRoute>
+                      <VacantRentals />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/general-expenses"
+                  element={
+                    <ProtectedRoute>
+                      <GeneralExpenses />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/general-income"
+                  element={
+                    <ProtectedRoute>
+                      <GeneralIncome />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/property-expenses"
+                  element={
+                    <ProtectedRoute>
+                      <PropertyExpenses />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/reports/property-statement"
+                  element={
+                    <ProtectedRoute>
+                      <PropertyStatement />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
               <Route
                 path="/downloads"
                 element={

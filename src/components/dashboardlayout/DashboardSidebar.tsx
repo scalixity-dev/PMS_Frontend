@@ -190,7 +190,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
 }) {
 
   const navigate = useNavigate();
-  const { isTeamMember, canView } = useTeamPermissions();
+  const { isTeamMember, canView, isLoading: permissionsLoading } = useTeamPermissions();
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isCreateNewOpen, setIsCreateNewOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -392,6 +392,18 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
 
           {/* Navigation */}
           <nav className="px-1 py-2 space-y-1">
+            {permissionsLoading && (
+              <div className="px-2 py-2 space-y-2 animate-pulse">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
+                    <div className="w-6 h-6 rounded-md bg-white/20 flex-shrink-0" />
+                    {!collapsed && <div className="h-3.5 rounded-full bg-white/20 flex-1" style={{ width: `${55 + (i % 3) * 15}%` }} />}
+                  </div>
+                ))}
+              </div>
+            )}
+            {!permissionsLoading && (
+            <>
             {/* Dashboard — always visible */}
             <SidebarDropdownLink
               label="Dashboard"
@@ -489,6 +501,8 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                 <SubLink label="My templates" to="/dashboard/documents/my-templates" />
                 <SubLink label="File manager" to="/dashboard/documents/file-manager" />
               </SidebarDropdownLink>
+            )}
+            </>
             )}
           </nav>
         </div>

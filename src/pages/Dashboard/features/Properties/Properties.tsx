@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { Trash2, CheckSquare, Square, Loader2, Building2 } from 'lucide-react';
 import PropertiesHeader from './components/PropertiesHeader';
@@ -31,6 +32,8 @@ interface Property {
 const Properties: React.FC = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('property-units');
 
     // Zustand store - persisted state
     const { currentPage, itemsPerPage, searchQuery, filters, setCurrentPage, setSearchQuery, setFilters } = usePropertyStore();
@@ -370,7 +373,7 @@ const Properties: React.FC = () => {
             />
 
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
-                <PropertiesHeader onAddProperty={handleAddProperty} onImport={handleImport} />
+                <PropertiesHeader onAddProperty={handleAddProperty} onImport={handleImport} canEdit={canEdit} />
 
                 {/* Selection Mode Controls */}
                 {selectionMode && (
@@ -415,7 +418,7 @@ const Properties: React.FC = () => {
                 )}
 
                 {/* Selection Mode Toggle Button */}
-                {!selectionMode && (
+                {canEdit && !selectionMode && (
                     <div className="mb-4 flex justify-end">
                         <button
                             onClick={handleToggleSelectionMode}
@@ -493,12 +496,14 @@ const Properties: React.FC = () => {
                         </div>
                         <h3 className="text-lg font-semibold text-gray-800 mb-1">No properties yet</h3>
                         <p className="text-gray-500 text-sm mb-4">Add your first property to get started</p>
-                        <button
-                            onClick={handleAddProperty}
-                            className="inline-flex items-center justify-center px-6 py-2.5 bg-[#7BD747] text-white font-medium rounded-full hover:bg-[#6bc93a] transition-colors"
-                        >
-                            Add Property
-                        </button>
+                        {canEdit && (
+                            <button
+                                onClick={handleAddProperty}
+                                className="inline-flex items-center justify-center px-6 py-2.5 bg-[#7BD747] text-white font-medium rounded-full hover:bg-[#6bc93a] transition-colors"
+                            >
+                                Add Property
+                            </button>
+                        )}
                     </div>
                 )}
 

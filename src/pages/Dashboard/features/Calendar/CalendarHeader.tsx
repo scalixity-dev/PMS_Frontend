@@ -8,6 +8,7 @@ interface CalendarHeaderProps {
     onDateChange: (date: Date) => void;
     onTodayClick: () => void;
     onAddReminder: () => void;
+    canEdit?: boolean;
 }
 
 const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -15,6 +16,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
     onDateChange,
     onTodayClick,
     onAddReminder,
+    canEdit = true,
 }) => {
     const months = Array.from({ length: 12 }, (_, i) => ({
         value: i.toString(),
@@ -69,13 +71,15 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
                     >
                         Today
                     </button>
-                    <button
-                        onClick={onAddReminder}
-                        className="flex-1 md:flex-none flex justify-center bg-white items-center gap-2 px-4 py-2.5 border border-green-500 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors"
-                    >
-                        Add Reminder
-                        <Plus size={18} />
-                    </button>
+                    {canEdit && (
+                        <button
+                            onClick={onAddReminder}
+                            className="flex-1 md:flex-none flex justify-center bg-white items-center gap-2 px-4 py-2.5 border border-green-500 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors"
+                        >
+                            Add Reminder
+                            <Plus size={18} />
+                        </button>
+                    )}
                 </div>
             </div>
 

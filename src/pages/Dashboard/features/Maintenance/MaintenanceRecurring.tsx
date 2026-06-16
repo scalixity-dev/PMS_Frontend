@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import { ChevronLeft, Plus, Check, Trash2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
@@ -16,6 +17,9 @@ import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
 const MaintenanceRecurring: React.FC = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('maintenance');
+    const canViewSettings = !isTeamMember || canManage('settings');
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -171,19 +175,23 @@ const MaintenanceRecurring: React.FC = () => {
                     </button>
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center justify-center gap-2"
-                        >
-                            Add Recurring Request
-                            <Plus className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => navigate('/dashboard/settings/request-settings/request-settings')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm text-center"
-                        >
-                            Settings
-                        </button>
+                        {canEdit && (
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center justify-center gap-2"
+                            >
+                                Add Recurring Request
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        )}
+                        {canViewSettings && (
+                            <button
+                                onClick={() => navigate('/dashboard/settings/request-settings/request-settings')}
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm text-center"
+                            >
+                                Settings
+                            </button>
+                        )}
                     </div>
                 </div>
 

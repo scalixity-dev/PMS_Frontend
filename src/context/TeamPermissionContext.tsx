@@ -6,6 +6,7 @@ interface TeamPermissionContextValue {
   canView: (module: string) => boolean;
   canManage: (module: string) => boolean;
   permissions: string[];
+  isLoading: boolean;
 }
 
 const TeamPermissionContext = createContext<TeamPermissionContextValue>({
@@ -13,10 +14,11 @@ const TeamPermissionContext = createContext<TeamPermissionContextValue>({
   canView: () => true,
   canManage: () => true,
   permissions: [],
+  isLoading: false,
 });
 
 export const TeamPermissionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { data: myTeams } = useGetMyTeams();
+  const { data: myTeams, isLoading } = useGetMyTeams();
 
   const value = useMemo<TeamPermissionContextValue>(() => {
     const activeTeam = myTeams?.find((t: any) => t.status === 'ACTIVE');
@@ -27,6 +29,7 @@ export const TeamPermissionProvider: React.FC<{ children: React.ReactNode }> = (
         canView: () => true,
         canManage: () => true,
         permissions: [],
+        isLoading,
       };
     }
 
@@ -39,8 +42,9 @@ export const TeamPermissionProvider: React.FC<{ children: React.ReactNode }> = (
       canView: (module: string) =>
         permSet.has(`${module}:view`) || permSet.has(`${module}:manage`),
       canManage: (module: string) => permSet.has(`${module}:manage`),
+      isLoading,
     };
-  }, [myTeams]);
+  }, [myTeams, isLoading]);
 
   return (
     <TeamPermissionContext.Provider value={value}>

@@ -21,6 +21,7 @@ import { useGetCurrentUser } from "../../hooks/useAuthQueries";
 import { propertyQueryKeys } from "../../hooks/usePropertyQueries";
 import AccountSwitcherModal from "../common/AccountSwitcherModal";
 import DownloadsModal from "../common/DownloadsModal";
+import { useTeamPermissions } from "../../context/TeamPermissionContext";
 
 interface NavbarProps {
   setSidebarOpen: (open: boolean) => void;
@@ -36,6 +37,7 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const { isTeamMember, canView } = useTeamPermissions();
   const { data: currentUser, isLoading } = useGetCurrentUser();
   const userName = currentUser?.fullName || "User";
   const userEmail = currentUser?.email || "";
@@ -207,18 +209,20 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
               {isMobileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150 origin-top-right">
                   <div className="p-2 flex flex-col gap-1">
-                    <button
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        navigate('/dashboard/reports');
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        <FileText size={16} className="text-gray-700" />
-                      </div>
-                      <span className="font-medium">Reports</span>
-                    </button>
+                    {(!isTeamMember || canView('reports')) && (
+                      <button
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          navigate('/dashboard/reports');
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                          <FileText size={16} className="text-gray-700" />
+                        </div>
+                        <span className="font-medium">Reports</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => { setIsMobileMenuOpen(false); setIsDownloadsOpen(true); }}
                       className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
@@ -228,18 +232,20 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
                       </div>
                       <span className="font-medium">Downloads</span>
                     </button>
-                    <button
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        navigate('/dashboard/calendar');
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        <Calendar size={16} className="text-gray-700" />
-                      </div>
-                      <span className="font-medium">Calendar</span>
-                    </button>
+                    {(!isTeamMember || canView('calendar')) && (
+                      <button
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          navigate('/dashboard/calendar');
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                          <Calendar size={16} className="text-gray-700" />
+                        </div>
+                        <span className="font-medium">Calendar</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setIsMobileMenuOpen(false);
@@ -271,13 +277,15 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
 
             {/* Desktop Actions (Hidden on Mobile) */}
             <div className="hidden md:flex items-center gap-1 md:gap-2">
-              <button
-                aria-label="Reports"
-                className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
-                onClick={() => navigate('/dashboard/reports')}
-              >
-                <FileText size={18} className="text-gray-800" />
-              </button>
+              {(!isTeamMember || canView('reports')) && (
+                <button
+                  aria-label="Reports"
+                  className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
+                  onClick={() => navigate('/dashboard/reports')}
+                >
+                  <FileText size={18} className="text-gray-800" />
+                </button>
+              )}
               <button
                 aria-label="Downloads"
                 className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
@@ -285,13 +293,15 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
               >
                 <Download size={18} className="text-gray-800" />
               </button>
-              <button
-                aria-label="Calendar"
-                className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
-                onClick={() => navigate('/dashboard/calendar')}
-              >
-                <Calendar size={18} className="text-gray-800" />
-              </button>
+              {(!isTeamMember || canView('calendar')) && (
+                <button
+                  aria-label="Calendar"
+                  className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
+                  onClick={() => navigate('/dashboard/calendar')}
+                >
+                  <Calendar size={18} className="text-gray-800" />
+                </button>
+              )}
               {/* Messages Icon */}
               <button
                 aria-label="Messages"

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { ChevronLeft, Download, Check, MoreHorizontal } from 'lucide-react';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useTransactionStore } from './store/transactionStore';
 import EditInvoiceModal from './components/EditInvoiceModal';
@@ -19,6 +20,8 @@ const Transactions: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('accounting');
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [moreMenuOpenId, setMoreMenuOpenId] = useState<string | null>(null);
@@ -434,7 +437,7 @@ const Transactions: React.FC = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                        <MoneyInMoneyOutButtons />
+                        {canEdit && <MoneyInMoneyOutButtons />}
 
 
                         <button
@@ -581,7 +584,7 @@ const Transactions: React.FC = () => {
                                             {/* Mobile Actions - Shown at top right relative to card */}
                                             <div className="block lg:hidden">
                                                 <div className="relative" ref={moreMenuOpenId === item.id ? moreMenuRef : null}>
-                                                    <button
+                                                    {canEdit && <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
@@ -589,7 +592,7 @@ const Transactions: React.FC = () => {
                                                         className="text-gray-600 hover:text-gray-800 transition-colors"
                                                     >
                                                         <MoreHorizontal className="w-8 h-8 bg-gray-100 rounded-full p-1.5" />
-                                                    </button>
+                                                    </button>}
                                                     {moreMenuOpenId === item.id && (
                                                         <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-[60]">
                                                             <button
@@ -769,7 +772,7 @@ const Transactions: React.FC = () => {
                                         {/* Desktop Actions */}
                                         <div className="hidden lg:flex items-center justify-end gap-3 relative w-full">
                                             <div className="relative" ref={moreMenuOpenId === item.id ? moreMenuRef : null}>
-                                                <button
+                                                {canEdit && <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
@@ -777,7 +780,7 @@ const Transactions: React.FC = () => {
                                                     className="text-gray-600 hover:text-gray-800 transition-colors"
                                                 >
                                                     <MoreHorizontal className="w-10 h-6 bg-gray-200 rounded-full p-0.5" />
-                                                </button>
+                                                </button>}
                                                 {moreMenuOpenId === item.id && (
                                                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
                                                         <button

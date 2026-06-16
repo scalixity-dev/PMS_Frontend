@@ -5,6 +5,7 @@ import MonthGrid from './MonthGrid';
 import AddReminderModal from './components/AddReminderModal';
 import { useGetCalendarEvents } from '../../../../hooks/useCalendarQueries';
 import { Loader2 } from 'lucide-react';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 // Debounce helper
 const debounce = <T extends (...args: unknown[]) => void>(fn: T, delay: number): T => {
@@ -32,6 +33,8 @@ export interface Reminder {
 }
 
 const Calendar: React.FC = () => {
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('calendar');
     const [currentDate, setCurrentDate] = useState(new Date());
     // Initialize with previous, current, and next month
     const [months, setMonths] = useState<Date[]>([
@@ -417,6 +420,7 @@ const Calendar: React.FC = () => {
                     onDateChange={handleDateChange}
                     onTodayClick={handleTodayClick}
                     onAddReminder={() => setIsReminderModalOpen(true)}
+                    canEdit={canEdit}
                 />
 
                 {/* Weekday Header - Aligned with the grid */}
@@ -479,7 +483,7 @@ const Calendar: React.FC = () => {
 
                                 {/* Month Grid */}
                                 <div className="flex-1">
-                                    <MonthGrid month={month} reminders={reminders} />
+                                    <MonthGrid month={month} reminders={reminders} canEdit={canEdit} />
                                 </div>
                             </div>
                         ))}

@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { formatPhoneNumber } from '@/utils/phone.utils';
 
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import { Plus, ChevronLeft, Download, MoreHorizontal, Edit2, Trash2, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
@@ -60,6 +61,8 @@ interface Lead {
 const Leads = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('leads');
     const { data: backendLeads = [], isLoading, error } = useGetAllLeads();
     const { data: listings = [] } = useGetAllListings();
     const updateLeadMutation = useUpdateLead();
@@ -394,7 +397,7 @@ const Leads = () => {
                         <h1 className="text-2xl font-bold text-gray-800">Leads</h1>
                     </div>
                     <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-                        {selectedLeads.length > 0 && (
+                        {canEdit && selectedLeads.length > 0 && (
                             <button
                                 onClick={() => initiateDelete('bulk', selectedLeads)}
                                 disabled={deletingLeadIds.length > 0}
@@ -404,13 +407,15 @@ const Leads = () => {
                                 <span className="whitespace-nowrap">Delete ({selectedLeads.length})</span>
                             </button>
                         )}
-                        <button
-                            onClick={() => navigate('/dashboard/leasing/leads/add')}
-                            className="flex items-center gap-2 bg-[#3A6D6C] text-white px-4 sm:px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-all shadow-sm flex-1 sm:flex-none justify-center"
-                        >
-                            <span className="whitespace-nowrap">Add Leads</span>
-                            <Plus className="w-5 h-5" />
-                        </button>
+                        {canEdit && (
+                            <button
+                                onClick={() => navigate('/dashboard/leasing/leads/add')}
+                                className="flex items-center gap-2 bg-[#3A6D6C] text-white px-4 sm:px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-all shadow-sm flex-1 sm:flex-none justify-center"
+                            >
+                                <span className="whitespace-nowrap">Add Leads</span>
+                                <Plus className="w-5 h-5" />
+                            </button>
+                        )}
                         <button
                             onClick={handleExport}
                             className="bg-[#3A6D6C] text-white p-2 rounded-full hover:bg-[#2c5251] transition-all shadow-sm"
@@ -498,7 +503,7 @@ const Leads = () => {
                                         </div>
 
                                         {/* Actions Menu */}
-                                        <div className="relative" ref={openMenuId === lead.id ? menuRef : null}>
+                                        {canEdit && <div className="relative" ref={openMenuId === lead.id ? menuRef : null}>
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -557,7 +562,7 @@ const Leads = () => {
                                                     </button>
                                                 </div>
                                             )}
-                                        </div>
+                                        </div>}
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4 text-sm bg-gray-50 rounded-xl p-4">
@@ -612,24 +617,28 @@ const Leads = () => {
                                     <div className="flex items-center justify-start gap-10">
                                         <span className="text-black font-normal text-sm whitespace-nowrap">{lead.lastUpdate}</span>
                                         <div className="flex items-center gap-3">
-                                            <button
-                                                onClick={() => navigate(`/dashboard/leasing/leads/edit/${lead.id}`)}
-                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                            >
-                                                <Edit2 className="w-4 h-4 stroke-[3]" />
-                                            </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    initiateDelete('single', [lead.id]);
-                                                }}
-                                                disabled={deletingLeadIds.includes(lead.id)}
-                                                className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                title="Delete lead"
-                                            >
-                                                <Trash2 className="w-4 h-4 stroke-[3]" />
-                                            </button>
-                                            <div className="relative" ref={openMenuId === lead.id ? menuRef : null}>
+                                            {canEdit && (
+                                                <button
+                                                    onClick={() => navigate(`/dashboard/leasing/leads/edit/${lead.id}`)}
+                                                    className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                                >
+                                                    <Edit2 className="w-4 h-4 stroke-[3]" />
+                                                </button>
+                                            )}
+                                            {canEdit && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        initiateDelete('single', [lead.id]);
+                                                    }}
+                                                    disabled={deletingLeadIds.includes(lead.id)}
+                                                    className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    title="Delete lead"
+                                                >
+                                                    <Trash2 className="w-4 h-4 stroke-[3]" />
+                                                </button>
+                                            )}
+                                            {canEdit && <div className="relative" ref={openMenuId === lead.id ? menuRef : null}>
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -666,7 +675,7 @@ const Leads = () => {
                                                         </button>
                                                     </div>
                                                 )}
-                                            </div>
+                                            </div>}
                                         </div>
                                     </div>
                                 </div>
