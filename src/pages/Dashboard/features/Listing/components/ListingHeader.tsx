@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 
 interface ListingHeaderProps {
     onAddListing?: () => void;
+    canEdit?: boolean;
 }
 
-const ListingHeader: React.FC<ListingHeaderProps> = ({ onAddListing }) => {
+const ListingHeader: React.FC<ListingHeaderProps> = ({ onAddListing, canEdit = true }) => {
     const navigate = useNavigate();
 
     return (
@@ -22,14 +23,16 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ onAddListing }) => {
             </div>
 
             <div className="flex items-center gap-2 md:gap-4">
-                <button
-                    onClick={onAddListing}
-                    className="flex items-center gap-1 px-3 md:px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#467676] transition-colors shadow-sm"
-                >
-                    <span className="hidden md:inline">Add Listing</span>
-                    <span className="md:hidden">Add</span>
-                    <Plus className="w-4 h-4" />
-                </button>
+                {canEdit && (
+                    <button
+                        onClick={onAddListing}
+                        className="flex items-center gap-1 px-3 md:px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#467676] transition-colors shadow-sm"
+                    >
+                        <span className="hidden md:inline">Add Listing</span>
+                        <span className="md:hidden">Add</span>
+                        <Plus className="w-4 h-4" />
+                    </button>
+                )}
                 {/* <button
                     className="flex items-center gap-1 px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#467676] transition-colors shadow-sm"
                 >

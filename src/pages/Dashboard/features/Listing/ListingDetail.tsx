@@ -31,10 +31,13 @@ import { leasingService } from '../../../../services/leasing.service';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 const ListingDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('listing');
     const [activeTab, setActiveTab] = useState('listing');
     const [isOnlineApplicationModalOpen, setIsOnlineApplicationModalOpen] = useState(false);
     const [isInviteToApplyModalOpen, setIsInviteToApplyModalOpen] = useState(false);
@@ -773,19 +776,23 @@ const ListingDetail: React.FC = () => {
                         <h1 className="text-2xl font-bold text-gray-800">{listing?.name || `#${id}`}</h1>
                     </div>
                     <div className="flex gap-3">
-                        <button
-                            onClick={handleToggleListing}
-                            disabled={updateListing.isPending}
-                            className={`bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors ${updateListing.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            {updateListing.isPending ? (listing?.status === 'Listed' ? 'Unlisting...' : 'Listing...') : (listing?.status === 'Listed' ? 'Unlist' : 'List')}
-                        </button>
-                        <button
-                            onClick={() => setIsInviteToApplyModalOpen(true)}
-                            className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors"
-                        >
-                            Invite to apply
-                        </button>
+                        {canEdit && (
+                            <button
+                                onClick={handleToggleListing}
+                                disabled={updateListing.isPending}
+                                className={`bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors ${updateListing.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                {updateListing.isPending ? (listing?.status === 'Listed' ? 'Unlisting...' : 'Listing...') : (listing?.status === 'Listed' ? 'Unlist' : 'List')}
+                            </button>
+                        )}
+                        {canEdit && (
+                            <button
+                                onClick={() => setIsInviteToApplyModalOpen(true)}
+                                className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors"
+                            >
+                                Invite to apply
+                            </button>
+                        )}
                         <div className="relative">
                             <button
                                 onClick={() => setIsShareDropdownOpen(!isShareDropdownOpen)}

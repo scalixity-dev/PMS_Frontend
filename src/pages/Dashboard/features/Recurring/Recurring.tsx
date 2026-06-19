@@ -13,6 +13,7 @@ import EditInvoiceModal from '../Transactions/components/EditInvoiceModal';
 import DeleteTransactionModal from '../Transactions/components/DeleteTransactionModal';
 import PostNextInvoiceModal from './components/PostNextInvoiceModal';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 // Utility function to calculate next date based on frequency
 const calculateNextDate = (startDate: Date, frequency: string, endDate?: Date | null): Date | null => {
@@ -87,6 +88,9 @@ const Recurring: React.FC = () => {
     const navigate = useNavigate();
     const context = useOutletContext<{ sidebarCollapsed?: boolean }>();
     const sidebarCollapsed = context?.sidebarCollapsed ?? false;
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('accounting');
+    const canViewSettings = !isTeamMember || canManage('settings');
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -343,13 +347,15 @@ const Recurring: React.FC = () => {
                     </button>
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3" ref={dropdownContainerRef}>
-                        <MoneyInMoneyOutButtons />
+                        {canEdit && <MoneyInMoneyOutButtons />}
 
                         {/* Settings */}
-                        <button className="w-full sm:w-auto px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center justify-center gap-2">
-                            <Settings className="w-4 h-4" />
-                            Settings
-                        </button>
+                        {canViewSettings && (
+                            <button className="w-full sm:w-auto px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center justify-center gap-2">
+                                <Settings className="w-4 h-4" />
+                                Settings
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -449,17 +455,19 @@ const Recurring: React.FC = () => {
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex justify-end relative">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
-                                        }}
-                                        className="text-gray-600 hover:text-gray-600"
-                                    >
-                                        <MoreHorizontal className="w-10 h-6 bg-gray-200 rounded-full p-0.5" />
-                                    </button>
-                                </div>
+                                {canEdit && (
+                                    <div className="flex justify-end relative">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                            }}
+                                            className="text-gray-600 hover:text-gray-600"
+                                        >
+                                            <MoreHorizontal className="w-10 h-6 bg-gray-200 rounded-full p-0.5" />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Mobile View */}
@@ -481,15 +489,17 @@ const Recurring: React.FC = () => {
                                             {item.status}
                                         </span>
                                     </div>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
-                                        }}
-                                        className="text-gray-600"
-                                    >
-                                        <MoreHorizontal className="w-8 h-8 bg-gray-100 rounded-full p-1.5" />
-                                    </button>
+                                    {canEdit && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                            }}
+                                            className="text-gray-600"
+                                        >
+                                            <MoreHorizontal className="w-8 h-8 bg-gray-100 rounded-full p-1.5" />
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="space-y-1">

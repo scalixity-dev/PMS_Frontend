@@ -436,14 +436,14 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
               </SidebarDropdownLink>
             )}
 
-            {(!isTeamMember || canView('rental-applications') || canView('rental-screenings') || canView('leads')) && (
+            {(!isTeamMember || canView('rental-applications') || canView('leads')) && (
               <SidebarDropdownLink
                 label="Leasing"
                 icon={<PiBuildingsFill size={24} />}
                 activeDropdown={activeDropdown}
                 setActiveDropdown={setActiveDropdown}
               >
-                {(!isTeamMember || canView('rental-applications') || canView('rental-screenings')) && (
+                {(!isTeamMember || canView('rental-applications')) && (
                   <SubLink label="Applications" to="/dashboard/leasing/applications" />
                 )}
                 <SubLink label="Leases" to="/dashboard/leasing/leases" />

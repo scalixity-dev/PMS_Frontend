@@ -8,6 +8,7 @@ import EditLeaseTermsModal, { type Lease } from './components/EditLeaseTermsModa
 import { useGetAllLeases, useDeleteLease, useUpdateLease } from '../../../../hooks/useLeaseQueries';
 import type { BackendLease } from '../../../../services/lease.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 // Define LeaseItem matching usage in this file
 export interface LeaseItem extends Lease {
@@ -24,6 +25,8 @@ const Leases: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('property-units');
     const [searchQuery, setSearchQuery] = useState('');
     // Read filter from nav state (e.g. Dashboard "Expiring leases" View All)
     const initialFilter = (location.state as any)?.filter as string | undefined;
@@ -330,20 +333,22 @@ const Leases: React.FC = () => {
                         </button>
                         <h1 className="text-2xl font-bold text-gray-800">Leases</h1>
                     </div>
-                    <div className="flex gap-3 mt-4 md:mt-0 md:ml-8 w-full md:w-auto">
-                        <button
-                            onClick={() => navigate('/dashboard/movein')}
-                            className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex-1 md:flex-none text-center"
-                        >
-                            Move in
-                        </button>
-                        <button
-                            onClick={() => navigate('/dashboard/leasing/leases/import')}
-                            className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex-1 md:flex-none text-center"
-                        >
-                            Import
-                        </button>
-                    </div>
+                    {canEdit && (
+                        <div className="flex gap-3 mt-4 md:mt-0 md:ml-8 w-full md:w-auto">
+                            <button
+                                onClick={() => navigate('/dashboard/movein')}
+                                className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex-1 md:flex-none text-center"
+                            >
+                                Move in
+                            </button>
+                            <button
+                                onClick={() => navigate('/dashboard/leasing/leases/import')}
+                                className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex-1 md:flex-none text-center"
+                            >
+                                Import
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Stats Section */}
@@ -440,18 +445,22 @@ const Leases: React.FC = () => {
                                             <div className="flex justify-between items-start border-b border-gray-100 pb-2">
                                                 <div className={`${getStatusColor(item.status)}`}>{item.status}</div>
                                                 <div className="flex items-center gap-2">
-                                                    <button
-                                                        className="px-3 py-1 bg-[#82D64D] text-white text-xs font-medium rounded-full hover:bg-[#72bd42] transition-colors"
-                                                        onClick={(e) => handleEndLeaseClick(e, item.id)}
-                                                    >
-                                                        End Lease
-                                                    </button>
-                                                    <button
-                                                        className="text-[#3A6D6C] p-2 hover:bg-gray-100 rounded-full"
-                                                        onClick={(e) => handleEditClick(e, item)}
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
+                                                    {canEdit && (
+                                                        <button
+                                                            className="px-3 py-1 bg-[#82D64D] text-white text-xs font-medium rounded-full hover:bg-[#72bd42] transition-colors"
+                                                            onClick={(e) => handleEndLeaseClick(e, item.id)}
+                                                        >
+                                                            End Lease
+                                                        </button>
+                                                    )}
+                                                    {canEdit && (
+                                                        <button
+                                                            className="text-[#3A6D6C] p-2 hover:bg-gray-100 rounded-full"
+                                                            onClick={(e) => handleEditClick(e, item)}
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         className="text-[#3A6D6C] p-2 hover:bg-gray-100 rounded-full"
                                                         onClick={(e) => {
@@ -461,12 +470,14 @@ const Leases: React.FC = () => {
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </button>
-                                                    <button
-                                                        className="text-red-500 p-2 hover:bg-red-50 rounded-full"
-                                                        onClick={(e) => handleDeleteClick(e, item.id)}
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                                    {canEdit && (
+                                                        <button
+                                                            className="text-red-500 p-2 hover:bg-red-50 rounded-full"
+                                                            onClick={(e) => handleDeleteClick(e, item.id)}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div>
@@ -505,18 +516,22 @@ const Leases: React.FC = () => {
                                         <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">{item.duration}</div>
                                         <div className="hidden md:block text-gray-600 text-sm font-medium text-center">{item.rent}</div>
                                         <div className="hidden md:flex items-center justify-center gap-2">
-                                            <button
-                                                className="px-3 py-1 bg-[#82D64D] text-white text-xs font-medium rounded-full hover:bg-[#72bd42] transition-colors"
-                                                onClick={(e) => handleEndLeaseClick(e, item.id)}
-                                            >
-                                                End Lease
-                                            </button>
-                                            <button
-                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                                onClick={(e) => handleEditClick(e, item)}
-                                            >
-                                                <Edit className="w-5 h-5" />
-                                            </button>
+                                            {canEdit && (
+                                                <button
+                                                    className="px-3 py-1 bg-[#82D64D] text-white text-xs font-medium rounded-full hover:bg-[#72bd42] transition-colors"
+                                                    onClick={(e) => handleEndLeaseClick(e, item.id)}
+                                                >
+                                                    End Lease
+                                                </button>
+                                            )}
+                                            {canEdit && (
+                                                <button
+                                                    className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                                    onClick={(e) => handleEditClick(e, item)}
+                                                >
+                                                    <Edit className="w-5 h-5" />
+                                                </button>
+                                            )}
                                             <button
                                                 className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
                                                 onClick={(e) => {
@@ -526,12 +541,14 @@ const Leases: React.FC = () => {
                                             >
                                                 <Eye className="w-5 h-5" />
                                             </button>
-                                            <button
-                                                className="text-red-500 hover:text-red-600 transition-colors"
-                                                onClick={(e) => handleDeleteClick(e, item.id)}
-                                            >
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
+                                            {canEdit && (
+                                                <button
+                                                    className="text-red-500 hover:text-red-600 transition-colors"
+                                                    onClick={(e) => handleDeleteClick(e, item.id)}
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))

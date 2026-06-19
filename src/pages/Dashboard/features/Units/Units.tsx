@@ -12,10 +12,13 @@ import { unitService } from '../../../../services/unit.service';
 import type { Unit } from './components/UnitItem';
 import type { BackendListing } from '../../../../services/listing.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 const Units: React.FC = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('property-units');
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [currentPage, setCurrentPage] = useState(1);
@@ -415,22 +418,24 @@ const Units: React.FC = () => {
                         </button>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800">Units</h1>
                     </div>
-                    <div className="flex items-center gap-2 md:gap-4">
-                        <button
-                            onClick={() => navigate('/dashboard/properties/import')}
-                            className="hidden md:block px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#2c5251] transition-colors"
-                        >
-                            Import
-                        </button>
-                        <button
-                            onClick={() => navigate('/dashboard/property/add')}
-                            className="flex items-center gap-1 px-3 md:px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#2c5251] transition-colors"
-                        >
-                            <span className="hidden md:inline">Add Properties</span>
-                            <span className="md:hidden">Add</span>
-                            <Plus className="w-4 h-4" />
-                        </button>
-                    </div>
+                    {canEdit && (
+                        <div className="flex items-center gap-2 md:gap-4">
+                            <button
+                                onClick={() => navigate('/dashboard/properties/import')}
+                                className="hidden md:block px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#2c5251] transition-colors"
+                            >
+                                Import
+                            </button>
+                            <button
+                                onClick={() => navigate('/dashboard/property/add')}
+                                className="flex items-center gap-1 px-3 md:px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#2c5251] transition-colors"
+                            >
+                                <span className="hidden md:inline">Add Properties</span>
+                                <span className="md:hidden">Add</span>
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Filter */}
