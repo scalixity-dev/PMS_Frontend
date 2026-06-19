@@ -50,7 +50,12 @@ export default function Configurations() {
                         Set the default number of days early to post the recurring transactions before the
                         invoice due date.
                     </p>
-                    <a href="#" className="text-[#5AB049] font-medium text-sm hover:underline inline-flex items-center gap-1">
+                    <a
+                        href="https://stripe.com/docs"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#5AB049] font-medium text-sm hover:underline inline-flex items-center gap-1"
+                    >
                         Learn more
                     </a>
                 </div>
@@ -60,9 +65,13 @@ export default function Configurations() {
                     <div className="flex items-center gap-3 mb-6">
                         <h2 className="text-xl font-bold text-gray-900">Settings</h2>
                         <div
-                            className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider select-none transition-colors bg-[#9CA3AF] text-white"
+                            className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider select-none transition-colors ${
+                                onlinePaymentsSettings?.values?.isConnected
+                                    ? 'bg-[#5AB049] text-white'
+                                    : 'bg-[#9CA3AF] text-white'
+                            }`}
                         >
-                            Not Active
+                            {onlinePaymentsSettings?.values?.isConnected ? 'Active' : 'Not Active'}
                         </div>
                     </div>
 
@@ -78,7 +87,12 @@ export default function Configurations() {
                                     buttonClassName="w-full bg-white border border-gray-200 rounded-lg h-[50px] px-4 text-left flex items-center justify-between text-gray-600 text-sm focus:outline-none focus:border-[#5AB049] focus:ring-1 focus:ring-[#5AB049] transition-all"
                                 />
                             </div>
-                            <a href="#" className="block text-[#4B8F77] text-xs hover:underline">
+                            <a
+                                href="https://stripe.com/global"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block text-[#4B8F77] text-xs hover:underline"
+                            >
                                 Don't see your country?
                             </a>
                         </div>
@@ -92,7 +106,12 @@ export default function Configurations() {
                                 onChange={(e) => setPublicApiKey(e.target.value)}
                                 className="w-full bg-white border border-gray-200 rounded-lg h-[50px] px-4 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:border-[#5AB049] focus:ring-1 focus:ring-[#5AB049] transition-all"
                             />
-                            <a href="#" className="block text-[#4B8F77] text-xs hover:underline">
+                            <a
+                                href="https://dashboard.stripe.com/apikeys"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block text-[#4B8F77] text-xs hover:underline"
+                            >
                                 How to find these keys?
                             </a>
                         </div>
@@ -122,9 +141,14 @@ export default function Configurations() {
 
                     {/* Footer - Stripe Account */}
                     <div className="space-y-1">
-                        <p className="text-gray-600 text-sm">Don't have a stipe account?</p>
-                        <a href="#" className="text-[#4B8F77] font-medium text-sm hover:underline">
-                            Create stripe account
+                        <p className="text-gray-600 text-sm">Don't have a Stripe account?</p>
+                        <a
+                            href="https://dashboard.stripe.com/register"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#4B8F77] font-medium text-sm hover:underline"
+                        >
+                            Create Stripe account
                         </a>
                     </div>
 

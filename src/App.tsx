@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools as TanStackDevtools } from '@tanstack/react-query-devtools';
 import { ChatToast } from './components/chat/ChatToast';
 import AppLayout from './components/layout/AppLayout';
-import { ProtectedRoute, ServiceProtectedRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, ServiceProtectedRoute, TenantProtectedRoute, GuestRoute } from './components/ProtectedRoute';
 import DashboardLayout from './components/dashboardlayout/DashboardLayout';
 const HomePage = lazy(() => import('./pages/basewebsite/home'));
 const ScreeningPage = lazy(() => import('./pages/basewebsite/features/screening/index'));
@@ -209,6 +209,7 @@ const GeneralIncome = lazy(() => import('./pages/Dashboard/features/Reports/Gene
 const PropertyExpenses = lazy(() => import('./pages/Dashboard/features/Reports/PropertyExpenses'));
 const PropertyStatement = lazy(() => import('./pages/Dashboard/features/Reports/PropertyStatement'));
 const Notification = lazy(() => import('./pages/Dashboard/features/Notification/Notification'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -289,10 +290,10 @@ const App: React.FC = () => {
             <Route path="/auth/callback" element={<OAuthCallbackPage />} />
             <Route path="/auth/mobile-login" element={<MobileAutoLogin />} />
             <Route element={<AppLayout />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/forgot-password" element={<LoginPage />} />
-              <Route path="/signup" element={<SignUpPage />} />
-              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+              <Route path="/forgot-password" element={<GuestRoute><LoginPage /></GuestRoute>} />
+              <Route path="/signup" element={<GuestRoute><SignUpPage /></GuestRoute>} />
+              <Route path="/" element={<GuestRoute><HomePage /></GuestRoute>} />
               <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
               <Route path="/usecases/tenant" element={<TenantPage />} />
               <Route path="/usecases/servicepros" element={<ServiceProsPage />} />
@@ -458,6 +459,24 @@ const App: React.FC = () => {
                 }
               />
 
+              {/* Personal Account Settings — always accessible, no module guard */}
+              <Route
+                path="/dashboard/settings/profile"
+                element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>}
+              />
+              <Route
+                path="/dashboard/settings/security"
+                element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>}
+              />
+              <Route
+                path="/dashboard/settings/integrations"
+                element={<ProtectedRoute><IntegrationSettings /></ProtectedRoute>}
+              />
+              <Route
+                path="/dashboard/settings/notifications"
+                element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>}
+              />
+
               {/* Settings Routes */}
               <Route element={<TeamPermissionGuard module="settings"><Outlet /></TeamPermissionGuard>}>
                 <Route
@@ -465,40 +484,6 @@ const App: React.FC = () => {
                   element={
                     <ProtectedRoute>
                       <Settings />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Account Settings */}
-                <Route
-                  path="/dashboard/settings/profile"
-                  element={
-                    <ProtectedRoute>
-                      <ProfileSettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/settings/security"
-                  element={
-                    <ProtectedRoute>
-                      <SecuritySettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/settings/integrations"
-                  element={
-                    <ProtectedRoute>
-                      <IntegrationSettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/settings/notifications"
-                  element={
-                    <ProtectedRoute>
-                      <NotificationSettings />
                     </ProtectedRoute>
                   }
                 />
@@ -859,7 +844,7 @@ const App: React.FC = () => {
             </Route>
 
             {/* User Dashboard Routes */}
-            <Route element={<UserDashboardLayout />}>
+            <Route element={<TenantProtectedRoute><UserDashboardLayout /></TenantProtectedRoute>}>
               <Route path="/userdashboard" element={<UserDashboard />} />
               <Route path="/userdashboard/rent" element={<UserRent />} />
               <Route path="/userdashboard/requests" element={<UserRequests />} />
@@ -886,7 +871,7 @@ const App: React.FC = () => {
             </Route>
 
             {/* Catch-all route */}
-            <Route path="*" element={<HomePage />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
           </TeamPermissionProvider>

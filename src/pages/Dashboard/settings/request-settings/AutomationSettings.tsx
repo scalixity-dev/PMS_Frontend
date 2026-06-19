@@ -2,6 +2,7 @@ import { RequestSettingsLayout } from "../../../../components/common/RequestSett
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import { useEffect, useState } from "react";
 import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
+import { useTeamPermissions } from "../../../../context/TeamPermissionContext";
 
 interface AutomationSettingsValues {
     autoAssignEnabled: boolean;
@@ -9,6 +10,8 @@ interface AutomationSettingsValues {
 }
 
 export default function AutomationSettings() {
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('settings');
     const { data } = useGetSettingsSection<AutomationSettingsValues>("request_automation");
     const updateSettings = useUpdateSettingsSection<AutomationSettingsValues>("request_automation");
     const [form, setForm] = useState<AutomationSettingsValues>({
@@ -46,12 +49,14 @@ export default function AutomationSettings() {
                         Learn more
                     </a>
                     <div className="flex items-center gap-3">
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className={`relative inline-flex items-center ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                             <input
                                 type="checkbox"
                                 className="sr-only peer"
                                 checked={form.autoAssignEnabled}
+                                disabled={!canEdit}
                                 onChange={() => {
+                                    if (!canEdit) return;
                                     const next = { ...form, autoAssignEnabled: !form.autoAssignEnabled };
                                     setForm(next);
                                     save(next);
@@ -77,12 +82,14 @@ export default function AutomationSettings() {
 
                     <div className="mt-4 space-y-6">
                         <div className="flex items-center gap-3">
-                            <label className="relative inline-flex items-center cursor-pointer">
+                            <label className={`relative inline-flex items-center ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                                 <input
                                     type="checkbox"
                                     className="sr-only peer"
                                     checked={form.reviewRequired}
+                                    disabled={!canEdit}
                                     onChange={() => {
+                                        if (!canEdit) return;
                                         const next = { ...form, reviewRequired: !form.reviewRequired };
                                         setForm(next);
                                         save(next);
@@ -97,7 +104,7 @@ export default function AutomationSettings() {
                             Set the default number of days early to post the recurring transactions before the invoice due date.
                         </p>
 
-                        <PrimaryActionButton text="Update" onClick={() => save()} />
+                        {canEdit && <PrimaryActionButton text="Update" onClick={() => save()} />}
                     </div>
                 </section>
             </div>

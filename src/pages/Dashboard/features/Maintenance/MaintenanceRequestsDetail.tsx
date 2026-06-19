@@ -12,6 +12,7 @@ import { maintenanceRequestQueryKeys, useDeleteMaintenanceRequest, useGetMainten
 import { maintenanceRequestService } from '../../../../services/maintenance-request.service';
 import { serviceProviderService } from '../../../../services/service-provider.service';
 import { useGetEquipment } from '../../../../hooks/useEquipmentQueries';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 // --- Reusable Components ---
 
@@ -100,6 +101,8 @@ const MaintenanceRequestsDetail: React.FC = () => {
         };
     }, [request]);
 
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('maintenance-requests');
     const { mutateAsync: deleteRequest } = useDeleteMaintenanceRequest();
     const approveTenantChargeMutation = useMutation({
         mutationFn: (reqId: string) => maintenanceRequestService.approveTenantCharge(reqId),
@@ -445,13 +448,13 @@ const MaintenanceRequestsDetail: React.FC = () => {
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800">Maintenance request</h1>
                     </div>
                     <div className="flex gap-3 w-full md:w-auto flex-wrap">
-                        <button
+                        {canEdit && <button
                             onClick={() => setIsStatusModalOpen(true)}
                             className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
                         >
                             Change Status
-                        </button>
-                        <div className="relative">
+                        </button>}
+                        {canEdit && <div className="relative">
                             <button
                                 onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
                                 className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
@@ -512,7 +515,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                     </button>
                                 </div>
                             )}
-                        </div>
+                        </div>}
                     </div>
                 </div>
 

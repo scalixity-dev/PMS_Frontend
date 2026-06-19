@@ -12,6 +12,7 @@ import EditInvoiceModal from './components/EditInvoiceModal';
 import VoidTransactionModal from './components/VoidTransactionModal';
 import { useTransactionStore } from './store/transactionStore';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useGetTransaction, useUpdateTransaction, useDeleteTransaction, useDeletePayment, useMarkAsPaid, useUpdatePayment } from '../../../../hooks/useTransactionQueries';
 import { formatMoney } from '../../../../utils/currency.utils';
@@ -21,6 +22,8 @@ const TransactionDetail: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast();
     const { id } = useParams<{ id: string }>();
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('accounting');
     const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false);
     const [isPaymentsCollapsed, setIsPaymentsCollapsed] = useState(false);
     const [isAttachmentsCollapsed, setIsAttachmentsCollapsed] = useState(false);
@@ -398,6 +401,7 @@ const TransactionDetail: React.FC = () => {
                         Transaction
                     </button>
                     <div className="flex flex-wrap gap-3">
+                        {canEdit && <>
                         <button
                             onClick={() => {
                                 setEditingTransactionData({
@@ -526,6 +530,7 @@ const TransactionDetail: React.FC = () => {
                         >
                             Mark As Paid
                         </button>
+                        </>}
                     </div>
                 </div>
 

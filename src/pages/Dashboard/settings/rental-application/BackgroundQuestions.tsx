@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { useGetBackgroundQuestions, useCreateBackgroundQuestion, useUpdateBackgroundQuestion, useDeleteBackgroundQuestion, useReorderBackgroundQuestions } from '../../../../hooks/useBackgroundQuestionQueries';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 export default function BackgroundQuestions() {
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('settings');
     const { data: questions = [], isLoading } = useGetBackgroundQuestions();
     const createQuestion = useCreateBackgroundQuestion();
     const updateQuestion = useUpdateBackgroundQuestion();
@@ -92,25 +95,27 @@ export default function BackgroundQuestions() {
                                                 <input
                                                     type="text"
                                                     value={editingId === question.id ? editingText : question.question}
+                                                    readOnly={!canEdit}
                                                     onChange={(e) => {
-                                                        if (editingId === question.id) {
+                                                        if (canEdit && editingId === question.id) {
                                                             setEditingText(e.target.value);
                                                         }
                                                     }}
                                                     onBlur={() => {
-                                                        if (editingId === question.id && editingText.trim()) {
+                                                        if (canEdit && editingId === question.id && editingText.trim()) {
                                                             handleUpdateQuestion(question.id, editingText);
                                                         }
                                                     }}
                                                     onFocus={() => {
+                                                        if (!canEdit) return;
                                                         setEditingId(question.id);
                                                         setEditingText(question.question);
                                                     }}
-                                                    className="w-full sm:flex-1 border border-gray-300 rounded-md px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-[#7CD947]"
+                                                    className={`w-full sm:flex-1 border border-gray-300 rounded-md px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-[#7CD947] ${!canEdit ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                     placeholder="Enter your question here"
                                                 />
 
-                                                <button
+                                                {canEdit && <button
                                                     onClick={() => handleDeleteQuestion(question.id)}
                                                     disabled={questions.length <= 1}
                                                     className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 border border-red-200 rounded-md text-red-600 hover:bg-red-50 bg-white text-sm font-medium w-full sm:w-auto ${questions.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -119,7 +124,7 @@ export default function BackgroundQuestions() {
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                     </svg>
                                                     Delete
-                                                </button>
+                                                </button>}
                                             </div>
 
                                             <div className="mt-4 flex flex-col gap-2">
@@ -136,7 +141,7 @@ export default function BackgroundQuestions() {
                                     ))}
                                 </div>
 
-                                <div className="mt-8 flex justify-center gap-3">
+                                {canEdit && <div className="mt-8 flex justify-center gap-3">
                                     <input
                                         type="text"
                                         value={newQuestionText}
@@ -153,7 +158,7 @@ export default function BackgroundQuestions() {
                                         <Plus className="h-5 w-5" />
                                         Add
                                     </button>
-                                </div>
+                                </div>}
                             </>
                         )}
                     </div>

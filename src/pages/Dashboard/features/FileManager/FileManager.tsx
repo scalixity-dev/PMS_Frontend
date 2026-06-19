@@ -9,6 +9,7 @@ import DeleteConfirmationModal from '../../../../components/common/modals/Delete
 import {
     useGetFiles, useRenameFile, useDeleteFile, useUploadFile,
     useGetFolders, useCreateFolder, useRenameFolder, useDeleteFolder,
+    useTrackDownload,
 } from '../../../../hooks/useFilesQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
@@ -135,6 +136,7 @@ const FileManager: React.FC = () => {
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const { isTeamMember, canManage } = useTeamPermissions();
     const canEdit = !isTeamMember || canManage('document-templates');
+    const trackDownloadMutation = useTrackDownload();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
@@ -429,6 +431,12 @@ const FileManager: React.FC = () => {
             link.download = `${file.name}.${file.type}`;
             document.body.appendChild(link);
             link.click();
+            trackDownloadMutation.mutate({
+                fileId: file.id,
+                fileName: `${file.name}.${file.type}`,
+                fileUrl: file.preview,
+                sizeBytes: blob.size,
+            });
         } catch (error) {
             const isTerminalError = error instanceof DownloadError && error.isTerminal;
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';

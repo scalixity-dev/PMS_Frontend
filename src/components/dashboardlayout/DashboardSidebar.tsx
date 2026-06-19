@@ -190,7 +190,14 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
 }) {
 
   const navigate = useNavigate();
-  const { isTeamMember, canView, isLoading: permissionsLoading } = useTeamPermissions();
+  const { isTeamMember, canView, canManage, isLoading: permissionsLoading } = useTeamPermissions();
+  const hasCreateNewItems = !isTeamMember || (
+    canManage('listing') ||
+    canManage('leasing') ||
+    canManage('accounting') ||
+    canManage('maintenance') ||
+    canManage('rental-applications')
+  );
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isCreateNewOpen, setIsCreateNewOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -325,7 +332,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
 
         <div className="flex-grow">
           {/* Create New Button */}
-          <div className={`relative pt-2 pb-2 transition-all ${collapsed ? 'px-2' : 'px-4'}`} ref={createNewRef}>
+          {hasCreateNewItems && <div className={`relative pt-2 pb-2 transition-all ${collapsed ? 'px-2' : 'px-4'}`} ref={createNewRef}>
             <button
               onClick={toggleCreateNew}
               className={`bg-gradient-to-r from-[#1BCB40] to-[#7CD947] hover:opacity-95 text-white font-semibold flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#1BCB40]/40 shadow-[0_20px_60px_rgba(27,203,64,0.32)] hover:shadow-[0_28px_90px_rgba(27,203,64,0.44)] overflow-hidden
@@ -351,12 +358,16 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
               >
                 <div className="flex flex-col py-1">
                   {[
-                    { label: 'List a unit', path: '/dashboard/list-unit' },
-                    { label: 'Create New Property', path: '/dashboard/property/add' },
-                    { label: 'Create New Lease', path: '/dashboard/leasing/leases' },
-                    { label: 'Record an Income', path: '/dashboard/accounting/transactions/income/add' },
-                    { label: 'Record a Request', path: '/dashboard/maintenance/request' }
-                  ].map((item) => (
+                    { label: 'List a unit', path: '/dashboard/list-unit', module: 'listing' },
+                    { label: 'Create New Property', path: '/dashboard/property/add', module: null },
+                    { label: 'Create New Lease', path: '/dashboard/leasing/leases', module: 'leasing' },
+                    { label: 'Record an Income', path: '/dashboard/accounting/transactions/income/add', module: 'accounting' },
+                    { label: 'Record a Request', path: '/dashboard/maintenance/request', module: 'maintenance' }
+                  ].filter((item) => {
+                    if (!isTeamMember) return true;
+                    if (item.module === null) return false; // owner-only
+                    return canManage(item.module);
+                  }).map((item) => (
                     <button
                       key={item.path}
                       onClick={() => {
@@ -368,16 +379,18 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                       {item.label}
                     </button>
                   ))}
-                  {/* Invite to Apply Special Case */}
-                  <button
-                    onClick={() => {
-                      setIsInviteModalOpen(true);
-                      setIsCreateNewOpen(false);
-                    }}
-                    className="px-4 py-2.5 text-sm font-medium text-[#1BCB40] hover:bg-green-50 border-b border-gray-100 transition-colors text-left"
-                  >
-                    Invite to Apply
-                  </button>
+                  {/* Invite to Apply — shown to team members with leasing manage permission */}
+                  {(!isTeamMember || canManage('leasing') || canManage('rental-applications')) && (
+                    <button
+                      onClick={() => {
+                        setIsInviteModalOpen(true);
+                        setIsCreateNewOpen(false);
+                      }}
+                      className="px-4 py-2.5 text-sm font-medium text-[#1BCB40] hover:bg-green-50 border-b border-gray-100 transition-colors text-left"
+                    >
+                      Invite to Apply
+                    </button>
+                  )}
                 </div>
               </div>,
               document.body
@@ -388,7 +401,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                 <div className="w-full h-full rounded-xl bg-gradient-to-b from-[#1BCB40]/40 to-transparent filter blur-[20px] opacity-40" />
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Navigation */}
           <nav className="px-1 py-2 space-y-1">

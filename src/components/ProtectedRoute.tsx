@@ -7,6 +7,12 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+const FullScreenLoader: React.FC = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+    <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600" />
+  </div>
+);
+
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,21 +80,33 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     checkAuth();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <FullScreenLoader />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+};
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+export const TenantProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        const isTenant = user.role?.toUpperCase() === 'TENANT';
+        setIsAuthenticated(isTenant && user.isActive);
+      } catch {
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (isLoading) return <FullScreenLoader />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
@@ -143,21 +161,34 @@ export const ServiceProtectedRoute: React.FC<ProtectedRouteProps> = ({ children 
     checkAuth();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
+  if (isLoading) return <FullScreenLoader />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
+export const GuestRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const [status, setStatus] = useState<'checking' | 'guest' | 'authenticated'>('checking');
+  const [redirectTo, setRedirectTo] = useState('/dashboard');
+
+  useEffect(() => {
+    authService.getCurrentUser().then((user) => {
+      const role = user?.role?.toUpperCase();
+      if (role === 'TENANT') {
+        setRedirectTo('/userdashboard');
+        setStatus('authenticated');
+      } else if (role === 'SERVICE_PRO') {
+        setRedirectTo('/service-dashboard');
+        setStatus('authenticated');
+      } else if (role === 'PROPERTY_MANAGER' || role === 'TEAM_MEMBER') {
+        setRedirectTo('/dashboard');
+        setStatus('authenticated');
+      } else {
+        setStatus('guest');
+      }
+    }).catch(() => setStatus('guest'));
+  }, []);
+
+  if (status === 'checking') return <FullScreenLoader />;
+  if (status === 'authenticated') return <Navigate to={redirectTo} replace />;
+  return <>{children}</>;
+};

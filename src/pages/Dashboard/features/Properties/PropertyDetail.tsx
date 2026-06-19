@@ -24,11 +24,14 @@ import { propertyService, isSummaryUnits } from '../../../../services/property.s
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import type { ChartConfig } from "@/components/ui/chart";
 import { Label, Legend, Pie, PieChart } from "recharts";
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 
 const PropertyDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('property-units');
     const [searchParams] = useSearchParams();
     const unitId = searchParams.get('unitId'); // Get unit ID from query parameter
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
@@ -378,12 +381,15 @@ const PropertyDetail: React.FC = () => {
                         <h1 className="text-lg md:text-2xl font-bold text-gray-800 truncate">{property?.name || 'Property'}</h1>
                     </div>
                     <div className="flex gap-2 md:gap-3 w-full sm:w-auto">
+                        {canEdit && (
                         <button
                             onClick={() => navigate('/dashboard/movein', { state: { preSelectedPropertyId: id } })}
                             className="flex-1 sm:flex-none bg-[#3A6D6C] text-white px-4 md:px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors"
                         >
                             Move In
                         </button>
+                        )}
+                        {canEdit && (
                         <div className="relative" ref={actionDropdownRef}>
                             <button
                                 onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
@@ -418,6 +424,7 @@ const PropertyDetail: React.FC = () => {
                                 </div>
                             )}
                         </div>
+                        )}
                     </div>
                 </div>
 

@@ -122,7 +122,7 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
 
   const handleManageProfile = () => {
     setIsProfileDropdownOpen(false);
-    navigate("/dashboard/settings");
+    navigate(isTeamMember && !canView('settings') ? "/dashboard/settings/profile" : "/dashboard/settings");
   };
 
   return (

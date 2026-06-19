@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import { Edit, Trash2, Check, ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
@@ -54,6 +55,9 @@ const Equipments: React.FC = () => {
         property: [],
         unit: []
     });
+
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('property-units');
 
     // Fetch equipment from backend
     const { data: equipment = [], isLoading, error } = useGetAllEquipment();
@@ -311,13 +315,15 @@ const Equipments: React.FC = () => {
                         </button>
                         <h1 className="text-2xl font-bold text-gray-800">Equipments</h1>
                     </div>
-                    <button
-                        onClick={() => navigate('/dashboard/equipments/add')}
-                        className="w-full md:w-auto justify-center px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-1"
-                    >
-                        Add Equipment
-                        <Plus className="w-4 h-4" />
-                    </button>
+                    {canEdit && (
+                        <button
+                            onClick={() => navigate('/dashboard/equipments/add')}
+                            className="w-full md:w-auto justify-center px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-1"
+                        >
+                            Add Equipment
+                            <Plus className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
 
                 <DashboardFilter
@@ -400,21 +406,23 @@ const Equipments: React.FC = () => {
                                             {item.property}
                                         </div>
 
-                                        <div className="flex items-center justify-end gap-3 absolute top-4 right-4 md:static">
-                                            <button
-                                                onClick={(e) => handleEdit(item.id, e)}
-                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                            >
-                                                <Edit className="w-5 h-5" />
-                                            </button>
-                                            <button
-                                                onClick={(e) => openDeleteModal(item, e)}
-                                                disabled={deleteEquipmentMutation.isPending}
-                                                className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
-                                            >
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
-                                        </div>
+                                        {canEdit && (
+                                            <div className="flex items-center justify-end gap-3 absolute top-4 right-4 md:static">
+                                                <button
+                                                    onClick={(e) => handleEdit(item.id, e)}
+                                                    className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                                >
+                                                    <Edit className="w-5 h-5" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => openDeleteModal(item, e)}
+                                                    disabled={deleteEquipmentMutation.isPending}
+                                                    className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             ) : (

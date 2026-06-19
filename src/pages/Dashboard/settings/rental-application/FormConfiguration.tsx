@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
+import { useTeamPermissions } from "../../../../context/TeamPermissionContext";
 
 interface ConfigurationOption {
     id: "basic" | "custom";
@@ -22,6 +23,8 @@ const CONFIGURATION_OPTIONS: ConfigurationOption[] = [
 ];
 
 export default function FormConfiguration() {
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('settings');
     const { data } = useGetSettingsSection<{ selectedMode: "basic" | "custom" }>("rental_form_configuration");
     const updateSettings = useUpdateSettingsSection<{ selectedMode: "basic" | "custom" }>("rental_form_configuration");
     const [selectedMode, setSelectedMode] = useState<"basic" | "custom">("basic");
@@ -34,6 +37,7 @@ export default function FormConfiguration() {
     }, [data]);
 
     const handleModeChange = (mode: "basic" | "custom") => {
+        if (!canEdit) return;
         setSelectedMode(mode);
         updateSettings.mutate({ selectedMode: mode });
     };
@@ -56,7 +60,7 @@ export default function FormConfiguration() {
                     <div
                         key={option.id}
                         onClick={() => handleModeChange(option.id)}
-                        className={`relative rounded-lg p-6 border transition-all cursor-pointer ${selectedMode === option.id
+                        className={`relative rounded-lg p-6 border transition-all ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'} ${selectedMode === option.id
                             ? "border-[#7CD947] bg-white ring-1 ring-[#7CD947]"
                             : "border-gray-300 bg-[#E8E8E8] hover:border-gray-400"
                             }`}

@@ -6,6 +6,7 @@ interface TeamPermissionContextValue {
   canView: (module: string) => boolean;
   canManage: (module: string) => boolean;
   permissions: string[];
+  assignedPropertyIds: string[] | null; // null = no restriction (owner), [] = no properties assigned
   isLoading: boolean;
 }
 
@@ -14,6 +15,7 @@ const TeamPermissionContext = createContext<TeamPermissionContextValue>({
   canView: () => true,
   canManage: () => true,
   permissions: [],
+  assignedPropertyIds: null,
   isLoading: false,
 });
 
@@ -29,16 +31,19 @@ export const TeamPermissionProvider: React.FC<{ children: React.ReactNode }> = (
         canView: () => true,
         canManage: () => true,
         permissions: [],
+        assignedPropertyIds: null,
         isLoading,
       };
     }
 
     const permissions: string[] = activeTeam.permissions ?? [];
     const permSet = new Set(permissions);
+    const assignedPropertyIds: string[] = activeTeam.propertyIds ?? [];
 
     return {
       isTeamMember: true,
       permissions,
+      assignedPropertyIds,
       canView: (module: string) =>
         permSet.has(`${module}:view`) || permSet.has(`${module}:manage`),
       canManage: (module: string) => permSet.has(`${module}:manage`),

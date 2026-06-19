@@ -12,6 +12,7 @@ import { useGetTenant, useDeleteTenant } from '../../../../hooks/useTenantQuerie
 import { useGetTenantAggregates } from '../../../../hooks/useTransactionQueries';
 import { formatPhoneNumber } from '@/utils/phone.utils';
 import type { BackendTenantProfile } from '../../../../services/tenant.service';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 
 // Transform backend tenant profile to detail page format
@@ -95,6 +96,8 @@ const TenantDetail = () => {
     const { id } = useParams<{ id: string }>();
     const [activeTab, setActiveTab] = useState('profile');
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('contacts');
     const actionMenuRef = useRef<HTMLDivElement>(null);
     const deleteTenantMutation = useDeleteTenant();
 
@@ -217,7 +220,7 @@ const TenantDetail = () => {
                         <h1 className="text-2xl font-bold text-black">Tenant</h1>
                     </div>
                     <div className="flex gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap">
-                        <button
+                        {canEdit && <button
                             onClick={() => navigate('/dashboard/accounting/transactions/income/add', {
                                 state: {
                                     prefilledPayer: {
@@ -232,8 +235,8 @@ const TenantDetail = () => {
                         >
                             Add Invoice
                             <Plus className="w-4 h-4" />
-                        </button>
-                        <div className="relative" ref={actionMenuRef}>
+                        </button>}
+                        {canEdit && <div className="relative" ref={actionMenuRef}>
                             <button
                                 onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
                                 className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors whitespace-nowrap"
@@ -260,7 +263,7 @@ const TenantDetail = () => {
                                     ))}
                                 </div>
                             )}
-                        </div>
+                        </div>}
                     </div>
                 </div>
 

@@ -30,7 +30,7 @@ interface DashboardContext {
   sidebarCollapsed: boolean;
 }
 
-const ALL_SETTING_CARDS: (SettingCardData & { teamMemberOnly?: boolean; pmOnly?: boolean })[] = [
+const ALL_SETTING_CARDS: (SettingCardData & { pmOnly?: boolean; teamViewable?: boolean })[] = [
   {
     title: "Account settings",
     description: "Lets you control and update account information and enable other products.",
@@ -74,7 +74,7 @@ const ALL_SETTING_CARDS: (SettingCardData & { teamMemberOnly?: boolean; pmOnly?:
     title: "Rental Application",
     description: "Lets you control and update account information and enable other products.",
     icon: Home,
-    pmOnly: true,
+    teamViewable: true,
     links: [
       { label: "Online Application", path: "/dashboard/settings/rental-application/online-application" },
       { label: "Form Configuration", path: "/dashboard/settings/rental-application/form-configuration" },
@@ -84,7 +84,7 @@ const ALL_SETTING_CARDS: (SettingCardData & { teamMemberOnly?: boolean; pmOnly?:
     title: "Request Settings",
     description: "Lets you control and update account information and enable other products.",
     icon: PaintRoller,
-    pmOnly: true,
+    teamViewable: true,
     links: [
       { label: "Request Settings", path: "/dashboard/settings/request-settings/request-settings" },
       { label: "Automation Settings", path: "/dashboard/settings/request-settings/automation-settings" },
@@ -163,7 +163,7 @@ const SettingCard = ({
 
 export default function Settings() {
   const [openCardTitle, setOpenCardTitle] = useState<string | null>(null);
-  const { isTeamMember } = useTeamPermissions();
+  const { isTeamMember, canView } = useTeamPermissions();
 
   // Safe context access
   const context = useOutletContext<DashboardContext>();
@@ -175,7 +175,12 @@ export default function Settings() {
   };
 
   const visibleCards = ALL_SETTING_CARDS
-    .filter((card) => !isTeamMember || !card.pmOnly)
+    .filter((card) => {
+      if (!isTeamMember) return true;
+      if (card.pmOnly) return false;
+      if (card.teamViewable) return canView('settings');
+      return true;
+    })
     .map((card) => {
       // Strip Integration link for team members — it's a PM-only feature
       if (isTeamMember && card.title === "Account settings") {

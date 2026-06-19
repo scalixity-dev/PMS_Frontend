@@ -356,7 +356,7 @@ const Payments: React.FC = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto" ref={dropdownContainerRef}>
-                        <MoneyInMoneyOutButtons />
+                        {canEdit && <MoneyInMoneyOutButtons />}
 
                         <button
                             onClick={handleExport}

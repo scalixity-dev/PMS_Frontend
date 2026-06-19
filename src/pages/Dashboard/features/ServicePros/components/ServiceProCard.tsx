@@ -3,6 +3,7 @@ import { MoreHorizontal, MessageCircle, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
 import { serviceProviderService } from '../../../../../services/service-provider.service';
+import { useTeamPermissions } from '../../../../../context/TeamPermissionContext';
 
 interface ServiceProCardProps {
     id: string | number;
@@ -26,6 +27,8 @@ const ServiceProCard: React.FC<ServiceProCardProps> = ({
     onDeleteSuccess
 }) => {
     const navigate = useNavigate();
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('contacts');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -77,6 +80,7 @@ const ServiceProCard: React.FC<ServiceProCardProps> = ({
         <>
             <div className="bg-[#F6F6F8] rounded-[2rem] p-4 flex gap-4 relative hover:shadow-lg transition-all duration-200 group">
                 {/* Action Buttons - Top Right */}
+                {canEdit && (
                 <div className="absolute top-4 right-4 z-10">
                     {/* More Options Menu */}
                     <div ref={menuRef}>
@@ -110,6 +114,7 @@ const ServiceProCard: React.FC<ServiceProCardProps> = ({
                         )}
                     </div>
                 </div>
+                )}
 
                 {/* Image/Initials Section */}
                 <div className="w-32 h-32 flex-shrink-0 relative">

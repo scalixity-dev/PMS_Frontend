@@ -9,6 +9,7 @@ import { useGetRecurringTransaction, usePostNextInvoice, useEndRecurringTransact
 import { formatMoney } from '../../../../utils/currency.utils';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import { useToast } from '../../../../components/common/Toast';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 // Utility function to calculate next date based on frequency
 const calculateNextDate = (startDate: Date, frequency: string, endDate?: Date | null): Date | null => {
@@ -87,6 +88,8 @@ const formatDate = (date: Date | string | null | undefined): string => {
 const RecurringDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('accounting');
     const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false);
     const [isAttachmentsCollapsed, setIsAttachmentsCollapsed] = useState(false);
     const [isActionsOpen, setIsActionsOpen] = useState(false);
@@ -295,6 +298,7 @@ const RecurringDetail: React.FC = () => {
                         Recurring
                     </button>
                     <div className="flex flex-wrap gap-3">
+                        {canEdit && <>
                         <button
                             onClick={() => setIsPostInvoiceModalOpen(true)}
                             disabled={!recurringTransaction.enabled || postNextInvoiceMutation.isPending}
@@ -354,6 +358,7 @@ const RecurringDetail: React.FC = () => {
                                 </div>
                             )}
                         </div>
+                        </>}
                     </div>
                 </div>
 
