@@ -102,7 +102,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
     }, [request]);
 
     const { isTeamMember, canManage } = useTeamPermissions();
-    const canEdit = !isTeamMember || canManage('maintenance-requests');
+    const canEdit = !isTeamMember || canManage('maintenance');
     const { mutateAsync: deleteRequest } = useDeleteMaintenanceRequest();
     const approveTenantChargeMutation = useMutation({
         mutationFn: (reqId: string) => maintenanceRequestService.approveTenantCharge(reqId),
@@ -643,14 +643,14 @@ const MaintenanceRequestsDetail: React.FC = () => {
                 <CollapsibleSection
                     title="Assignee information"
                     defaultOpen={true}
-                    action={
+                    action={canEdit ? (
                         <button
                             onClick={() => setIsAssigneeModalOpen(true)}
                             className="px-4 py-1.5 bg-[#3A6D6C] text-white rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors"
                         >
                             {assigneeInfo?.name ? 'Re-Assign' : 'Add Assignee'}
                         </button>
-                    }
+                    ) : undefined}
                 >
                     <div className="flex flex-col xl:flex-row gap-6 bg-[#f0f0f6] p-4 md:p-6 rounded-xl">
                         {/* Profile Card */}
@@ -666,12 +666,9 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                             .slice(0, 2)}
                                     </div>
                                 ) : (
-                                    <button
-                                        onClick={() => setIsAssigneeModalOpen(true)}
-                                        className="w-full h-full flex items-center justify-center bg-gray-300 text-gray-500 hover:bg-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
-                                    >
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-300 text-gray-500">
                                         <span className="text-4xl">?</span>
-                                    </button>
+                                    </div>
                                 )}
                             </div>
 
@@ -683,15 +680,9 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                     )}
                                 </div>
                             ) : (
-                                <button
-                                    onClick={() => setIsAssigneeModalOpen(true)}
-                                    className="bg-[#3A6D6C] text-white text-center py-2 px-6 rounded-xl w-full mb-4 hover:bg-[#2c5251] transition-colors cursor-pointer group"
-                                >
-                                    <h3 className="font-bold text-sm">
-                                        <span className="group-hover:hidden">Not Assigned</span>
-                                        <span className="hidden group-hover:inline">+ Add Assignee</span>
-                                    </h3>
-                                </button>
+                                <div className="bg-[#3A6D6C] text-white text-center py-2 px-6 rounded-xl w-full mb-4">
+                                    <h3 className="font-bold text-sm">Not Assigned</h3>
+                                </div>
                             )}
 
                             {assigneeInfo?.name && (
@@ -833,7 +824,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                 <CollapsibleSection
                     title="Materials"
                     defaultOpen={true}
-                    action={
+                    action={canEdit ? (
                         <button
                             className="flex items-center gap-2 px-4 py-1.5 bg-[#3A6D6C] text-white rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors"
                             onClick={() => navigate('/dashboard/maintenance/request', { state: { editMode: true, id, targetSection: 'materials' } })}
@@ -841,27 +832,27 @@ const MaintenanceRequestsDetail: React.FC = () => {
                             Add material
                             <Plus className="w-3 h-3" />
                         </button>
-                    }
+                    ) : undefined}
                 >
                     <div className="bg-[#F0F0F6] rounded-3xl p-4 shadow-sm overflow-hidden">
                         {/* Desktop Table View */}
                         <div className="hidden md:block overflow-x-auto">
                             {/* Table Header */}
-                            <div className="bg-[#3A6D6C] text-white rounded-t-xl px-6 py-3 grid grid-cols-[1fr_1fr_100px] text-xs font-bold min-w-[500px]">
+                            <div className={`bg-[#3A6D6C] text-white rounded-t-xl px-6 py-3 text-xs font-bold min-w-[500px] ${canEdit ? 'grid grid-cols-[1fr_1fr_100px]' : 'grid grid-cols-[1fr_1fr]'}`}>
                                 <div>Item</div>
                                 <div>Quantity</div>
-                                <div className="text-right">Actions</div>
+                                {canEdit && <div className="text-right">Actions</div>}
                             </div>
 
                             {/* Table Body */}
                             <div className="bg-white rounded-b-xl px-6 py-2 min-w-[500px]">
                                 {materials.map((m) => (
-                                    <div key={m.id} className="grid grid-cols-[1fr_1fr_100px] items-center py-3 border-b border-gray-50 last:border-0">
+                                    <div key={m.id} className={`items-center py-3 border-b border-gray-50 last:border-0 ${canEdit ? 'grid grid-cols-[1fr_1fr_100px]' : 'grid grid-cols-[1fr_1fr]'}`}>
                                         <div className="flex items-center gap-3">
                                             <span className="text-sm font-semibold text-gray-800">{m.item}</span>
                                         </div>
                                         <div className="text-sm font-medium text-black pl-1">{m.quantity}</div>
-                                        <div className="flex justify-end gap-3">
+                                        {canEdit && <div className="flex justify-end gap-3">
                                             <button
                                                 className="text-[#3A6D6C] hover:text-[#2c5251]"
                                                 onClick={() => navigate('/dashboard/maintenance/request', { state: { editMode: true, id, targetSection: 'materials' } })}
@@ -871,7 +862,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                             <button className="text-red-500 hover:text-red-600">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
-                                        </div>
+                                        </div>}
                                     </div>
                                 ))}
                             </div>
@@ -883,7 +874,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                 <div key={m.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                                     <div className="flex justify-between items-start mb-2">
                                         <span className="text-sm font-bold text-gray-800">{m.item}</span>
-                                        <div className="flex gap-2">
+                                        {canEdit && <div className="flex gap-2">
                                             <button
                                                 className="text-[#3A6D6C] p-1.5 hover:bg-gray-50 rounded-full"
                                                 onClick={() => navigate('/dashboard/maintenance/request', { state: { editMode: true, id, targetSection: 'materials' } })}
@@ -893,7 +884,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                             <button className="text-red-500 p-1.5 hover:bg-red-50 rounded-full">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
-                                        </div>
+                                        </div>}
                                     </div>
                                     <div className="flex items-center justify-between text-xs text-gray-500">
                                         <span>Quantity:</span>
@@ -911,28 +902,28 @@ const MaintenanceRequestsDetail: React.FC = () => {
                         {/* Desktop Table View */}
                         <div className="hidden md:block overflow-x-auto">
                             {/* Table Header */}
-                            <div className="bg-[#3A6D6C] text-white rounded-t-xl px-6 py-3 grid grid-cols-[1fr_1fr_1fr_100px] text-xs font-bold min-w-[500px]">
+                            <div className={`bg-[#3A6D6C] text-white rounded-t-xl px-6 py-3 text-xs font-bold min-w-[500px] ${canEdit ? 'grid grid-cols-[1fr_1fr_1fr_100px]' : 'grid grid-cols-[1fr_1fr_1fr]'}`}>
                                 <div>Name</div>
                                 <div>Serial Number</div>
                                 <div>Condition</div>
-                                <div className="text-right">Actions</div>
+                                {canEdit && <div className="text-right">Actions</div>}
                             </div>
 
                             {/* Table Body */}
                             <div className="bg-white rounded-b-xl px-6 py-2 min-w-[500px]">
                                 {equipment.map((e) => (
-                                    <div key={e.id} className="grid grid-cols-[1fr_1fr_1fr_100px] items-center py-3 border-b border-gray-50 last:border-0">
+                                    <div key={e.id} className={`items-center py-3 border-b border-gray-50 last:border-0 ${canEdit ? 'grid grid-cols-[1fr_1fr_1fr_100px]' : 'grid grid-cols-[1fr_1fr_1fr]'}`}>
                                         <div className="text-sm font-semibold text-gray-800">{e.name}</div>
                                         <div className="text-sm font-medium text-gray-600">{e.serialNumber}</div>
                                         <div className="text-sm font-medium text-[#3A6D6C]">{e.condition}</div>
-                                        <div className="flex justify-end gap-3">
+                                        {canEdit && <div className="flex justify-end gap-3">
                                             <button className="text-[#3A6D6C] hover:text-[#2c5251]">
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button className="text-red-500 hover:text-red-600">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
-                                        </div>
+                                        </div>}
                                     </div>
                                 ))}
                             </div>
@@ -944,14 +935,14 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                 <div key={e.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                                     <div className="flex justify-between items-start mb-2">
                                         <span className="text-sm font-bold text-gray-800">{e.name}</span>
-                                        <div className="flex gap-2">
+                                        {canEdit && <div className="flex gap-2">
                                             <button className="text-[#3A6D6C] p-1.5 hover:bg-gray-50 rounded-full">
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button className="text-red-500 p-1.5 hover:bg-red-50 rounded-full">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
-                                        </div>
+                                        </div>}
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
                                         <div>
@@ -973,7 +964,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                 <CollapsibleSection
                     title="Transactions"
                     defaultOpen={true}
-                    action={
+                    action={canEdit ? (
                         <div className="flex flex-wrap gap-4">
                             <button
                                 onClick={() => navigate('/dashboard/accounting/transactions/expense/add')}
@@ -988,7 +979,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                 Money In
                             </button>
                         </div>
-                    }
+                    ) : undefined}
                 >
                     <div className="bg-[#F0F0F6] rounded-3xl p-4 shadow-sm overflow-hidden">
                         {/* Desktop Table View */}

@@ -251,7 +251,7 @@ const MaintenanceRecurring: React.FC = () => {
                                                 </div>
                                             </button>
                                         </div>
-                                        <button
+                                        {canEdit && <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleDeleteClick(item.id);
@@ -259,7 +259,7 @@ const MaintenanceRecurring: React.FC = () => {
                                             className="text-red-500 hover:text-red-600 transition-colors p-1"
                                         >
                                             <Trash2 className="w-5 h-5" />
-                                        </button>
+                                        </button>}
                                     </div>
 
                                     {/* Desktop: Checkbox */}
@@ -297,7 +297,7 @@ const MaintenanceRecurring: React.FC = () => {
 
                                     {/* Desktop: Delete Action */}
                                     <div className="hidden md:flex items-center justify-end">
-                                        <button
+                                        {canEdit && <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleDeleteClick(item.id);
@@ -305,7 +305,7 @@ const MaintenanceRecurring: React.FC = () => {
                                             className="text-red-500 hover:text-red-600 transition-colors p-1"
                                         >
                                             <Trash2 className="w-5 h-5" />
-                                        </button>
+                                        </button>}
                                     </div>
                                 </div>
                             ))

@@ -199,6 +199,7 @@ const Listing: React.FC = () => {
                                         country={listing.country ?? undefined}
                                         listingId={listing.listingId ?? undefined}
                                         propertyId={listing.propertyId}
+                                        canEdit={canEdit}
                                     />
                                 ))}
                             </div>

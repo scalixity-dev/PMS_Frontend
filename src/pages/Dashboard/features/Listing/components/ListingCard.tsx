@@ -15,6 +15,7 @@ interface ListingCardProps {
     country?: string;
     listingId?: string;
     propertyId?: string;
+    canEdit?: boolean;
 }
 
 const ListingCard: React.FC<ListingCardProps> = ({
@@ -28,7 +29,8 @@ const ListingCard: React.FC<ListingCardProps> = ({
     bedrooms,
     country,
     listingId,
-    propertyId
+    propertyId,
+    canEdit = true,
 }) => {
     const navigate = useNavigate();
     const currencySymbol = getCurrencySymbol(country);
@@ -102,7 +104,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
                     >
                         View Listing
                     </button>
-                ) : (
+                ) : canEdit ? (
                     <button
                         onClick={() => navigate(propertyId ? `/dashboard/list-unit?propertyId=${propertyId}` : '/dashboard/list-unit')}
                         className="bg-[#467676] text-white px-4 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium hover:bg-[#3A6D6C] transition-colors w-full md:w-32 mt-auto flex items-center justify-center gap-2"
@@ -110,6 +112,10 @@ const ListingCard: React.FC<ListingCardProps> = ({
                         List a unit
                         <PlusCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     </button>
+                ) : (
+                    <span className="bg-gray-200 text-gray-500 px-4 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium w-full md:w-32 mt-auto flex items-center justify-center">
+                        Unlisted
+                    </span>
                 )}
             </div>
         </div>

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useEndRecurringTransaction } from '../../../../hooks/useTransactionQueries';
 import { useToast } from '../../../../components/common/Toast';
-import { ChevronLeft, Check, MoreHorizontal, Settings } from 'lucide-react';
+import { ChevronLeft, Check, MoreHorizontal } from 'lucide-react';
 import MoneyInMoneyOutButtons from '../../components/MoneyInMoneyOutButtons';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useTransactionStore } from '../Transactions/store/transactionStore';
@@ -90,7 +90,7 @@ const Recurring: React.FC = () => {
     const sidebarCollapsed = context?.sidebarCollapsed ?? false;
     const { isTeamMember, canManage } = useTeamPermissions();
     const canEdit = !isTeamMember || canManage('accounting');
-    const canViewSettings = !isTeamMember || canManage('settings');
+
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -349,13 +349,6 @@ const Recurring: React.FC = () => {
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3" ref={dropdownContainerRef}>
                         {canEdit && <MoneyInMoneyOutButtons />}
 
-                        {/* Settings */}
-                        {canViewSettings && (
-                            <button className="w-full sm:w-auto px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center justify-center gap-2">
-                                <Settings className="w-4 h-4" />
-                                Settings
-                            </button>
-                        )}
                     </div>
                 </div>
 

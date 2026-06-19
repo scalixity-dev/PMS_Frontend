@@ -72,7 +72,7 @@ const MonthGrid: React.FC<MonthGridProps> = ({ month, reminders, canEdit = true 
     const confirmDelete = async () => {
         if (reminderToDelete) {
             try {
-                await deleteReminderMutation.mutateAsync(reminderToDelete.id);
+                await deleteReminderMutation.mutateAsync(reminderToDelete.id.split('_')[0]);
                 setIsDeleteModalOpen(false);
                 setIsDetailModalOpen(false);
                 setReminderToDelete(null);

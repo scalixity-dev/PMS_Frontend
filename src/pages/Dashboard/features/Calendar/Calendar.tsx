@@ -409,6 +409,26 @@ const Calendar: React.FC = () => {
         handleDateChange(new Date());
     };
 
+    // Scroll to current month on initial render
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (containerRef.current) {
+                const todayEl = containerRef.current.querySelector('.today-cell');
+                if (todayEl) {
+                    todayEl.scrollIntoView({ block: 'center', behavior: 'auto' });
+                } else {
+                    // Fallback: scroll to the current month section
+                    const currentMonthIso = startOfMonth(new Date()).toISOString();
+                    const el = containerRef.current.querySelector(`[data-date="${currentMonthIso}"]`);
+                    if (el) {
+                        (el as HTMLElement).scrollIntoView({ block: 'start', behavior: 'auto' });
+                    }
+                }
+            }
+        }, 100);
+        return () => clearTimeout(timer);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
     const weekDays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
     return (

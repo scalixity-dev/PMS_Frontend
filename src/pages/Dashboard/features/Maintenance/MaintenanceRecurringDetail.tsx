@@ -7,11 +7,14 @@ import {
     useGetMaintenanceRecurring,
     useDeleteMaintenanceRecurring,
 } from '../../../../hooks/useMaintenanceRecurringQueries';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 
 const MaintenanceRecurringDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('maintenance');
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [isGeneralInfoCollapsed, setIsGeneralInfoCollapsed] = useState(false);
     const [isRelatedRequestCollapsed, setIsRelatedRequestCollapsed] = useState(false);
@@ -48,7 +51,7 @@ const MaintenanceRecurringDetail: React.FC = () => {
                         </button>
                         <h1 className="text-2xl font-bold text-gray-800">Recurring request</h1>
                     </div>
-                    <div className="relative" ref={actionMenuRef}>
+                    {canEdit && <div className="relative" ref={actionMenuRef}>
                         <button
                             onClick={() => setIsDeleteModalOpen(true)}
                             className="px-6 py-2 bg-red-500 text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors shadow-sm flex items-center gap-2"
@@ -56,7 +59,7 @@ const MaintenanceRecurringDetail: React.FC = () => {
                             Delete
                             <ChevronDown className="w-4 h-4" />
                         </button>
-                    </div>
+                    </div>}
                 </div>
 
                 {/* ID & Property Section */}

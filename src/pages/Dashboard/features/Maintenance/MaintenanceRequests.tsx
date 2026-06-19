@@ -376,7 +376,7 @@ const Requests: React.FC = () => {
 
                 <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 mb-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 mb-6">
                     <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors">
                         <ChevronLeft className="w-6 h-6" />
                         Requests
@@ -607,7 +607,7 @@ const Requests: React.FC = () => {
                                             <div className="text-sm font-semibold flex items-center gap-2">
                                                 {item.assignee ? (
                                                     <span className="text-[#4ad1a6]">{item.assignee}</span>
-                                                ) : (
+                                                ) : canEdit ? (
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -618,7 +618,7 @@ const Requests: React.FC = () => {
                                                         <UserPlus className="w-4 h-4" />
                                                         Assign
                                                     </button>
-                                                )}
+                                                ) : null}
                                                 {item.applicantCount > 0 && (
                                                     <button
                                                         onClick={(e) => {
@@ -663,6 +663,7 @@ const Requests: React.FC = () => {
                                                         onMakeRecurring={() => handleMakeRecurring(item.id)}
                                                         onPrint={() => handlePrint(item.id)}
                                                         onDelete={() => handleDeleteClick(item.id)}
+                                                        canEdit={canEdit}
                                                     />
                                                 </div>
                                             </div>

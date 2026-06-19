@@ -190,32 +190,30 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
 
                 {/* Footer Buttons */}
                 <div className="p-4 md:p-8 md:pt-4 flex flex-col sm:flex-row gap-3 flex-shrink-0 bg-white border-t border-gray-100">
-                    <div className="flex gap-3 flex-1">
-                        <button
-                            onClick={() => {
-                                if (onEdit && reminder) {
-                                    onEdit(reminder);
-                                }
-                            }}
-                            className="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-600 transition-colors shadow-lg flex items-center justify-center gap-2"
-                            aria-label="Edit reminder"
-                        >
-                            <Edit size={16} />
-                            Edit
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (onDelete && reminder) {
-                                    onDelete(reminder);
-                                }
-                            }}
-                            className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors shadow-lg flex items-center justify-center gap-2"
-                            aria-label="Delete reminder"
-                        >
-                            <Trash2 size={16} />
-                            Delete
-                        </button>
-                    </div>
+                    {(onEdit || onDelete) && (
+                        <div className="flex gap-3 flex-1">
+                            {onEdit && (
+                                <button
+                                    onClick={() => onEdit(reminder)}
+                                    className="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-600 transition-colors shadow-lg flex items-center justify-center gap-2"
+                                    aria-label="Edit reminder"
+                                >
+                                    <Edit size={16} />
+                                    Edit
+                                </button>
+                            )}
+                            {onDelete && (
+                                <button
+                                    onClick={() => onDelete(reminder)}
+                                    className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors shadow-lg flex items-center justify-center gap-2"
+                                    aria-label="Delete reminder"
+                                >
+                                    <Trash2 size={16} />
+                                    Delete
+                                </button>
+                            )}
+                        </div>
+                    )}
                     <button
                         onClick={onClose}
                         className="w-full sm:w-auto sm:flex-1 bg-[#3A6D6C] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#2c5251] transition-colors shadow-lg"
