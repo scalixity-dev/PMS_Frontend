@@ -13,6 +13,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
+import { usePlanFeatures } from '../../../../hooks/usePlanFeatures';
+import UpgradeModal from '../../../../components/common/UpgradeModal';
 
 interface Unit {
   unitNumber: string;
@@ -78,6 +80,8 @@ const AddProperty: React.FC = () => {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigationPath, setPendingNavigationPath] = useState<string | null>(null);
   const [showAIChat, setShowAIChat] = useState(false);
+  const [aiUpgradeOpen, setAiUpgradeOpen] = useState(false);
+  const { canAccess } = usePlanFeatures();
 
   // Allowed MIME types for document attachments
   const allowedDocumentTypes = [
@@ -936,7 +940,7 @@ const AddProperty: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setShowAIChat(true)}
+          onClick={() => canAccess('ai-property-assistant') ? setShowAIChat(true) : setAiUpgradeOpen(true)}
           className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 active:scale-95"
           style={{
             background: 'linear-gradient(135deg, #2D6A6A 0%, #3D9B6B 50%, #52C97A 100%)',
@@ -959,6 +963,12 @@ const AddProperty: React.FC = () => {
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
         onFormDataReceived={handleAIFormData}
+      />
+      <UpgradeModal
+        isOpen={aiUpgradeOpen}
+        onClose={() => setAiUpgradeOpen(false)}
+        requiredPlan="growth"
+        featureLabel="AI Property Assistant"
       />
 
       <div className={`bg-[#E0E8E7] min-h-screen p-4 md:p-8 font-sans rounded-[1.5rem] md:rounded-[2rem] text-[#4B5563]`}>

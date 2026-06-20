@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { createPortal } from 'react-dom';
-import { SquarePen, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { SquarePen, ChevronLeft, ChevronRight, X, Lock } from "lucide-react";
 import {
   PiChartLineUpFill, PiChartPieSliceFill, PiBuildingsFill, PiUsersFill,
   PiCurrencyDollarFill, PiWrenchFill, PiFileTextFill
@@ -12,6 +12,8 @@ import { Dialog, Transition } from '@headlessui/react';
 import artworkImage from "../../assets/images/Artwork.png";
 import InviteToApplyModal from '../../pages/Dashboard/features/Application/components/InviteToApplyModal';
 import { useTeamPermissions } from '../../context/TeamPermissionContext';
+import { usePlanFeatures } from '../../hooks/usePlanFeatures';
+import UpgradeModal from '../common/UpgradeModal';
 
 const SidebarContext = React.createContext<{ collapsed: boolean }>({ collapsed: false });
 
@@ -49,6 +51,36 @@ function SidebarSubLink({ label, to }: SidebarSubLinkProps) {
     >
       {label}
     </NavLink>
+  );
+}
+
+interface PlanLockedSubLinkProps { label: string; feature: string; }
+
+function PlanLockedSubLink({ label, feature }: PlanLockedSubLinkProps) {
+  const { planGateInfo } = usePlanFeatures();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { allowed, requiredPlan, featureLabel } = planGateInfo(feature);
+
+  if (allowed) return null; // parent renders normal SubLink when allowed
+
+  return (
+    <>
+      <button
+        onClick={() => setUpgradeOpen(true)}
+        className="flex items-center justify-between w-full py-2 px-3 rounded-md text-sm text-gray-400 hover:bg-gray-50 transition-colors"
+      >
+        <span>{label}</span>
+        <Lock size={12} className="flex-shrink-0" />
+      </button>
+      {requiredPlan && (
+        <UpgradeModal
+          isOpen={upgradeOpen}
+          onClose={() => setUpgradeOpen(false)}
+          requiredPlan={requiredPlan}
+          featureLabel={featureLabel}
+        />
+      )}
+    </>
   );
 }
 
@@ -191,6 +223,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
 
   const navigate = useNavigate();
   const { isTeamMember, canView, canManage, isLoading: permissionsLoading } = useTeamPermissions();
+  const { canAccess } = usePlanFeatures();
   const hasCreateNewItems = !isTeamMember || (
     canManage('listing') ||
     canManage('leasing') ||
@@ -487,7 +520,10 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
               >
                 <SubLink label="Transactions" to="/dashboard/accounting/transactions" />
                 <SubLink label="Payments" to="/dashboard/accounting/payments" />
-                <SubLink label="Recurring" to="/dashboard/accounting/recurring" />
+                {canAccess('recurring-transactions')
+                  ? <SubLink label="Recurring" to="/dashboard/accounting/recurring" />
+                  : <PlanLockedSubLink label="Recurring" feature="recurring-transactions" />
+                }
               </SidebarDropdownLink>
             )}
 
@@ -499,7 +535,10 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                 setActiveDropdown={setActiveDropdown}
               >
                 <SubLink label="Requests" to="/dashboard/maintenance/requests" />
-                <SubLink label="Recurring" to="/dashboard/maintenance/recurring" />
+                {canAccess('maintenance-board')
+                  ? <SubLink label="Recurring" to="/dashboard/maintenance/recurring" />
+                  : <PlanLockedSubLink label="Recurring" feature="maintenance-board" />
+                }
               </SidebarDropdownLink>
             )}
 

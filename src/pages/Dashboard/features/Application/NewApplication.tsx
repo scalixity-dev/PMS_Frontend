@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Sparkles } from 'lucide-react';
+import { usePlanFeatures } from '../../../../hooks/usePlanFeatures';
+import UpgradeModal from '../../../../components/common/UpgradeModal';
 import ApplicationStepper from './components/ApplicationStepper';
 import PropertySelectionStep from './steps/PropertySelectionStep';
 import ApplicantInfoStep from './steps/ApplicantInfoStep';
@@ -160,6 +162,8 @@ const NewApplication: React.FC = () => {
     const [errorMessages, setErrorMessages] = React.useState<string[]>([]);
     const [documentsNeedReupload, setDocumentsNeedReupload] = React.useState(false);
     const [showAIChat, setShowAIChat] = React.useState(false);
+    const [aiUpgradeOpen, setAiUpgradeOpen] = React.useState(false);
+    const { canAccess } = usePlanFeatures();
     const [showCancelModal, setShowCancelModal] = React.useState(false);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const isSubmittingRef = useRef(false);
@@ -383,7 +387,7 @@ const NewApplication: React.FC = () => {
                 <div className="flex items-center gap-4">
                     {currentStep === 1 && !isPropertySelected && (
                         <button
-                            onClick={() => setShowAIChat(true)}
+                            onClick={() => canAccess('ai-application-assistant') ? setShowAIChat(true) : setAiUpgradeOpen(true)}
                             className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-full font-medium hover:from-teal-700 hover:to-teal-600 transition-all shadow-lg hover:shadow-xl"
                         >
                             <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
@@ -461,6 +465,12 @@ const NewApplication: React.FC = () => {
                 isOpen={showAIChat}
                 onClose={() => setShowAIChat(false)}
                 onFormDataReceived={handleAIFormData}
+            />
+            <UpgradeModal
+                isOpen={aiUpgradeOpen}
+                onClose={() => setAiUpgradeOpen(false)}
+                requiredPlan="growth"
+                featureLabel="AI Application Assistant"
             />
 
             <BaseModal

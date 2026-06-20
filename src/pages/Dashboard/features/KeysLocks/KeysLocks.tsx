@@ -7,6 +7,7 @@ import { useGetAllKeys, useDeleteKey } from '../../../../hooks/useKeysQueries';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
+import PlanLimitBanner from '../../../../components/common/PlanLimitBanner';
 import type { BackendKey } from '../../../../services/keys.service';
 
 // Map backend key type to display format
@@ -228,6 +229,8 @@ const KeysLocks = () => {
                         </div>
                     )}
                 </div>
+
+                <PlanLimitBanner resource="keysAndLocks" currentCount={keys.length} className="mb-6" />
 
                 {/* Filter Section */}
                 <DashboardFilter

@@ -7,6 +7,7 @@ import Pagination from '../../components/Pagination';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import { useGetAllEquipment, useDeleteEquipment, useGetEquipmentCategories } from '../../../../hooks/useEquipmentQueries';
+import PlanLimitBanner from '../../../../components/common/PlanLimitBanner';
 import type { BackendEquipment } from '../../../../services/equipment.service';
 
 // Map backend status to display format
@@ -325,6 +326,8 @@ const Equipments: React.FC = () => {
                         </button>
                     )}
                 </div>
+
+                <PlanLimitBanner resource="equipment" currentCount={equipment.length} className="mb-6" />
 
                 <DashboardFilter
                     filterOptions={filterOptions}

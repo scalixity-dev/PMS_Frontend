@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Button from "../../../../components/common/Button";
 import { Check } from "lucide-react";
 import { SubscriptionSettingsLayout } from "../../../../components/common/SubscriptionSettingsLayout";
@@ -8,6 +9,7 @@ import ChangePlanModal from "./components/ChangePlanModal";
 import DatePicker from "../../../../components/ui/DatePicker";
 
 const MyPlanSettings: React.FC = () => {
+  const queryClient = useQueryClient();
   const [accountMode, setAccountMode] = useState<"Landlord" | "Property Manager">("Landlord");
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
@@ -127,6 +129,7 @@ const MyPlanSettings: React.FC = () => {
       const renewed = await subscriptionService.renew({
         isYearly: subscription.isYearly,
       });
+      await queryClient.invalidateQueries({ queryKey: ['subscription', 'current'] });
       setSubscription(renewed);
       // Refresh billing history
       const billingData = await subscriptionService.getBillingHistory();

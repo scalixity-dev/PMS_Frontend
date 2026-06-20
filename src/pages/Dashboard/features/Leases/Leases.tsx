@@ -9,6 +9,7 @@ import { useGetAllLeases, useDeleteLease, useUpdateLease } from '../../../../hoo
 import type { BackendLease } from '../../../../services/lease.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
+import PlanLimitBanner from '../../../../components/common/PlanLimitBanner';
 
 // Define LeaseItem matching usage in this file
 export interface LeaseItem extends Lease {
@@ -350,6 +351,8 @@ const Leases: React.FC = () => {
                         </div>
                     )}
                 </div>
+
+                <PlanLimitBanner resource="leases" currentCount={leases.length} className="mb-6" />
 
                 {/* Stats Section */}
                 <div className="bg-[#F0F0F6] p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 rounded-[2rem] shadow-md mb-8">

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { X, Check } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { pricingPlans } from "../../../../../pages/basewebsite/pricing/sections/PricingAndTableData";
 import { subscriptionService } from "../../../../../services/subscription.service";
 import type { Subscription } from "../../../../../services/subscription.service";
@@ -34,6 +35,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
   currentSubscription,
   onPlanChanged,
 }) => {
+  const queryClient = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isYearly, setIsYearly] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
@@ -137,6 +139,8 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
         planId: selectedPlan.toLowerCase(),
         isYearly,
       });
+      // Invalidate global subscription cache so all plan guards update immediately
+      await queryClient.invalidateQueries({ queryKey: ['subscription', 'current'] });
       onPlanChanged(updated);
       onClose();
     } catch (err) {

@@ -12,6 +12,7 @@ import {
     type RecurringMaintenance,
 } from '../../../../hooks/useMaintenanceRecurringQueries';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
+import PlanLimitBanner from '../../../../components/common/PlanLimitBanner';
 
 
 const MaintenanceRecurring: React.FC = () => {
@@ -194,6 +195,8 @@ const MaintenanceRecurring: React.FC = () => {
                         )}
                     </div>
                 </div>
+
+                <PlanLimitBanner resource="recurringRequests" currentCount={recurringRequests.length} className="mb-6" />
 
                 {/* Filters */}
                 <DashboardFilter

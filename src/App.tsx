@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { usePageTracking } from './hooks/usePageTracking';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
@@ -41,12 +41,57 @@ const OAuthCompletePage = lazy(() => import('./pages/basewebsite/auth/signUp/oau
 const MobileAutoLogin = lazy(() => import('./pages/basewebsite/auth/mobile-auto-login/MobileAutoLogin'));
 import AutoLoginProvider from './components/AutoLoginProvider';
 import { TeamPermissionProvider, useTeamPermissions } from './context/TeamPermissionContext';
-import { Navigate } from 'react-router-dom';
+import { SubscriptionProvider } from './context/SubscriptionContext';
+import { Navigate, Outlet } from 'react-router-dom';
+import { usePlanFeatures } from './hooks/usePlanFeatures';
+import UpgradeModal from './components/common/UpgradeModal';
+import { Lock } from 'lucide-react';
 
 const TeamPermissionGuard: React.FC<{ module: string; children: React.ReactNode }> = ({ module, children }) => {
   const { isTeamMember, canView } = useTeamPermissions();
   if (isTeamMember && !canView(module)) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
+};
+
+const PlanRouteGuard: React.FC<{ feature: string }> = ({ feature }) => {
+  const { planGateInfo, isLoading } = usePlanFeatures();
+  const [upgradeOpen, setUpgradeOpen] = React.useState(false);
+
+  if (isLoading) return null;
+
+  const { allowed, requiredPlan, requiredPlanName, featureLabel } = planGateInfo(feature);
+
+  if (allowed) return <Outlet />;
+
+  return (
+    <>
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 p-8 font-['Urbanist']">
+        <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
+          <Lock size={28} className="text-gray-400" />
+        </div>
+        <div className="text-center max-w-sm">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{featureLabel}</h2>
+          <p className="text-gray-500 text-sm">
+            This feature requires the <strong>{requiredPlanName}</strong> plan or higher.
+          </p>
+        </div>
+        <button
+          onClick={() => setUpgradeOpen(true)}
+          className="px-6 py-2.5 bg-[#3A6D6C] text-white font-semibold rounded-xl hover:bg-[#2e5857] transition-colors text-sm"
+        >
+          Upgrade to {requiredPlanName}
+        </button>
+      </div>
+      {requiredPlan && (
+        <UpgradeModal
+          isOpen={upgradeOpen}
+          onClose={() => setUpgradeOpen(false)}
+          requiredPlan={requiredPlan}
+          featureLabel={featureLabel}
+        />
+      )}
+    </>
+  );
 };
 const TenantOnboardingFlow = lazy(() => import('./pages/basewebsite/auth/signUp/sections/TenantOnboardingFlow').then((mod) => ({ default: mod.TenantOnboardingFlow })));
 const TeamPage = lazy(() => import('./pages/basewebsite/features/team/index'));
@@ -229,6 +274,7 @@ const App: React.FC = () => {
           <RoutedApp>
           <AutoLoginProvider>
           <TeamPermissionProvider>
+          <SubscriptionProvider>
           <GlobalLoader />
           <AIChatButton />
           <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>Loading…</div>}>
@@ -340,27 +386,36 @@ const App: React.FC = () => {
                 <Route path="/dashboard/accounting/transactions/:id" element={<TransactionDetail />} />
                 <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
                 <Route path="/dashboard/accounting/transactions/income-payments" element={<IncomePayments />} />
-                <Route path="/dashboard/accounting/transactions/recurring-income/add" element={<RecurringIncome />} />
                 <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
-                <Route path="/dashboard/accounting/transactions/recurring-expense/add" element={<RecurringExpense />} />
                 <Route path="/dashboard/accounting/transactions/return-deposit" element={<ReturnDeposit />} />
                 <Route path="/dashboard/accounting/transactions/apply-deposit" element={<ApplyDepositAndCredit />} />
-                <Route path="/dashboard/accounting/transactions/bulk-payments-income" element={<BulkPaymentsIncome />} />
-                <Route path="/dashboard/accounting/transactions/bulk-payments-expense" element={<BulkPaymentsExpense />} />
+                {/* Bulk Payments — Growth+ */}
+                <Route element={<PlanRouteGuard feature="bulk-payments" />}>
+                  <Route path="/dashboard/accounting/transactions/bulk-payments-income" element={<BulkPaymentsIncome />} />
+                  <Route path="/dashboard/accounting/transactions/bulk-payments-expense" element={<BulkPaymentsExpense />} />
+                </Route>
                 <Route path="/dashboard/accounting/transactions/deposit/add" element={<Deposit />} />
                 <Route path="/dashboard/accounting/transactions/credits/add" element={<Credits />} />
                 <Route path="/dashboard/accounting/transactions/expense-payments" element={<ExpensePayments />} />
                 <Route path="/dashboard/accounting/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
-                <Route path="/dashboard/accounting/recurring" element={<ProtectedRoute><Recurring /></ProtectedRoute>} />
-                <Route path="/dashboard/accounting/transactions/recurring-clone" element={<ProtectedRoute><RecurringClone /></ProtectedRoute>} />
-                <Route path="/dashboard/accounting/recurring/:id" element={<ProtectedRoute><RecurringDetail /></ProtectedRoute>} />
+                {/* Growth+ — recurring transactions */}
+                <Route element={<PlanRouteGuard feature="recurring-transactions" />}>
+                  <Route path="/dashboard/accounting/transactions/recurring-income/add" element={<RecurringIncome />} />
+                  <Route path="/dashboard/accounting/transactions/recurring-expense/add" element={<RecurringExpense />} />
+                  <Route path="/dashboard/accounting/recurring" element={<ProtectedRoute><Recurring /></ProtectedRoute>} />
+                  <Route path="/dashboard/accounting/transactions/recurring-clone" element={<ProtectedRoute><RecurringClone /></ProtectedRoute>} />
+                  <Route path="/dashboard/accounting/recurring/:id" element={<ProtectedRoute><RecurringDetail /></ProtectedRoute>} />
+                </Route>
               </Route>
               <Route element={<TeamPermissionGuard module="maintenance"><Outlet /></TeamPermissionGuard>}>
                 <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
                 <Route path="/dashboard/maintenance/requests" element={<Requests />} />
                 <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />
-                <Route path="/dashboard/maintenance/recurring" element={<MaintenanceRecurring />} />
-                <Route path="/dashboard/maintenance/recurring/:id" element={<MaintenanceRecurringDetail />} />
+                {/* Growth+ — maintenance board */}
+                <Route element={<PlanRouteGuard feature="maintenance-board" />}>
+                  <Route path="/dashboard/maintenance/recurring" element={<MaintenanceRecurring />} />
+                  <Route path="/dashboard/maintenance/recurring/:id" element={<MaintenanceRecurringDetail />} />
+                </Route>
               </Route>
               <Route path="/dashboard/movein" element={<MoveIn />} />
               <Route element={<TeamPermissionGuard module="contacts"><Outlet /></TeamPermissionGuard>}>
@@ -455,10 +510,13 @@ const App: React.FC = () => {
                 path="/dashboard/settings/security"
                 element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>}
               />
-              <Route
-                path="/dashboard/settings/integrations"
-                element={<ProtectedRoute><IntegrationSettings /></ProtectedRoute>}
-              />
+              {/* Growth+ — integrations */}
+              <Route element={<PlanRouteGuard feature="integrations" />}>
+                <Route
+                  path="/dashboard/settings/integrations"
+                  element={<ProtectedRoute><IntegrationSettings /></ProtectedRoute>}
+                />
+              </Route>
               <Route
                 path="/dashboard/settings/notifications"
                 element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>}
@@ -493,23 +551,25 @@ const App: React.FC = () => {
                   }
                 />
 
-                {/* Accounting Settings */}
-                <Route
-                  path="/dashboard/settings/accounting/invoice"
-                  element={
-                    <ProtectedRoute>
-                      <InvoiceSettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/settings/accounting/tags"
-                  element={
-                    <ProtectedRoute>
-                      <TagsSettings />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Accounting Settings — Growth+ */}
+                <Route element={<PlanRouteGuard feature="invoice-customization" />}>
+                  <Route
+                    path="/dashboard/settings/accounting/invoice"
+                    element={
+                      <ProtectedRoute>
+                        <InvoiceSettings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/settings/accounting/tags"
+                    element={
+                      <ProtectedRoute>
+                        <TagsSettings />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Route>
 
                 {/* Online Payments Settings */}
                 <Route
@@ -528,32 +588,30 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }>
                   <Route path="online-application" element={<OnlineApplication />} />
-                  <Route path="form-configuration" element={<FormConfiguration />} />
+                  {/* Pro+ — custom application forms */}
+                  <Route element={<PlanRouteGuard feature="custom-application-forms" />}>
+                    <Route path="form-configuration" element={<FormConfiguration />} />
+                  </Route>
                 </Route>
 
+                {/* Background Questions — available on all plans */}
                 <Route path="/dashboard/settings/rental-application/background-questions" element={
                   <ProtectedRoute>
                     <BackgroundQuestions />
                   </ProtectedRoute>
                 } />
 
-                {/* Team Management Settings */}
-                <Route
-                  path="/dashboard/settings/team-management/roles-permissions"
-                  element={
-                    <ProtectedRoute>
-                      <RolesPermissions />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/settings/team-management/property-permissions"
-                  element={
-                    <ProtectedRoute>
-                      <PropertyPermissions />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Team Management Settings — Pro+ */}
+                <Route element={<PlanRouteGuard feature="team-management" />}>
+                  <Route
+                    path="/dashboard/settings/team-management/roles-permissions"
+                    element={<ProtectedRoute><RolesPermissions /></ProtectedRoute>}
+                  />
+                  <Route
+                    path="/dashboard/settings/team-management/property-permissions"
+                    element={<ProtectedRoute><PropertyPermissions /></ProtectedRoute>}
+                  />
+                </Route>
 
                 {/* Request Settings */}
                 <Route
@@ -564,14 +622,13 @@ const App: React.FC = () => {
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/dashboard/settings/request-settings/automation-settings"
-                  element={
-                    <ProtectedRoute>
-                      <AutomationSettings />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Auto-assign Maintenance — Pro+ */}
+                <Route element={<PlanRouteGuard feature="auto-assign-maintenance" />}>
+                  <Route
+                    path="/dashboard/settings/request-settings/automation-settings"
+                    element={<ProtectedRoute><AutomationSettings /></ProtectedRoute>}
+                  />
+                </Route>
               </Route>
 
               <Route
@@ -640,38 +697,25 @@ const App: React.FC = () => {
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/dashboard/documents/my-templates"
-                  element={
-                    <ProtectedRoute>
-                      <MyTemplates />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/documents/my-templates/create-wizard"
-                  element={
-                    <ProtectedRoute>
-                      <CreateTemplateWizard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/documents/my-templates/:id"
-                  element={
-                    <ProtectedRoute>
-                      <MyTemplateDetail />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/documents/my-templates/:id/edit"
-                  element={
-                    <ProtectedRoute>
-                      <EditTemplate />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Growth+ — custom document templates */}
+                <Route element={<PlanRouteGuard feature="custom-document-templates" />}>
+                  <Route
+                    path="/dashboard/documents/my-templates"
+                    element={<ProtectedRoute><MyTemplates /></ProtectedRoute>}
+                  />
+                  <Route
+                    path="/dashboard/documents/my-templates/create-wizard"
+                    element={<ProtectedRoute><CreateTemplateWizard /></ProtectedRoute>}
+                  />
+                  <Route
+                    path="/dashboard/documents/my-templates/:id"
+                    element={<ProtectedRoute><MyTemplateDetail /></ProtectedRoute>}
+                  />
+                  <Route
+                    path="/dashboard/documents/my-templates/:id/edit"
+                    element={<ProtectedRoute><EditTemplate /></ProtectedRoute>}
+                  />
+                </Route>
                 <Route
                   path="/dashboard/documents/file-manager"
                   element={
@@ -723,102 +767,28 @@ const App: React.FC = () => {
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/dashboard/reports/rentability"
-                  element={
-                    <ProtectedRoute>
-                      <Rentability />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/reports/statement"
-                  element={
-                    <ProtectedRoute>
-                      <ProviderStatement />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/reports/contacts"
-                  element={
-                    <ProtectedRoute>
-                      <Contacts />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/reports/maintenance-requests"
-                  element={
-                    <ProtectedRoute>
-                      <MaintenanceRequestsReport />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Starter — free reports */}
                 <Route
                   path="/dashboard/reports/rent-roll"
-                  element={
-                    <ProtectedRoute>
-                      <RentRoll />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/reports/renters-insurance"
-                  element={
-                    <ProtectedRoute>
-                      <RentersInsurance />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/reports/tenant-statement"
-                  element={
-                    <ProtectedRoute>
-                      <TenantStatement />
-                    </ProtectedRoute>
-                  }
+                  element={<ProtectedRoute><RentRoll /></ProtectedRoute>}
                 />
                 <Route
                   path="/dashboard/reports/vacant-rentals"
-                  element={
-                    <ProtectedRoute>
-                      <VacantRentals />
-                    </ProtectedRoute>
-                  }
+                  element={<ProtectedRoute><VacantRentals /></ProtectedRoute>}
                 />
-                <Route
-                  path="/dashboard/reports/general-expenses"
-                  element={
-                    <ProtectedRoute>
-                      <GeneralExpenses />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/reports/general-income"
-                  element={
-                    <ProtectedRoute>
-                      <GeneralIncome />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/reports/property-expenses"
-                  element={
-                    <ProtectedRoute>
-                      <PropertyExpenses />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/reports/property-statement"
-                  element={
-                    <ProtectedRoute>
-                      <PropertyStatement />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Growth+ reports */}
+                <Route element={<PlanRouteGuard feature="report-income-expense" />}>
+                  <Route path="/dashboard/reports/rentability" element={<ProtectedRoute><Rentability /></ProtectedRoute>} />
+                  <Route path="/dashboard/reports/statement" element={<ProtectedRoute><ProviderStatement /></ProtectedRoute>} />
+                  <Route path="/dashboard/reports/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+                  <Route path="/dashboard/reports/maintenance-requests" element={<ProtectedRoute><MaintenanceRequestsReport /></ProtectedRoute>} />
+                  <Route path="/dashboard/reports/renters-insurance" element={<ProtectedRoute><RentersInsurance /></ProtectedRoute>} />
+                  <Route path="/dashboard/reports/tenant-statement" element={<ProtectedRoute><TenantStatement /></ProtectedRoute>} />
+                  <Route path="/dashboard/reports/general-expenses" element={<ProtectedRoute><GeneralExpenses /></ProtectedRoute>} />
+                  <Route path="/dashboard/reports/general-income" element={<ProtectedRoute><GeneralIncome /></ProtectedRoute>} />
+                  <Route path="/dashboard/reports/property-expenses" element={<ProtectedRoute><PropertyExpenses /></ProtectedRoute>} />
+                  <Route path="/dashboard/reports/property-statement" element={<ProtectedRoute><PropertyStatement /></ProtectedRoute>} />
+                </Route>
               </Route>
               <Route
                 path="/downloads"
@@ -861,6 +831,7 @@ const App: React.FC = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
+          </SubscriptionProvider>
           </TeamPermissionProvider>
           </AutoLoginProvider>
           </RoutedApp>
