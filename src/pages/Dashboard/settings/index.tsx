@@ -97,6 +97,7 @@ const ALL_SETTING_CARDS: (SettingCardData & { pmOnly?: boolean; teamViewable?: b
     pmOnly: true,
     links: [
       { label: "Roles & Permissions", path: "/dashboard/settings/team-management/roles-permissions" },
+      { label: "Property Permissions", path: "/dashboard/settings/team-management/property-permissions" },
     ],
   },
 ];
