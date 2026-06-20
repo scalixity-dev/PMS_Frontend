@@ -5,6 +5,7 @@ import AddInsuranceModal from './AddInsuranceModal';
 import AddLoanModal from './AddLoanModal';
 import { useState } from 'react';
 import { useCreatePropertyInsurance, useCreatePropertyLoan, useDeletePropertyInsurance, useUpdatePropertyInsurance, useDeletePropertyLoan, useUpdatePropertyLoan, useGetPropertyFinancials } from '../../../../../hooks/usePropertyDetailQueries';
+import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
 
 interface FinancialsTabProps {
     propertyId: string;
@@ -16,6 +17,7 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
     const [isAddLoanModalOpen, setIsAddLoanModalOpen] = useState(false);
     const [editingInsurance, setEditingInsurance] = useState<any>(null);
     const [editingLoan, setEditingLoan] = useState<any>(null);
+    const [confirmAction, setConfirmAction] = useState<{ type: 'insurance' | 'loan'; id: string } | null>(null);
 
     // Fetch real financials data
     const { data: financialsData = {}, isLoading, error } = useGetPropertyFinancials(propertyId, unitId);
@@ -141,15 +143,21 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
     };
 
     const handleDeleteInsurance = (insuranceId: string) => {
-        if (window.confirm('Delete this insurance?')) {
-            deleteInsuranceMutation.mutate({ propertyId, insuranceId });
-        }
+        setConfirmAction({ type: 'insurance', id: insuranceId });
     };
 
     const handleDeleteLoan = (loanId: string) => {
-        if (window.confirm('Delete this loan?')) {
-            deleteLoanMutation.mutate({ propertyId, loanId });
+        setConfirmAction({ type: 'loan', id: loanId });
+    };
+
+    const handleConfirmDelete = () => {
+        if (!confirmAction) return;
+        if (confirmAction.type === 'insurance') {
+            deleteInsuranceMutation.mutate({ propertyId, insuranceId: confirmAction.id });
+        } else {
+            deleteLoanMutation.mutate({ propertyId, loanId: confirmAction.id });
         }
+        setConfirmAction(null);
     };
 
     const handleEditInsurance = (insurance: any) => {
@@ -186,6 +194,15 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
 
     return (
         <div className="space-y-8">
+            <DeleteConfirmationModal
+                isOpen={!!confirmAction}
+                onClose={() => setConfirmAction(null)}
+                onConfirm={handleConfirmDelete}
+                isLoading={deleteInsuranceMutation.isPending || deleteLoanMutation.isPending}
+                title={confirmAction?.type === 'insurance' ? 'Delete Insurance' : 'Delete Loan'}
+                message={`Delete this ${confirmAction?.type}? This cannot be undone.`}
+                confirmText="Delete"
+            />
             {/* Financial Summary Section */}
             <div className="bg-gradient-to-r from-[#82D64D] to-[#7BD747] rounded-[2rem] p-6 md:p-8 text-white shadow-lg">
                 <h3 className="text-xl font-bold mb-6">Financial Summary</h3>

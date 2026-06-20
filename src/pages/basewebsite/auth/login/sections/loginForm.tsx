@@ -261,12 +261,13 @@ const LoginForm: React.FC = () => {
         } catch (err) {
             console.error('Login error:', err);
             const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
-            setError(errorMessage);
 
-            // If it's a 401, provide more specific error
-            if (err instanceof Error && errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
-                setError('Invalid email or password. Please check your credentials and try again.');
-            }
+            // Use the backend message if it's specific; fall back to generic for plain credential failures
+            const isGenericUnauthorized = errorMessage === 'Unauthorized' || errorMessage === 'Login failed. Please check your credentials.';
+            setError(isGenericUnauthorized
+                ? 'Invalid email or password. Please check your credentials and try again.'
+                : errorMessage
+            );
         } finally {
             setIsLoading(false);
         }

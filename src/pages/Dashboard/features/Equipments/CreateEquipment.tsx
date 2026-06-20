@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Upload, Check, Loader2, X, ChevronLeft, Edit, Trash2 } from 'lucide-react';
+import { useToast } from '../../../../components/common/Toast';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import CustomDropdown from '../../components/CustomDropdown';
 
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
@@ -48,6 +50,8 @@ const CreateEquipment = () => {
         fileSize?: number | null;
     }
     const [existingAttachments, setExistingAttachments] = useState<ExistingAttachment[]>([]);
+    const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+    const toast = useToast();
 
     const [formData, setFormData] = useState({
         categoryId: '',
@@ -142,17 +146,22 @@ const CreateEquipment = () => {
             .catch(() => { /* noop — attachments are non-critical */ });
     }, [isEditMode, id]);
 
-    const handleDeleteExistingAttachment = async (attachmentId: string) => {
-        if (!window.confirm('Delete this document?')) return;
+    const handleDeleteExistingAttachment = (attachmentId: string) => {
+        setAttachmentToDelete(attachmentId);
+    };
+
+    const confirmDeleteAttachment = async () => {
+        if (!attachmentToDelete) return;
         try {
-            const res = await fetch(API_ENDPOINTS.EQUIPMENT_ATTACHMENTS.DELETE(attachmentId), {
+            const res = await fetch(API_ENDPOINTS.EQUIPMENT_ATTACHMENTS.DELETE(attachmentToDelete), {
                 method: 'DELETE',
                 credentials: 'include',
             });
             if (!res.ok) throw new Error('Failed to delete');
-            setExistingAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+            setExistingAttachments((prev) => prev.filter((a) => a.id !== attachmentToDelete));
+            setAttachmentToDelete(null);
         } catch (err: any) {
-            alert(err?.message || 'Failed to delete document');
+            toast.error(err?.message || 'Failed to delete document');
         }
     };
 
@@ -496,6 +505,14 @@ const CreateEquipment = () => {
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-12 transition-all duration-300">
+            <DeleteConfirmationModal
+                isOpen={!!attachmentToDelete}
+                onClose={() => setAttachmentToDelete(null)}
+                onConfirm={confirmDeleteAttachment}
+                title="Delete Document"
+                message="Delete this document? This cannot be undone."
+                confirmText="Delete"
+            />
             {/* Breadcrumb */}
             <div className="overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 mb-6 w-full">
                 <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Equipments', path: '/dashboard/equipments' }, { label: isEditMode ? 'Edit Equipment' : 'Add Equipment' }]} />

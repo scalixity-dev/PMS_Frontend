@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import ServiceBreadCrumb from "../../../../components/ServiceBreadCrumb";
 import ServiceTabs from "../../../../components/ServiceTabs";
 import DashboardButton from "../../../../components/DashboardButton";
+import { useToast } from "../../../../../../components/common/Toast";
+import DeleteConfirmationModal from "../../../../../../components/common/modals/DeleteConfirmationModal";
 import {
     useGetGoogleCalendarStatus,
     useGetGoogleCalendarConnectUrl,
@@ -19,6 +21,8 @@ const IntegrationSettings = () => {
 
     const [activeTab, setActiveTab] = useState('integrations');
     const [isConnecting, setIsConnecting] = useState(false);
+    const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+    const toast = useToast();
 
     const handleTabChange = (val: string) => {
         setActiveTab(val);
@@ -40,33 +44,34 @@ const IntegrationSettings = () => {
             }
         } catch (error: any) {
             console.error("Failed to get connect URL:", error);
-            alert(error.message || "Failed to connect Google Calendar");
+            toast.error(error.message || "Failed to connect Google Calendar");
             setIsConnecting(false);
         }
     };
 
-    const handleDisconnect = async () => {
-        if (!confirm("Are you sure you want to disconnect Google Calendar?")) {
-            return;
-        }
+    const handleDisconnect = () => {
+        setShowDisconnectConfirm(true);
+    };
 
+    const confirmDisconnect = async () => {
         try {
             await disconnectMutation.mutateAsync();
+            setShowDisconnectConfirm(false);
             refetchStatus();
         } catch (error: any) {
             console.error("Failed to disconnect:", error);
-            alert(error.message || "Failed to disconnect Google Calendar");
+            toast.error(error.message || "Failed to disconnect Google Calendar");
         }
     };
 
     const handleSync = async () => {
         try {
             const result = await syncMutation.mutateAsync({});
-            alert(`Successfully synced ${result.count} calendar event${result.count !== 1 ? 's' : ''} from Google Calendar`);
-            refetchStatus(); // Refresh status to update lastSyncedAt
+            toast.success(`Successfully synced ${result.count} calendar event${result.count !== 1 ? 's' : ''} from Google Calendar`);
+            refetchStatus();
         } catch (error: any) {
             console.error("Failed to sync calendar:", error);
-            alert(error.message || "Failed to sync Google Calendar events");
+            toast.error(error.message || "Failed to sync Google Calendar events");
         }
     };
 
@@ -78,15 +83,13 @@ const IntegrationSettings = () => {
         const error = urlParams.get("error");
 
         if (success === "true") {
-            // Show success message
             if (message) {
-                alert(`Success: ${message}`);
+                toast.success(`Success: ${message}`);
             }
             refetchStatus();
-            // Clean up URL
             window.history.replaceState({}, document.title, window.location.pathname);
         } else if (error) {
-            alert(`Connection failed: ${error}`);
+            toast.error(`Connection failed: ${error}`);
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }, [refetchStatus]);
@@ -96,6 +99,17 @@ const IntegrationSettings = () => {
 
     return (
         <div className="min-h-screen font-sans w-full max-w-full overflow-x-hidden">
+            <DeleteConfirmationModal
+                isOpen={showDisconnectConfirm}
+                onClose={() => setShowDisconnectConfirm(false)}
+                onConfirm={confirmDisconnect}
+                isLoading={disconnectMutation.isPending}
+                title="Disconnect Google Calendar"
+                message="Are you sure you want to disconnect Google Calendar? Your synced events will remain but new ones won't sync."
+                confirmText="Disconnect"
+                confirmButtonClass="bg-orange-500 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-600 transition-colors"
+                headerClassName="bg-orange-500"
+            />
             <div className="w-full">
                 {/* Breadcrumb */}
                 <div className="mb-6">

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import { ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DetailTabs from '../../components/DetailTabs';
@@ -96,6 +97,7 @@ const TenantDetail = () => {
     const { id } = useParams<{ id: string }>();
     const [activeTab, setActiveTab] = useState('profile');
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const { isTeamMember, canManage } = useTeamPermissions();
     const canEdit = !isTeamMember || canManage('contacts');
     const actionMenuRef = useRef<HTMLDivElement>(null);
@@ -123,15 +125,18 @@ const TenantDetail = () => {
         };
     }, [isActionMenuOpen]);
 
-    const handleDeleteTenant = async () => {
-        if (id && window.confirm('Are you sure you want to delete this tenant?')) {
-            try {
-                await deleteTenantMutation.mutateAsync(id);
-                navigate('/dashboard/contacts/tenants');
-            } catch (err) {
-                console.error('Failed to delete tenant:', err);
-                alert(`Failed to delete tenant: ${err instanceof Error ? err.message : 'Unknown error'}`);
-            }
+    const handleDeleteTenant = () => {
+        if (id) setShowDeleteConfirm(true);
+    };
+
+    const confirmDeleteTenant = async () => {
+        if (!id) return;
+        try {
+            await deleteTenantMutation.mutateAsync(id);
+            setShowDeleteConfirm(false);
+            navigate('/dashboard/contacts/tenants');
+        } catch (err) {
+            console.error('Failed to delete tenant:', err);
         }
     };
 
@@ -200,6 +205,15 @@ const TenantDetail = () => {
 
     return (
         <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10">
+            <DeleteConfirmationModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={confirmDeleteTenant}
+                isLoading={deleteTenantMutation.isPending}
+                title="Delete Tenant"
+                message="Are you sure you want to delete this tenant? This cannot be undone."
+                confirmText="Delete"
+            />
             {/* Breadcrumb */}
             <Breadcrumb
                 items={[

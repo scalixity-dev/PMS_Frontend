@@ -1,6 +1,6 @@
 import { useState, useCallback, memo, useMemo, useEffect } from "react";
 import { TeamManagementSettingsLayout } from "../../../../components/common/TeamManagementSettingsLayout";
-import { X, Mail, Trash2, RefreshCw, CheckCircle, Clock, AlertCircle, Loader2, ChevronDown, ChevronUp, ShieldCheck, Building2 } from "lucide-react";
+import { X, Mail, Trash2, RefreshCw, CheckCircle, Clock, AlertCircle, Loader2, ChevronDown, ChevronUp, ShieldCheck, Building2, UserCheck } from "lucide-react";
 import {
     useGetTeamMembers,
     useInviteTeamMember,
@@ -8,6 +8,7 @@ import {
     useResendInvitation,
     useRevokeTeamMember,
     useUpdateTeamMember,
+    useEnableTeamMember,
 } from "../../../../hooks/useTeamQueries";
 import { useGetAllProperties } from "../../../../hooks/usePropertyQueries";
 import { useToast } from "../../../../components/common/Toast";
@@ -417,6 +418,74 @@ const EditPermissionsModal = memo(({
 
 EditPermissionsModal.displayName = 'EditPermissionsModal';
 
+const ConfirmModal = memo(({
+    isOpen,
+    onClose,
+    onConfirm,
+    isSubmitting,
+    title,
+    message,
+    confirmLabel,
+    danger,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    isSubmitting: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    danger?: boolean;
+}) => {
+    if (!isOpen) return null;
+    return (
+        <div
+            className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4"
+            onClick={onClose}
+            role="dialog"
+            aria-modal="true"
+        >
+            <div
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-sm"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                    <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                <div className="px-6 py-5">
+                    <p className="text-sm text-gray-600">{message}</p>
+                </div>
+                <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                        className="px-4 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onConfirm}
+                        disabled={isSubmitting}
+                        className={`px-5 py-2 rounded-lg text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2 ${
+                            danger ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-500 hover:bg-orange-600'
+                        }`}
+                    >
+                        {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {confirmLabel}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+});
+
+ConfirmModal.displayName = 'ConfirmModal';
+
 const StatusBadge = ({ status }: { status: string }) => {
     const config: Record<string, { color: string; icon: React.ComponentType<{ className?: string }>; label: string }> = {
         INVITED: { color: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: Clock, label: 'Invited' },
@@ -440,11 +509,15 @@ export default function RolesPermissions() {
     const deleteMutation = useDeleteTeamMember();
     const resendMutation = useResendInvitation();
     const revokeMutation = useRevokeTeamMember();
+    const enableMutation = useEnableTeamMember();
     const updateMutation = useUpdateTeamMember();
     const toast = useToast();
 
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<{ id: string; name: string; permissions: string[]; propertyIds: string[] } | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+    const [revokeTarget, setRevokeTarget] = useState<{ id: string; name: string } | null>(null);
+    const [enableTarget, setEnableTarget] = useState<{ id: string; name: string } | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
     const filteredMembers = useMemo(() => {
@@ -481,25 +554,46 @@ export default function RolesPermissions() {
         }
     }, [resendMutation, toast]);
 
-    const handleRevoke = useCallback(async (id: string, name: string) => {
-        if (!window.confirm(`Revoke access for ${name}? They will no longer be able to access your team.`)) return;
+    const handleRevoke = useCallback((id: string, name: string) => {
+        setRevokeTarget({ id, name });
+    }, []);
+
+    const confirmRevoke = useCallback(async () => {
+        if (!revokeTarget) return;
         try {
-            await revokeMutation.mutateAsync(id);
+            await revokeMutation.mutateAsync(revokeTarget.id);
             toast.success('Access revoked');
+            setRevokeTarget(null);
         } catch (err: any) {
             toast.error(err?.message || 'Failed to revoke access');
         }
-    }, [revokeMutation, toast]);
+    }, [revokeTarget, revokeMutation, toast]);
 
-    const handleDelete = useCallback(async (id: string, name: string) => {
-        if (!window.confirm(`Delete ${name} from your team? This cannot be undone.`)) return;
+    const confirmEnable = useCallback(async () => {
+        if (!enableTarget) return;
         try {
-            await deleteMutation.mutateAsync(id);
+            await enableMutation.mutateAsync(enableTarget.id);
+            toast.success(`${enableTarget.name} re-enabled successfully`);
+            setEnableTarget(null);
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to enable team member');
+        }
+    }, [enableTarget, enableMutation, toast]);
+
+    const handleDelete = useCallback((id: string, name: string) => {
+        setDeleteTarget({ id, name });
+    }, []);
+
+    const confirmDelete = useCallback(async () => {
+        if (!deleteTarget) return;
+        try {
+            await deleteMutation.mutateAsync(deleteTarget.id);
             toast.success('Team member deleted');
+            setDeleteTarget(null);
         } catch (err: any) {
             toast.error(err?.message || 'Failed to delete team member');
         }
-    }, [deleteMutation, toast]);
+    }, [deleteTarget, deleteMutation, toast]);
 
     const handleEditPermissions = useCallback(async (permissions: string[], propertyIds: string[]) => {
         if (!editingMember) return;
@@ -529,6 +623,34 @@ export default function RolesPermissions() {
                 onClose={() => setIsInviteModalOpen(false)}
                 onSubmit={handleInvite}
                 isSubmitting={inviteMutation.isPending}
+            />
+            <ConfirmModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={confirmDelete}
+                isSubmitting={deleteMutation.isPending}
+                title="Delete Team Member"
+                message={`Delete ${deleteTarget?.name} from your team? This cannot be undone.`}
+                confirmLabel="Delete"
+                danger
+            />
+            <ConfirmModal
+                isOpen={!!revokeTarget}
+                onClose={() => setRevokeTarget(null)}
+                onConfirm={confirmRevoke}
+                isSubmitting={revokeMutation.isPending}
+                title="Revoke Access"
+                message={`Revoke access for ${revokeTarget?.name}? They will no longer be able to access your team.`}
+                confirmLabel="Revoke"
+            />
+            <ConfirmModal
+                isOpen={!!enableTarget}
+                onClose={() => setEnableTarget(null)}
+                onConfirm={confirmEnable}
+                isSubmitting={enableMutation.isPending}
+                title="Re-enable Access"
+                message={`Re-enable access for ${enableTarget?.name}? They will be able to log in and access your team again.`}
+                confirmLabel="Enable"
             />
             <EditPermissionsModal
                 isOpen={!!editingMember}
@@ -618,6 +740,16 @@ export default function RolesPermissions() {
                                                 >
                                                     <AlertCircle className="w-3 h-3" />
                                                     Revoke
+                                                </button>
+                                            )}
+                                            {member.status === 'REVOKED' && (
+                                                <button
+                                                    onClick={() => setEnableTarget({ id: member.id, name: member.name })}
+                                                    disabled={enableMutation.isPending}
+                                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 rounded-md hover:bg-green-100 transition-colors disabled:opacity-50"
+                                                >
+                                                    <UserCheck className="w-3 h-3" />
+                                                    Enable
                                                 </button>
                                             )}
                                             <button

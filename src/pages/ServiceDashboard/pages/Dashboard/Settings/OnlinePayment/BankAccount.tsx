@@ -1,9 +1,12 @@
 import { Building2, CheckCircle2, AlertCircle, ExternalLink, Loader2, HelpCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import {
     useConnectStatus,
     useCreateConnectOnboarding,
     useDisconnectConnect,
 } from '../../../../../../hooks/usePaymentsQueries';
+import { useToast } from '../../../../../../components/common/Toast';
+import DeleteConfirmationModal from '../../../../../../components/common/modals/DeleteConfirmationModal';
 
 /**
  * Stripe Connect (Express) — service pro receives payouts directly to bank.
@@ -13,6 +16,8 @@ const BankAccount = () => {
     const { data: status, isLoading, refetch, isFetching } = useConnectStatus();
     const onboardingMut = useCreateConnectOnboarding();
     const disconnectMut = useDisconnectConnect();
+    const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+    const toast = useToast();
 
     const handleConnect = async () => {
         const returnUrl = `${window.location.origin}/service-dashboard/settings/bank-account?stripe=success`;
@@ -27,13 +32,17 @@ const BankAccount = () => {
         }
     };
 
-    const handleDisconnect = async () => {
-        if (!window.confirm('Disconnect Stripe? You will not receive payouts until reconnected.')) return;
+    const handleDisconnect = () => {
+        setShowDisconnectConfirm(true);
+    };
+
+    const confirmDisconnect = async () => {
         try {
             await disconnectMut.mutateAsync();
+            setShowDisconnectConfirm(false);
             await refetch();
         } catch (err: any) {
-            alert(err?.message || 'Failed to disconnect');
+            toast.error(err?.message || 'Failed to disconnect');
         }
     };
 
@@ -88,6 +97,18 @@ const BankAccount = () => {
     const allReady = status.chargesEnabled && status.payoutsEnabled && status.detailsSubmitted;
 
     return (
+        <>
+        <DeleteConfirmationModal
+            isOpen={showDisconnectConfirm}
+            onClose={() => setShowDisconnectConfirm(false)}
+            onConfirm={confirmDisconnect}
+            isLoading={disconnectMut.isPending}
+            title="Disconnect Stripe"
+            message="Disconnect Stripe? You will not receive payouts until reconnected."
+            confirmText="Disconnect"
+            confirmButtonClass="bg-orange-500 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-600 transition-colors"
+            headerClassName="bg-orange-500"
+        />
         <div className="space-y-8">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -165,6 +186,7 @@ const BankAccount = () => {
 
             <HelpSection />
         </div>
+        </>
     );
 };
 

@@ -359,6 +359,7 @@ export const API_ENDPOINTS = {
     INVITE: `${API_BASE_URL}/team`,
     UPDATE: (id: string) => `${API_BASE_URL}/team/${id}`,
     REVOKE: (id: string) => `${API_BASE_URL}/team/${id}/revoke`,
+    ENABLE: (id: string) => `${API_BASE_URL}/team/${id}/enable`,
     RESEND: (id: string) => `${API_BASE_URL}/team/${id}/resend-invitation`,
     DELETE: (id: string) => `${API_BASE_URL}/team/${id}`,
     ACCEPT_INVITATION: `${API_BASE_URL}/team/accept-invitation`,

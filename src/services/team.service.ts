@@ -113,6 +113,16 @@ class TeamService {
     return response.json();
   }
 
+  async enable(id: string): Promise<{ message: string }> {
+    const response = await fetch(API_ENDPOINTS.TEAM.ENABLE(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error(await this.extractError(response, 'Failed to enable team member'));
+    return response.json();
+  }
+
   async resendInvitation(id: string): Promise<{ message: string }> {
     const response = await fetch(API_ENDPOINTS.TEAM.RESEND(id), {
       method: 'POST',

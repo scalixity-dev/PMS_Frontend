@@ -68,6 +68,16 @@ export const useRevokeTeamMember = () => {
   });
 };
 
+export const useEnableTeamMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => teamService.enable(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamQueryKeys.lists() });
+    },
+  });
+};
+
 export const useResendInvitation = () => {
   return useMutation({
     mutationFn: (id: string) => teamService.resendInvitation(id),
