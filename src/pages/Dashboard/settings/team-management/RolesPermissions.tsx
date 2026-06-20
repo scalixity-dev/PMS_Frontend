@@ -443,6 +443,94 @@ const ConfirmModal = memo(({
 
 ConfirmModal.displayName = 'ConfirmModal';
 
+const DeleteConfirmModal = memo(({
+    isOpen,
+    onClose,
+    onConfirm,
+    isSubmitting,
+    memberName,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    isSubmitting: boolean;
+    memberName: string;
+}) => {
+    const [checked, setChecked] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) setChecked(false);
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div
+            className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4"
+            onClick={onClose}
+            role="dialog"
+            aria-modal="true"
+        >
+            <div
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-sm"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                        </div>
+                        <h2 className="text-base font-semibold text-gray-900">Delete Team Member</h2>
+                    </div>
+                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="px-6 py-5 space-y-4">
+                    <p className="text-sm text-gray-700">
+                        You are about to permanently delete <span className="font-semibold text-gray-900">{memberName}</span> from your team.
+                    </p>
+                    <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-xs text-red-700 leading-relaxed">
+                        <strong>This action is irreversible.</strong> Their account, permissions, and all property assignments will be permanently removed. They will not be able to log in.
+                    </div>
+                    <label className="flex items-start gap-3 cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => setChecked(e.target.checked)}
+                            className="mt-0.5 w-4 h-4 accent-red-600 cursor-pointer shrink-0"
+                        />
+                        <span className="text-xs text-gray-600">I understand this cannot be undone</span>
+                    </label>
+                </div>
+
+                <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                        className="px-4 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onConfirm}
+                        disabled={!checked || isSubmitting}
+                        className="px-5 py-2 rounded-lg text-white text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                        {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {isSubmitting ? 'Deleting...' : 'Delete Permanently'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+});
+
+DeleteConfirmModal.displayName = 'DeleteConfirmModal';
+
 const StatusBadge = ({ status }: { status: string }) => {
     const config: Record<string, { color: string; icon: React.ComponentType<{ className?: string }>; label: string }> = {
         INVITED: { color: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: Clock, label: 'Invited' },
@@ -581,15 +669,12 @@ export default function RolesPermissions() {
                 onSubmit={handleInvite}
                 isSubmitting={inviteMutation.isPending}
             />
-            <ConfirmModal
+            <DeleteConfirmModal
                 isOpen={!!deleteTarget}
                 onClose={() => setDeleteTarget(null)}
                 onConfirm={confirmDelete}
                 isSubmitting={deleteMutation.isPending}
-                title="Delete Team Member"
-                message={`Delete ${deleteTarget?.name} from your team? This cannot be undone.`}
-                confirmLabel="Delete"
-                danger
+                memberName={deleteTarget?.name ?? ''}
             />
             <ConfirmModal
                 isOpen={!!revokeTarget}
