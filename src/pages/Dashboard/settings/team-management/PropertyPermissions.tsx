@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback } from "react";
 import { TeamManagementSettingsLayout } from "../../../../components/common/TeamManagementSettingsLayout";
 import Pagination from "../../components/Pagination";
 import propertyPlaceholder from "../../../../assets/images/property_placeholder.png";
-import { X, Loader2, Check } from "lucide-react";
+import { X, Loader2, Users, MapPin } from "lucide-react";
 import { useGetAllPropertiesTransformed } from "../../../../hooks/usePropertyQueries";
 import { useGetTeamMembers, useUpdateTeamMember } from "../../../../hooks/useTeamQueries";
 import { useToast } from "../../../../components/common/Toast";
@@ -14,7 +14,7 @@ interface Property {
     image: string;
 }
 
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 6;
 
 const AssignTeamModal = ({
     isOpen,
@@ -103,7 +103,7 @@ const AssignTeamModal = ({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-medium text-gray-900 truncate">{member.name}</div>
-                                        <div className="text-xs text-gray-500 truncate">{member.email} · {member.role}</div>
+                                        <div className="text-xs text-gray-500 truncate">{member.email} · {member.role.replace(/_/g, ' ')}</div>
                                     </div>
                                 </label>
                             ))}
@@ -234,41 +234,81 @@ export default function PropertyPermissions() {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             {paginatedProperties.map((property) => {
                                 const assignedCount = getAssignedCount(property.id);
+                                const assignedMembers = teamMembers.filter((m) => m.propertyIds.includes(property.id));
                                 return (
                                     <div
                                         key={property.id}
-                                        className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                                        className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col"
                                     >
-                                        <div className="flex flex-col sm:flex-row gap-6 p-6">
-                                            <div className="w-full h-48 sm:w-36 sm:h-32 rounded-lg shrink-0 overflow-hidden">
-                                                <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
+                                        {/* Image */}
+                                        <div className="relative w-full h-44 shrink-0">
+                                            <img
+                                                src={property.image}
+                                                alt={property.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                            {/* Members badge overlay */}
+                                            <div className={`absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ${assignedCount > 0 ? 'bg-[#3D7475] text-white' : 'bg-white/90 text-gray-500'}`}>
+                                                <Users className="w-3 h-3" />
+                                                {assignedCount > 0 ? `${assignedCount} assigned` : 'No members'}
                                             </div>
-                                            <div className="flex-1 flex flex-col justify-between">
-                                                <div>
-                                                    <h3 className="text-2xl font-semibold text-gray-900 mb-2">{property.name}</h3>
-                                                    <p className="text-sm text-gray-600 leading-relaxed">{property.address}</p>
-                                                </div>
-                                                <div className="flex justify-end mt-3">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setActiveProperty(property)}
-                                                        disabled={teamMembers.length === 0}
-                                                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2 bg-[#4A9B8E] text-white text-sm font-medium rounded-lg hover:bg-[#3d8275] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    >
-                                                        {assignedCount > 0 && <Check className="w-3 h-3" />}
-                                                        Assign Team ({assignedCount})
-                                                    </button>
-                                                </div>
+                                        </div>
+
+                                        {/* Content */}
+                                        <div className="flex flex-col flex-1 p-4">
+                                            <h3 className="text-sm font-bold text-gray-900 mb-1 line-clamp-1">{property.name}</h3>
+                                            <div className="flex items-start gap-1 mb-4">
+                                                <MapPin className="w-3 h-3 text-gray-400 mt-0.5 shrink-0" />
+                                                <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">{property.address}</p>
                                             </div>
+
+                                            {/* Assigned member avatars */}
+                                            {assignedMembers.length > 0 && (
+                                                <div className="flex items-center gap-1.5 mb-4">
+                                                    <div className="flex -space-x-2">
+                                                        {assignedMembers.slice(0, 4).map((m) => (
+                                                            <div
+                                                                key={m.id}
+                                                                title={m.name}
+                                                                className="w-7 h-7 rounded-full bg-gradient-to-br from-[#3D7475] to-[#273F3B] border-2 border-white flex items-center justify-center text-white text-[10px] font-bold"
+                                                            >
+                                                                {m.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                        ))}
+                                                        {assignedMembers.length > 4 && (
+                                                            <div className="w-7 h-7 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-gray-600 text-[10px] font-bold">
+                                                                +{assignedMembers.length - 4}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-xs text-gray-400">
+                                                        {assignedMembers.slice(0, 2).map(m => m.name.split(' ')[0]).join(', ')}
+                                                        {assignedMembers.length > 2 ? ` +${assignedMembers.length - 2} more` : ''}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveProperty(property)}
+                                                disabled={teamMembers.length === 0}
+                                                className={`mt-auto w-full py-2 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                                    assignedCount > 0
+                                                        ? 'bg-[#E8F0EE] text-[#3D7475] hover:bg-[#d7e5e1]'
+                                                        : 'bg-[#3D7475] text-white hover:bg-[#2c5556]'
+                                                }`}
+                                            >
+                                                {assignedCount > 0 ? 'Edit Assignment' : 'Assign Team'}
+                                            </button>
                                         </div>
                                     </div>
                                 );
                             })}
                             {paginatedProperties.length === 0 && (
-                                <p className="text-sm text-gray-500">No properties found.</p>
+                                <p className="text-sm text-gray-500 col-span-3">No properties found.</p>
                             )}
                         </div>
 

@@ -5,6 +5,7 @@ import OtpForm from './sections/OtpForm';
 import { authService } from '../../../../services/auth.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { useOtpSessionStore } from '../store/otpSessionStore';
+import { queryClient } from '../../../../lib/queryClient';
 
 const OtpPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -112,7 +113,10 @@ const OtpPage: React.FC = () => {
       console.log('Redirecting to service provider dashboard');
       navigate('/service-dashboard', { replace: true });
     } else {
-      // Property manager - redirect to property manager dashboard
+      // Property manager / team member - redirect to property manager dashboard.
+      // Reset team queries so TeamPermissionContext refetches with the authenticated session
+      // rather than serving the stale unauthenticated (empty) cache.
+      queryClient.resetQueries({ queryKey: ['team'] });
       console.log('Redirecting to property manager dashboard');
       navigate('/dashboard', { replace: true });
     }

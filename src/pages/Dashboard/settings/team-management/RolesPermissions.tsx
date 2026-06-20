@@ -1,6 +1,6 @@
 import { useState, useCallback, memo, useMemo, useEffect } from "react";
 import { TeamManagementSettingsLayout } from "../../../../components/common/TeamManagementSettingsLayout";
-import { X, Mail, Trash2, RefreshCw, CheckCircle, Clock, AlertCircle, Loader2, ChevronDown, ChevronUp, ShieldCheck, Building2, UserCheck } from "lucide-react";
+import { X, Mail, Trash2, RefreshCw, CheckCircle, Clock, AlertCircle, Loader2, ChevronDown, ChevronUp, ShieldCheck, UserCheck } from "lucide-react";
 import {
     useGetTeamMembers,
     useInviteTeamMember,
@@ -10,7 +10,6 @@ import {
     useUpdateTeamMember,
     useEnableTeamMember,
 } from "../../../../hooks/useTeamQueries";
-import { useGetAllProperties } from "../../../../hooks/usePropertyQueries";
 import { useToast } from "../../../../components/common/Toast";
 import { formatPhoneNumber } from '@/utils/phone.utils';
 
@@ -276,34 +275,22 @@ const EditPermissionsModal = memo(({
     onSubmit,
     isSubmitting,
     currentPermissions,
-    currentPropertyIds,
     memberName,
 }: {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (permissions: string[], propertyIds: string[]) => void;
+    onSubmit: (permissions: string[]) => void;
     isSubmitting: boolean;
     currentPermissions: string[];
-    currentPropertyIds: string[];
     memberName: string;
 }) => {
     const [perms, setPerms] = useState<PermissionMap>(() => stringsToPermissions(currentPermissions));
-    const [selectedPropertyIds, setSelectedPropertyIds] = useState<string[]>(currentPropertyIds);
-    const { data: allProperties = [] } = useGetAllProperties();
 
-    // reset when opened or member changes
     useEffect(() => {
         if (isOpen) {
             setPerms(stringsToPermissions(currentPermissions));
-            setSelectedPropertyIds(currentPropertyIds);
         }
-    }, [isOpen, currentPermissions, currentPropertyIds]);
-
-    const toggleProperty = (id: string) => {
-        setSelectedPropertyIds(prev =>
-            prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
-        );
-    };
+    }, [isOpen, currentPermissions]);
 
     if (!isOpen) return null;
 
@@ -365,36 +352,6 @@ const EditPermissionsModal = memo(({
                         })}
                     </div>
                     <p className="text-xs text-gray-400 mt-3 px-2">Enabling "Manage" automatically enables "View".</p>
-
-                    {/* Property Assignment */}
-                    <div className="mt-5 border-t border-gray-100 pt-4">
-                        <div className="flex items-center gap-2 px-2 mb-3">
-                            <Building2 className="w-4 h-4 text-[#3D7475]" />
-                            <span className="text-xs font-semibold text-gray-700">Property Access</span>
-                            <span className="text-xs text-gray-400 ml-auto">
-                                {selectedPropertyIds.length === 0 ? 'No access' : `${selectedPropertyIds.length} selected`}
-                            </span>
-                        </div>
-                        {allProperties.length === 0 ? (
-                            <p className="text-xs text-gray-400 px-2">No properties available.</p>
-                        ) : (
-                            <div className="space-y-1 max-h-40 overflow-y-auto">
-                                {allProperties.map((p: any) => (
-                                    <label key={p.id} className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedPropertyIds.includes(p.id)}
-                                            onChange={() => toggleProperty(p.id)}
-                                            disabled={isSubmitting}
-                                            className="w-4 h-4 accent-[#3D7475] cursor-pointer"
-                                        />
-                                        <span className="text-xs text-gray-700 truncate">{p.propertyName}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        )}
-                        <p className="text-xs text-gray-400 mt-2 px-2">Select properties to grant access. No selection means no property access.</p>
-                    </div>
                 </div>
 
                 <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2 shrink-0">
@@ -403,7 +360,7 @@ const EditPermissionsModal = memo(({
                     </button>
                     <button
                         type="button"
-                        onClick={() => onSubmit(permissionsToStrings(perms), selectedPropertyIds)}
+                        onClick={() => onSubmit(permissionsToStrings(perms))}
                         disabled={isSubmitting}
                         className="px-6 py-2 rounded-lg text-white font-medium text-sm bg-[#3D7475] hover:bg-[#2c5556] transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
@@ -595,10 +552,10 @@ export default function RolesPermissions() {
         }
     }, [deleteTarget, deleteMutation, toast]);
 
-    const handleEditPermissions = useCallback(async (permissions: string[], propertyIds: string[]) => {
+    const handleEditPermissions = useCallback(async (permissions: string[]) => {
         if (!editingMember) return;
         try {
-            await updateMutation.mutateAsync({ id: editingMember.id, dto: { permissions, propertyIds } });
+            await updateMutation.mutateAsync({ id: editingMember.id, dto: { permissions } });
             toast.success('Permissions updated');
             setEditingMember(null);
         } catch (err: any) {
@@ -658,7 +615,6 @@ export default function RolesPermissions() {
                 onSubmit={handleEditPermissions}
                 isSubmitting={updateMutation.isPending}
                 currentPermissions={editingMember?.permissions ?? []}
-                currentPropertyIds={editingMember?.propertyIds ?? []}
                 memberName={editingMember?.name ?? ''}
             />
 
@@ -681,14 +637,14 @@ export default function RolesPermissions() {
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                         {filteredMembers.map((member) => (
-                            <div key={member.id} className="relative">
+                            <div key={member.id} className="relative h-full">
                                 <div className="absolute -top-3 left-6 z-10 px-4 py-1.5 bg-[#E8F0EE] border border-[#3D7475] rounded-xl">
-                                    <h3 className="text-xs font-bold text-[#3D7475] uppercase tracking-wide">{member.role}</h3>
+                                    <h3 className="text-xs font-bold text-[#3D7475] uppercase tracking-wide">{member.role.replace(/_/g, ' ')}</h3>
                                 </div>
 
-                                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 pt-10">
+                                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 pt-10 flex flex-col h-full">
                                     <div className="flex items-start gap-4 mb-4">
                                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#3D7475] to-[#273F3B] flex items-center justify-center shrink-0 text-white font-bold text-xl">
                                             {member.name.charAt(0).toUpperCase()}
@@ -711,16 +667,20 @@ export default function RolesPermissions() {
                                         )}
                                     </div>
 
-                                    <div className="flex flex-col gap-2 pt-3 border-t border-gray-100">
-                                        {member.status === 'ACTIVE' && (
-                                            <button
-                                                onClick={() => setEditingMember({ id: member.id, name: member.name, permissions: member.permissions, propertyIds: member.propertyIds ?? [] })}
-                                                className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-[#3D7475] bg-[#E8F0EE] rounded-md hover:bg-[#d7e5e1] transition-colors"
-                                            >
-                                                <ShieldCheck className="w-3 h-3" />
-                                                Edit Permissions
-                                            </button>
-                                        )}
+                                    <div className="flex flex-col gap-2 pt-3 border-t border-gray-100 mt-auto">
+                                        {/* Always reserve the Edit Permissions row — invisible when not applicable */}
+                                        <button
+                                            onClick={() => setEditingMember({ id: member.id, name: member.name, permissions: member.permissions, propertyIds: member.propertyIds ?? [] })}
+                                            disabled={member.status !== 'ACTIVE'}
+                                            className={`w-full flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                                                member.status === 'ACTIVE'
+                                                    ? 'text-[#3D7475] bg-[#E8F0EE] hover:bg-[#d7e5e1]'
+                                                    : 'invisible'
+                                            }`}
+                                        >
+                                            <ShieldCheck className="w-3 h-3" />
+                                            Edit Permissions
+                                        </button>
                                         <div className="flex gap-2">
                                             {member.status === 'INVITED' && (
                                                 <button

@@ -1,7 +1,8 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { usePageTracking } from './hooks/usePageTracking';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/queryClient';
 import { ReactQueryDevtools as TanStackDevtools } from '@tanstack/react-query-devtools';
 import { ChatToast } from './components/chat/ChatToast';
 import AppLayout from './components/layout/AppLayout';
@@ -211,20 +212,6 @@ const PropertyStatement = lazy(() => import('./pages/Dashboard/features/Reports/
 const Notification = lazy(() => import('./pages/Dashboard/features/Notification/Notification'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-// Create a QueryClient instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-    mutations: {
-      retry: 0,
-    },
-  },
-});
 
 // Inner component so usePageTracking can sit inside <BrowserRouter>.
 const RoutedApp: React.FC<{ children: React.ReactNode }> = ({ children }) => {
