@@ -22,6 +22,8 @@ export interface BillingHistoryItem {
   amount: number;
   plan: string;
   billingPeriod: string;
+  invoicePdfUrl: string | null;
+  hostedInvoiceUrl: string | null;
   createdAt: string;
 }
 
@@ -33,6 +35,12 @@ export interface BillingHistory {
 export interface UpdateSubscriptionDto {
   status?: string;
   isYearly?: boolean;
+}
+
+export interface CreateSubscriptionDto {
+  planId: string;
+  isYearly: boolean;
+  paymentMethodId?: string;
 }
 
 export interface ChangePlanDto {
@@ -74,6 +82,39 @@ class SubscriptionService {
       throw new Error(errorMessage);
     }
 
+    return response.json();
+  }
+
+  /**
+   * Create a new Stripe subscription (first-time subscriber)
+   */
+  async create(data: CreateSubscriptionDto): Promise<Subscription> {
+    const response = await fetch(API_ENDPOINTS.SUBSCRIPTION.CREATE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to create subscription');
+    }
+    return response.json();
+  }
+
+  /**
+   * Cancel active subscription (access continues until period end)
+   */
+  async cancel(): Promise<Subscription> {
+    const response = await fetch(API_ENDPOINTS.SUBSCRIPTION.CANCEL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to cancel subscription');
+    }
     return response.json();
   }
 

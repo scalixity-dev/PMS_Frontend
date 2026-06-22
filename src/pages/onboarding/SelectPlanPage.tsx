@@ -1,0 +1,230 @@
+import React, { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { authService } from "../../services/auth.service";
+import logo from "../../assets/images/logo.png";
+import { pricingPlans } from "../basewebsite/pricing/sections/PricingAndTableData";
+
+const CheckIcon = ({ dark }: { dark?: boolean }) => (
+  <svg width="16" height="16" viewBox="0 0 17 17" fill="none">
+    <circle cx="8.1" cy="8.1" r="8.1" fill={dark ? "white" : "#20CC95"} />
+    <path
+      d="M12.19 5.05a1 1 0 00-1.41 0L6.41 9.91 4.37 7.87a1 1 0 00-1.41 1.41l2.5 2.5a1 1 0 001.41 0l5.32-5.32a1 1 0 000-1.41z"
+      fill={dark ? "#20CC95" : "white"}
+    />
+  </svg>
+);
+
+interface PlanCardProps {
+  plan: (typeof pricingPlans)[number];
+  isYearly: boolean;
+  onSelect: (planId: string) => void;
+  loading: boolean;
+  selectedPlan: string | null;
+}
+
+const PlanCard: React.FC<PlanCardProps> = ({ plan, isYearly, onSelect, loading, selectedPlan }) => {
+  const isPro = plan.isPro;
+  const isCustom = plan.priceText.toLowerCase() === "custom";
+  const isThisLoading = loading && selectedPlan === plan.plan.toLowerCase();
+
+  const yearlyPrice = plan.annualBillingText.match(/\$[\d,]+\.?\d*/)?.[0] ?? "";
+  const displayPrice = isYearly
+    ? isCustom
+      ? plan.annualBillingText.replace(" / mo", " /yr")
+      : `${yearlyPrice} /yr`
+    : plan.priceText;
+
+  const displaySub = isYearly
+    ? isCustom
+      ? "Contact us for annual pricing"
+      : `${plan.priceText.replace("/m", "/mo")} billed monthly`
+    : plan.annualBillingText;
+
+  return (
+    <div
+      className={`relative flex flex-col rounded-2xl p-6 transition-all duration-200 border-2 ${
+        isPro
+          ? "bg-[#20CC95] border-white shadow-xl shadow-[#20CC95]/30 text-white"
+          : "bg-white border-gray-100 hover:border-[#20CC95] hover:shadow-lg shadow-sm"
+      }`}
+    >
+      {isPro && (
+        <span className="absolute -top-3 right-5 bg-[#FEC74E] text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+          Most Popular
+        </span>
+      )}
+
+      <h3 className={`text-xl font-bold mb-1 ${isPro ? "text-white" : "text-gray-900"}`}>
+        {plan.plan}
+      </h3>
+      <p className={`text-sm mb-5 ${isPro ? "text-white/80" : "text-gray-500"}`}>
+        {plan.description}
+      </p>
+
+      <div className="mb-6">
+        <p className={`text-3xl font-bold ${isPro ? "text-white" : "text-gray-900"}`}>
+          {displayPrice}
+        </p>
+        <p className={`text-xs mt-1 ${isPro ? "text-white/70" : "text-gray-400"}`}>
+          {displaySub}
+        </p>
+      </div>
+
+      <button
+        onClick={() => onSelect(plan.plan.toLowerCase())}
+        disabled={loading}
+        className={`w-full py-3 rounded-lg font-semibold text-sm transition-all duration-200 mb-6 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+          isPro
+            ? "bg-white text-gray-900 hover:bg-gray-100"
+            : isCustom
+            ? "bg-[#1a3a2f] text-white hover:bg-[#243d33]"
+            : "bg-[#20CC95] text-white hover:bg-[#17a877]"
+        }`}
+      >
+        {isThisLoading ? (
+          <>
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+            </svg>
+            <span>Activating...</span>
+          </>
+        ) : isCustom ? (
+          "Contact Sales"
+        ) : (
+          "Start 14-day free trial →"
+        )}
+      </button>
+
+      <p className={`text-xs font-semibold mb-3 ${isPro ? "text-white" : "text-gray-700"}`}>
+        {plan.includesTitle}
+      </p>
+      <ul className="space-y-2">
+        {plan.features.map((f) => (
+          <li key={f} className="flex items-center gap-2 text-sm">
+            <CheckIcon dark={isPro} />
+            <span className={isPro ? "text-white" : "text-gray-600"}>{f}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default function SelectPlanPage() {
+  const [isYearly, setIsYearly] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const userId = searchParams.get("userId") ?? "";
+  const email = searchParams.get("email") ?? "";
+  const isOAuth = searchParams.get("oauth") === "true";
+
+  const handleSelect = async (planId: string) => {
+    if (planId === "business") {
+      window.location.href = "mailto:sales@scalixity.com?subject=Business Plan Inquiry";
+      return;
+    }
+
+    setLoading(true);
+    setSelectedPlan(planId);
+    setError(null);
+
+    try {
+      await authService.activateAccount(userId, { planId, isYearly });
+
+      if (isOAuth) {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate(
+          `/otp?userId=${userId}&email=${encodeURIComponent(email)}&role=PROPERTY_MANAGER&activated=true`,
+          { replace: true }
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to activate account. Please try again.");
+      setLoading(false);
+      setSelectedPlan(null);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f7fdf9]">
+      {/* Minimal header — logo only */}
+      <header className="flex items-center justify-center py-6 border-b border-gray-100 bg-white">
+        <img src={logo} alt="SmartTenantAI" className="h-8 w-auto" />
+      </header>
+
+      <main className="max-w-6xl mx-auto px-4 py-12">
+        {/* Heading */}
+        <div className="text-center mb-10">
+          <p className="text-sm font-semibold text-[#20CC95] uppercase tracking-widest mb-2">
+            Step 2 of 2
+          </p>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+            Choose your plan
+          </h1>
+          <p className="text-gray-500 text-base">
+            Start free for 14 days. No credit card required.
+          </p>
+        </div>
+
+        {/* Monthly / Yearly toggle */}
+        <div className="flex items-center justify-center gap-3 mb-10">
+          <span className={`text-sm font-medium ${!isYearly ? "text-gray-900" : "text-gray-400"}`}>
+            Monthly
+          </span>
+          <button
+            onClick={() => setIsYearly((v) => !v)}
+            className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
+              isYearly ? "bg-[#20CC95]" : "bg-gray-200"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                isYearly ? "translate-x-6" : "translate-x-0"
+              }`}
+            />
+          </button>
+          <span className={`text-sm font-medium ${isYearly ? "text-gray-900" : "text-gray-400"}`}>
+            Yearly
+          </span>
+          {isYearly && (
+            <span className="bg-[#20CC95]/10 text-[#20CC95] text-xs font-semibold px-2 py-0.5 rounded-full">
+              Save up to 20%
+            </span>
+          )}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="max-w-md mx-auto mb-6 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm text-center">
+            {error}
+          </div>
+        )}
+
+        {/* Plan cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          {pricingPlans.map((plan) => (
+            <PlanCard
+              key={plan.plan}
+              plan={plan}
+              isYearly={isYearly}
+              onSelect={handleSelect}
+              loading={loading}
+              selectedPlan={selectedPlan}
+            />
+          ))}
+        </div>
+
+        <p className="text-center text-xs text-gray-400 mt-10">
+          You can upgrade, downgrade, or cancel anytime. By selecting a plan you agree to our{" "}
+          <a href="/terms" className="underline hover:text-gray-600">Terms of Service</a>.
+        </p>
+      </main>
+    </div>
+  );
+}

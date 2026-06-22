@@ -1,9 +1,13 @@
-import React, { useState, useRef } from "react";
-import { X, Check } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { X, Check, CreditCard, Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { pricingPlans } from "../../../../../pages/basewebsite/pricing/sections/PricingAndTableData";
 import { subscriptionService } from "../../../../../services/subscription.service";
 import type { Subscription } from "../../../../../services/subscription.service";
+import { paymentsService } from "../../../../../services/payments.service";
+import { useToast } from "../../../../../components/common/Toast";
+import { useSubscription } from "../../../../../context/SubscriptionContext";
 
 interface ChangePlanModalProps {
   isOpen: boolean;
@@ -29,6 +33,8 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ text, isDark = false }) => (
   </div>
 );
 
+const BUSINESS_CONTACT_EMAIL = "sales@scalixity.com";
+
 const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
   isOpen,
   onClose,
@@ -36,11 +42,16 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
   onPlanChanged,
 }) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { refetch: refetchSubscription } = useSubscription();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isYearly, setIsYearly] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [hasNoCard, setHasNoCard] = useState(false);
+  const [cardsLoading, setCardsLoading] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -84,16 +95,25 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
     }
   };
 
-  // Initialize with current subscription if available
-  React.useEffect(() => {
-    if (currentSubscription && isOpen) {
+  // Initialize with current subscription if available; also prefetch saved cards
+  useEffect(() => {
+    if (!isOpen) return;
+    if (currentSubscription) {
       setSelectedPlan(currentSubscription.planId);
       setIsYearly(currentSubscription.isYearly);
-      setError(null);
     }
-  }, [currentSubscription, isOpen]);
+    setError(null);
+    setHasNoCard(false);
+    setCardsLoading(true);
+    paymentsService.listCards()
+      .then((cards) => setHasNoCard(cards.length === 0))
+      .catch(() => {}) // non-fatal — guard will surface on submit
+      .finally(() => setCardsLoading(false));
+  }, [isOpen, currentSubscription]);
 
   if (!isOpen) return null;
+
+  const isBusinessSelected = selectedPlan?.toLowerCase() === "business";
 
   // Helper function to extract price from annualBillingText
   const extractAnnualPrice = (text: string): string => {
@@ -121,6 +141,12 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
       return;
     }
 
+    // Business plan → contact sales, no Stripe checkout
+    if (isBusinessSelected) {
+      window.location.href = `mailto:${BUSINESS_CONTACT_EMAIL}?subject=Business Plan Inquiry`;
+      return;
+    }
+
     // Don't change if it's the same plan and billing cycle
     if (
       currentSubscription &&
@@ -128,6 +154,12 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
       currentSubscription.isYearly === isYearly
     ) {
       onClose();
+      return;
+    }
+
+    // No-card guard
+    if (hasNoCard) {
+      setError("You need a payment method on file before subscribing.");
       return;
     }
 
@@ -139,13 +171,13 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
         planId: selectedPlan.toLowerCase(),
         isYearly,
       });
-      // Invalidate global subscription cache so all plan guards update immediately
       await queryClient.invalidateQueries({ queryKey: ['subscription', 'current'] });
+      refetchSubscription();
+      toast.success("Plan changed successfully! Your card on file has been charged.");
       onPlanChanged(updated);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to change plan");
-      console.error("Error changing plan:", err);
     } finally {
       setIsChanging(false);
     }
@@ -195,6 +227,23 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
               </button>
             </div>
           </div>
+
+          {/* No-card warning */}
+          {hasNoCard && !cardsLoading && !isBusinessSelected && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-start gap-2">
+              <CreditCard size={16} className="mt-0.5 shrink-0" />
+              <span>
+                No payment method on file.{" "}
+                <button
+                  onClick={() => { onClose(); navigate("/dashboard/settings/subscription/my-card"); }}
+                  className="underline font-medium hover:text-amber-900"
+                >
+                  Add a card
+                </button>{" "}
+                before subscribing.
+              </span>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -339,32 +388,15 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
             </button>
             <button
               onClick={handlePlanChange}
-              disabled={isChanging || !selectedPlan}
+              disabled={isChanging || !selectedPlan || cardsLoading}
               className="px-6 py-2 bg-[#486370] text-white rounded-lg font-medium hover:bg-[#3a505b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full sm:w-auto"
             >
-              {isChanging && (
-                <svg
-                  className="animate-spin h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-              )}
-              {isChanging ? "Changing Plan..." : "Change Plan"}
+              {(isChanging || cardsLoading) && <Loader2 className="animate-spin h-4 w-4 text-white" />}
+              {isBusinessSelected
+                ? "Contact Sales"
+                : isChanging
+                  ? "Changing Plan..."
+                  : "Change Plan"}
             </button>
           </div>
         </div>

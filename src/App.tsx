@@ -15,6 +15,7 @@ const FinancePage = lazy(() => import('./pages/basewebsite/features/finance/inde
 const LeadsPage = lazy(() => import('./pages/basewebsite/features/leads/index'));
 import { RentalApplicationSettingsLayout } from './components/common/RentalApplicationSettingsLayout';
 const PricingPage = lazy(() => import('./pages/basewebsite/pricing'));
+const SelectPlanPage = lazy(() => import('./pages/onboarding/SelectPlanPage'));
 const TermsOfService = lazy(() => import('./pages/basewebsite/legal/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('./pages/basewebsite/legal/PrivacyPolicy'));
 const CookiePolicy = lazy(() => import('./pages/basewebsite/legal/CookiePolicy'));
@@ -322,6 +323,7 @@ const App: React.FC = () => {
             <Route path="/otp" element={<OtpPage />} />
             <Route path="/auth/callback" element={<OAuthCallbackPage />} />
             <Route path="/auth/mobile-login" element={<MobileAutoLogin />} />
+            <Route path="/onboarding/plan" element={<SelectPlanPage />} />
             <Route element={<AppLayout />}>
               <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
               <Route path="/forgot-password" element={<GuestRoute><LoginPage /></GuestRoute>} />

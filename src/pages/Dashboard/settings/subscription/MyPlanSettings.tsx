@@ -369,8 +369,29 @@ const MyPlanSettings: React.FC = () => {
                     <td className="py-4 px-4 text-sm text-gray-900 font-medium">${row.amount.toFixed(2)}</td>
                     <td className="py-4 px-4 text-sm text-gray-600">{row.plan}</td>
                     <td className="py-4 px-4 text-sm text-gray-600">{row.billingPeriod}</td>
-                    <td className="py-4 px-4">
-                      <button className="text-gray-900 font-bold text-sm hover:underline">View</button>
+                    <td className="py-4 px-4 flex items-center gap-3">
+                      {row.hostedInvoiceUrl ? (
+                        <a
+                          href={row.hostedInvoiceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-900 font-bold text-sm hover:underline"
+                        >
+                          View
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-sm">—</span>
+                      )}
+                      {row.invoicePdfUrl && (
+                        <a
+                          href={row.invoicePdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#486370] font-medium text-sm hover:underline"
+                        >
+                          PDF
+                        </a>
+                      )}
                     </td>
                   </tr>
                 ))}

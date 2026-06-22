@@ -27,8 +27,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     queryKey: ['subscription', 'current'],
     queryFn: () => subscriptionService.getCurrent(),
     enabled: isPropertyManagerOrTeamMember,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
     retry: 1,
   });
 

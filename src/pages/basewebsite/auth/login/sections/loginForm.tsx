@@ -90,7 +90,7 @@ const LoginForm: React.FC = () => {
             // Force pricing — do NOT show OTP screen.
             if (response.requiresPlanSelection) {
                 console.log('Plan selection required, redirecting to pricing');
-                navigate(`/pricing?userId=${response.user.id}&email=${encodeURIComponent(response.user.email)}&newAccount=true`, { replace: true });
+                navigate(`/onboarding/plan?userId=${response.user.id}&email=${encodeURIComponent(response.user.email)}&newAccount=true`, { replace: true });
             }
             // Check if email verification is required
             else if (response.requiresEmailVerification) {

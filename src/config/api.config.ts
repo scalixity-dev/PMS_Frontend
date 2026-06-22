@@ -271,8 +271,10 @@ export const API_ENDPOINTS = {
   },
   SUBSCRIPTION: {
     GET_CURRENT: `${API_BASE_URL}/subscription/current`,
+    CREATE: `${API_BASE_URL}/subscription/create`,
     UPDATE: `${API_BASE_URL}/subscription/update`,
     CHANGE_PLAN: `${API_BASE_URL}/subscription/change-plan`,
+    CANCEL: `${API_BASE_URL}/subscription/cancel`,
     RENEW: `${API_BASE_URL}/subscription/renew`,
     BILLING_HISTORY: `${API_BASE_URL}/subscription/billing-history`,
   },
