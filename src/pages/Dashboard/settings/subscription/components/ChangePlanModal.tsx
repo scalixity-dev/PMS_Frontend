@@ -33,7 +33,7 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ text, isDark = false }) => (
   </div>
 );
 
-const BUSINESS_CONTACT_EMAIL = "sales@scalixity.com";
+const BUSINESS_CONTACT_EMAIL = "support@smarttenantai.com";
 
 const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
   isOpen,

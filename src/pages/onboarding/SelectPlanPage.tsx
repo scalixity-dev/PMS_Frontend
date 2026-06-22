@@ -125,7 +125,7 @@ export default function SelectPlanPage() {
 
   const handleSelect = async (planId: string) => {
     if (planId === "business") {
-      window.location.href = "mailto:sales@scalixity.com?subject=Business Plan Inquiry";
+      window.location.href = "mailto:support@smarttenantai.com?subject=Business Plan Inquiry";
       return;
     }
 
