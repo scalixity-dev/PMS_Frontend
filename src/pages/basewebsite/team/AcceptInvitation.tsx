@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Eye, EyeOff, Loader2, XCircle, CheckCircle, Users } from 'lucide-react';
+import { Eye, EyeOff, Loader2, XCircle, CheckCircle, Users, Smartphone } from 'lucide-react';
 import { useGetInvitation, useAcceptInvitation } from '../../../hooks/useTeamQueries';
 
 const AcceptInvitation: React.FC = () => {
@@ -10,6 +10,8 @@ const AcceptInvitation: React.FC = () => {
 
     const { data: invite, isLoading: isLoadingInvite, error: inviteError } = useGetInvitation(token);
     const acceptMutation = useAcceptInvitation();
+
+    const isMobile = searchParams.get('isMobile') === 'true';
 
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -88,15 +90,35 @@ const AcceptInvitation: React.FC = () => {
                             <CheckCircle className="w-8 h-8 text-green-600" />
                         </div>
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">You're all set!</h2>
-                        <p className="text-gray-500 text-sm mb-6">
-                            Your account is active. Log in to start working with your team.
-                        </p>
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="w-full bg-[#3D7475] text-white py-3 rounded-lg font-semibold hover:bg-[#2c5556] transition-colors"
-                        >
-                            Go to Login
-                        </button>
+
+                        {isMobile ? (
+                            <>
+                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#E8F0EE] mb-3 mt-1">
+                                    <Smartphone className="w-6 h-6 text-[#3D7475]" />
+                                </div>
+                                <p className="text-gray-500 text-sm mb-2">
+                                    Your account is active and ready to go.
+                                </p>
+                                <p className="text-gray-700 text-sm font-medium">
+                                    You can now continue on your SmartTenantAI mobile app.
+                                </p>
+                                <p className="text-gray-400 text-xs mt-3">
+                                    Open the app and log in with your email and the password you just set.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-gray-500 text-sm mb-6">
+                                    Your account is active. Log in to start working with your team.
+                                </p>
+                                <button
+                                    onClick={() => navigate('/login')}
+                                    className="w-full bg-[#3D7475] text-white py-3 rounded-lg font-semibold hover:bg-[#2c5556] transition-colors"
+                                >
+                                    Go to Login
+                                </button>
+                            </>
+                        )}
                     </div>
                 )}
 
