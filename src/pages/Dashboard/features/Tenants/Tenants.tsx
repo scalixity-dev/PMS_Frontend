@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import TenantCard from './components/TenantCard';
@@ -10,6 +11,8 @@ import { tenantService, type Tenant } from '../../../../services/tenant.service'
 
 const Tenants = () => {
     const navigate = useNavigate();
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('contacts');
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [currentPage, setCurrentPage] = useState(1);
@@ -158,21 +161,23 @@ const Tenants = () => {
                         </button>
                         <h1 className="text-2xl font-bold text-black">Tenants</h1>
                     </div>
-                    <div className="flex gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-                        <button
-                            onClick={() => navigate('/dashboard/contacts/tenants/import')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors whitespace-nowrap"
-                        >
-                            Import
-                        </button>
-                        <button
-                            onClick={() => navigate('/dashboard/contacts/tenants/add')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 whitespace-nowrap"
-                        >
-                            Add Tenants
-                            <Plus className="w-4 h-4" />
-                        </button>
-                    </div>
+                    {canEdit && (
+                        <div className="flex gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                            <button
+                                onClick={() => navigate('/dashboard/contacts/tenants/import')}
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors whitespace-nowrap"
+                            >
+                                Import
+                            </button>
+                            <button
+                                onClick={() => navigate('/dashboard/contacts/tenants/add')}
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 whitespace-nowrap"
+                            >
+                                Add Tenants
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Filter Section */}
@@ -229,6 +234,7 @@ const Tenants = () => {
                                     email={tenant.email}
                                     image={tenant.image || ''}
                                     propertyName="Sunset Apartments, Unit 4B"
+                                    readOnly={!canEdit}
                                     onDeleteSuccess={() => refetch()}
                                 />
                             ))

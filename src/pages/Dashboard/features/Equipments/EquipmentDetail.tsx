@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import { ChevronLeft, Edit, Paperclip, ChevronDown, ChevronUp, Trash2, Loader2 } from 'lucide-react';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
@@ -20,6 +21,9 @@ const findSubcategoryName = (categories: any[], subcategoryId: string): string =
 const EquipmentDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('property-units');
 
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
 
@@ -155,35 +159,37 @@ const EquipmentDetail = () => {
                         <ChevronLeft className="w-6 h-6" />
                         Equipments
                     </button>
-                    <div className="flex gap-3 w-full md:w-auto">
-                        <div className="relative w-full md:w-auto">
-                            <button
-                                onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
-                                className="w-full md:w-auto justify-center px-6 py-1.5 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
-                            >
-                                Action
-                                <ChevronDown className="w-4 h-4" />
-                            </button>
-                            {isActionDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-full md:w-32 bg-white rounded-lg shadow-lg z-10 border border-gray-100 overflow-hidden">
-                                    <button
-                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
-                                        onClick={handleEdit}
-                                    >
-                                        <Edit className="w-4 h-4" />
-                                        Edit
-                                    </button>
-                                    <button
-                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
-                                        onClick={handleDelete}
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                        Delete
-                                    </button>
-                                </div>
-                            )}
+                    {canEdit && (
+                        <div className="flex gap-3 w-full md:w-auto">
+                            <div className="relative w-full md:w-auto">
+                                <button
+                                    onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
+                                    className="w-full md:w-auto justify-center px-6 py-1.5 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                                >
+                                    Action
+                                    <ChevronDown className="w-4 h-4" />
+                                </button>
+                                {isActionDropdownOpen && (
+                                    <div className="absolute right-0 mt-2 w-full md:w-32 bg-white rounded-lg shadow-lg z-10 border border-gray-100 overflow-hidden">
+                                        <button
+                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                            onClick={handleEdit}
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                            Edit
+                                        </button>
+                                        <button
+                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                                            onClick={handleDelete}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            Delete
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Top Section */}

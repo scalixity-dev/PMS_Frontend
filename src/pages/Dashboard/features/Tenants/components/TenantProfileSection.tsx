@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import { Plus, Trash2, Download, Loader2, X } from 'lucide-react';
 import CustomTextBox from '@/pages/Dashboard/components/CustomTextBox';
 import { useGetTenantDocuments, useUploadTenantDocument, useDeleteTenantDocument } from '../../../../../hooks/useTenantQueries';
+import { useToast } from '../../../../../components/common/Toast';
+import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
 
 interface TenantProfileSectionProps {
     tenantId: string;
@@ -51,6 +53,8 @@ const TenantProfileSection = ({ tenantId, tenant }: TenantProfileSectionProps) =
     const [description, setDescription] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [docToDelete, setDocToDelete] = useState<string | null>(null);
+    const toast = useToast();
 
     const { data: documents = [], isLoading: isLoadingDocuments } = useGetTenantDocuments(tenantId);
     const uploadDocumentMutation = useUploadTenantDocument();
@@ -115,14 +119,18 @@ const TenantProfileSection = ({ tenantId, tenant }: TenantProfileSectionProps) =
         }
     };
 
-    const handleDeleteDocument = async (documentId: string) => {
-        if (window.confirm('Are you sure you want to delete this document?')) {
-            try {
-                await deleteDocumentMutation.mutateAsync(documentId);
-            } catch (error) {
-                console.error('Failed to delete document:', error);
-                alert(`Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
+    const handleDeleteDocument = (documentId: string) => {
+        setDocToDelete(documentId);
+    };
+
+    const confirmDeleteDocument = async () => {
+        if (!docToDelete) return;
+        try {
+            await deleteDocumentMutation.mutateAsync(docToDelete);
+            setDocToDelete(null);
+        } catch (error) {
+            console.error('Failed to delete document:', error);
+            toast.error(`Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 
@@ -135,6 +143,15 @@ const TenantProfileSection = ({ tenantId, tenant }: TenantProfileSectionProps) =
     };
   return (
     <div className="space-y-8">
+        <DeleteConfirmationModal
+            isOpen={!!docToDelete}
+            onClose={() => setDocToDelete(null)}
+            onConfirm={confirmDeleteDocument}
+            isLoading={deleteDocumentMutation.isPending}
+            title="Delete Document"
+            message="Are you sure you want to delete this document? This cannot be undone."
+            confirmText="Delete"
+        />
         {/* Personal Information */}
         <section>
             <SectionTitle title="Personal information" />

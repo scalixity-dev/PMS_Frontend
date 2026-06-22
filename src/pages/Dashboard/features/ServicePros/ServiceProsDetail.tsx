@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus, Edit, Link2Off, Archive, Trash2, Send, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DetailTabs from '../../components/DetailTabs';
 import ServiceProProfileSection from './components/ServiceProProfileSection';
@@ -78,6 +79,8 @@ const transformServiceProvider = (data: BackendServiceProvider) => {
 const ServiceProsDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('contacts');
     const [activeTab, setActiveTab] = useState('profile');
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const [isSendConnectionModalOpen, setIsSendConnectionModalOpen] = useState(false);
@@ -251,6 +254,7 @@ const ServiceProsDetail = () => {
                         </button>
                         <h1 className="text-2xl font-bold text-black">Service Pro</h1>
                     </div>
+                    {canEdit && (
                     <div className="flex gap-3 flex-wrap w-full sm:w-auto">
                         <button
                             onClick={() => navigate('/dashboard/accounting/transactions/expense/add', {
@@ -315,6 +319,7 @@ const ServiceProsDetail = () => {
                             )}
                         </div>
                     </div>
+                    )}
                 </div>
 
                 <div className='shadow-lg rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 mb-8 bg-white'>

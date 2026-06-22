@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import { ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DetailTabs from '../../components/DetailTabs';
@@ -12,6 +13,7 @@ import { useGetTenant, useDeleteTenant } from '../../../../hooks/useTenantQuerie
 import { useGetTenantAggregates } from '../../../../hooks/useTransactionQueries';
 import { formatPhoneNumber } from '@/utils/phone.utils';
 import type { BackendTenantProfile } from '../../../../services/tenant.service';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 
 // Transform backend tenant profile to detail page format
@@ -95,6 +97,9 @@ const TenantDetail = () => {
     const { id } = useParams<{ id: string }>();
     const [activeTab, setActiveTab] = useState('profile');
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('contacts');
     const actionMenuRef = useRef<HTMLDivElement>(null);
     const deleteTenantMutation = useDeleteTenant();
 
@@ -120,15 +125,18 @@ const TenantDetail = () => {
         };
     }, [isActionMenuOpen]);
 
-    const handleDeleteTenant = async () => {
-        if (id && window.confirm('Are you sure you want to delete this tenant?')) {
-            try {
-                await deleteTenantMutation.mutateAsync(id);
-                navigate('/dashboard/contacts/tenants');
-            } catch (err) {
-                console.error('Failed to delete tenant:', err);
-                alert(`Failed to delete tenant: ${err instanceof Error ? err.message : 'Unknown error'}`);
-            }
+    const handleDeleteTenant = () => {
+        if (id) setShowDeleteConfirm(true);
+    };
+
+    const confirmDeleteTenant = async () => {
+        if (!id) return;
+        try {
+            await deleteTenantMutation.mutateAsync(id);
+            setShowDeleteConfirm(false);
+            navigate('/dashboard/contacts/tenants');
+        } catch (err) {
+            console.error('Failed to delete tenant:', err);
         }
     };
 
@@ -197,6 +205,15 @@ const TenantDetail = () => {
 
     return (
         <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10">
+            <DeleteConfirmationModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={confirmDeleteTenant}
+                isLoading={deleteTenantMutation.isPending}
+                title="Delete Tenant"
+                message="Are you sure you want to delete this tenant? This cannot be undone."
+                confirmText="Delete"
+            />
             {/* Breadcrumb */}
             <Breadcrumb
                 items={[
@@ -217,7 +234,7 @@ const TenantDetail = () => {
                         <h1 className="text-2xl font-bold text-black">Tenant</h1>
                     </div>
                     <div className="flex gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap">
-                        <button
+                        {canEdit && <button
                             onClick={() => navigate('/dashboard/accounting/transactions/income/add', {
                                 state: {
                                     prefilledPayer: {
@@ -232,8 +249,8 @@ const TenantDetail = () => {
                         >
                             Add Invoice
                             <Plus className="w-4 h-4" />
-                        </button>
-                        <div className="relative" ref={actionMenuRef}>
+                        </button>}
+                        {canEdit && <div className="relative" ref={actionMenuRef}>
                             <button
                                 onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
                                 className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors whitespace-nowrap"
@@ -260,7 +277,7 @@ const TenantDetail = () => {
                                     ))}
                                 </div>
                             )}
-                        </div>
+                        </div>}
                     </div>
                 </div>
 

@@ -20,6 +20,7 @@ import { useGetTenantByUserId } from '../../../../hooks/useTenantQueries';
 import type { BackendLease } from '../../../../services/lease.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 
 const INVOICE_SCHEDULE_TO_DISPLAY: Record<string, string> = {
@@ -38,6 +39,8 @@ const LeaseDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('tenants');
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('leases');
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isEndLeaseModalOpen, setIsEndLeaseModalOpen] = useState(false);
@@ -604,7 +607,7 @@ const LeaseDetail: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        {isMoveInIncomplete && (
+                        {canEdit && isMoveInIncomplete && (
                             <button
                                 onClick={() => {
                                     navigate('/dashboard/movein', {
@@ -617,7 +620,7 @@ const LeaseDetail: React.FC = () => {
                                 Complete Move-In
                             </button>
                         )}
-                        {canRenew && !isMoveInIncomplete && (
+                        {canEdit && canRenew && !isMoveInIncomplete && (
                             <button
                                 onClick={() => {
                                     setRenewEndDate('');
@@ -632,7 +635,7 @@ const LeaseDetail: React.FC = () => {
                                 Renew Lease
                             </button>
                         )}
-                        <div className="relative" ref={dropdownRef}>
+                        {canEdit && <div className="relative" ref={dropdownRef}>
                             <button
                                 onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
                                 className="flex items-center gap-2 px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
@@ -709,7 +712,7 @@ const LeaseDetail: React.FC = () => {
                                     </button>
                                 </div >
                             )}
-                        </div>
+                        </div>}
                     </div>
                 </div>
 

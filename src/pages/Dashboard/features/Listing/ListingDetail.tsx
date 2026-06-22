@@ -31,10 +31,13 @@ import { leasingService } from '../../../../services/leasing.service';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 const ListingDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('listing');
     const [activeTab, setActiveTab] = useState('listing');
     const [isOnlineApplicationModalOpen, setIsOnlineApplicationModalOpen] = useState(false);
     const [isInviteToApplyModalOpen, setIsInviteToApplyModalOpen] = useState(false);
@@ -773,19 +776,23 @@ const ListingDetail: React.FC = () => {
                         <h1 className="text-2xl font-bold text-gray-800">{listing?.name || `#${id}`}</h1>
                     </div>
                     <div className="flex gap-3">
-                        <button
-                            onClick={handleToggleListing}
-                            disabled={updateListing.isPending}
-                            className={`bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors ${updateListing.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            {updateListing.isPending ? (listing?.status === 'Listed' ? 'Unlisting...' : 'Listing...') : (listing?.status === 'Listed' ? 'Unlist' : 'List')}
-                        </button>
-                        <button
-                            onClick={() => setIsInviteToApplyModalOpen(true)}
-                            className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors"
-                        >
-                            Invite to apply
-                        </button>
+                        {canEdit && (
+                            <button
+                                onClick={handleToggleListing}
+                                disabled={updateListing.isPending}
+                                className={`bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors ${updateListing.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                {updateListing.isPending ? (listing?.status === 'Listed' ? 'Unlisting...' : 'Listing...') : (listing?.status === 'Listed' ? 'Unlist' : 'List')}
+                            </button>
+                        )}
+                        {canEdit && (
+                            <button
+                                onClick={() => setIsInviteToApplyModalOpen(true)}
+                                className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors"
+                            >
+                                Invite to apply
+                            </button>
+                        )}
                         <div className="relative">
                             <button
                                 onClick={() => setIsShareDropdownOpen(!isShareDropdownOpen)}
@@ -967,9 +974,9 @@ const ListingDetail: React.FC = () => {
                             <h3 className="font-bold">Accept online applications</h3>
                             <div className="flex items-center gap-3">
                                 <span className="bg-[#3A6D6C] px-3 py-1 border border-white rounded-full text-xs">{onlineApplicationStatus}</span>
-                                <button onClick={() => setIsOnlineApplicationModalOpen(true)}>
+                                {canEdit && <button onClick={() => setIsOnlineApplicationModalOpen(true)}>
                                     <SquarePen className="w-4 h-4" />
-                                </button>
+                                </button>}
                             </div>
 
                             {applicationFee && (
@@ -998,7 +1005,7 @@ const ListingDetail: React.FC = () => {
                                     <h3 className="text-lg font-bold text-gray-800">Lease terms</h3>
                                     <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
                                 </div>
-                                <button
+                                {canEdit && <button
                                     onClick={() => {
                                         if (isLeaseTermsEditing) {
                                             handleSaveLeaseTerms();
@@ -1013,7 +1020,7 @@ const ListingDetail: React.FC = () => {
                                     className={`${isLeaseTermsEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
                                     {isLeaseTermsEditing ? (updateListing.isPending ? 'Saving...' : 'Done') : 'Edit'} <SquarePen className="w-3 h-3" />
-                                </button>
+                                </button>}
                             </div>
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1162,7 +1169,7 @@ const ListingDetail: React.FC = () => {
                                     <h3 className="text-lg font-bold text-gray-800">Pet Policy</h3>
                                     <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
                                 </div>
-                                <button
+                                {canEdit && <button
                                     onClick={() => {
                                         if (isPetPolicyEditing) {
                                             handleSavePetPolicy();
@@ -1177,7 +1184,7 @@ const ListingDetail: React.FC = () => {
                                     className={`${isPetPolicyEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
                                     {isPetPolicyEditing ? (isSavingPetPolicy ? 'Saving...' : 'Done') : 'Edit'} <SquarePen className="w-3 h-3" />
-                                </button>
+                                </button>}
                             </div>
 
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
@@ -1314,7 +1321,7 @@ const ListingDetail: React.FC = () => {
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6 mb-4">
                                 <div className="flex gap-4 mb-4">
                                     <span className="bg-[#82D64D] text-white px-6 py-1.5 rounded-full text-xs font-bold">Gallery</span>
-                                    <button
+                                    {canEdit && <button
                                         onClick={() => {
                                             if (isGalleryEditing) {
                                                 handleSaveGallery();
@@ -1326,7 +1333,7 @@ const ListingDetail: React.FC = () => {
                                         className={`${isGalleryEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50`}
                                     >
                                         {isGalleryEditing ? (updateProperty.isPending ? 'Saving...' : 'Done') : 'Edit'} <SquarePen className="w-3 h-3" />
-                                    </button>
+                                    </button>}
                                 </div>
                                 <div className={`${isGalleryEditing ? 'flex overflow-x-auto gap-4 pb-2' : 'grid grid-cols-4 gap-4'}`}>
                                     <input
@@ -1367,7 +1374,7 @@ const ListingDetail: React.FC = () => {
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
                                 <div className="flex gap-4 mb-4">
                                     <span className="bg-[#82D64D] text-white px-6 py-1.5 rounded-full text-xs font-bold">Video</span>
-                                    <button
+                                    {canEdit && <button
                                         onClick={() => {
                                             // Persist on Done click (toggle-off). Same UX as Gallery.
                                             if (isVideoEditing) {
@@ -1378,7 +1385,7 @@ const ListingDetail: React.FC = () => {
                                         className={`${isVideoEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors`}
                                     >
                                         {isVideoEditing ? 'Done' : 'Edit'} <SquarePen className="w-3 h-3" />
-                                    </button>
+                                    </button>}
                                 </div>
                                 <div className={`${isVideoEditing ? 'flex overflow-x-auto gap-4 pb-2' : 'grid grid-cols-4 gap-4'}`}>
                                     <input
@@ -1424,7 +1431,7 @@ const ListingDetail: React.FC = () => {
                             <div className="flex items-center gap-2 mb-4">
                                 <h3 className="text-lg font-bold text-gray-800">Promotions</h3>
                                 <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
-                                <div className="flex gap-2 ml-4">
+                                {canEdit && <div className="flex gap-2 ml-4">
                                     <button
                                         onClick={() => {
                                             if (isDescriptionEditing) {
@@ -1449,7 +1456,7 @@ const ListingDetail: React.FC = () => {
                                     >
                                         {isRibbonEditing ? (updateListing.isPending ? 'Saving...' : 'Done') : 'Edit ribbon'} <SquarePen className="w-3 h-3" />
                                     </button>
-                                </div>
+                                </div>}
                             </div>
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6 flex gap-6">
                                 {listing.image ? (
@@ -1494,12 +1501,12 @@ const ListingDetail: React.FC = () => {
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6 mb-4">
                                 <div className="flex gap-4 mb-4">
                                     <span className="bg-[#82D64D] text-white px-6 py-1.5 rounded-full text-xs font-bold">Features</span>
-                                    <button
+                                    {canEdit && <button
                                         onClick={() => setActiveModal('features')}
                                         className="bg-[#888888] text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2"
                                     >
                                         Edit <SquarePen className="w-3 h-3" />
-                                    </button>
+                                    </button>}
                                 </div>
                                 <div className="flex gap-3 flex-wrap">
                                     {features.map((feature, idx) => (
@@ -1513,12 +1520,12 @@ const ListingDetail: React.FC = () => {
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
                                 <div className="flex gap-4 mb-4">
                                     <span className="bg-[#82D64D] text-white px-6 py-1.5 rounded-full text-xs font-bold">Amenities</span>
-                                    <button
+                                    {canEdit && <button
                                         onClick={() => setActiveModal('amenities')}
                                         className="bg-[#888888] text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2"
                                     >
                                         Edit <SquarePen className="w-3 h-3" />
-                                    </button>
+                                    </button>}
                                 </div>
                                 <div className="flex gap-3 flex-wrap">
                                     {amenities.map((amenity, idx) => (
@@ -1557,7 +1564,7 @@ const ListingDetail: React.FC = () => {
                                     <h3 className="text-lg font-bold text-gray-800">Listing contact</h3>
                                     <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
                                 </div>
-                                <button
+                                {canEdit && <button
                                     onClick={() => {
                                         if (isContactEditing) {
                                             handleSaveContact();
@@ -1569,7 +1576,7 @@ const ListingDetail: React.FC = () => {
                                     className={`${isContactEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50`}
                                 >
                                     {isContactEditing ? (updateProperty.isPending ? 'Saving...' : 'Done') : 'Edit'} <SquarePen className="w-3 h-3" />
-                                </button>
+                                </button>}
                             </div>
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
                                 <div className="flex items-center gap-4">

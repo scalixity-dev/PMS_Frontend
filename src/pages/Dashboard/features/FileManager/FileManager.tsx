@@ -9,8 +9,10 @@ import DeleteConfirmationModal from '../../../../components/common/modals/Delete
 import {
     useGetFiles, useRenameFile, useDeleteFile, useUploadFile,
     useGetFolders, useCreateFolder, useRenameFolder, useDeleteFolder,
+    useTrackDownload,
 } from '../../../../hooks/useFilesQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 // File data structure
 interface FileData {
@@ -132,6 +134,9 @@ type FileFilters = Record<string, string[]> & {
 
 const FileManager: React.FC = () => {
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('document-templates');
+    const trackDownloadMutation = useTrackDownload();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
@@ -426,6 +431,12 @@ const FileManager: React.FC = () => {
             link.download = `${file.name}.${file.type}`;
             document.body.appendChild(link);
             link.click();
+            trackDownloadMutation.mutate({
+                fileId: file.id,
+                fileName: `${file.name}.${file.type}`,
+                fileUrl: file.preview,
+                sizeBytes: blob.size,
+            });
         } catch (error) {
             const isTerminalError = error instanceof DownloadError && error.isTerminal;
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -488,29 +499,31 @@ const FileManager: React.FC = () => {
                             </React.Fragment>
                         ))}
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setIsCreateFolderOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
-                        >
-                            <FolderPlus size={16} />
-                            New Folder
-                        </button>
-                        <button
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isUploading}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm disabled:opacity-50"
-                        >
-                            {isUploading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
-                            {isUploading ? 'Uploading...' : 'Upload File'}
-                        </button>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            onChange={handleFileUpload}
-                            className="hidden"
-                        />
-                    </div>
+                    {canEdit && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setIsCreateFolderOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                <FolderPlus size={16} />
+                                New Folder
+                            </button>
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                                className="flex items-center gap-2 px-4 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm disabled:opacity-50"
+                            >
+                                {isUploading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                                {isUploading ? 'Uploading...' : 'Upload File'}
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                onChange={handleFileUpload}
+                                className="hidden"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Upload error banner */}
@@ -569,22 +582,24 @@ const FileManager: React.FC = () => {
                                             {folder.name}
                                         </span>
                                     </div>
-                                    <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 flex gap-1">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setEditingFolder({ id: folder.id, name: folder.name }); }}
-                                            className="p-1 bg-white rounded hover:bg-gray-100 shadow-sm"
-                                            title="Rename"
-                                        >
-                                            <MoreHorizontal size={12} />
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setDeletingFolder({ id: folder.id, name: folder.name }); }}
-                                            className="p-1 bg-white rounded hover:bg-red-50 text-red-500 shadow-sm"
-                                            title="Delete"
-                                        >
-                                            <X size={12} />
-                                        </button>
-                                    </div>
+                                    {canEdit && (
+                                        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 flex gap-1">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setEditingFolder({ id: folder.id, name: folder.name }); }}
+                                                className="p-1 bg-white rounded hover:bg-gray-100 shadow-sm"
+                                                title="Rename"
+                                            >
+                                                <MoreHorizontal size={12} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setDeletingFolder({ id: folder.id, name: folder.name }); }}
+                                                className="p-1 bg-white rounded hover:bg-red-50 text-red-500 shadow-sm"
+                                                title="Delete"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -761,15 +776,17 @@ const FileManager: React.FC = () => {
                                                                     >
                                                                         Download
                                                                     </button>
-                                                                    <button
-                                                                        className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
-                                                                        onClick={() => {
-                                                                            setActiveActionMenu(null);
-                                                                            setEditingFile(file);
-                                                                        }}
-                                                                    >
-                                                                        Edit name
-                                                                    </button>
+                                                                    {canEdit && (
+                                                                        <button
+                                                                            className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
+                                                                            onClick={() => {
+                                                                                setActiveActionMenu(null);
+                                                                                setEditingFile(file);
+                                                                            }}
+                                                                        >
+                                                                            Edit name
+                                                                        </button>
+                                                                    )}
                                                                     <button
                                                                         className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
                                                                         onClick={() => {
@@ -779,15 +796,17 @@ const FileManager: React.FC = () => {
                                                                     >
                                                                         Preview
                                                                     </button>
-                                                                    <button
-                                                                        className="px-4 py-3 hover:bg-red-50 text-red-500 transition-colors text-left font-semibold"
-                                                                        onClick={() => {
-                                                                            setActiveActionMenu(null);
-                                                                            setDeletingFile(file);
-                                                                        }}
-                                                                    >
-                                                                        Delete
-                                                                    </button>
+                                                                    {canEdit && (
+                                                                        <button
+                                                                            className="px-4 py-3 hover:bg-red-50 text-red-500 transition-colors text-left font-semibold"
+                                                                            onClick={() => {
+                                                                                setActiveActionMenu(null);
+                                                                                setDeletingFile(file);
+                                                                            }}
+                                                                        >
+                                                                            Delete
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         )}
@@ -873,15 +892,17 @@ const FileManager: React.FC = () => {
                                                                     >
                                                                         Download
                                                                     </button>
-                                                                    <button
-                                                                        className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
-                                                                        onClick={() => {
-                                                                            setActiveActionMenu(null);
-                                                                            setEditingFile(file);
-                                                                        }}
-                                                                    >
-                                                                        Edit name
-                                                                    </button>
+                                                                    {canEdit && (
+                                                                        <button
+                                                                            className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
+                                                                            onClick={() => {
+                                                                                setActiveActionMenu(null);
+                                                                                setEditingFile(file);
+                                                                            }}
+                                                                        >
+                                                                            Edit name
+                                                                        </button>
+                                                                    )}
                                                                     <button
                                                                         className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
                                                                         onClick={() => {
@@ -891,15 +912,17 @@ const FileManager: React.FC = () => {
                                                                     >
                                                                         Preview
                                                                     </button>
-                                                                    <button
-                                                                        className="px-4 py-3 hover:bg-red-50 text-red-500 transition-colors text-left font-semibold"
-                                                                        onClick={() => {
-                                                                            setActiveActionMenu(null);
-                                                                            setDeletingFile(file);
-                                                                        }}
-                                                                    >
-                                                                        Delete
-                                                                    </button>
+                                                                    {canEdit && (
+                                                                        <button
+                                                                            className="px-4 py-3 hover:bg-red-50 text-red-500 transition-colors text-left font-semibold"
+                                                                            onClick={() => {
+                                                                                setActiveActionMenu(null);
+                                                                                setDeletingFile(file);
+                                                                            }}
+                                                                        >
+                                                                            Delete
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         )}

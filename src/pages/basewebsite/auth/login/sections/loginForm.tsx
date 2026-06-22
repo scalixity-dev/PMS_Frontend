@@ -149,9 +149,16 @@ const LoginForm: React.FC = () => {
                     return;
                 }
 
+                // Team members go straight to the dashboard
+                if (userRole === 'TEAM_MEMBER') {
+                    console.log('Navigating team member to dashboard');
+                    navigate('/dashboard', { replace: true });
+                    return;
+                }
+
                 // Wait a bit more to ensure cookie is fully propagated
                 await new Promise(resolve => setTimeout(resolve, 500));
-                
+
                 // Check if user is a tenant and needs onboarding
                 if (userRole === 'TENANT') {
                     try {
@@ -254,12 +261,13 @@ const LoginForm: React.FC = () => {
         } catch (err) {
             console.error('Login error:', err);
             const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
-            setError(errorMessage);
 
-            // If it's a 401, provide more specific error
-            if (err instanceof Error && errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
-                setError('Invalid email or password. Please check your credentials and try again.');
-            }
+            // Use the backend message if it's specific; fall back to generic for plain credential failures
+            const isGenericUnauthorized = errorMessage === 'Unauthorized' || errorMessage === 'Login failed. Please check your credentials.';
+            setError(isGenericUnauthorized
+                ? 'Invalid email or password. Please check your credentials and try again.'
+                : errorMessage
+            );
         } finally {
             setIsLoading(false);
         }

@@ -14,6 +14,7 @@ interface TenantCardProps {
     email: string;
     propertyName?: string;
     onDeleteSuccess?: () => void;
+    readOnly?: boolean;
 }
 
 const TenantCard: React.FC<TenantCardProps> = ({
@@ -23,7 +24,8 @@ const TenantCard: React.FC<TenantCardProps> = ({
     phone,
     email,
     propertyName,
-    onDeleteSuccess
+    onDeleteSuccess,
+    readOnly = false,
 }) => {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -76,7 +78,7 @@ const TenantCard: React.FC<TenantCardProps> = ({
         }
     };
 
-    const menuItems = [
+    const menuItems = readOnly ? [] : [
         { label: 'Edit', action: () => navigate(`/dashboard/contacts/tenants/edit/${id}`) },
         { label: 'Send connection', action: () => { } },
         { label: 'Move in', action: () => navigate(`/dashboard/movein?tenantId=${id}`) },
@@ -101,33 +103,36 @@ const TenantCard: React.FC<TenantCardProps> = ({
                 <div className="absolute top-4 right-4 z-10">
                     {/* More Options Menu */}
                     <div ref={menuRef}>
-                        <button
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="w-10 h-6 flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/40 shadow-sm rounded-full hover:bg-white/40 transition-all cursor-pointer"
-                            title="More Options"
-                        >
-                            <MoreHorizontal className="w-6 h-6 text-gray-700" />
-                        </button>
-
-                        {isMenuOpen && (
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-20 overflow-hidden">
-                                {menuItems.map((item, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => {
-                                            item.action();
-                                            setIsMenuOpen(false);
-                                        }}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-gray-50 last:border-none
-                                            ${item.isDestructive
-                                                ? 'text-red-600 hover:bg-red-50'
-                                                : 'text-gray-700 hover:bg-gray-50'
-                                            }`}
-                                    >
-                                        {item.label}
-                                    </button>
-                                ))}
-                            </div>
+                        {menuItems.length > 0 && (
+                            <>
+                                <button
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                    className="w-10 h-6 flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/40 shadow-sm rounded-full hover:bg-white/40 transition-all cursor-pointer"
+                                    title="More Options"
+                                >
+                                    <MoreHorizontal className="w-6 h-6 text-gray-700" />
+                                </button>
+                                {isMenuOpen && (
+                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-20 overflow-hidden">
+                                        {menuItems.map((item, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => {
+                                                    item.action();
+                                                    setIsMenuOpen(false);
+                                                }}
+                                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-gray-50 last:border-none
+                                                    ${item.isDestructive
+                                                        ? 'text-red-600 hover:bg-red-50'
+                                                        : 'text-gray-700 hover:bg-gray-50'
+                                                    }`}
+                                            >
+                                                {item.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../../context/TeamPermissionContext';
 import { ChevronLeft, Plus } from 'lucide-react';
 import DashboardFilter from '../../../components/DashboardFilter';
 import Breadcrumb from '../../../../../components/ui/Breadcrumb';
@@ -9,6 +10,8 @@ import type { DocumentTemplate } from '../../../../../services/documents.service
 
 const MyTemplates: React.FC = () => {
     const navigate = useNavigate();
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('document-templates');
     const [searchQuery, setSearchQuery] = useState('');
     const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
@@ -67,13 +70,15 @@ const MyTemplates: React.FC = () => {
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800">My Templates</h1>
                     </div>
 
-                    <button
-                        onClick={() => navigate('/dashboard/documents/my-templates/create-wizard')}
-                        className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#3A6D6C] text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-all shadow-sm"
-                    >
-                        Create new Template
-                        <Plus className="w-5 h-5 bg-white/20 rounded-full p-0.5" />
-                    </button>
+                    {canEdit && (
+                        <button
+                            onClick={() => navigate('/dashboard/documents/my-templates/create-wizard')}
+                            className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#3A6D6C] text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-all shadow-sm"
+                        >
+                            Create new Template
+                            <Plus className="w-5 h-5 bg-white/20 rounded-full p-0.5" />
+                        </button>
+                    )}
                 </div>
 
                 <DashboardFilter
@@ -120,9 +125,11 @@ const MyTemplates: React.FC = () => {
                                                 <button onClick={(e) => handlePreview(e, template.id)} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-50">
                                                     Preview
                                                 </button>
-                                                <button onClick={(e) => handleDelete(template.id, e)} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors border-t border-gray-50">
-                                                    Delete
-                                                </button>
+                                                {canEdit && (
+                                                    <button onClick={(e) => handleDelete(template.id, e)} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors border-t border-gray-50">
+                                                        Delete
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </div>

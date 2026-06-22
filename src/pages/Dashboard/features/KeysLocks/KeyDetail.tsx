@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import { ChevronLeft, Edit, Trash2, Loader2 } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
 import AssignKeyModal from './AssignKeyModal';
@@ -26,6 +27,9 @@ const KeyDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('property-units');
+
     const [isActionDropdownOpen, setIsActionDropdownOpen] = React.useState(false);
     const [isAssignModalOpen, setIsAssignModalOpen] = React.useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
@@ -211,7 +215,7 @@ const KeyDetail = () => {
                             <h1 className="text-2xl font-bold text-black mr-auto md:mr-0">Keys</h1>
                         </div>
 
-                        <div className="flex items-center gap-3 w-full md:w-auto ml-auto">
+                        {canEdit && <div className="flex items-center gap-3 w-full md:w-auto ml-auto">
                             {!isAssigned ? (
                                 <button
                                     onClick={() => setIsAssignModalOpen(true)}
@@ -303,7 +307,7 @@ const KeyDetail = () => {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </div>}
                     </div>
 
                     {/* Content Card */}

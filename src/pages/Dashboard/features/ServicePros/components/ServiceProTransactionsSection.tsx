@@ -1,4 +1,5 @@
 import { ChevronUp, MoreHorizontal, Trash2, Edit } from 'lucide-react';
+import { useTeamPermissions } from '../../../../../context/TeamPermissionContext';
 
 interface Transaction {
     id: number;
@@ -16,6 +17,8 @@ interface ServiceProTransactionsSectionProps {
 }
 
 const ServiceProTransactionsSection = ({ servicePro }: ServiceProTransactionsSectionProps) => {
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('contacts');
     // Mock transaction data specific to service pros
     const transactions: Transaction[] = [
         {
@@ -80,7 +83,7 @@ const ServiceProTransactionsSection = ({ servicePro }: ServiceProTransactionsSec
                         Total & balance
                         <ChevronUp className="w-3 h-3" />
                     </div>
-                    <div className="text-right">Actions</div>
+                    {canEdit && <div className="text-right">Actions</div>}
                 </div>
             </div>
 
@@ -99,11 +102,13 @@ const ServiceProTransactionsSection = ({ servicePro }: ServiceProTransactionsSec
                                 <span className={`text-sm font-medium ${getStatusColor(transaction.status)}`}>{transaction.status}</span>
                             </div>
                             {/* Actions */}
+                            {canEdit && (
                             <div className="flex items-center gap-1">
                                 <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"><Edit className="w-4 h-4 text-gray-400" /></button>
                                 <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"><Trash2 className="w-4 h-4 text-red-400" /></button>
                                 <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"><MoreHorizontal className="w-4 h-4 text-gray-400" /></button>
                             </div>
+                            )}
                         </div>
 
                         {/* Mobile Content Body */}
@@ -168,11 +173,13 @@ const ServiceProTransactionsSection = ({ servicePro }: ServiceProTransactionsSec
                             )}
                         </div>
 
+                        {canEdit && (
                         <div className="hidden md:flex items-center justify-end gap-2">
                             <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"><Edit className="w-4 h-4 text-gray-400" /></button>
                             <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"><Trash2 className="w-4 h-4 text-red-400" /></button>
                             <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"><MoreHorizontal className="w-4 h-4 text-gray-400" /></button>
                         </div>
+                        )}
                     </div>
                 ))}
             </div>

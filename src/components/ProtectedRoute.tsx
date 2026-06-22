@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { authService } from '../services/auth.service';
+import { API_ENDPOINTS } from '../config/api.config';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
+
+const FullScreenLoader: React.FC = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+    <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600" />
+  </div>
+);
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -23,29 +30,35 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           isEmailVerified: user.isEmailVerified
         });
 
-        // Verify user is property manager (or has property manager role) and account is active
-        // Role might be 'PROPERTY_MANAGER', 'property_manager', or similar variations
-        const isPropertyManager = user.role && (
-          user.role.toUpperCase() === 'PROPERTY_MANAGER' ||
-          user.role.toLowerCase() === 'property_manager' ||
-          user.role === 'property_manager'
-        );
+        const role = user.role?.toUpperCase();
+        const isPropertyManager = role === 'PROPERTY_MANAGER';
+        const isTeamMember = role === 'TEAM_MEMBER';
 
         console.log('ProtectedRoute: Validation results:', {
-          isPropertyManager,
+          role,
           isActive: user.isActive,
           isEmailVerified: user.isEmailVerified
         });
 
-        // User must be:
-        // 1. Property manager
-        // 2. Account must be active (isActive = true)
-        // 3. Email must be verified (isEmailVerified = true)
-        // Note: Backend JwtAuthGuard already checks for active subscription,
-        // so if getCurrentUser succeeds, user has an active subscription
-        if (isPropertyManager && user.isActive && user.isEmailVerified) {
+        // Property managers need active + email verified
+        // Team members only need active (email verified via invite flow)
+        if ((isPropertyManager && user.isActive && user.isEmailVerified) ||
+            (isTeamMember && user.isActive)) {
           console.log('ProtectedRoute: Authentication successful');
           setIsAuthenticated(true);
+        } else if (isPropertyManager && user.isActive) {
+          // May be a team member (email verified via invite flow, no subscription)
+          try {
+            const teamsRes = await fetch(API_ENDPOINTS.TEAM.MY_TEAMS, { credentials: 'include' });
+            if (teamsRes.ok) {
+              const teams = await teamsRes.json();
+              if (Array.isArray(teams) && teams.length > 0) {
+                setIsAuthenticated(true);
+                return;
+              }
+            }
+          } catch { /* fall through */ }
+          setIsAuthenticated(false);
         } else {
           console.warn('ProtectedRoute: Authentication failed - user does not meet requirements');
           setIsAuthenticated(false);
@@ -67,21 +80,33 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     checkAuth();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <FullScreenLoader />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+};
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+export const TenantProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        const isTenant = user.role?.toUpperCase() === 'TENANT';
+        setIsAuthenticated(isTenant && user.isActive);
+      } catch {
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (isLoading) return <FullScreenLoader />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
@@ -136,21 +161,34 @@ export const ServiceProtectedRoute: React.FC<ProtectedRouteProps> = ({ children 
     checkAuth();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
+  if (isLoading) return <FullScreenLoader />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
+export const GuestRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const [status, setStatus] = useState<'checking' | 'guest' | 'authenticated'>('checking');
+  const [redirectTo, setRedirectTo] = useState('/dashboard');
+
+  useEffect(() => {
+    authService.getCurrentUser().then((user) => {
+      const role = user?.role?.toUpperCase();
+      if (role === 'TENANT') {
+        setRedirectTo('/userdashboard');
+        setStatus('authenticated');
+      } else if (role === 'SERVICE_PRO') {
+        setRedirectTo('/service-dashboard');
+        setStatus('authenticated');
+      } else if (role === 'PROPERTY_MANAGER' || role === 'TEAM_MEMBER') {
+        setRedirectTo('/dashboard');
+        setStatus('authenticated');
+      } else {
+        setStatus('guest');
+      }
+    }).catch(() => setStatus('guest'));
+  }, []);
+
+  if (status === 'checking') return <FullScreenLoader />;
+  if (status === 'authenticated') return <Navigate to={redirectTo} replace />;
+  return <>{children}</>;
+};

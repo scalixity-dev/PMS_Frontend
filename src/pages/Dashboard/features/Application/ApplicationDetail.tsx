@@ -38,6 +38,7 @@ import CustomTextBox from '../../components/CustomTextBox';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useToast } from '../../../../components/common/Toast';
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 
 // ... existing imports ...
@@ -107,6 +108,8 @@ const ApplicationDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() || {};
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('rental-applications');
     const toast = useToast();
 
     // Modals State
@@ -1367,6 +1370,7 @@ ${section('Income History', incomesHtml)}
                                 >
                                     Chat with Applicant
                                 </button>
+                                {canEdit && (
                                 <div className="relative" ref={actionDropdownRef}>
                                     <button
                                         onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
@@ -1440,6 +1444,7 @@ ${section('Income History', incomesHtml)}
                                     </div>
                                 )}
                             </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1448,7 +1453,7 @@ ${section('Income History', incomesHtml)}
                     <Section
                         title="Applicant information"
                         secondaryButton={
-                            !isApproved ? (
+                            !isApproved && canEdit ? (
                                 <button
                                     onClick={() => setIsApplicantInfoEditModalOpen(true)}
                                     className="bg-white border border-gray-200 text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
@@ -1513,7 +1518,7 @@ ${section('Income History', incomesHtml)}
                     {/* 2. Additional Occupants */}
                     <Section
                         title="Additional occupants"
-                        onAdd={isApproved ? undefined : () => setIsOccupantModalOpen(true)}
+                        onAdd={isApproved || !canEdit ? undefined : () => setIsOccupantModalOpen(true)}
                         addButtonLabel="Add co-occupant"
                         isEmpty={application.occupants.length === 0}
                         emptyText="No additional occupants added"
@@ -1521,7 +1526,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-3">
                             {application.occupants.map(occ => (
                                 <div key={occ.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
-                                    {!isApproved && (
+                                    {!isApproved && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1584,7 +1589,7 @@ ${section('Income History', incomesHtml)}
                     {/* 3. Pets */}
                     <Section
                         title="Pets"
-                        onAdd={isApproved ? undefined : () => setIsPetModalOpen(true)}
+                        onAdd={isApproved || !canEdit ? undefined : () => setIsPetModalOpen(true)}
                         addButtonLabel="Add Pets"
                         isEmpty={application.pets.length === 0}
                         emptyText="No pets added"
@@ -1592,7 +1597,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-3">
                             {application.pets.map(pet => (
                                 <div key={pet.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
-                                    {!isApproved && (
+                                    {!isApproved && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1671,7 +1676,7 @@ ${section('Income History', incomesHtml)}
                     {/* 4. Vehicles */}
                     < Section
                         title="Vehicles"
-                        onAdd={isApproved ? undefined : () => setIsVehicleModalOpen(true)}
+                        onAdd={isApproved || !canEdit ? undefined : () => setIsVehicleModalOpen(true)}
                         addButtonLabel="Add Vehicles"
                         isEmpty={application.vehicles.length === 0}
                         emptyText="No vehicles added"
@@ -1679,7 +1684,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-3">
                             {application.vehicles.map(v => (
                                 <div key={v.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
-                                    {!isApproved && (
+                                    {!isApproved && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1751,12 +1756,12 @@ ${section('Income History', incomesHtml)}
                     {/* 5. Residential History */}
                     < Section
                         title="Residential history"
-                        onAdd={isApproved ? undefined : () => setIsResidenceModalOpen(true)}
+                        onAdd={isApproved || !canEdit ? undefined : () => setIsResidenceModalOpen(true)}
                         addButtonLabel="Add residence"
                         isEmpty={application.residenceHistory.length === 0}
                         emptyText="No residential history added"
                         secondaryButton={
-                            !isApproved ? (
+                            !isApproved && canEdit ? (
                             < button
                                 onClick={() => setIsResidenceInfoModalOpen(true)}
                                 className="flex items-center gap-1 bg-white border border-gray-200 text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm"
@@ -1770,7 +1775,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-4">
                             {application.residenceHistory.map(res => (
                                 <div key={res.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
-                                    {!isApproved && (
+                                    {!isApproved && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1878,7 +1883,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-4">
                             {application.incomeDetails.map(inc => (
                                 <div key={inc.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
-                                    {!isApproved && (
+                                    {!isApproved && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1948,12 +1953,12 @@ ${section('Income History', incomesHtml)}
                     {/* 7. Contacts */}
                     < Section
                         title="Contacts"
-                        onAdd={isApproved ? undefined : () => setIsReferenceModalOpen(true)}
+                        onAdd={isApproved || !canEdit ? undefined : () => setIsReferenceModalOpen(true)}
                         addButtonLabel="Add reference"
                         isEmpty={application.emergencyContacts.length === 0}
                         emptyText="No contacts added"
                         secondaryButton={
-                            !isApproved ? (
+                            !isApproved && canEdit ? (
                             < button
                                 onClick={() => setIsContactModalOpen(true)}
                                 className="flex items-center gap-1 bg-white border border-gray-200 text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm"
@@ -1967,7 +1972,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-3">
                             {application.emergencyContacts.map(contact => (
                                 <div key={contact.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group flex items-center justify-between">
-                                    {!isApproved && (
+                                    {!isApproved && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -2164,6 +2169,7 @@ ${section('Income History', incomesHtml)}
                         isEmpty={persistedAttachments.length === 0 && attachments.length === 0}
                         emptyText="No attachments yet"
                         secondaryButton={
+                            canEdit ? (
                             <>
                                 <input
                                     type="file"
@@ -2180,6 +2186,7 @@ ${section('Income History', incomesHtml)}
                                     <Upload className="w-4 h-4" />
                                 </button>
                             </>
+                            ) : undefined
                         }
                     >
                         <div className="space-y-3">

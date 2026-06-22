@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/auth.service';
+
+const EXCLUDED_PATHS = ['/team/accept-invitation'];
 
 interface AutoLoginProviderProps {
   children: React.ReactNode;
@@ -23,15 +25,17 @@ interface AutoLoginProviderProps {
 const AutoLoginProvider: React.FC<AutoLoginProviderProps> = ({ children }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isMobileTokenPath = !EXCLUDED_PATHS.includes(location.pathname);
   const [state, setState] = useState<'idle' | 'verifying' | 'done' | 'error'>(() => {
-    return searchParams.has('token') ? 'verifying' : 'idle';
+    return isMobileTokenPath && searchParams.has('token') ? 'verifying' : 'idle';
   });
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     const token = searchParams.get('token');
 
-    if (!token) {
+    if (!token || !isMobileTokenPath) {
       setState('idle');
       return;
     }

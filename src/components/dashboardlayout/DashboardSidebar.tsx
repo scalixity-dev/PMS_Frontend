@@ -11,6 +11,7 @@ import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import { Dialog, Transition } from '@headlessui/react';
 import artworkImage from "../../assets/images/Artwork.png";
 import InviteToApplyModal from '../../pages/Dashboard/features/Application/components/InviteToApplyModal';
+import { useTeamPermissions } from '../../context/TeamPermissionContext';
 
 const SidebarContext = React.createContext<{ collapsed: boolean }>({ collapsed: false });
 
@@ -189,6 +190,14 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
 }) {
 
   const navigate = useNavigate();
+  const { isTeamMember, canView, canManage, isLoading: permissionsLoading } = useTeamPermissions();
+  const hasCreateNewItems = !isTeamMember || (
+    canManage('listing') ||
+    canManage('leasing') ||
+    canManage('accounting') ||
+    canManage('maintenance') ||
+    canManage('rental-applications')
+  );
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isCreateNewOpen, setIsCreateNewOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -323,7 +332,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
 
         <div className="flex-grow">
           {/* Create New Button */}
-          <div className={`relative pt-2 pb-2 transition-all ${collapsed ? 'px-2' : 'px-4'}`} ref={createNewRef}>
+          {hasCreateNewItems && <div className={`relative pt-2 pb-2 transition-all ${collapsed ? 'px-2' : 'px-4'}`} ref={createNewRef}>
             <button
               onClick={toggleCreateNew}
               className={`bg-gradient-to-r from-[#1BCB40] to-[#7CD947] hover:opacity-95 text-white font-semibold flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#1BCB40]/40 shadow-[0_20px_60px_rgba(27,203,64,0.32)] hover:shadow-[0_28px_90px_rgba(27,203,64,0.44)] overflow-hidden
@@ -349,12 +358,16 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
               >
                 <div className="flex flex-col py-1">
                   {[
-                    { label: 'List a unit', path: '/dashboard/list-unit' },
-                    { label: 'Create New Property', path: '/dashboard/property/add' },
-                    { label: 'Create New Lease', path: '/dashboard/leasing/leases' },
-                    { label: 'Record an Income', path: '/dashboard/accounting/transactions/income/add' },
-                    { label: 'Record a Request', path: '/dashboard/maintenance/request' }
-                  ].map((item) => (
+                    { label: 'List a unit', path: '/dashboard/list-unit', module: 'listing' },
+                    { label: 'Create New Property', path: '/dashboard/property/add', module: null },
+                    { label: 'Create New Lease', path: '/dashboard/leasing/leases', module: 'leasing' },
+                    { label: 'Record an Income', path: '/dashboard/accounting/transactions/income/add', module: 'accounting' },
+                    { label: 'Record a Request', path: '/dashboard/maintenance/request', module: 'maintenance' }
+                  ].filter((item) => {
+                    if (!isTeamMember) return true;
+                    if (item.module === null) return false; // owner-only
+                    return canManage(item.module);
+                  }).map((item) => (
                     <button
                       key={item.path}
                       onClick={() => {
@@ -366,16 +379,18 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                       {item.label}
                     </button>
                   ))}
-                  {/* Invite to Apply Special Case */}
-                  <button
-                    onClick={() => {
-                      setIsInviteModalOpen(true);
-                      setIsCreateNewOpen(false);
-                    }}
-                    className="px-4 py-2.5 text-sm font-medium text-[#1BCB40] hover:bg-green-50 border-b border-gray-100 transition-colors text-left"
-                  >
-                    Invite to Apply
-                  </button>
+                  {/* Invite to Apply — shown to team members with leasing manage permission */}
+                  {(!isTeamMember || canManage('leasing') || canManage('rental-applications')) && (
+                    <button
+                      onClick={() => {
+                        setIsInviteModalOpen(true);
+                        setIsCreateNewOpen(false);
+                      }}
+                      className="px-4 py-2.5 text-sm font-medium text-[#1BCB40] hover:bg-green-50 border-b border-gray-100 transition-colors text-left"
+                    >
+                      Invite to Apply
+                    </button>
+                  )}
                 </div>
               </div>,
               document.body
@@ -386,14 +401,26 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                 <div className="w-full h-full rounded-xl bg-gradient-to-b from-[#1BCB40]/40 to-transparent filter blur-[20px] opacity-40" />
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Navigation */}
           <nav className="px-1 py-2 space-y-1">
+            {permissionsLoading && (
+              <div className="px-2 py-2 space-y-2 animate-pulse">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
+                    <div className="w-6 h-6 rounded-md bg-white/20 flex-shrink-0" />
+                    {!collapsed && <div className="h-3.5 rounded-full bg-white/20 flex-1" style={{ width: `${55 + (i % 3) * 15}%` }} />}
+                  </div>
+                ))}
+              </div>
+            )}
+            {!permissionsLoading && (
+            <>
+            {/* Dashboard — always visible */}
             <SidebarDropdownLink
               label="Dashboard"
               icon={<PiChartLineUpFill size={24} />}
-
               activeDropdown={activeDropdown}
               setActiveDropdown={setActiveDropdown}
             >
@@ -401,77 +428,95 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
               <SubLink label="Tasks" to="/dashboard/tasks" />
             </SidebarDropdownLink>
 
-            <SidebarDropdownLink
-              label="Portfolio"
-              icon={<PiChartPieSliceFill size={24} />}
+            {(!isTeamMember || canView('property-units') || canView('listing')) && (
+              <SidebarDropdownLink
+                label="Portfolio"
+                icon={<PiChartPieSliceFill size={24} />}
+                activeDropdown={activeDropdown}
+                setActiveDropdown={setActiveDropdown}
+              >
+                {(!isTeamMember || canView('property-units')) && (
+                  <>
+                    <SubLink label="Properties" to="/dashboard/properties" />
+                    <SubLink label="Units" to="/dashboard/portfolio/units" />
+                    <SubLink label="Keys & Locks" to="/dashboard/portfolio/keys-locks" />
+                    <SubLink label="Equipment" to="/dashboard/equipments" />
+                  </>
+                )}
+                {(!isTeamMember || canView('listing')) && (
+                  <SubLink label="Listing" to="/dashboard/portfolio/listing" />
+                )}
+              </SidebarDropdownLink>
+            )}
 
-              activeDropdown={activeDropdown}
-              setActiveDropdown={setActiveDropdown}
-            >
-              <SubLink label="Properties" to="/dashboard/properties" />
-              <SubLink label="Units" to="/dashboard/portfolio/units" />
-              <SubLink label="Listing" to="/dashboard/portfolio/listing" />
-              <SubLink label="Keys & Locks" to="/dashboard/portfolio/keys-locks" />
-              <SubLink label="Equipment" to="/dashboard/equipments" />
-            </SidebarDropdownLink>
+            {(!isTeamMember || canView('rental-applications') || canView('leads')) && (
+              <SidebarDropdownLink
+                label="Leasing"
+                icon={<PiBuildingsFill size={24} />}
+                activeDropdown={activeDropdown}
+                setActiveDropdown={setActiveDropdown}
+              >
+                {(!isTeamMember || canView('rental-applications')) && (
+                  <SubLink label="Applications" to="/dashboard/leasing/applications" />
+                )}
+                <SubLink label="Leases" to="/dashboard/leasing/leases" />
+                {(!isTeamMember || canView('leads')) && (
+                  <SubLink label="Leads" to="/dashboard/leasing/leads" />
+                )}
+              </SidebarDropdownLink>
+            )}
 
-            <SidebarDropdownLink
-              label="Leasing"
-              icon={<PiBuildingsFill size={24} />}
+            {(!isTeamMember || canView('contacts')) && (
+              <SidebarDropdownLink
+                label="Contacts"
+                icon={<PiUsersFill size={24} />}
+                activeDropdown={activeDropdown}
+                setActiveDropdown={setActiveDropdown}
+              >
+                <SubLink label="Tenants" to="/dashboard/contacts/tenants" />
+                <SubLink label="Service Pros" to="/dashboard/contacts/service-pros" />
+              </SidebarDropdownLink>
+            )}
 
-              activeDropdown={activeDropdown}
-              setActiveDropdown={setActiveDropdown}
-            >
-              <SubLink label="Applications" to="/dashboard/leasing/applications" />
-              <SubLink label="Leases" to="/dashboard/leasing/leases" />
-              <SubLink label="Leads" to="/dashboard/leasing/leads" />
-            </SidebarDropdownLink>
+            {(!isTeamMember || canView('accounting')) && (
+              <SidebarDropdownLink
+                label="Accounting"
+                icon={<PiCurrencyDollarFill size={24} />}
+                activeDropdown={activeDropdown}
+                setActiveDropdown={setActiveDropdown}
+              >
+                <SubLink label="Transactions" to="/dashboard/accounting/transactions" />
+                <SubLink label="Payments" to="/dashboard/accounting/payments" />
+                <SubLink label="Recurring" to="/dashboard/accounting/recurring" />
+              </SidebarDropdownLink>
+            )}
 
-            <SidebarDropdownLink
-              label="Contacts"
-              icon={<PiUsersFill size={24} />}
+            {(!isTeamMember || canView('maintenance')) && (
+              <SidebarDropdownLink
+                label="Maintenance"
+                icon={<PiWrenchFill size={24} />}
+                activeDropdown={activeDropdown}
+                setActiveDropdown={setActiveDropdown}
+              >
+                <SubLink label="Requests" to="/dashboard/maintenance/requests" />
+                <SubLink label="Recurring" to="/dashboard/maintenance/recurring" />
+              </SidebarDropdownLink>
+            )}
 
-              activeDropdown={activeDropdown}
-              setActiveDropdown={setActiveDropdown}
-            >
-              <SubLink label="Tenants" to="/dashboard/contacts/tenants" />
-              <SubLink label="Service Pros" to="/dashboard/contacts/service-pros" />
-            </SidebarDropdownLink>
-
-            <SidebarDropdownLink
-              label="Accounting"
-              icon={<PiCurrencyDollarFill size={24} />}
-
-              activeDropdown={activeDropdown}
-              setActiveDropdown={setActiveDropdown}
-            >
-              <SubLink label="Transactions" to="/dashboard/accounting/transactions" />
-              <SubLink label="Payments" to="/dashboard/accounting/payments" />
-              <SubLink label="Recurring" to="/dashboard/accounting/recurring" />
-            </SidebarDropdownLink>
-
-            <SidebarDropdownLink
-              label="Maintenance"
-              icon={<PiWrenchFill size={24} />}
-
-              activeDropdown={activeDropdown}
-              setActiveDropdown={setActiveDropdown}
-            >
-              <SubLink label="Requests" to="/dashboard/maintenance/requests" />
-              <SubLink label="Recurring" to="/dashboard/maintenance/recurring" />
-            </SidebarDropdownLink>
-
-            <SidebarDropdownLink
-              label="Documents"
-              icon={<PiFileTextFill size={24} />}
-
-              activeDropdown={activeDropdown}
-              setActiveDropdown={setActiveDropdown}
-            >
-              <SubLink label="Landlord forms" to="/dashboard/documents/landlord-forms" />
-              <SubLink label="My templates" to="/dashboard/documents/my-templates" />
-              <SubLink label="File manager" to="/dashboard/documents/file-manager" />
-            </SidebarDropdownLink>
+            {(!isTeamMember || canView('document-templates')) && (
+              <SidebarDropdownLink
+                label="Documents"
+                icon={<PiFileTextFill size={24} />}
+                activeDropdown={activeDropdown}
+                setActiveDropdown={setActiveDropdown}
+              >
+                <SubLink label="Landlord forms" to="/dashboard/documents/landlord-forms" />
+                <SubLink label="My templates" to="/dashboard/documents/my-templates" />
+                <SubLink label="File manager" to="/dashboard/documents/file-manager" />
+              </SidebarDropdownLink>
+            )}
+            </>
+            )}
           </nav>
         </div>
 

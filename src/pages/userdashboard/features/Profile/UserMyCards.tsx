@@ -5,6 +5,8 @@ import { CreditCard, Trash2, Plus, Loader2 } from "lucide-react";
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { paymentsService, type SavedCard } from "../../../../services/payments.service";
+import { useToast } from "../../../../components/common/Toast";
+import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
 
 /**
  * My Cards — Stripe-powered. Uses SetupIntent + Stripe Elements to tokenize
@@ -162,6 +164,8 @@ const MyCards: React.FC = () => {
     const [loadError, setLoadError] = useState<string | null>(null);
     const [showAddCard, setShowAddCard] = useState(false);
     const [busyCardId, setBusyCardId] = useState<string | null>(null);
+    const [cardToDelete, setCardToDelete] = useState<string | null>(null);
+    const toast = useToast();
 
     const loadCards = async () => {
         setIsLoading(true);
@@ -180,14 +184,19 @@ const MyCards: React.FC = () => {
         loadCards();
     }, []);
 
-    const handleDeleteCard = async (cardId: string) => {
-        if (!window.confirm("Remove this card?")) return;
-        setBusyCardId(cardId);
+    const handleDeleteCard = (cardId: string) => {
+        setCardToDelete(cardId);
+    };
+
+    const confirmDeleteCard = async () => {
+        if (!cardToDelete) return;
+        setBusyCardId(cardToDelete);
         try {
-            await paymentsService.deleteCard(cardId);
+            await paymentsService.deleteCard(cardToDelete);
+            setCardToDelete(null);
             await loadCards();
         } catch (err: any) {
-            alert(err?.message || "Failed to remove card");
+            toast.error(err?.message || "Failed to remove card");
         } finally {
             setBusyCardId(null);
         }
@@ -209,6 +218,15 @@ const MyCards: React.FC = () => {
 
     return (
         <UserAccountSettingsLayout activeTab="My Cards">
+            <DeleteConfirmationModal
+                isOpen={!!cardToDelete}
+                onClose={() => setCardToDelete(null)}
+                onConfirm={confirmDeleteCard}
+                isLoading={!!busyCardId}
+                title="Remove Card"
+                message="Remove this card from your account? This cannot be undone."
+                confirmText="Remove"
+            />
             <div className="px-3 sm:px-4 md:px-8 pb-6 sm:pb-8 md:pb-10">
                 <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-3 sm:px-4 md:px-6 py-4 md:py-5 space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">

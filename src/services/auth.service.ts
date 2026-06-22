@@ -558,11 +558,6 @@ class AuthService {
         }
       }
       
-      // Add status code to error message for 401
-      if (response.status === 401) {
-        errorMessage = `Unauthorized (401): ${errorMessage}`;
-      }
-      
       throw new Error(errorMessage);
     }
 

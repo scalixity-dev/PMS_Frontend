@@ -113,6 +113,16 @@ class TeamService {
     return response.json();
   }
 
+  async enable(id: string): Promise<{ message: string }> {
+    const response = await fetch(API_ENDPOINTS.TEAM.ENABLE(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error(await this.extractError(response, 'Failed to enable team member'));
+    return response.json();
+  }
+
   async resendInvitation(id: string): Promise<{ message: string }> {
     const response = await fetch(API_ENDPOINTS.TEAM.RESEND(id), {
       method: 'POST',
@@ -133,12 +143,21 @@ class TeamService {
     return response.json();
   }
 
-  async acceptInvitation(token: string): Promise<TeamMember> {
+  async getInvitation(token: string): Promise<{ email: string; name: string; role: string }> {
+    const response = await fetch(API_ENDPOINTS.TEAM.GET_INVITATION(token), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) throw new Error(await this.extractError(response, 'Invalid or expired invitation'));
+    return response.json();
+  }
+
+  async acceptInvitation(token: string, password: string): Promise<TeamMember> {
     const response = await fetch(API_ENDPOINTS.TEAM.ACCEPT_INVITATION, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ token, password }),
     });
     if (!response.ok) throw new Error(await this.extractError(response, 'Failed to accept invitation'));
     return response.json();

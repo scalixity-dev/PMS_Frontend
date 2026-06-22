@@ -17,10 +17,13 @@ import DeletePaymentModal from '../Transactions/components/DeletePaymentModal';
 import { useGetPayments, useDeletePayment, useRefundPayment, useDeleteTransaction, useUpdatePayment } from '../../../../hooks/useTransactionQueries';
 import type { Payment } from '../../../../services/transaction.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 const Payments: React.FC = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('accounting');
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense' | 'Refund'>('All');
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -353,7 +356,7 @@ const Payments: React.FC = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto" ref={dropdownContainerRef}>
-                        <MoneyInMoneyOutButtons />
+                        {canEdit && <MoneyInMoneyOutButtons />}
 
                         <button
                             onClick={handleExport}
@@ -494,65 +497,67 @@ const Payments: React.FC = () => {
                                 </div>
 
                                 {/* Mobile Actions - Shown at top right relative to card */}
-                                <div className="block lg:hidden">
-                                    <div className="relative">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
-                                            }}
-                                            className="text-gray-400 hover:text-gray-600 transition-colors"
-                                            aria-label="Actions visible"
-                                        >
-                                            <MoreHorizontal className="w-8 h-8 bg-gray-100 rounded-full p-1.5" />
-                                        </button>
-                                        {moreMenuOpenId === item.id && (
-                                            <div
-                                                ref={moreMenuRefMobile}
-                                                className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-[60] animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
-                                                role="menu"
+                                {canEdit && (
+                                    <div className="block lg:hidden">
+                                        <div className="relative">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                                }}
+                                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                aria-label="Actions visible"
                                             >
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setEditPaymentModalOpen(true);
-                                                        setSelectedPayment(convertPaymentToPaymentData(item));
-                                                        setSelectedTransactionId(item.id);
-                                                        setMoreMenuOpenId(null);
-                                                    }}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                                                    role="menuitem"
+                                                <MoreHorizontal className="w-8 h-8 bg-gray-100 rounded-full p-1.5" />
+                                            </button>
+                                            {moreMenuOpenId === item.id && (
+                                                <div
+                                                    ref={moreMenuRefMobile}
+                                                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-[60] animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
+                                                    role="menu"
                                                 >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedPayment(convertPaymentToPaymentData(item));
-                                                        setRefundModalOpen(true);
-                                                        setMoreMenuOpenId(null);
-                                                    }}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                                                    role="menuitem"
-                                                >
-                                                    Refund
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setMoreMenuOpenId(null);
-                                                        setSelectedPayment(convertPaymentToPaymentData(item));
-                                                        setDeleteModalOpen(true);
-                                                    }}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
-                                                    role="menuitem"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        )}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditPaymentModalOpen(true);
+                                                            setSelectedPayment(convertPaymentToPaymentData(item));
+                                                            setSelectedTransactionId(item.id);
+                                                            setMoreMenuOpenId(null);
+                                                        }}
+                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                                        role="menuitem"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedPayment(convertPaymentToPaymentData(item));
+                                                            setRefundModalOpen(true);
+                                                            setMoreMenuOpenId(null);
+                                                        }}
+                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                                        role="menuitem"
+                                                    >
+                                                        Refund
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setMoreMenuOpenId(null);
+                                                            setSelectedPayment(convertPaymentToPaymentData(item));
+                                                            setDeleteModalOpen(true);
+                                                        }}
+                                                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                                        role="menuitem"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             {/* Desktop Status */}
@@ -591,64 +596,66 @@ const Payments: React.FC = () => {
                             </div>
 
                             {/* Desktop Actions */}
-                            <div className="hidden lg:flex justify-end relative">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
-                                    }}
-                                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                                    aria-label="Actions"
-                                    aria-expanded={moreMenuOpenId === item.id}
-                                >
-                                    <MoreHorizontal className="w-5 h-5" />
-                                </button>
-                                {moreMenuOpenId === item.id && (
-                                    <div
-                                        ref={moreMenuRefDesktop}
-                                        className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
-                                        role="menu"
+                            {canEdit && (
+                                <div className="hidden lg:flex justify-end relative">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                        }}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                        aria-label="Actions"
+                                        aria-expanded={moreMenuOpenId === item.id}
                                     >
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setEditPaymentModalOpen(true);
-                                                setSelectedPayment(convertPaymentToPaymentData(item));
-                                                setSelectedTransactionId(item.id);
-                                                setMoreMenuOpenId(null);
-                                            }}
-                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                                            role="menuitem"
+                                        <MoreHorizontal className="w-5 h-5" />
+                                    </button>
+                                    {moreMenuOpenId === item.id && (
+                                        <div
+                                            ref={moreMenuRefDesktop}
+                                            className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
+                                            role="menu"
                                         >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedPayment(convertPaymentToPaymentData(item));
-                                                setRefundModalOpen(true);
-                                                setMoreMenuOpenId(null);
-                                            }}
-                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                                            role="menuitem"
-                                        >
-                                            Refund
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setMoreMenuOpenId(null);
-                                                setSelectedPayment(convertPaymentToPaymentData(item));
-                                                setDeleteModalOpen(true);
-                                            }}
-                                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
-                                            role="menuitem"
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditPaymentModalOpen(true);
+                                                    setSelectedPayment(convertPaymentToPaymentData(item));
+                                                    setSelectedTransactionId(item.id);
+                                                    setMoreMenuOpenId(null);
+                                                }}
+                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                                role="menuitem"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedPayment(convertPaymentToPaymentData(item));
+                                                    setRefundModalOpen(true);
+                                                    setMoreMenuOpenId(null);
+                                                }}
+                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                                role="menuitem"
+                                            >
+                                                Refund
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setMoreMenuOpenId(null);
+                                                    setSelectedPayment(convertPaymentToPaymentData(item));
+                                                    setDeleteModalOpen(true);
+                                                }}
+                                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                                role="menuitem"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ))}
                     {filteredPayments.length === 0 && (

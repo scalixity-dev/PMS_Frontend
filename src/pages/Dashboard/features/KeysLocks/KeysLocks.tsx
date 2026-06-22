@@ -6,6 +6,7 @@ import Pagination from '../../components/Pagination';
 import { useGetAllKeys, useDeleteKey } from '../../../../hooks/useKeysQueries';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import type { BackendKey } from '../../../../services/keys.service';
 
 // Map backend key type to display format
@@ -24,6 +25,8 @@ const mapKeyType = (keyType: string): string => {
 const KeysLocks = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('property-units');
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -216,12 +219,14 @@ const KeysLocks = () => {
                         </button>
                         <h1 className="text-lg md:text-2xl font-bold text-gray-800">Keys & Locks</h1>
                     </div>
-                    <div className="flex gap-3">
-                        <button onClick={() => navigate('/dashboard/portfolio/add-key')} className="px-3 md:px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-xs md:text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-1 md:gap-2 shadow-sm whitespace-nowrap">
-                            Add Keys
-                            <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                        </button>
-                    </div>
+                    {canEdit && (
+                        <div className="flex gap-3">
+                            <button onClick={() => navigate('/dashboard/portfolio/add-key')} className="px-3 md:px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-xs md:text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-1 md:gap-2 shadow-sm whitespace-nowrap">
+                                Add Keys
+                                <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Filter Section */}
@@ -307,22 +312,24 @@ const KeysLocks = () => {
                                             </div>
 
                                             {/* Mobile Actions */}
-                                            <div className="flex items-center gap-2 md:hidden absolute top-4 right-4 bg-white pl-2">
-                                                <button
-                                                    onClick={(e) => handleEdit(item.id, e)}
-                                                    className="p-1.5 text-[#3A6D6C] hover:bg-gray-50 rounded-full"
-                                                    aria-label={`Edit key ${item.name}`}
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => handleDeleteClick(item.id, e)}
-                                                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-full"
-                                                    aria-label={`Delete key ${item.name}`}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
+                                            {canEdit && (
+                                                <div className="flex items-center gap-2 md:hidden absolute top-4 right-4 bg-white pl-2">
+                                                    <button
+                                                        onClick={(e) => handleEdit(item.id, e)}
+                                                        className="p-1.5 text-[#3A6D6C] hover:bg-gray-50 rounded-full"
+                                                        aria-label={`Edit key ${item.name}`}
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDeleteClick(item.id, e)}
+                                                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-full"
+                                                        aria-label={`Delete key ${item.name}`}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Desktop Name (hidden on mobile) */}
@@ -349,21 +356,23 @@ const KeysLocks = () => {
                                         </div>
 
                                         {/* Desktop Actions */}
-                                        <div className="hidden md:flex items-center justify-end gap-3">
-                                            <button
-                                                onClick={(e) => handleEdit(item.id, e)}
-                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                            >
-                                                <Edit className="w-5 h-5" />
-                                            </button>
-                                            <button
-                                                onClick={(e) => handleDeleteClick(item.id, e)}
-                                                disabled={deleteKeyMutation.isPending}
-                                                className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
-                                            >
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
-                                        </div>
+                                        {canEdit && (
+                                            <div className="hidden md:flex items-center justify-end gap-3">
+                                                <button
+                                                    onClick={(e) => handleEdit(item.id, e)}
+                                                    className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                                >
+                                                    <Edit className="w-5 h-5" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDeleteClick(item.id, e)}
+                                                    disabled={deleteKeyMutation.isPending}
+                                                    className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             )}

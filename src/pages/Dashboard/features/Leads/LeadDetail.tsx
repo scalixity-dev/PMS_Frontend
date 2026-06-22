@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { formatPhoneNumber } from '@/utils/phone.utils';
 
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import { ChevronLeft, MoreHorizontal, Clock, Plus, Edit2, Trash2, User, FileText, CheckSquare, LogIn } from 'lucide-react';
 import AddNoteModal from './components/AddNoteModal';
 import AddTaskModal from './components/AddleadsTaskModal';
@@ -75,6 +76,8 @@ const LeadDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('leasing');
     const { data: lead, isLoading: isLoadingLead, error: leadError } = useGetLead(id || null, !!id);
     const updateLeadMutation = useUpdateLead();
     const deleteLeadMutation = useDeleteLead();
@@ -804,7 +807,7 @@ const LeadDetail = () => {
                                     {getStatusLabel(status)} <Clock className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                                 </div>
 
-                                <div className="relative">
+                                {canEdit && <div className="relative">
                                     <button
                                         onClick={() => setShowActionMenu(!showActionMenu)}
                                         className="bg-[#3A6D6C] text-white w-9 sm:w-10 h-7 sm:h-8 flex items-center justify-center rounded-lg shadow-md hover:bg-[#2c5251] transition-all"
@@ -894,7 +897,7 @@ const LeadDetail = () => {
                                             </div>
                                         </>
                                     )}
-                                </div>
+                                </div>}
                             </div>
                         </div>
 
@@ -937,7 +940,7 @@ const LeadDetail = () => {
                                 {/* Activity Filter Section */}
                                 <div className="flex flex-col justify-between gap-4 sm:gap-6">
                                     {/* Add Activity Controls */}
-                                    <div className="bg-[#3E706F] p-4 rounded-[2rem] shadow-xl flex flex-col items-center justify-center gap-3 relative">
+                                    {canEdit && <div className="bg-[#3E706F] p-4 rounded-[2rem] shadow-xl flex flex-col items-center justify-center gap-3 relative">
                                         <h3 className="text-white font-bold text-sm">Add Activity</h3>
                                         <div className="flex flex-wrap justify-center gap-3">
                                             <button
@@ -989,7 +992,7 @@ const LeadDetail = () => {
                                                 )}
                                             </div>
                                         </div>
-                                    </div>
+                                    </div>}
 
                                     {/* Filters */}
                                     <div className="bg-[#C9E5BC] p-4 sm:p-6 px-4 sm:px-10 lg:px-20 rounded-t-[1.5rem] sm:rounded-t-[2.2rem] flex flex-wrap sm:flex-nowrap gap-2 sm:gap-4 lg:gap-10 shadow-inner">
@@ -1203,7 +1206,7 @@ const LeadDetail = () => {
                                                     </div>
 
                                                     {/* Action Icons - Not for activity*/}
-                                                    {(item.type !== 'Activity') && (
+                                                    {(item.type !== 'Activity') && canEdit && (
                                                         <div className="absolute top-2 sm:top-3 right-3 sm:right-5 flex items-center gap-1 sm:gap-2 opacity-100 group-hover:opacity-100 transition-opacity">
                                                             <button
                                                                 onClick={(e) => {

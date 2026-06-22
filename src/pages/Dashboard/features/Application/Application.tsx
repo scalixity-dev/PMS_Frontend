@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import Pagination from '../../components/Pagination';
 import ApplicationCard from './components/ApplicationCard';
 import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
@@ -73,6 +74,8 @@ const transformApplicationToCard = (app: BackendApplication) => {
 const Application = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('rental-applications');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [currentPage, setCurrentPage] = useState(1);
@@ -204,21 +207,23 @@ const Application = () => {
                         </button>
                         <h1 className="text-2xl font-bold text-black">Application</h1>
                     </div>
-                    <div className="flex flex-wrap gap-3 w-full md:w-auto">
-                        <button
-                            onClick={() => setIsInviteModalOpen(true)}
-                            className="flex-1 md:flex-none px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors text-center"
-                        >
-                            Invite to apply
-                        </button>
-                        <button
-                            onClick={() => navigate('/dashboard/application/new')} // Check route if needed
-                            className="flex-1 md:flex-none px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2"
-                        >
-                            New Application
-                            <Plus className="w-4 h-4" />
-                        </button>
-                    </div>
+                    {canEdit && (
+                        <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                            <button
+                                onClick={() => setIsInviteModalOpen(true)}
+                                className="flex-1 md:flex-none px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors text-center"
+                            >
+                                Invite to apply
+                            </button>
+                            <button
+                                onClick={() => navigate('/dashboard/application/new')}
+                                className="flex-1 md:flex-none px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2"
+                            >
+                                New Application
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Filter Section */}
@@ -325,6 +330,7 @@ const Application = () => {
                                     backendStatus={app.backendStatus}
                                     propertyId={app.propertyId}
                                     applicantEmail={app.applicantEmail}
+                                    readOnly={!canEdit}
                                     onStatusChange={handleStatusChange}
                                     onMoveIn={handleMoveIn}
                                 />

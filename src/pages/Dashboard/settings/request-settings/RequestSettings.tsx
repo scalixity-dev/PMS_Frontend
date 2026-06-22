@@ -2,6 +2,7 @@ import { RequestSettingsLayout } from "../../../../components/common/RequestSett
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import { useEffect, useState } from "react";
 import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
+import { useTeamPermissions } from "../../../../context/TeamPermissionContext";
 
 interface RequestSettingsValues {
   recurringDays: string;
@@ -11,6 +12,8 @@ interface RequestSettingsValues {
 }
 
 export default function RequestSettings() {
+  const { isTeamMember, canManage } = useTeamPermissions();
+  const canEdit = !isTeamMember || canManage('settings');
   const { data } = useGetSettingsSection<RequestSettingsValues>("request_settings");
   const updateSettings = useUpdateSettingsSection<RequestSettingsValues>("request_settings");
 
@@ -50,8 +53,9 @@ export default function RequestSettings() {
             <div className="w-48">
               <select
                 value={form.recurringDays}
-                onChange={(e) => setForm((prev) => ({ ...prev, recurringDays: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7CD947] bg-white"
+                onChange={(e) => canEdit && setForm((prev) => ({ ...prev, recurringDays: e.target.value }))}
+                disabled={!canEdit}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7CD947] bg-white disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <option>Days</option>
                 <option>1 Day</option>
@@ -60,7 +64,7 @@ export default function RequestSettings() {
                 <option>7 Days</option>
               </select>
             </div>
-            <PrimaryActionButton text="Update" onClick={() => save()} />
+            {canEdit && <PrimaryActionButton text="Update" onClick={() => save()} />}
           </div>
         </section>
 
@@ -73,12 +77,14 @@ export default function RequestSettings() {
 
           <div className="mt-4 space-y-6">
             <div className="flex items-center gap-3">
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className={`relative inline-flex items-center ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                 <input
                   type="checkbox"
                   className="sr-only peer"
                   checked={form.oneTimeFee}
+                  disabled={!canEdit}
                   onChange={() => {
+                    if (!canEdit) return;
                     const next = { ...form, oneTimeFee: !form.oneTimeFee };
                     setForm(next);
                     save(next);
@@ -90,12 +96,14 @@ export default function RequestSettings() {
             </div>
 
             <div className="flex items-center gap-3">
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className={`relative inline-flex items-center ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                 <input
                   type="checkbox"
                   className="sr-only peer"
                   checked={form.dailyFee}
+                  disabled={!canEdit}
                   onChange={() => {
+                    if (!canEdit) return;
                     const next = { ...form, dailyFee: !form.dailyFee };
                     setForm(next);
                     save(next);
@@ -106,7 +114,7 @@ export default function RequestSettings() {
               <span className="text-sm font-medium text-[#273F3B]">Daily Rent Late Fee</span>
             </div>
 
-            <PrimaryActionButton text="Update" onClick={() => save()} />
+            {canEdit && <PrimaryActionButton text="Update" onClick={() => save()} />}
           </div>
         </section>
 
@@ -119,12 +127,14 @@ export default function RequestSettings() {
 
           <div className="mt-4 space-y-6">
             <div className="flex items-center gap-3">
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className={`relative inline-flex items-center ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                 <input
                   type="checkbox"
                   className="sr-only peer"
                   checked={form.communicationEnabled}
+                  disabled={!canEdit}
                   onChange={() => {
+                    if (!canEdit) return;
                     const next = { ...form, communicationEnabled: !form.communicationEnabled };
                     setForm(next);
                     save(next);
@@ -135,7 +145,7 @@ export default function RequestSettings() {
               <span className="text-sm font-medium text-[#273F3B]">Communication Automation</span>
             </div>
 
-            <PrimaryActionButton text="Update" onClick={() => save()} />
+            {canEdit && <PrimaryActionButton text="Update" onClick={() => save()} />}
           </div>
         </section>
       </div>

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import Button from "../../../../components/common/Button";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
+import { useToast } from "../../../../components/common/Toast";
+import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
 import {
   useGetGoogleCalendarStatus,
   useGetGoogleCalendarConnectUrl,
@@ -14,6 +16,8 @@ export default function IntegrationSettings() {
   const disconnectMutation = useDisconnectGoogleCalendar();
   const syncMutation = useSyncGoogleCalendarEvents();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  const toast = useToast();
 
   const handleConnect = async () => {
     try {
@@ -23,33 +27,34 @@ export default function IntegrationSettings() {
       window.location.href = result.authUrl;
     } catch (error: any) {
       console.error("Failed to get connect URL:", error);
-      alert(error.message || "Failed to connect Google Calendar");
+      toast.error(error.message || "Failed to connect Google Calendar");
       setIsConnecting(false);
     }
   };
 
-  const handleDisconnect = async () => {
-    if (!confirm("Are you sure you want to disconnect Google Calendar?")) {
-      return;
-    }
+  const handleDisconnect = () => {
+    setShowDisconnectConfirm(true);
+  };
 
+  const confirmDisconnect = async () => {
     try {
       await disconnectMutation.mutateAsync();
+      setShowDisconnectConfirm(false);
       refetchStatus();
     } catch (error: any) {
       console.error("Failed to disconnect:", error);
-      alert(error.message || "Failed to disconnect Google Calendar");
+      toast.error(error.message || "Failed to disconnect Google Calendar");
     }
   };
 
   const handleSync = async () => {
     try {
       const result = await syncMutation.mutateAsync({});
-      alert(`Successfully synced ${result.count} calendar event${result.count !== 1 ? 's' : ''} from Google Calendar`);
-      refetchStatus(); // Refresh status to update lastSyncedAt
+      toast.success(`Successfully synced ${result.count} calendar event${result.count !== 1 ? 's' : ''} from Google Calendar`);
+      refetchStatus();
     } catch (error: any) {
       console.error("Failed to sync calendar:", error);
-      alert(error.message || "Failed to sync Google Calendar events");
+      toast.error(error.message || "Failed to sync Google Calendar events");
     }
   };
 
@@ -61,15 +66,13 @@ export default function IntegrationSettings() {
     const error = urlParams.get("error");
 
     if (success === "true") {
-      // Show success message
       if (message) {
-        alert(`Success: ${decodeURIComponent(message)}`);
+        toast.success(`Success: ${decodeURIComponent(message)}`);
       }
       refetchStatus();
-      // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (error) {
-      alert(`Connection failed: ${decodeURIComponent(error)}`);
+      toast.error(`Connection failed: ${decodeURIComponent(error)}`);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [refetchStatus]);
@@ -79,6 +82,17 @@ export default function IntegrationSettings() {
 
   return (
     <AccountSettingsLayout activeTab="integrations">
+      <DeleteConfirmationModal
+        isOpen={showDisconnectConfirm}
+        onClose={() => setShowDisconnectConfirm(false)}
+        onConfirm={confirmDisconnect}
+        isLoading={disconnectMutation.isPending}
+        title="Disconnect Google Calendar"
+        message="Are you sure you want to disconnect Google Calendar? Your synced events will remain but new ones won't sync."
+        confirmText="Disconnect"
+        confirmButtonClass="bg-orange-500 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-600 transition-colors"
+        headerClassName="bg-orange-500"
+      />
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Connected apps</h2>
         <p className="text-xs text-gray-600">

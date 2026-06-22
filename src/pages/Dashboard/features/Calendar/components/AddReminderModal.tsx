@@ -190,7 +190,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
             if (isEditMode && editReminder) {
                 // Update existing reminder
                 await updateReminderMutation.mutateAsync({
-                    id: editReminder.id,
+                    id: editReminder.id.split('_')[0],
                     updateData: reminderDto,
                 });
             } else {

@@ -5,6 +5,7 @@ import MonthGrid from './MonthGrid';
 import AddReminderModal from './components/AddReminderModal';
 import { useGetCalendarEvents } from '../../../../hooks/useCalendarQueries';
 import { Loader2 } from 'lucide-react';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 // Debounce helper
 const debounce = <T extends (...args: unknown[]) => void>(fn: T, delay: number): T => {
@@ -32,6 +33,8 @@ export interface Reminder {
 }
 
 const Calendar: React.FC = () => {
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('calendar');
     const [currentDate, setCurrentDate] = useState(new Date());
     // Initialize with previous, current, and next month
     const [months, setMonths] = useState<Date[]>([
@@ -406,6 +409,26 @@ const Calendar: React.FC = () => {
         handleDateChange(new Date());
     };
 
+    // Scroll to current month on initial render
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (containerRef.current) {
+                const todayEl = containerRef.current.querySelector('.today-cell');
+                if (todayEl) {
+                    todayEl.scrollIntoView({ block: 'center', behavior: 'auto' });
+                } else {
+                    // Fallback: scroll to the current month section
+                    const currentMonthIso = startOfMonth(new Date()).toISOString();
+                    const el = containerRef.current.querySelector(`[data-date="${currentMonthIso}"]`);
+                    if (el) {
+                        (el as HTMLElement).scrollIntoView({ block: 'start', behavior: 'auto' });
+                    }
+                }
+            }
+        }, 100);
+        return () => clearTimeout(timer);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
     const weekDays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
     return (
@@ -417,6 +440,7 @@ const Calendar: React.FC = () => {
                     onDateChange={handleDateChange}
                     onTodayClick={handleTodayClick}
                     onAddReminder={() => setIsReminderModalOpen(true)}
+                    canEdit={canEdit}
                 />
 
                 {/* Weekday Header - Aligned with the grid */}
@@ -479,7 +503,7 @@ const Calendar: React.FC = () => {
 
                                 {/* Month Grid */}
                                 <div className="flex-1">
-                                    <MonthGrid month={month} reminders={reminders} />
+                                    <MonthGrid month={month} reminders={reminders} canEdit={canEdit} />
                                 </div>
                             </div>
                         ))}

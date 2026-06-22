@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Lightbulb } from "lucide-react";
 import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
+import { useTeamPermissions } from "../../../../context/TeamPermissionContext";
 
 interface FeeCollectionOption {
     value: "auto" | "request";
@@ -19,6 +20,8 @@ const FEE_COLLECTION_OPTIONS: FeeCollectionOption[] = [
 ];
 
 export default function OnlineApplication() {
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('settings');
     const { data } = useGetSettingsSection<{ feeCollection: "auto" | "request" }>("rental_online_application");
     const updateSettings = useUpdateSettingsSection<{ feeCollection: "auto" | "request" }>("rental_online_application");
     const [feeCollection, setFeeCollection] = useState<"auto" | "request">("auto");
@@ -31,6 +34,7 @@ export default function OnlineApplication() {
     }, [data]);
 
     const handleChange = (value: "auto" | "request") => {
+        if (!canEdit) return;
         setFeeCollection(value);
         updateSettings.mutate({ feeCollection: value });
     };
@@ -52,7 +56,7 @@ export default function OnlineApplication() {
                 {FEE_COLLECTION_OPTIONS.map((option) => (
                     <label
                         key={option.value}
-                        className="flex items-center gap-3 cursor-pointer group"
+                        className={`flex items-center gap-3 group ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
                     >
                         <div className="relative flex items-center justify-center">
                             <input

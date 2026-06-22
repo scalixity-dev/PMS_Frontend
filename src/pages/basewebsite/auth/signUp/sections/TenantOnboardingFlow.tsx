@@ -64,7 +64,7 @@ export const TenantOnboardingFlow: React.FC = () => {
   const [cities, setCities] = useState<ICity[]>([]);
 
   // Step 1: Location
-  const [country, setCountry] = useState('');
+  const [country, setCountry] = useState('US');
   const [stateRegion, setStateRegion] = useState('');
   const [city, setCity] = useState('');
 

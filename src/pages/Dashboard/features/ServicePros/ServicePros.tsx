@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { formatPhoneNumber as formatPhone } from '@/utils/phone.utils';
 
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import DashboardFilter from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import ServiceProCard from './components/ServiceProCard';
@@ -23,6 +24,8 @@ const ServicePros = () => {
     const navigate = useNavigate();
     const context = useOutletContext<{ sidebarCollapsed?: boolean }>();
     const sidebarCollapsed = context?.sidebarCollapsed ?? false;
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('contacts');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [searchQuery, setSearchQuery] = useState('');
     const [servicePros, setServicePros] = useState<ServiceProCardData[]>([]);
@@ -220,25 +223,27 @@ const ServicePros = () => {
                             Service Pros
                         </h1>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                        <button
-                            onClick={() => navigate('/dashboard/contacts/service-pros/import')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors w-full sm:w-auto"
-                        >
-                            Import
-                        </button>
-                        <button
-                            onClick={() => navigate('/dashboard/contacts/service-pros/add')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
-                        >
-                            Add service pro
-                            <Plus className="w-4 h-4" />
-                        </button>
-                    </div>
+                    {canEdit && (
+                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            <button
+                                onClick={() => navigate('/dashboard/contacts/service-pros/import')}
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors w-full sm:w-auto"
+                            >
+                                Import
+                            </button>
+                            <button
+                                onClick={() => navigate('/dashboard/contacts/service-pros/add')}
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
+                            >
+                                Add service pro
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Pending Registrations */}
-                {pendingProviders.length > 0 && (
+                {canEdit && pendingProviders.length > 0 && (
                     <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
                         <h3 className="text-lg font-semibold text-amber-900 mb-3 flex items-center gap-2">
                             <AlertCircle size={20} />

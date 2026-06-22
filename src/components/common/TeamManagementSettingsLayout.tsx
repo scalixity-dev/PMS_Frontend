@@ -107,31 +107,21 @@ export function TeamManagementSettingsLayout(
 
                         <div className="flex overflow-x-auto pb-2 sm:pb-0 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
                             <div className="flex gap-2 bg-[#F5F7FB] rounded-full p-1.5 w-fit min-w-max">
-                                {(
-                                    [
-                                        "roles-permissions",
-                                        "property-permissions",
-                                    ] as TeamManagementSettingsTab[]
-                                ).map((tab) => {
-                                    const isActive = activeTab === tab;
-
-                                    return (
-                                        <button
-                                            key={tab}
-                                            type="button"
-                                            onClick={() => handleTabClick(tab)}
-                                            className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${isActive
+                                {(["roles-permissions", "property-permissions"] as TeamManagementSettingsTab[]).map((tab) => (
+                                    <button
+                                        key={tab}
+                                        type="button"
+                                        onClick={() => handleTabClick(tab)}
+                                        className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
+                                            activeTab === tab
                                                 ? "text-white shadow-[0_6px_14px_rgba(124,217,71,0.45)]"
-                                                : "text-gray-700 hover:bg-white"
-                                                }`}
-                                            style={
-                                                isActive ? { backgroundColor: primaryColor } : undefined
-                                            }
-                                        >
-                                            {getTabLabel(tab)}
-                                        </button>
-                                    );
-                                })}
+                                                : "text-gray-600 hover:text-gray-900"
+                                        }`}
+                                        style={activeTab === tab ? { backgroundColor: primaryColor } : {}}
+                                    >
+                                        {tab === "roles-permissions" ? "Roles & Permissions" : "Property Permissions"}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 

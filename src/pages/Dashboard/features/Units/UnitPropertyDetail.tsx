@@ -20,12 +20,15 @@ import DetailTabs from '../../components/DetailTabs';
 import { useGetProperty } from '../../../../hooks/usePropertyQueries';
 import { useGetUnit } from '../../../../hooks/useUnitQueries';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 const UnitPropertyDetail: React.FC = () => {
     const { unitId } = useParams<{ unitId: string }>();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const propertyId = searchParams.get('propertyId');
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('property-units');
     const [activeTab, setActiveTab] = useState('profile');
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -215,10 +218,12 @@ const UnitPropertyDetail: React.FC = () => {
                         <h1 className="text-2xl font-bold text-gray-800">{unit?.name || 'Unit'}</h1>
                     </div>
                     <div className="flex gap-3">
+                        {canEdit && (
                         <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors">
                             Move In
                         </button>
-                        <div className="relative" ref={actionDropdownRef}>
+                        )}
+                        {canEdit && <div className="relative" ref={actionDropdownRef}>
                             <button
                                 onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
                                 className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors flex items-center gap-2"
@@ -257,7 +262,7 @@ const UnitPropertyDetail: React.FC = () => {
                                     </button>
                                 </div>
                             )}
-                        </div>
+                        </div>}
                     </div>
                 </div>
 

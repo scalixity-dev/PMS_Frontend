@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 interface PropertiesHeaderProps {
     onImport?: () => void;
     onAddProperty?: () => void;
+    canEdit?: boolean;
 }
 
-const PropertiesHeader: React.FC<PropertiesHeaderProps> = ({ onImport, onAddProperty }) => {
+const PropertiesHeader: React.FC<PropertiesHeaderProps> = ({ onImport, onAddProperty, canEdit = true }) => {
     const navigate = useNavigate();
     return (
         <div className="flex items-center justify-between mb-4 md:mb-6">
@@ -19,22 +20,24 @@ const PropertiesHeader: React.FC<PropertiesHeaderProps> = ({ onImport, onAddProp
                 </button>
                 <h1 className="text-xl md:text-2xl font-bold text-gray-800">Properties</h1>
             </div>
-            <div className="flex items-center gap-2 md:gap-4">
-                <button
-                    onClick={onImport}
-                    className="hidden md:block px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#2c5251] transition-colors"
-                >
-                    Import
-                </button>
-                <button
-                    onClick={onAddProperty}
-                    className="flex items-center gap-1 px-3 md:px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#2c5251] transition-colors"
-                >
-                    <span className="hidden md:inline">Add Property</span>
-                    <span className="md:hidden">Add</span>
-                    <Plus className="w-4 h-4" />
-                </button>
-            </div>
+            {canEdit && (
+                <div className="flex items-center gap-2 md:gap-4">
+                    <button
+                        onClick={onImport}
+                        className="hidden md:block px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#2c5251] transition-colors"
+                    >
+                        Import
+                    </button>
+                    <button
+                        onClick={onAddProperty}
+                        className="flex items-center gap-1 px-3 md:px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#2c5251] transition-colors"
+                    >
+                        <span className="hidden md:inline">Add Property</span>
+                        <span className="md:hidden">Add</span>
+                        <Plus className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

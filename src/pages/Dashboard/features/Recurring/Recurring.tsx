@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useEndRecurringTransaction } from '../../../../hooks/useTransactionQueries';
 import { useToast } from '../../../../components/common/Toast';
-import { ChevronLeft, Check, MoreHorizontal, Settings } from 'lucide-react';
+import { ChevronLeft, Check, MoreHorizontal } from 'lucide-react';
 import MoneyInMoneyOutButtons from '../../components/MoneyInMoneyOutButtons';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useTransactionStore } from '../Transactions/store/transactionStore';
@@ -12,7 +12,9 @@ import { useGetRecurringTransactions } from '../../../../hooks/useTransactionQue
 import EditInvoiceModal from '../Transactions/components/EditInvoiceModal';
 import DeleteTransactionModal from '../Transactions/components/DeleteTransactionModal';
 import PostNextInvoiceModal from './components/PostNextInvoiceModal';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 // Utility function to calculate next date based on frequency
 const calculateNextDate = (startDate: Date, frequency: string, endDate?: Date | null): Date | null => {
@@ -87,6 +89,9 @@ const Recurring: React.FC = () => {
     const navigate = useNavigate();
     const context = useOutletContext<{ sidebarCollapsed?: boolean }>();
     const sidebarCollapsed = context?.sidebarCollapsed ?? false;
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('accounting');
+
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -113,6 +118,7 @@ const Recurring: React.FC = () => {
     }, [moreMenuOpenId]);
     const [isPostInvoiceModalOpen, setIsPostInvoiceModalOpen] = useState(false);
     const [selectedRecurringId, setSelectedRecurringId] = useState<string | null>(null);
+    const [endTarget, setEndTarget] = useState<string | null>(null);
 
     // Using transaction store for shared modals state
     const {
@@ -303,8 +309,30 @@ const Recurring: React.FC = () => {
         }
     };
 
+    const confirmEnd = async () => {
+        if (!endTarget) return;
+        try {
+            await endRecurringMutation.mutateAsync(endTarget);
+            toast.success('Recurring transaction ended');
+            setEndTarget(null);
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to end recurring transaction');
+        }
+    };
+
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
+            <DeleteConfirmationModal
+                isOpen={!!endTarget}
+                onClose={() => setEndTarget(null)}
+                onConfirm={confirmEnd}
+                isLoading={endRecurringMutation.isPending}
+                title="End Recurring Transaction"
+                message="End this recurring transaction? No future invoices will be generated."
+                confirmText="End Transaction"
+                confirmButtonClass="bg-orange-500 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-600 transition-colors"
+                headerClassName="bg-orange-500"
+            />
             {/* Modals - Reused from Transactions */}
             <EditInvoiceModal />
             <DeleteTransactionModal
@@ -343,13 +371,8 @@ const Recurring: React.FC = () => {
                     </button>
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3" ref={dropdownContainerRef}>
-                        <MoneyInMoneyOutButtons />
+                        {canEdit && <MoneyInMoneyOutButtons />}
 
-                        {/* Settings */}
-                        <button className="w-full sm:w-auto px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center justify-center gap-2">
-                            <Settings className="w-4 h-4" />
-                            Settings
-                        </button>
                     </div>
                 </div>
 
@@ -449,17 +472,19 @@ const Recurring: React.FC = () => {
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex justify-end relative">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
-                                        }}
-                                        className="text-gray-600 hover:text-gray-600"
-                                    >
-                                        <MoreHorizontal className="w-10 h-6 bg-gray-200 rounded-full p-0.5" />
-                                    </button>
-                                </div>
+                                {canEdit && (
+                                    <div className="flex justify-end relative">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                            }}
+                                            className="text-gray-600 hover:text-gray-600"
+                                        >
+                                            <MoreHorizontal className="w-10 h-6 bg-gray-200 rounded-full p-0.5" />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Mobile View */}
@@ -481,15 +506,17 @@ const Recurring: React.FC = () => {
                                             {item.status}
                                         </span>
                                     </div>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
-                                        }}
-                                        className="text-gray-600"
-                                    >
-                                        <MoreHorizontal className="w-8 h-8 bg-gray-100 rounded-full p-1.5" />
-                                    </button>
+                                    {canEdit && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                            }}
+                                            className="text-gray-600"
+                                        >
+                                            <MoreHorizontal className="w-8 h-8 bg-gray-100 rounded-full p-1.5" />
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="space-y-1">
@@ -532,15 +559,9 @@ const Recurring: React.FC = () => {
                                         Post next invoice
                                     </button>
                                     <button
-                                        onClick={async () => {
+                                        onClick={() => {
                                             setMoreMenuOpenId(null);
-                                            if (!window.confirm('End this recurring transaction? No future invoices will be generated.')) return;
-                                            try {
-                                                await endRecurringMutation.mutateAsync(item.id);
-                                                toast.success('Recurring transaction ended');
-                                            } catch (err: any) {
-                                                toast.error(err?.message || 'Failed to end recurring transaction');
-                                            }
+                                            setEndTarget(item.id);
                                         }}
                                         className="w-full text-left px-4 py-2 text-sm text-[#3A6D6C] hover:bg-gray-50 border-b border-gray-100"
                                     >

@@ -5,6 +5,7 @@ import ResponsibilityModal, { type ResponsibilityItem } from './ResponsibilityMo
 import AddUtilityProviderModal from './AddUtilityProviderModal';
 import { currencyOptions } from '../../../../../components/ui/CurrencySelector';
 import { useCreateUtilityProvider, useDeleteUtilityProvider, useGetPropertyServiceProviders, useGetPropertyResponsibilities, useUpsertPropertyResponsibilities } from '../../../../../hooks/usePropertyDetailQueries';
+import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
 
 // --- Types ---
 interface DetailField {
@@ -73,6 +74,7 @@ interface ServiceProvidersTabProps {
 const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, unitId }) => {
     const [isResponsibilityModalOpen, setIsResponsibilityModalOpen] = React.useState(false);
     const [isAddUtilityModalOpen, setIsAddUtilityModalOpen] = React.useState(false);
+    const [providerToDelete, setProviderToDelete] = React.useState<string | number | null>(null);
 
     // Bug 4 fix: load/persist responsibilities via API
     const { data: responsibilitiesData = [] } = useGetPropertyResponsibilities(propertyId);
@@ -91,9 +93,13 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
     const realUtilityProviders = providersData.utilityProviders || [];
 
     const handleDeleteUtilityProvider = (providerId: string | number) => {
-        if (window.confirm('Delete this utility provider?')) {
-            deleteUtilityProviderMutation.mutate({ propertyId, providerId: String(providerId) });
-        }
+        setProviderToDelete(providerId);
+    };
+
+    const confirmDeleteProvider = () => {
+        if (providerToDelete === null) return;
+        deleteUtilityProviderMutation.mutate({ propertyId, providerId: String(providerToDelete) });
+        setProviderToDelete(null);
     };
 
     const mapProviderTypeToServiceType = (providerType: string) => {
@@ -149,6 +155,15 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
 
     return (
         <div className="space-y-8">
+            <DeleteConfirmationModal
+                isOpen={providerToDelete !== null}
+                onClose={() => setProviderToDelete(null)}
+                onConfirm={confirmDeleteProvider}
+                isLoading={deleteUtilityProviderMutation.isPending}
+                title="Delete Utility Provider"
+                message="Delete this utility provider? This cannot be undone."
+                confirmText="Delete"
+            />
             {/* Responsibility Section */}
             <div className="bg-[#E9E9E9] shadow-lg rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6">
                 <SectionHeader

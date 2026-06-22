@@ -6,6 +6,8 @@ import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
 import DashboardButton from '../../../components/DashboardButton';
 import ContactCard from './components/ContactCard';
 import { serviceProviderService } from '../../../../../services/service-provider.service';
+import { useToast } from '../../../../../components/common/Toast';
+import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
 
 interface Contact {
     id: string;
@@ -29,6 +31,8 @@ const ServiceContacts: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingContact, setEditingContact] = useState<Contact | null>(null);
     const [form, setForm] = useState({ name: '', phone: '', email: '' });
+    const [contactToDelete, setContactToDelete] = useState<string | null>(null);
+    const toast = useToast();
 
     const fetchContacts = async () => {
         try {
@@ -77,13 +81,18 @@ const ServiceContacts: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!window.confirm('Delete this contact?')) return;
+    const handleDelete = (id: string) => {
+        setContactToDelete(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!contactToDelete) return;
         try {
-            await serviceProviderService.deleteMyContact(id);
+            await serviceProviderService.deleteMyContact(contactToDelete);
+            setContactToDelete(null);
             await fetchContacts();
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to delete contact');
+            toast.error(err instanceof Error ? err.message : 'Failed to delete contact');
         }
     };
 
@@ -151,6 +160,14 @@ const ServiceContacts: React.FC = () => {
 
     return (
         <div className={`flex flex-col gap-4 sm:gap-6 mx-auto min-h-screen pb-20 transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
+            <DeleteConfirmationModal
+                isOpen={!!contactToDelete}
+                onClose={() => setContactToDelete(null)}
+                onConfirm={confirmDelete}
+                title="Delete Contact"
+                message="Delete this contact? This cannot be undone."
+                confirmText="Delete"
+            />
             {/* Breadcrumb */}
             <ServiceBreadCrumb
                 items={[

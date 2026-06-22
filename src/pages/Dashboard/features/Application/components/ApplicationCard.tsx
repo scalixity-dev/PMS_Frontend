@@ -12,6 +12,7 @@ interface ApplicationCardProps {
     backendStatus: string;
     propertyId?: string;
     applicantEmail?: string;
+    readOnly?: boolean;
     onView?: () => void;
     onStatusChange?: (id: string | number, newStatus: 'APPROVED' | 'REVIEWING' | 'REJECTED') => Promise<void>;
     onMoveIn?: (propertyId: string, applicantEmail?: string) => void;
@@ -45,6 +46,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
     backendStatus,
     propertyId,
     applicantEmail,
+    readOnly = false,
     onView,
     onStatusChange,
     onMoveIn
@@ -116,7 +118,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
         backendStatus === 'DRAFT' || backendStatus === 'SUBMITTED' || backendStatus === 'REVIEWING';
     const allowMoveIn = backendStatus === 'APPROVED' && !!propertyId;
 
-    const menuItems = [
+    const menuItems = readOnly ? [] : [
         ...(allowApprove ? [{
             label: 'Approve',
             action: () => setConfirmModal({ type: 'approve', isOpen: true }),

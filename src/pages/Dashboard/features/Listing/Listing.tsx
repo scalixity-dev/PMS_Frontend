@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import ListingHeader from './components/ListingHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
@@ -12,6 +13,8 @@ const ITEMS_PER_PAGE = 9;
 const Listing: React.FC = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEdit = !isTeamMember || canManage('listing');
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<{
@@ -155,7 +158,7 @@ const Listing: React.FC = () => {
             </div>
 
             <div className="p-4 md:p-6 bg-[#E0E8E7] rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
-                <ListingHeader onAddListing={handleAddListing} />
+                <ListingHeader onAddListing={canEdit ? handleAddListing : undefined} canEdit={canEdit} />
 
                 <DashboardFilter
                     filterOptions={filterOptions}
@@ -196,6 +199,7 @@ const Listing: React.FC = () => {
                                         country={listing.country ?? undefined}
                                         listingId={listing.listingId ?? undefined}
                                         propertyId={listing.propertyId}
+                                        canEdit={canEdit}
                                     />
                                 ))}
                             </div>
