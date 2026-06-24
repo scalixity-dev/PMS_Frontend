@@ -12,6 +12,7 @@ import { useGetAllLeads, useUpdateLead, useDeleteLead } from '../../../../hooks/
 import { useGetAllListings } from '../../../../hooks/useListingQueries';
 import type { BackendLead, LeadStatus } from '../../../../services/lead.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useToast } from '../../../../components/common/Toast';
 
 const STATUS_DISPLAY_TO_ENUM: Record<string, LeadStatus> = {
     'New': 'NEW',
@@ -59,6 +60,7 @@ interface Lead {
 }
 
 const Leads = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const { isTeamMember, canManage } = useTeamPermissions();
@@ -356,7 +358,7 @@ const Leads = () => {
                     const reason = failure.status === 'rejected' ? failure.reason : 'Unknown error';
                     return `Lead ${id}: ${reason instanceof Error ? reason.message : String(reason)}`;
                 });
-                alert(`Failed to delete ${failures.length} lead(s):\n${errorMessages.join('\n')}`);
+                toast.error(`Failed to delete ${failures.length} lead(s):\n${errorMessages.join('\n')}`);
             } else {
                 // All deletions succeeded (including "not found" cases)
                 console.log('All selected leads deleted successfully');
@@ -372,7 +374,7 @@ const Leads = () => {
 
         } catch (error) {
             console.error('Failed to delete leads:', error);
-            alert(`Failed to delete leads: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast.error(`Failed to delete leads: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setDeletingLeadIds([]);
             setIsDeleteModalOpen(false);

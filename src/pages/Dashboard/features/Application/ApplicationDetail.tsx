@@ -224,7 +224,7 @@ const ApplicationDetail = () => {
 
             // Block video and audio files
             if (mimeType.startsWith('video/') || mimeType.startsWith('audio/')) {
-                alert('Video and audio files are not allowed. Please upload images or documents only.');
+                toast.error('Video and audio files are not allowed. Please upload images or documents only.');
                 event.target.value = ''; // Reset input
                 return;
             }
@@ -232,7 +232,7 @@ const ApplicationDetail = () => {
             // Block video/audio extensions
             const blockedExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'mp3', 'wav', 'ogg', 'aac', 'm4a', 'wma'];
             if (extension && blockedExtensions.includes(extension)) {
-                alert('Video and audio files are not allowed. Please upload images or documents only.');
+                toast.error('Video and audio files are not allowed. Please upload images or documents only.');
                 event.target.value = ''; // Reset input
                 return;
             }
@@ -242,7 +242,7 @@ const ApplicationDetail = () => {
 
             // Additional validation: ensure file is either image or document
             if (category !== 'IMAGE' && category !== 'DOCUMENT') {
-                alert('Unsupported file type. Please upload images (jpg, png, gif, etc.) or documents (pdf, doc, docx, xls, xlsx, etc.) only.');
+                toast.error('Unsupported file type. Please upload images (jpg, png, gif, etc.) or documents (pdf, doc, docx, xls, xlsx, etc.) only.');
                 event.target.value = ''; // Reset input
                 return;
             }
@@ -299,14 +299,14 @@ const ApplicationDetail = () => {
             // Validate file type
             const mimeType = file.type.toLowerCase();
             if (!mimeType.startsWith('image/')) {
-                alert('Please upload an image file.');
+                toast.error('Please upload an image file.');
                 return;
             }
 
             // Validate file size (5MB max)
             const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
             if (file.size > MAX_IMAGE_SIZE) {
-                alert(`Image too large. Max size is 5MB (your file is ${(file.size / 1024 / 1024).toFixed(2)}MB).`);
+                toast.error(`Image too large. Max size is 5MB (your file is ${(file.size / 1024 / 1024).toFixed(2)}MB).`);
                 return;
             }
 
@@ -338,7 +338,7 @@ const ApplicationDetail = () => {
                 }
             } catch (error) {
                 console.error('Error uploading profile image:', error);
-                alert('Failed to upload profile image. Please try again.');
+                toast.error('Failed to upload profile image. Please try again.');
             } finally {
                 setIsUploadingProfileImage(false);
                 if (event.target) event.target.value = '';
@@ -692,7 +692,7 @@ const ApplicationDetail = () => {
                 }));
             } catch (error) {
                 console.error('Error uploading pet images:', error);
-                alert('Failed to upload pet image. Please try again.');
+                toast.error('Failed to upload pet image. Please try again.');
                 return;
             }
         }

@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
 import { tenantService } from '../../../../../services/tenant.service';
 import { tenantQueryKeys } from '../../../../../hooks/useTenantQueries';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface TenantCardProps {
     id: string | number;
@@ -27,6 +28,7 @@ const TenantCard: React.FC<TenantCardProps> = ({
     onDeleteSuccess,
     readOnly = false,
 }) => {
+    const toast = useToast();
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -74,7 +76,7 @@ const TenantCard: React.FC<TenantCardProps> = ({
             }
         } catch (error) {
             console.error('Error deleting tenant:', error);
-            alert('Failed to delete tenant');
+            toast.error('Failed to delete tenant');
         }
     };
 

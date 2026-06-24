@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { authService } from "../../../../services/auth.service";
+import { useToast } from "../../../../components/common/Toast";
 
 interface PricingCardProps {
   plan: string;
@@ -43,6 +44,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   isYearly = false,
   onLearnMoreClick,
 }) => {
+  const toast = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isActivating, setIsActivating] = useState(false);
@@ -152,7 +154,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
                 }
               } catch (error) {
                 console.error('Failed to activate account:', error);
-                alert(error instanceof Error ? error.message : 'Failed to activate account. Please try again.');
+                toast.error(error instanceof Error ? error.message : 'Failed to activate account. Please try again.');
                 setIsActivating(false);
               }
             } else {

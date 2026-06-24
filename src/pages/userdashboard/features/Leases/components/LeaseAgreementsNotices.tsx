@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronDown, ChevronUp, FileText, X, Eye } from 'lucide-react';
 import type { Lease } from '../../../utils/types';
 import type { RenderedDocument } from '../../../../../services/documents.service';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface LeaseAgreementsNoticesProps {
     lease: Lease;
@@ -9,6 +10,7 @@ interface LeaseAgreementsNoticesProps {
 }
 
 export const LeaseAgreementsNotices = ({ lease, renderedDocuments = [] }: LeaseAgreementsNoticesProps) => {
+    const toast = useToast();
     const [isAttachmentsExpanded, setIsAttachmentsExpanded] = useState(true);
     const [isDocumentsExpanded, setIsDocumentsExpanded] = useState(true);
     const [previewDoc, setPreviewDoc] = useState<RenderedDocument | null>(null);
@@ -17,7 +19,7 @@ export const LeaseAgreementsNotices = ({ lease, renderedDocuments = [] }: LeaseA
 
     const handleDownload = (attachment: typeof attachments[0]) => {
         if (!attachment.url || attachment.url === '#') {
-            alert(`File "${attachment.name}" is not available for download.`);
+            toast.error(`File "${attachment.name}" is not available for download.`);
             return;
         }
         const link = document.createElement('a');

@@ -3,8 +3,10 @@ import { OnlinePaymentsSettingsLayout } from "../../../../components/common/Onli
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import SearchableDropdown from "../../../../components/ui/SearchableDropdown";
 import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
+import { useToast } from "../../../../components/common/Toast";
 
 export default function Configurations() {
+    const toast = useToast();
     const [country, setCountry] = useState("");
     const [publicApiKey, setPublicApiKey] = useState("");
     const [secretApiKey, setSecretApiKey] = useState("");
@@ -28,7 +30,7 @@ export default function Configurations() {
 
     const handleSetup = () => {
         if (!country || !publicApiKey || !secretApiKey) {
-            alert("Please fill in all fields");
+            toast.error("Please fill in all fields");
             return;
         }
 

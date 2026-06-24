@@ -7,6 +7,7 @@ import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import CustomTextBox from '../../components/CustomTextBox';
 import { useGetEquipment, useDeleteEquipment, useGetEquipmentCategories } from '../../../../hooks/useEquipmentQueries';
 import type { BackendEquipment } from '../../../../services/equipment.service';
+import { useToast } from '../../../../components/common/Toast';
 
 const findSubcategoryName = (categories: any[], subcategoryId: string): string => {
     for (const cat of categories) {
@@ -19,6 +20,7 @@ const findSubcategoryName = (categories: any[], subcategoryId: string): string =
 };
 
 const EquipmentDetail = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
 
@@ -58,7 +60,7 @@ const EquipmentDetail = () => {
             navigate('/dashboard/equipments');
         } catch (error) {
             console.error('Error deleting equipment:', error);
-            alert(error instanceof Error ? error.message : 'Failed to delete equipment');
+            toast.error(error instanceof Error ? error.message : 'Failed to delete equipment');
         }
     };
 

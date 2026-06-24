@@ -5,6 +5,7 @@ import { useGetSecuritySessions, useGetSettingsSection, useUpdateSettingsSection
 import TwoFactorModal from "../../../../components/common/TwoFactorModal";
 import { twoFactorService } from "../../../../services/two-factor.service";
 import { exportUserData } from "../../../../utils/export-user-data";
+import { useToast } from "../../../../components/common/Toast";
 
 interface LoginSession {
   id: string;
@@ -20,6 +21,7 @@ interface AccountSecuritySettingsValues {
 }
 
 export default function SecuritySettings() {
+  const toast = useToast();
   const { data: securityData, isLoading: isLoadingSecurity } = useGetSettingsSection<AccountSecuritySettingsValues>("account_security");
   const { data: sessionsData, isLoading: isLoadingSessions } = useGetSecuritySessions();
   const updateSecurity = useUpdateSettingsSection<AccountSecuritySettingsValues>("account_security");
@@ -75,7 +77,7 @@ export default function SecuritySettings() {
       setLocalValues(nextValues);
       updateSecurity.mutate(nextValues);
     } catch (err: any) {
-      alert(err?.message || "Failed to export data");
+      toast.error(err?.message || "Failed to export data");
     } finally {
       setIsExporting(false);
     }

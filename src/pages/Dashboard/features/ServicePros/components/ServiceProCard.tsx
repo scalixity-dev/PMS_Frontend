@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
 import { serviceProviderService } from '../../../../../services/service-provider.service';
 import { useTeamPermissions } from '../../../../../context/TeamPermissionContext';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface ServiceProCardProps {
     id: string | number;
@@ -26,6 +27,7 @@ const ServiceProCard: React.FC<ServiceProCardProps> = ({
     image,
     onDeleteSuccess
 }) => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { isTeamMember, canManage } = useTeamPermissions();
     const canEdit = !isTeamMember || canManage('contacts');
@@ -58,7 +60,7 @@ const ServiceProCard: React.FC<ServiceProCardProps> = ({
             }
         } catch (error) {
             console.error('Error deleting service provider:', error);
-            alert('Failed to delete service provider');
+            toast.error('Failed to delete service provider');
         }
     };
 

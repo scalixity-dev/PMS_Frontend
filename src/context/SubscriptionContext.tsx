@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { subscriptionService } from '../services/subscription.service';
-import { useAuth } from './AuthContext';
 
 interface SubscriptionContextValue {
   planId: string;
@@ -18,19 +17,14 @@ const SubscriptionContext = createContext<SubscriptionContextValue>({
 });
 
 export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-
-  const isPropertyManagerOrTeamMember =
-    user?.role === 'PROPERTY_MANAGER' || user?.role === 'TEAM_MEMBER';
-
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['subscription', 'current'],
     queryFn: () => subscriptionService.getCurrent(),
-    enabled: isPropertyManagerOrTeamMember,
-    staleTime: 60 * 1000,
+    staleTime: 0,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
-    retry: 1,
+    refetchOnMount: true,
+    retry: false,
   });
 
   const value = useMemo<SubscriptionContextValue>(

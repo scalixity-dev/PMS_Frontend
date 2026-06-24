@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
+import { useToast } from '../../../../components/common/Toast';
 import { Trash2, ChevronLeft, Eye, Edit, Loader2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
@@ -23,6 +24,7 @@ export interface LeaseItem extends Lease {
 const ITEMS_PER_PAGE = 9;
 
 const Leases: React.FC = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const location = useLocation();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
@@ -286,7 +288,7 @@ const Leases: React.FC = () => {
             setSelectedLeaseData(null);
         } catch (error) {
             console.error('Failed to update lease:', error);
-            alert(error instanceof Error ? error.message : 'Failed to update lease. Please try again.');
+            toast.error(error instanceof Error ? error.message : 'Failed to update lease. Please try again.');
         }
     };
 
@@ -299,7 +301,7 @@ const Leases: React.FC = () => {
             setSelectedLeaseId(null);
         } catch (error) {
             console.error('Failed to delete lease:', error);
-            alert(error instanceof Error ? error.message : 'Failed to delete lease. Please try again.');
+            toast.error(error instanceof Error ? error.message : 'Failed to delete lease. Please try again.');
         }
     };
 

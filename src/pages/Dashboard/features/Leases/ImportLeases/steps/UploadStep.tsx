@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
+import { useToast } from '../../../../../../components/common/Toast';
 
 interface UploadStepProps {
     file: File | null;
@@ -7,6 +8,7 @@ interface UploadStepProps {
 }
 
 const UploadStep: React.FC<UploadStepProps> = ({ file, onFileSelect }) => {
+    const toast = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [dragActive, setDragActive] = useState(false);
 
@@ -43,14 +45,14 @@ const UploadStep: React.FC<UploadStepProps> = ({ file, onFileSelect }) => {
         const isValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
 
         if (!isValidExtension) {
-            alert(`Invalid file type. Please upload an Excel file (.xls or .xlsx)`);
+            toast.error(`Invalid file type. Please upload an Excel file (.xls or .xlsx)`);
             return;
         }
 
         // Validate file size (10MB max)
         const maxSizeBytes = 10 * 1024 * 1024;
         if (uploadedFile.size > maxSizeBytes) {
-            alert('File size must not exceed 10MB');
+            toast.error('File size must not exceed 10MB');
             return;
         }
 

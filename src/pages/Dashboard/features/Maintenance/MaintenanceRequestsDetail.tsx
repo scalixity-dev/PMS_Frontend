@@ -13,6 +13,7 @@ import { maintenanceRequestService } from '../../../../services/maintenance-requ
 import { serviceProviderService } from '../../../../services/service-provider.service';
 import { useGetEquipment } from '../../../../hooks/useEquipmentQueries';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
+import { useToast } from '../../../../components/common/Toast';
 
 // --- Reusable Components ---
 
@@ -44,6 +45,7 @@ const CollapsibleSection = ({ title, children, defaultOpen = false, action }: { 
 // --- Main Component ---
 
 const MaintenanceRequestsDetail: React.FC = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { id } = useParams();
     const location = useLocation();
@@ -191,7 +193,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.detail(id) });
             queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.all });
         } catch (err: any) {
-            alert(`Failed to update status: ${err?.message || 'Unknown error'}`);
+            toast.error(`Failed to update status: ${err?.message || 'Unknown error'}`);
         }
     };
 

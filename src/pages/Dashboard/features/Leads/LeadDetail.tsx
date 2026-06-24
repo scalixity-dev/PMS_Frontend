@@ -39,6 +39,7 @@ import type { LeadStatus, CreateActivityDto } from '../../../../services/lead.se
 import { authService } from '../../../../services/auth.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useLeadDetailStore } from '../../../../store/leadDetailStore';
+import { useToast } from '../../../../components/common/Toast';
 
 interface ActivityItem {
     id: string; // Changed to string to use UUID directly
@@ -73,6 +74,7 @@ async function uploadFile(file: File): Promise<string | undefined> {
 }
 
 const LeadDetail = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { id } = useParams();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
@@ -452,7 +454,7 @@ const LeadDetail = () => {
             setEditingItem(null);
         } catch (error) {
             console.error('Failed to save note:', error);
-            alert(`Failed to save note: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast.error(`Failed to save note: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 
@@ -461,12 +463,12 @@ const LeadDetail = () => {
 
         // Validate required fields
         if (!taskData.details.trim()) {
-            alert('Task description is required');
+            toast.error('Task description is required');
             return;
         }
 
         if (!taskData.date) {
-            alert('Due date is required');
+            toast.error('Due date is required');
             return;
         }
 
@@ -474,7 +476,7 @@ const LeadDetail = () => {
             // Parse the datetime-local value and convert to ISO string
             const dueDate = new Date(taskData.date);
             if (isNaN(dueDate.getTime())) {
-                alert('Invalid date format');
+                toast.error('Invalid date format');
                 return;
             }
 
@@ -506,7 +508,7 @@ const LeadDetail = () => {
             setEditingItem(null);
         } catch (error) {
             console.error('Failed to save task:', error);
-            alert(`Failed to save task: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast.error(`Failed to save task: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 
@@ -515,22 +517,22 @@ const LeadDetail = () => {
 
         // Validate required fields
         if (!logData.details || !logData.details.trim()) {
-            alert('Details are required');
+            toast.error('Details are required');
             return;
         }
 
         if (logData.details.length > 5000) {
-            alert('Details must not exceed 5000 characters');
+            toast.error('Details must not exceed 5000 characters');
             return;
         }
 
         if (!logData.date) {
-            alert('Date and time are required');
+            toast.error('Date and time are required');
             return;
         }
 
         if (!logData.results || !logData.results.trim()) {
-            alert('Call result is required');
+            toast.error('Call result is required');
             return;
         }
 
@@ -538,7 +540,7 @@ const LeadDetail = () => {
             // Convert datetime-local format to ISO string
             const dateObj = new Date(logData.date);
             if (isNaN(dateObj.getTime())) {
-                alert('Invalid date format. Date and time must be a valid ISO 8601 date string');
+                toast.error('Invalid date format. Date and time must be a valid ISO 8601 date string');
                 return;
             }
             const isoDate = dateObj.toISOString();
@@ -574,7 +576,7 @@ const LeadDetail = () => {
             setEditingItem(null);
         } catch (error) {
             console.error('Failed to create/update call:', error);
-            alert(`Failed to ${editingItem ? 'update' : 'create'} call: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast.error(`Failed to ${editingItem ? 'update' : 'create'} call: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 
@@ -583,17 +585,17 @@ const LeadDetail = () => {
 
         // Validate required fields
         if (!meetingData.details || !meetingData.details.trim()) {
-            alert('Details are required');
+            toast.error('Details are required');
             return;
         }
 
         if (meetingData.details.length > 5000) {
-            alert('Details must not exceed 5000 characters');
+            toast.error('Details must not exceed 5000 characters');
             return;
         }
 
         if (!meetingData.date) {
-            alert('Date and time are required');
+            toast.error('Date and time are required');
             return;
         }
 
@@ -601,7 +603,7 @@ const LeadDetail = () => {
             // Convert datetime-local format to ISO string
             const dateObj = new Date(meetingData.date);
             if (isNaN(dateObj.getTime())) {
-                alert('Invalid date format. Date and time must be a valid ISO 8601 date string');
+                toast.error('Invalid date format. Date and time must be a valid ISO 8601 date string');
                 return;
             }
             const isoDate = dateObj.toISOString();
@@ -635,7 +637,7 @@ const LeadDetail = () => {
             setEditingItem(null);
         } catch (error) {
             console.error('Failed to create/update meeting:', error);
-            alert(`Failed to ${editingItem ? 'update' : 'create'} meeting: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast.error(`Failed to ${editingItem ? 'update' : 'create'} meeting: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 
@@ -671,7 +673,7 @@ const LeadDetail = () => {
             setIsInviteModalOpen(false);
         } catch (error) {
             console.error('Failed to send invitation:', error);
-            alert(`Failed to send invitation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast.error(`Failed to send invitation: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 
@@ -726,11 +728,11 @@ const LeadDetail = () => {
                 });
             } else {
                 console.error('Unknown item type:', type);
-                alert(`Cannot delete: Unknown item type ${type}`);
+                toast.error(`Cannot delete: Unknown item type ${type}`);
             }
         } catch (error) {
             console.error('Failed to delete item:', error);
-            alert(`Failed to delete item: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast.error(`Failed to delete item: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 
@@ -757,7 +759,7 @@ const LeadDetail = () => {
             navigate('/dashboard/leasing/leads');
         } catch (error) {
             console.error('Failed to delete lead:', error);
-            alert('Failed to delete lead. Please try again.');
+            toast.error('Failed to delete lead. Please try again.');
         } finally {
             setIsDeleting(false);
             setIsDeleteModalOpen(false);
@@ -862,7 +864,7 @@ const LeadDetail = () => {
                                                                         });
                                                                     } catch (activityError) {
                                                                         console.error('Failed to create activity for status change:', activityError);
-                                                                        alert(`Warning: Status changed but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
+                                                                        toast.error(`Warning: Status changed but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
                                                                     }
                                                                 } catch (error) {
                                                                     console.error('Failed to update lead status:', error);

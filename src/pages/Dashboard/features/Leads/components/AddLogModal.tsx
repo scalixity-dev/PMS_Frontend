@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import DatePicker from '@/components/ui/DatePicker';
 import PreciseTimePicker from '@/components/ui/PreciseTimePicker';
 import SearchableDropdown from '@/components/ui/SearchableDropdown';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface AddLogModalProps {
     isOpen: boolean;
@@ -30,6 +31,7 @@ const REVERSE_RESULT_MAPPING: Record<string, string> = Object.entries(RESULT_MAP
 const RESULT_OPTIONS = Object.keys(RESULT_MAPPING);
 
 const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, initialData }) => {
+    const toast = useToast();
     const [details, setDetails] = useState(initialData?.details || '');
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(
         initialData?.date && !isNaN(new Date(initialData.date).getTime())
@@ -127,12 +129,12 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
 
     const handleCreate = () => {
         if (!details.trim() || !selectedDate || !selectedTime) {
-            alert('Please provide details, date, and time');
+            toast.error('Please provide details, date, and time');
             return;
         }
 
         if (!results) {
-            alert('Please select a result');
+            toast.error('Please select a result');
             return;
         }
 
@@ -175,7 +177,7 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
             onClose();
         } catch (error) {
             console.error('Error processing date/time:', error);
-            alert('Invalid date or time');
+            toast.error('Invalid date or time');
         }
     };
 

@@ -40,7 +40,7 @@ const ServiceContacts: React.FC = () => {
             const rows = await serviceProviderService.getMyContacts();
             setContacts(rows.map((r) => ({ id: r.id, name: r.name, phone: r.phone, email: r.email })));
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to load contacts');
+            toast.error(err instanceof Error ? err.message : 'Failed to load contacts');
             setContacts([]);
         } finally {
             setIsLoading(false);
@@ -57,7 +57,7 @@ const ServiceContacts: React.FC = () => {
 
     const handleSave = async () => {
         if (!form.name.trim() || !form.phone.trim()) {
-            alert('Name and phone required');
+            toast.error('Name and phone required');
             return;
         }
         try {
@@ -77,7 +77,7 @@ const ServiceContacts: React.FC = () => {
             await fetchContacts();
             closeModal();
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to save contact');
+            toast.error(err instanceof Error ? err.message : 'Failed to save contact');
         }
     };
 
@@ -130,17 +130,17 @@ const ServiceContacts: React.FC = () => {
             }
 
             if (imported.length === 0) {
-                alert('No new contacts imported. Ensure CSV has "name,phone" columns.');
+                toast.error('No new contacts imported. Ensure CSV has "name,phone" columns.');
             } else {
                 for (const c of imported) {
                     // Sequential to surface first backend validation error clearly.
                     await serviceProviderService.addMyContact({ name: c.name, phone: c.phone });
                 }
                 await fetchContacts();
-                alert(`Imported ${imported.length} contact${imported.length === 1 ? '' : 's'}.`);
+                toast.success(`Imported ${imported.length} contact${imported.length === 1 ? '' : 's'}.`);
             }
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to import CSV');
+            toast.error(err instanceof Error ? err.message : 'Failed to import CSV');
         } finally {
             if (importInputRef.current) importInputRef.current.value = '';
         }

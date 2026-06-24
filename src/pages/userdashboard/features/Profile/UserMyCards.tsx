@@ -208,7 +208,7 @@ const MyCards: React.FC = () => {
             await paymentsService.setDefaultCard(cardId);
             await loadCards();
         } catch (err: any) {
-            alert(err?.message || "Failed to set default");
+            toast.error(err?.message || "Failed to set default");
         } finally {
             setBusyCardId(null);
         }

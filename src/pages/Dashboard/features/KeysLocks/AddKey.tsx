@@ -9,6 +9,7 @@ import { useGetUnitsByProperty } from '../../../../hooks/useUnitQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import type { KeyType } from '../../../../services/keys.service';
 import { useDebouncedCallback } from '../../../../hooks/useDebounce';
+import { useToast } from '../../../../components/common/Toast';
 
 // Map display key type to backend enum
 const mapKeyTypeToBackend = (displayType: string): KeyType => {
@@ -36,11 +37,19 @@ const mapKeyTypeToDisplay = (backendType: KeyType): string => {
     return typeMap[backendType] || 'Other';
 };
 
+interface FormErrors {
+    keyName?: string;
+    keyType?: string;
+    propertyId?: string;
+    unitId?: string;
+}
+
 const AddKey = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const isEditMode = Boolean(id);
+    const toast = useToast();
 
     // Fetch key data if in edit mode
     const { data: keyData, isLoading: isLoadingKey } = useGetKey(id || null, isEditMode);
@@ -56,6 +65,7 @@ const AddKey = () => {
     const [image, setImage] = useState<string | null>(null);
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [errors, setErrors] = useState<FormErrors>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageUrlRef = useRef<string | null>(null);
     const uploadedFileRef = useRef<File | null>(null);
@@ -98,6 +108,7 @@ const AddKey = () => {
         if (newPropertyId !== propertyId) {
             setUnitId('');
         }
+        if (newPropertyId) setErrors(prev => ({ ...prev, propertyId: undefined }));
         if (!isInitializingRef.current) setIsDirty(true);
     };
 
@@ -157,7 +168,7 @@ const AddKey = () => {
                 setUploadedImageUrl(data.url || data.imageUrl || data.path);
             } catch (error) {
                 console.error('Error uploading image:', error);
-                alert('Failed to upload image. Please try again.');
+                toast.error('Failed to upload image. Please try again.');
             } finally {
                 setIsUploading(false);
             }
@@ -204,15 +215,19 @@ const AddKey = () => {
     }));
 
     const handleSubmit = useDebouncedCallback(async () => {
-        if (!keyName || !keyType || !propertyId) {
-            alert('Please fill in all required fields');
+        const newErrors: FormErrors = {};
+
+        if (!keyName) newErrors.keyName = 'Key name is required';
+        if (!keyType) newErrors.keyType = 'Key type is required';
+        if (!propertyId) newErrors.propertyId = 'Property is required';
+        if (isMultiUnit && !unitId) newErrors.unitId = 'Please select a unit for this multi-unit property';
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
-        if (isMultiUnit && !unitId) {
-            alert('This is a multi-unit property — please select a unit');
-            return;
-        }
+        setErrors({});
 
         try {
             const keyData = {
@@ -233,13 +248,11 @@ const AddKey = () => {
                 await createKeyMutation.mutateAsync(keyData);
             }
 
-            // navigate('/dashboard/portfolio/keys-locks');
-            // Force navigation success by resetting dirty state right before
             setIsDirty(false);
             navigate('/dashboard/portfolio/keys-locks');
         } catch (error) {
             console.error('Error saving key:', error);
-            alert(error instanceof Error ? error.message : 'Failed to save key');
+            toast.error(error instanceof Error ? error.message : 'Failed to save key');
         }
     });
 
@@ -253,14 +266,9 @@ const AddKey = () => {
 
     const handleNavigation = (path: string | number) => {
         if (isDirty) {
-            // Store as string if possible, or null/special handling for number
-            // For now, assume number is -1 (back) or specific path string
             if (typeof path === 'string') {
                 setPendingNavigationPath(path);
             } else {
-                // If it's a number (like -1), we might need to handle it differently or resolve it
-                // For simplicity, let's treat it as 'BACK' marker or resolve it relative to current
-                // Actually, navigate(-1) is back. We can just store a special marker.
                 setPendingNavigationPath('__BACK__');
             }
             setShowUnsavedModal(true);
@@ -392,11 +400,15 @@ const AddKey = () => {
                             value={keyName}
                             onChange={(e) => {
                                 setKeyName(e.target.value);
+                                if (e.target.value) setErrors(prev => ({ ...prev, keyName: undefined }));
                                 if (!isInitializingRef.current) setIsDirty(true);
                             }}
                             placeholder="Key Name"
-                            className="w-full px-4 py-3 border-none rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 text-sm font-medium text-gray-700 placeholder-gray-400 shadow-sm"
+                            className={`w-full px-4 py-3 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 text-sm font-medium text-gray-700 placeholder-gray-400 shadow-sm ${errors.keyName ? 'border-red-400' : 'border-transparent'}`}
                         />
+                        {errors.keyName && (
+                            <p className="mt-1 text-xs text-red-500">{errors.keyName}</p>
+                        )}
                     </div>
 
                     {/* Key Type Dropdown */}
@@ -406,14 +418,18 @@ const AddKey = () => {
                             value={keyType}
                             onChange={(val) => {
                                 setKeyType(val);
+                                if (val) setErrors(prev => ({ ...prev, keyType: undefined }));
                                 if (!isInitializingRef.current) setIsDirty(true);
                             }}
                             options={keyTypeOptions}
                             placeholder="Key Type"
-                            buttonClassName="bg-white border-none rounded-lg py-3 px-4 h-[46px] shadow-sm"
+                            buttonClassName={`bg-white border rounded-lg py-3 px-4 h-[46px] shadow-sm ${errors.keyType ? 'border-red-400' : 'border-transparent'}`}
                             required={true}
                             textClassName="font-medium text-sm text-gray-700"
                         />
+                        {errors.keyType && (
+                            <p className="mt-1 text-xs text-red-500">{errors.keyType}</p>
+                        )}
                     </div>
                 </div>
 
@@ -426,16 +442,21 @@ const AddKey = () => {
                                 <span className="text-sm text-gray-500">Loading properties...</span>
                             </div>
                         ) : (
-                            <CustomDropdown
-                                label="Property"
-                                value={propertyId}
-                                onChange={handlePropertyChange}
-                                options={propertyOptions}
-                                placeholder="Select Property"
-                                buttonClassName="bg-white border-none rounded-lg py-3 px-4 h-[46px] shadow-sm"
-                                required={true}
-                                textClassName="font-medium text-sm text-gray-700"
-                            />
+                            <>
+                                <CustomDropdown
+                                    label="Property"
+                                    value={propertyId}
+                                    onChange={handlePropertyChange}
+                                    options={propertyOptions}
+                                    placeholder="Select Property"
+                                    buttonClassName={`bg-white border rounded-lg py-3 px-4 h-[46px] shadow-sm ${errors.propertyId ? 'border-red-400' : 'border-transparent'}`}
+                                    required={true}
+                                    textClassName="font-medium text-sm text-gray-700"
+                                />
+                                {errors.propertyId && (
+                                    <p className="mt-1 text-xs text-red-500">{errors.propertyId}</p>
+                                )}
+                            </>
                         )}
                     </div>
 
@@ -454,19 +475,25 @@ const AddKey = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <CustomDropdown
-                                    label="Unit"
-                                    value={unitId}
-                                    onChange={(val) => {
-                                        setUnitId(val);
-                                        if (!isInitializingRef.current) setIsDirty(true);
-                                    }}
-                                    options={unitOptions}
-                                    placeholder="Select Unit"
-                                    buttonClassName="bg-white border-none rounded-lg py-3 px-4 h-[46px] shadow-sm"
-                                    required={true}
-                                    textClassName="font-medium text-sm text-gray-700"
-                                />
+                                <>
+                                    <CustomDropdown
+                                        label="Unit"
+                                        value={unitId}
+                                        onChange={(val) => {
+                                            setUnitId(val);
+                                            if (val) setErrors(prev => ({ ...prev, unitId: undefined }));
+                                            if (!isInitializingRef.current) setIsDirty(true);
+                                        }}
+                                        options={unitOptions}
+                                        placeholder="Select Unit"
+                                        buttonClassName={`bg-white border rounded-lg py-3 px-4 h-[46px] shadow-sm ${errors.unitId ? 'border-red-400' : 'border-transparent'}`}
+                                        required={true}
+                                        textClassName="font-medium text-sm text-gray-700"
+                                    />
+                                    {errors.unitId && (
+                                        <p className="mt-1 text-xs text-red-500">{errors.unitId}</p>
+                                    )}
+                                </>
                             )}
                         </div>
                     )}

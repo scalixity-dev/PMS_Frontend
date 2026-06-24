@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Upload, Trash2, FileText, Download } from 'lucide-react';
 import DeleteConfirmationModal from '../../../../../../components/common/modals/DeleteConfirmationModal';
 import { serviceProviderService } from '../../../../../../services/service-provider.service';
+import { useToast } from '../../../../../../components/common/Toast';
 
 
 interface TaxForm {
@@ -24,6 +25,7 @@ interface TaxFormMeta {
 }
 
 const TaxForms = () => {
+    const toast = useToast();
     const [taxForms, setTaxForms] = useState<TaxForm[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -89,7 +91,7 @@ const TaxForms = () => {
 
     const handleUpload = async () => {
         if (!formType || !taxYear || !selectedFile) {
-            alert("Please fill in all fields and select a file.");
+            toast.error("Please fill in all fields and select a file.");
             return;
         }
 
@@ -132,7 +134,7 @@ const TaxForms = () => {
             setSelectedFile(null);
             setIsUploadModalOpen(false);
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Upload failed');
+            toast.error(err instanceof Error ? err.message : 'Upload failed');
         } finally {
             setIsUploading(false);
         }
@@ -148,7 +150,7 @@ const TaxForms = () => {
             serviceProviderService
                 .deleteMyDocument(itemToDelete)
                 .then(() => fetchTaxForms())
-                .catch((err) => alert(err instanceof Error ? err.message : 'Delete failed'))
+                .catch((err) => toast.error(err instanceof Error ? err.message : 'Delete failed'))
                 .finally(() => {
                     setDeleteModalOpen(false);
                     setItemToDelete(null);

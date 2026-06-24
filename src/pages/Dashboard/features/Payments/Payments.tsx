@@ -18,8 +18,10 @@ import { useGetPayments, useDeletePayment, useRefundPayment, useDeleteTransactio
 import type { Payment } from '../../../../services/transaction.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
+import { useToast } from '../../../../components/common/Toast';
 
 const Payments: React.FC = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const { isTeamMember, canManage } = useTeamPermissions();
@@ -226,7 +228,7 @@ const Payments: React.FC = () => {
                 onConfirm={async () => {
                     const transactionId = selectedTransactionId;
                     if (!transactionId) {
-                        alert('No transaction selected');
+                        toast.error('No transaction selected');
                         return;
                     }
                     try {
@@ -234,7 +236,7 @@ const Payments: React.FC = () => {
                         setDeleteTransactionOpen(false);
                         setSelectedTransactionId(null);
                     } catch (error) {
-                        alert(`Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                        toast.error(`Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}`);
                         console.error('Error deleting transaction:', error);
                     }
                 }}
@@ -243,7 +245,7 @@ const Payments: React.FC = () => {
             <DeletePaymentModal
                 onConfirm={async () => {
                     if (!selectedPayment?.transactionId) {
-                        alert('Cannot delete: transaction reference is missing');
+                        toast.error('Cannot delete: transaction reference is missing');
                         return;
                     }
                     try {
@@ -252,17 +254,17 @@ const Payments: React.FC = () => {
                                 transactionId: selectedPayment.transactionId,
                                 paymentId: selectedPayment.paymentId,
                             });
-                            alert(`Payment of ${selectedPayment.amount} deleted successfully`);
+                            toast.success(`Payment of ${selectedPayment.amount} deleted successfully`);
                         } else {
                             // No standalone payment record on this row — delete the underlying transaction.
                             await deleteTransactionMutation.mutateAsync(selectedPayment.transactionId);
-                            alert(`Transaction of ${selectedPayment.amount} deleted successfully`);
+                            toast.success(`Transaction of ${selectedPayment.amount} deleted successfully`);
                         }
                         setDeleteModalOpen(false);
                         setSelectedPayment(null);
                     } catch (error) {
                         console.error('Failed to delete payment:', error);
-                        alert(`Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                        toast.error(`Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}`);
                     }
                 }}
                 isLoading={deletePaymentMutation.isPending || deleteTransactionMutation.isPending}
@@ -280,7 +282,7 @@ const Payments: React.FC = () => {
             <EditPaymentModal
                 onConfirm={async (data) => {
                     if (!selectedPayment?.transactionId || !selectedPayment?.paymentId) {
-                        alert('Cannot edit: payment reference is missing on this row');
+                        toast.error('Cannot edit: payment reference is missing on this row');
                         return;
                     }
                     try {
@@ -297,9 +299,9 @@ const Payments: React.FC = () => {
                         });
                         setEditPaymentModalOpen(false);
                         setSelectedPayment(null);
-                        alert('Payment updated successfully');
+                        toast.success('Payment updated successfully');
                     } catch (error) {
-                        alert(`Failed to update payment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                        toast.error(`Failed to update payment: ${error instanceof Error ? error.message : 'Unknown error'}`);
                         console.error('Failed to update payment:', error);
                     }
                 }}
@@ -307,7 +309,7 @@ const Payments: React.FC = () => {
             <RefundPaymentModal
                 onConfirm={async (data) => {
                     if (!selectedPayment?.transactionId || !selectedPayment?.paymentId) {
-                        alert('Cannot refund: payment information missing');
+                        toast.error('Cannot refund: payment information missing');
                         setRefundModalOpen(false);
                         return;
                     }
@@ -320,11 +322,11 @@ const Payments: React.FC = () => {
                                 details: data.details,
                             },
                         });
-                        alert('Payment refunded successfully');
+                        toast.success('Payment refunded successfully');
                         setRefundModalOpen(false);
                         setSelectedPayment(null);
                     } catch (err: any) {
-                        alert(`Failed to refund: ${err?.message || 'Unknown error'}`);
+                        toast.error(`Failed to refund: ${err?.message || 'Unknown error'}`);
                     }
                 }}
             />

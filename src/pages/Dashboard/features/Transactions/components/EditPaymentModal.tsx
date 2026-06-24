@@ -5,12 +5,14 @@ import { validateFile } from '@/utils/fileValidation';
 import CustomDropdown from '../../../components/CustomDropdown';
 
 import { useTransactionStore } from '../store/transactionStore';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface EditPaymentModalProps {
     onConfirm?: (data: any) => void;
 }
 
 const EditPaymentModal: React.FC<EditPaymentModalProps> = ({ onConfirm }) => {
+    const toast = useToast();
     const { isEditPaymentModalOpen, setEditPaymentModalOpen, selectedPayment } = useTransactionStore();
     const isOpen = isEditPaymentModalOpen;
     const onClose = () => setEditPaymentModalOpen(false);
@@ -81,7 +83,7 @@ const EditPaymentModal: React.FC<EditPaymentModalProps> = ({ onConfirm }) => {
     const handleConfirm = () => {
         // Basic validation
         if (!amountPaid) {
-            alert("Please enter amount paid");
+            toast.error("Please enter amount paid");
             return;
         }
 

@@ -5,6 +5,7 @@ import ServiceTabs from '../../../../components/ServiceTabs';
 import DashboardButton from '../../../../components/DashboardButton';
 import TwoFactorModal from '../../../../../../components/common/TwoFactorModal';
 import { twoFactorService } from '../../../../../../services/two-factor.service';
+import { useToast } from '../../../../../../components/common/Toast';
 
 interface LoginSession {
     location: string;
@@ -35,6 +36,7 @@ const mockSessions: LoginSession[] = [
 ];
 
 const SecuritySettings = () => {
+    const toast = useToast();
     const navigate = useNavigate();
 
     // -- State --
@@ -117,7 +119,7 @@ const SecuritySettings = () => {
                                 </div>
                                 <DashboardButton
                                     onClick={() => {
-                                        alert('ID verification flow will be available soon. Please contact support@smarttenantai.com for manual verification.');
+                                        toast.error('ID verification flow will be available soon. Please contact support@smarttenantai.com for manual verification.');
                                     }}
                                     className="h-10 text-xs font-bold px-6"
                                 >

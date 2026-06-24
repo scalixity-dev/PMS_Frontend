@@ -15,6 +15,7 @@ import { API_ENDPOINTS } from '../../../../config/api.config';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
 import { usePlanFeatures } from '../../../../hooks/usePlanFeatures';
 import UpgradeModal from '../../../../components/common/UpgradeModal';
+import { useToast } from '../../../../components/common/Toast';
 
 interface Unit {
   unitNumber: string;
@@ -27,6 +28,7 @@ interface Unit {
 }
 
 const AddProperty: React.FC = () => {
+  const toast = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
@@ -301,7 +303,7 @@ const AddProperty: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > MAX_IMAGE_BYTES) {
-        alert(`Cover photo must be under ${MAX_IMAGE_SIZE_MB} MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
+        toast.error(`Cover photo must be under ${MAX_IMAGE_SIZE_MB} MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
         e.target.value = '';
         return;
       }
@@ -317,7 +319,7 @@ const AddProperty: React.FC = () => {
       const tooBig = newPhotos.filter(f => f.size > MAX_IMAGE_BYTES);
       const valid = newPhotos.filter(f => f.size <= MAX_IMAGE_BYTES);
       if (tooBig.length > 0) {
-        alert(`${tooBig.length} photo(s) exceed ${MAX_IMAGE_SIZE_MB} MB limit and were skipped: ${tooBig.map(f => f.name).join(', ')}`);
+        toast.error(`${tooBig.length} photo(s) exceed ${MAX_IMAGE_SIZE_MB} MB limit and were skipped: ${tooBig.map(f => f.name).join(', ')}`);
       }
       setFormData(prev => ({ ...prev, galleryPhotos: [...prev.galleryPhotos, ...valid] }));
       e.target.value = '';
@@ -342,7 +344,7 @@ const AddProperty: React.FC = () => {
       });
 
       if (oversizeFiles.length > 0) {
-        alert(`${oversizeFiles.length} file(s) exceed ${MAX_ATTACHMENT_SIZE_MB} MB limit: ${oversizeFiles.join(', ')}`);
+        toast.error(`${oversizeFiles.length} file(s) exceed ${MAX_ATTACHMENT_SIZE_MB} MB limit: ${oversizeFiles.join(', ')}`);
       }
 
       if (invalidFiles.length > 0) {

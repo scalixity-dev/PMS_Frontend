@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { formatPhoneNumber } from '../../../../utils/phone.utils';
+import { useToast } from '../../../../components/common/Toast';
 
 import {
     ChevronLeft,
@@ -65,7 +66,8 @@ const handleConfirmDeleteGeneric = async (
     currentId: string,
     updateMutation: any,
     refetch: () => void,
-    onClose: () => void
+    onClose: () => void,
+    showError: (msg: string) => void
 ) => {
     if (!backendApplication) return;
 
@@ -113,7 +115,7 @@ const handleConfirmDeleteGeneric = async (
                 onClose();
             },
             onError: (err: any) => {
-                alert(err.message || `Failed to delete ${type}`);
+                showError(err.message || `Failed to delete ${type}`);
             }
         }
     );
@@ -755,6 +757,7 @@ const mapBackendToUI = (backendApplication: any) => {
 };
 
 const ApplicationDetail: React.FC = () => {
+    const toast = useToast();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
@@ -929,7 +932,7 @@ const ApplicationDetail: React.FC = () => {
                 },
                 onError: (error: any) => {
                     console.error('Failed to update applicant info:', error);
-                    alert(error.message || 'Failed to update applicant info');
+                    toast.error(error.message || 'Failed to update applicant info');
                 }
             }
         );
@@ -983,7 +986,7 @@ const ApplicationDetail: React.FC = () => {
                 },
                 onError: (error: any) => {
                     console.error('Failed to save occupant:', error);
-                    alert(error.message || 'Failed to save occupant');
+                    toast.error(error.message || 'Failed to save occupant');
                 }
             }
         );
@@ -1046,7 +1049,7 @@ const ApplicationDetail: React.FC = () => {
                 },
                 onError: (error: any) => {
                     console.error('Failed to save pet:', error);
-                    alert(error.message || 'Failed to save pet');
+                    toast.error(error.message || 'Failed to save pet');
                 }
             }
         );
@@ -1100,7 +1103,7 @@ const ApplicationDetail: React.FC = () => {
                 },
                 onError: (error: any) => {
                     console.error('Failed to save vehicle:', error);
-                    alert(error.message || 'Failed to save vehicle');
+                    toast.error(error.message || 'Failed to save vehicle');
                 }
             }
         );
@@ -1174,7 +1177,7 @@ const ApplicationDetail: React.FC = () => {
                 },
                 onError: (error: any) => {
                     console.error('Failed to save residence:', error);
-                    alert(error.message || 'Failed to save residence');
+                    toast.error(error.message || 'Failed to save residence');
                 }
             }
         );
@@ -1246,7 +1249,7 @@ const ApplicationDetail: React.FC = () => {
                 },
                 onError: (error: any) => {
                     console.error('Failed to save income:', error);
-                    alert(error.message || 'Failed to save income');
+                    toast.error(error.message || 'Failed to save income');
                 }
             }
         );
@@ -1282,7 +1285,7 @@ const ApplicationDetail: React.FC = () => {
                 },
                 onError: (error: any) => {
                     console.error('Failed to update background info:', error);
-                    alert(error.message || 'Failed to update background info');
+                    toast.error(error.message || 'Failed to update background info');
                 }
             }
         );
@@ -1332,7 +1335,7 @@ const ApplicationDetail: React.FC = () => {
                 },
                 onError: (error: any) => {
                     console.error('Failed to save reference:', error);
-                    alert(error.message || 'Failed to save reference');
+                    toast.error(error.message || 'Failed to save reference');
                 }
             }
         );
@@ -1382,7 +1385,7 @@ const ApplicationDetail: React.FC = () => {
                 },
                 onError: (error: any) => {
                     console.error('Failed to save emergency contact:', error);
-                    alert(error.message || 'Failed to save emergency contact');
+                    toast.error(error.message || 'Failed to save emergency contact');
                 }
             }
         );
@@ -1507,7 +1510,8 @@ const ApplicationDetail: React.FC = () => {
                                 id!,
                                 updateApplicationMutation,
                                 refetch,
-                                () => setDeleteConfirmation({ ...deleteConfirmation, isOpen: false })
+                                () => setDeleteConfirmation({ ...deleteConfirmation, isOpen: false }),
+                                toast.error
                             );
                         }
                     }}

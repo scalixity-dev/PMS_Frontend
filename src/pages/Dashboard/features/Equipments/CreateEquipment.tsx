@@ -226,7 +226,7 @@ const CreateEquipment = () => {
                 setIsDirty(true);
             } catch (error) {
                 console.error('Error uploading image:', error);
-                alert('Failed to upload image. Please try again.');
+                toast.error('Failed to upload image. Please try again.');
             } finally {
                 setIsUploading(false);
             }
@@ -258,7 +258,7 @@ const CreateEquipment = () => {
 
         const remainingSlots = 10 - uploadedFiles.length;
         if (remainingSlots <= 0) {
-            alert('Maximum 10 files allowed. Please remove some files first.');
+            toast.error('Maximum 10 files allowed. Please remove some files first.');
             if (fileUploadRef.current) fileUploadRef.current.value = '';
             return;
         }
@@ -344,24 +344,24 @@ const CreateEquipment = () => {
 
     const handleSubmit = async () => {
         if (!formData.categoryId || !formData.brand || !formData.model || !formData.price || !formData.propertyId || !formData.serial || !formData.installationDate) {
-            alert('Please fill in all required fields');
+            toast.error('Please fill in all required fields');
             return;
         }
 
         // Basic Validation
         const priceValue = parseFloat(formData.price.replace(/[^0-9.]/g, ''));
         if (isNaN(priceValue) || priceValue < 0) {
-            alert('Please enter a valid price');
+            toast.error('Please enter a valid price');
             return;
         }
 
         if (!formData.serial.trim()) {
-            alert('Please enter a valid serial number');
+            toast.error('Please enter a valid serial number');
             return;
         }
 
         if (formData.hasWarranty && !formData.isLifetimeWarranty && !formData.warrantyExpirationDate) {
-            alert('Please select warranty expiration date or enable lifetime warranty');
+            toast.error('Please select warranty expiration date or enable lifetime warranty');
             return;
         }
 
@@ -406,7 +406,7 @@ const CreateEquipment = () => {
                         );
                     } catch (uploadError) {
                         console.error('Some attachments failed to upload:', uploadError);
-                        alert('Equipment updated, but some attachments failed to upload.');
+                        toast.error('Equipment updated, but some attachments failed to upload.');
                     }
                 }
             } else {
@@ -423,7 +423,7 @@ const CreateEquipment = () => {
                         );
                     } catch (uploadError) {
                         console.error('Some attachments failed to upload:', uploadError);
-                        alert('Equipment created, but some attachments failed to upload. Please try adding them again.');
+                        toast.error('Equipment created, but some attachments failed to upload. Please try adding them again.');
                         navigate('/dashboard/equipments');
                         return;
                     }
@@ -433,7 +433,7 @@ const CreateEquipment = () => {
             navigate('/dashboard/equipments');
         } catch (error) {
             console.error(`Error ${isEditMode ? 'updating' : 'creating'} equipment:`, error);
-            alert(error instanceof Error ? error.message : `Failed to ${isEditMode ? 'update' : 'create'} equipment`);
+            toast.error(error instanceof Error ? error.message : `Failed to ${isEditMode ? 'update' : 'create'} equipment`);
         }
     };
 

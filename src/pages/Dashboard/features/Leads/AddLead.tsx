@@ -8,8 +8,10 @@ import { useCreateLead, useCreateActivity } from '../../../../hooks/useLeadQueri
 import type { LeadType } from '../../../../services/lead.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useDebouncedCallback } from '../../../../hooks/useDebounce';
+import { useToast } from '../../../../components/common/Toast';
 
 const AddLead = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const createLeadMutation = useCreateLead();
     const createActivityMutation = useCreateActivity();
@@ -85,7 +87,7 @@ const AddLead = () => {
                     console.log('Activity created successfully:', activity);
                 } catch (activityError) {
                     console.error('Failed to create activity for new lead:', activityError);
-                    alert(`Warning: Lead created but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
+                    toast.error(`Warning: Lead created but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
                     // Don't block navigation if activity creation fails
                 }
 

@@ -11,8 +11,10 @@ import { Country, State } from 'country-state-city';
 import type { ICountry, IState } from 'country-state-city';
 import { authService } from '../../../../../../services/auth.service';
 import { API_ENDPOINTS } from '../../../../../../config/api.config';
+import { useToast } from '../../../../../../components/common/Toast';
 
 const ProfileSettings = () => {
+    const toast = useToast();
     const navigate = useNavigate();
 
     // -- State --
@@ -187,25 +189,25 @@ const ProfileSettings = () => {
 
     const handleSavePassword = async () => {
         if (!passwordForm.oldPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-            alert("All password fields are required.");
+            toast.error("All password fields are required.");
             return;
         }
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-            alert("New passwords do not match.");
+            toast.error("New passwords do not match.");
             return;
         }
         if (passwordForm.newPassword.length < 6) {
-            alert("Password must be at least 6 characters.");
+            toast.error("Password must be at least 6 characters.");
             return;
         }
         try {
             setIsSavingPassword(true);
             await authService.changePassword(passwordForm.oldPassword, passwordForm.newPassword);
-            alert("Password updated successfully.");
+            toast.success("Password updated successfully.");
             setIsChangingPassword(false);
             setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to update password');
+            toast.error(err instanceof Error ? err.message : 'Failed to update password');
         } finally {
             setIsSavingPassword(false);
         }

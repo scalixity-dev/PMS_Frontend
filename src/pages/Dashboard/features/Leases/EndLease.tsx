@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MoreHorizontal, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { useGetLease, useUpdateLease } from '../../../../hooks/useLeaseQueries';
+import { useToast } from '../../../../components/common/Toast';
 import { useGetTransactions } from '../../../../hooks/useTransactionQueries';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DatePicker from '../../../../components/ui/DatePicker';
@@ -36,6 +37,7 @@ const formatCurrency = (amount: string | number | null | undefined): string => {
 
 // --- Component ---
 const EndLease: React.FC = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const [endDate, setEndDate] = useState<Date | undefined>(new Date());
@@ -103,7 +105,7 @@ const EndLease: React.FC = () => {
             navigate('/dashboard/leasing/leases');
         } catch (error) {
             console.error('Failed to end lease:', error);
-            alert(error instanceof Error ? error.message : 'Failed to end lease. Please try again.');
+            toast.error(error instanceof Error ? error.message : 'Failed to end lease. Please try again.');
         }
     };
 
