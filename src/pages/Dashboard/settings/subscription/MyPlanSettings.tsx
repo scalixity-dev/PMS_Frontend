@@ -5,12 +5,16 @@ import { Check } from "lucide-react";
 import { SubscriptionSettingsLayout } from "../../../../components/common/SubscriptionSettingsLayout";
 import { subscriptionService, type Subscription, type BillingHistoryItem } from "../../../../services/subscription.service";
 import ChangePlanModal from "./components/ChangePlanModal";
+import { useToast } from "../../../../components/common/Toast";
+import { API_ENDPOINTS } from "../../../../config/api.config";
 
 import DatePicker from "../../../../components/ui/DatePicker";
 
 const MyPlanSettings: React.FC = () => {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [accountMode, setAccountMode] = useState<"Landlord" | "Property Manager">("Landlord");
+  const [isModeUpdating, setIsModeUpdating] = useState(false);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,6 +75,34 @@ const MyPlanSettings: React.FC = () => {
 
     fetchData();
   }, []);
+
+  // Load saved account mode
+  useEffect(() => {
+    fetch(API_ENDPOINTS.SETTINGS.GET_SECTION('subscription_account_mode'), { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        const saved = data?.values?.accountMode;
+        if (saved === 'Landlord' || saved === 'Property Manager') setAccountMode(saved);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleAccountModeUpdate = async () => {
+    setIsModeUpdating(true);
+    try {
+      await fetch(API_ENDPOINTS.SETTINGS.UPDATE_SECTION('subscription_account_mode'), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ values: { accountMode } }),
+      });
+      toast.success('Account mode updated');
+    } catch {
+      toast.error('Failed to update account mode');
+    } finally {
+      setIsModeUpdating(false);
+    }
+  };
 
   // Handle billing history date filter
   const handleDateFilter = async () => {
@@ -297,8 +329,12 @@ const MyPlanSettings: React.FC = () => {
         </div>
 
         <div className="pt-2">
-          <Button className="bg-[#486370] hover:bg-[#3a505b] text-white px-8 py-2 rounded-lg font-medium">
-            Update
+          <Button
+            className="bg-[#486370] hover:bg-[#3a505b] text-white px-8 py-2 rounded-lg font-medium disabled:opacity-50"
+            onClick={handleAccountModeUpdate}
+            disabled={isModeUpdating}
+          >
+            {isModeUpdating ? 'Updating...' : 'Update'}
           </Button>
         </div>
       </section>

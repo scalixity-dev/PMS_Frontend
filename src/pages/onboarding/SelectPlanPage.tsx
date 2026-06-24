@@ -134,9 +134,9 @@ export default function SelectPlanPage() {
     setError(null);
 
     try {
-      await authService.activateAccount(userId, { planId, isYearly });
+      const result = await authService.activateAccount(userId, { planId, isYearly });
 
-      if (isOAuth) {
+      if (isOAuth || !result.requiresEmailVerification) {
         navigate("/dashboard", { replace: true });
       } else {
         navigate(

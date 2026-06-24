@@ -88,9 +88,12 @@ const LoginForm: React.FC = () => {
 
             // Check if user must pick a plan first (property manager with no subscription).
             // Force pricing — do NOT show OTP screen.
-            if (response.requiresPlanSelection) {
+            const needsPlan = response.requiresPlanSelection ||
+                (response.user?.role === 'PROPERTY_MANAGER' && response.user?.subscription == null);
+            if (needsPlan) {
                 console.log('Plan selection required, redirecting to pricing');
                 navigate(`/onboarding/plan?userId=${response.user.id}&email=${encodeURIComponent(response.user.email)}&newAccount=true`, { replace: true });
+                return;
             }
             // Check if email verification is required
             else if (response.requiresEmailVerification) {
