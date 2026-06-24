@@ -1,5 +1,5 @@
 // src/components/dashboard/DashboardNavbar.tsx
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -14,7 +14,13 @@ import {
   Calendar,
   X,
   MoreHorizontal,
+  Building2,
+  Users,
+  FileText as LeaseIcon,
+  Star,
+  Loader2,
 } from "lucide-react";
+import { API_BASE_URL } from "../../config/api.config";
 import logo from "../../assets/images/logo.png";
 import { authService } from "../../services/auth.service";
 import { useGetCurrentUser } from "../../hooks/useAuthQueries";
@@ -27,13 +33,79 @@ interface NavbarProps {
   setSidebarOpen: (open: boolean) => void;
 }
 
+const BADGE_COLORS: Record<string, string> = {
+  ACTIVE: 'bg-green-100 text-green-700',
+  MULTI: 'bg-blue-100 text-blue-700',
+  NEW: 'bg-purple-100 text-purple-700',
+  CONTACTED: 'bg-yellow-100 text-yellow-700',
+  PENDING: 'bg-yellow-100 text-yellow-700',
+  EXPIRED: 'bg-red-100 text-red-700',
+  TERMINATED: 'bg-red-100 text-red-700',
+  'Multi-unit': 'bg-blue-100 text-blue-700',
+  Single: 'bg-gray-100 text-gray-600',
+};
+
+const SearchGroup: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  items: Array<{ id: string; label: string; sublabel?: string; badge?: string; route: string }>;
+  onSelect: (route: string) => void;
+}> = ({ icon, label, items, onSelect }) => (
+  <div>
+    <div className="flex items-center gap-1.5 px-4 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+      {icon}
+      {label}
+    </div>
+    {items.map((item) => (
+      <button
+        key={item.id}
+        onClick={() => onSelect(item.route)}
+        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors text-left gap-3"
+      >
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-800 truncate">{item.label}</p>
+          {item.sublabel && <p className="text-xs text-gray-400 truncate">{item.sublabel}</p>}
+        </div>
+        {item.badge && (
+          <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${BADGE_COLORS[item.badge] ?? 'bg-gray-100 text-gray-600'}`}>
+            {item.badge}
+          </span>
+        )}
+      </button>
+    ))}
+    <div className="mx-4 border-b border-gray-100 last:hidden" />
+  </div>
+);
+
+interface SearchResult {
+  id: string;
+  label: string;
+  sublabel?: string;
+  badge?: string;
+  type: 'property' | 'tenant' | 'lease' | 'lead';
+  route: string;
+}
+
+interface SearchResults {
+  properties: SearchResult[];
+  tenants: SearchResult[];
+  leases: SearchResult[];
+  leads: SearchResult[];
+}
+
 export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -53,6 +125,9 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
         setIsMobileMenuOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -60,6 +135,109 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const runSearch = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setSearchResults(null);
+      setIsSearchOpen(false);
+      return;
+    }
+
+    if (searchAbortRef.current) searchAbortRef.current.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+
+    setIsSearchLoading(true);
+    setIsSearchOpen(true);
+
+    try {
+      const opts = { credentials: 'include' as const, signal: controller.signal };
+      const q = encodeURIComponent(query);
+
+      const [propRes, tenantRes, leaseRes, leadRes] = await Promise.allSettled([
+        fetch(`${API_BASE_URL}/property?search=${q}&_limit=5`, opts),
+        fetch(`${API_BASE_URL}/tenant?search=${q}&_limit=5`, opts),
+        fetch(`${API_BASE_URL}/leasing?search=${q}&_limit=5`, opts),
+        fetch(`${API_BASE_URL}/leads?search=${q}&_limit=5`, opts),
+      ]);
+
+      const parseJson = async (res: PromiseSettledResult<Response>) => {
+        if (res.status !== 'fulfilled' || !res.value.ok) return [];
+        try { return await res.value.json(); } catch { return []; }
+      };
+
+      const [propData, tenantData, leaseData, leadData] = await Promise.all([
+        parseJson(propRes),
+        parseJson(tenantRes),
+        parseJson(leaseRes),
+        parseJson(leadRes),
+      ]);
+
+      const propList = Array.isArray(propData) ? propData : (propData?.data ?? []);
+      const tenantList = Array.isArray(tenantData) ? tenantData : (tenantData?.data ?? []);
+      const leaseList = Array.isArray(leaseData) ? leaseData : (leaseData?.data ?? []);
+      const leadList = Array.isArray(leadData) ? leadData : (leadData?.data ?? []);
+
+      setSearchResults({
+        properties: propList.slice(0, 5).map((p: any) => ({
+          id: p.propertyId || p.id,
+          label: p.propertyName || p.name || 'Unnamed Property',
+          badge: p.propertyType === 'MULTI' ? 'Multi-unit' : 'Single',
+          type: 'property',
+          route: `/dashboard/property-detail/${p.propertyId || p.id}`,
+        })),
+        tenants: tenantList.slice(0, 5).map((t: any) => ({
+          id: t.id,
+          label: t.user?.fullName || `${t.firstName || ''} ${t.lastName || ''}`.trim() || t.email || 'Unknown Tenant',
+          sublabel: t.contactBookEntry?.email || t.user?.email,
+          type: 'tenant',
+          route: `/dashboard/contacts/tenants/${t.id}`,
+        })),
+        leases: leaseList.slice(0, 5).map((l: any) => ({
+          id: l.id,
+          label: l.property?.propertyName || 'Unknown Property',
+          sublabel: l.tenant?.user?.fullName || (l.tenant ? `${l.tenant.firstName || ''} ${l.tenant.lastName || ''}`.trim() : undefined),
+          badge: l.status,
+          type: 'lease',
+          route: `/dashboard/leasing/leases/${l.id}`,
+        })),
+        leads: leadList.slice(0, 5).map((l: any) => ({
+          id: l.id,
+          label: l.name || l.fullName || 'Unknown Lead',
+          badge: l.status,
+          type: 'lead',
+          route: `/dashboard/leasing/leads/${l.id}`,
+        })),
+      });
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') setSearchResults(null);
+    } finally {
+      setIsSearchLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => runSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, runSearch]);
+
+  const handleSearchResultClick = (route: string) => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults(null);
+    navigate(route);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setIsSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
+
+  const totalResults = searchResults
+    ? searchResults.properties.length + searchResults.tenants.length + searchResults.leases.length + searchResults.leads.length
+    : 0;
 
   // Focus mobile search input when opened
   useEffect(() => {
@@ -135,15 +313,40 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
             <input
               ref={mobileSearchRef}
               type="text"
-              placeholder="Search anything..."
-              className="w-full h-10 pl-4 pr-10 rounded-full bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              placeholder="Search properties, tenants..."
+              className="w-full h-10 pl-4 pr-10 rounded-full bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm text-sm"
             />
-            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-              <Search size={18} />
-            </button>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+              {isSearchLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={18} />}
+            </div>
+
+            {/* Mobile Search Dropdown */}
+            {isSearchOpen && searchQuery.length >= 2 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-gray-100 z-[100] overflow-hidden max-h-[60vh] overflow-y-auto">
+                {isSearchLoading ? (
+                  <div className="flex items-center justify-center gap-2 py-8 text-gray-400 text-sm">
+                    <Loader2 size={16} className="animate-spin" /> Searching…
+                  </div>
+                ) : totalResults === 0 ? (
+                  <div className="py-8 text-center text-sm text-gray-400">
+                    No results for <span className="font-medium text-gray-600">"{searchQuery}"</span>
+                  </div>
+                ) : (
+                  <div className="py-2">
+                    {searchResults!.properties.length > 0 && <SearchGroup icon={<Building2 size={13} />} label="Properties" items={searchResults!.properties} onSelect={(r) => { setIsMobileSearchOpen(false); handleSearchResultClick(r); }} />}
+                    {searchResults!.tenants.length > 0 && <SearchGroup icon={<Users size={13} />} label="Tenants" items={searchResults!.tenants} onSelect={(r) => { setIsMobileSearchOpen(false); handleSearchResultClick(r); }} />}
+                    {searchResults!.leases.length > 0 && <SearchGroup icon={<LeaseIcon size={13} />} label="Leases" items={searchResults!.leases} onSelect={(r) => { setIsMobileSearchOpen(false); handleSearchResultClick(r); }} />}
+                    {searchResults!.leads.length > 0 && <SearchGroup icon={<Star size={13} />} label="Leads" items={searchResults!.leads} onSelect={(r) => { setIsMobileSearchOpen(false); handleSearchResultClick(r); }} />}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <button
-            onClick={() => setIsMobileSearchOpen(false)}
+            onClick={() => { setIsMobileSearchOpen(false); setSearchQuery(''); setSearchResults(null); setIsSearchOpen(false); }}
             className="ml-3 text-white p-2 rounded-full hover:bg-white/10"
           >
             <X size={20} />
@@ -175,15 +378,73 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
           {/* Middle Section: Search Bar */}
           <div className="flex-1 flex justify-center lg:justify-start max-w-xl mx-auto lg:mx-0 lg:pl-4">
             {/* Desktop/Tablet Search */}
-            <div className="hidden sm:block w-full max-w-md relative group">
+            <div className="hidden sm:block w-full max-w-md relative group" ref={searchRef}>
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => { if (searchQuery.length >= 2) setIsSearchOpen(true); }}
+                onKeyDown={handleSearchKeyDown}
                 placeholder="Search properties, tenants..."
                 className="w-full h-9 pl-4 pr-10 rounded-full bg-white/90 hover:bg-white text-gray-800 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white transition-all shadow-sm"
               />
-              <button className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <Search size={14} className="text-white" />
-              </button>
+              <div className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-gray-800 rounded-full flex items-center justify-center">
+                {isSearchLoading
+                  ? <Loader2 size={13} className="text-white animate-spin" />
+                  : <Search size={14} className="text-white" />
+                }
+              </div>
+
+              {/* Search Dropdown */}
+              {isSearchOpen && searchQuery.length >= 2 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-gray-100 z-[100] overflow-hidden max-h-[420px] overflow-y-auto">
+                  {isSearchLoading ? (
+                    <div className="flex items-center justify-center gap-2 py-8 text-gray-400 text-sm">
+                      <Loader2 size={16} className="animate-spin" />
+                      Searching…
+                    </div>
+                  ) : totalResults === 0 ? (
+                    <div className="py-8 text-center text-sm text-gray-400">
+                      No results for <span className="font-medium text-gray-600">"{searchQuery}"</span>
+                    </div>
+                  ) : (
+                    <div className="py-2">
+                      {searchResults!.properties.length > 0 && (
+                        <SearchGroup
+                          icon={<Building2 size={13} />}
+                          label="Properties"
+                          items={searchResults!.properties}
+                          onSelect={handleSearchResultClick}
+                        />
+                      )}
+                      {searchResults!.tenants.length > 0 && (
+                        <SearchGroup
+                          icon={<Users size={13} />}
+                          label="Tenants"
+                          items={searchResults!.tenants}
+                          onSelect={handleSearchResultClick}
+                        />
+                      )}
+                      {searchResults!.leases.length > 0 && (
+                        <SearchGroup
+                          icon={<LeaseIcon size={13} />}
+                          label="Leases"
+                          items={searchResults!.leases}
+                          onSelect={handleSearchResultClick}
+                        />
+                      )}
+                      {searchResults!.leads.length > 0 && (
+                        <SearchGroup
+                          icon={<Star size={13} />}
+                          label="Leads"
+                          items={searchResults!.leads}
+                          onSelect={handleSearchResultClick}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
