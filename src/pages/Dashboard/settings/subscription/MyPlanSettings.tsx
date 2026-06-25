@@ -32,6 +32,7 @@ const MyPlanSettings: React.FC = () => {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isReactivating, setIsReactivating] = useState(false);
+  const [isFiltered, setIsFiltered] = useState(false);
   const actionDropdownRef = useRef<HTMLDivElement>(null);
 
   // Format date for display
@@ -120,9 +121,23 @@ const MyPlanSettings: React.FC = () => {
         formatDateForApi(dateRange.endDate)
       );
       setBillingHistory(billingData.items);
+      setIsFiltered(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load billing history");
-      console.error("Error fetching billing history:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClearFilter = async () => {
+    setDateRange({ startDate: undefined, endDate: undefined });
+    setIsFiltered(false);
+    setIsLoading(true);
+    try {
+      const billingData = await subscriptionService.getBillingHistory();
+      setBillingHistory(billingData.items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load billing history");
     } finally {
       setIsLoading(false);
     }
@@ -227,14 +242,14 @@ const MyPlanSettings: React.FC = () => {
               </Button>
               {isActionDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                  {subscription.status === 'CANCELED' ? (
+                  {subscription.cancelledAt ? (
                     <button
                       onClick={handleReactivate}
                       disabled={isReactivating}
                       className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 text-left"
                     >
                       <RefreshCw className="w-4 h-4 text-green-600 shrink-0" />
-                      {isReactivating ? 'Reactivating...' : 'Reactivate Plan'}
+                      {isReactivating ? 'Reactivating...' : 'Reactivate Subscription'}
                     </button>
                   ) : (
                     <button
@@ -302,12 +317,22 @@ const MyPlanSettings: React.FC = () => {
 
               {/* Active paid subscription */}
               {!isTrialing && !isExpired && subscription.nextBillingDate && (
-                <p className="text-gray-600 mb-4 max-w-lg text-sm">
-                  Next payment of <span className="font-semibold">${subscription.amount.toFixed(2)}</span>{' '}
-                  ({subscription.isYearly ? "yearly" : "monthly"}) occurs on {formatDate(subscription.nextBillingDate)}
-                  <br />
-                  <span className="text-gray-400">you can upgrade or modify your account subscription at any time</span>
-                </p>
+                subscription.cancelledAt ? (
+                  <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                    <p className="text-sm font-semibold text-amber-800 mb-1">Cancellation scheduled</p>
+                    <p className="text-xs text-amber-700">
+                      Your subscription ends on <span className="font-semibold">{formatDate(subscription.nextBillingDate)}</span>.
+                      {' '}You keep full access until then. Reactivate any time to continue.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-gray-600 mb-4 max-w-lg text-sm">
+                    Next payment of <span className="font-semibold">${subscription.amount.toFixed(2)}</span>{' '}
+                    ({subscription.isYearly ? "yearly" : "monthly"}) occurs on {formatDate(subscription.nextBillingDate)}
+                    <br />
+                    <span className="text-gray-400">you can upgrade or modify your account subscription at any time</span>
+                  </p>
+                )
               )}
             </div>
 
@@ -453,12 +478,20 @@ const MyPlanSettings: React.FC = () => {
               />
             </div>
 
-            {(dateRange.startDate || dateRange.endDate) && (
+            {(dateRange.startDate || dateRange.endDate) && !isFiltered && (
               <button
                 onClick={handleDateFilter}
                 className="text-[#486370] text-sm font-medium hover:underline sm:ml-2 mt-2 sm:mt-0"
               >
                 Filter
+              </button>
+            )}
+            {isFiltered && (
+              <button
+                onClick={handleClearFilter}
+                className="text-red-500 text-sm font-medium hover:underline sm:ml-2 mt-2 sm:mt-0"
+              >
+                Clear filter
               </button>
             )}
           </div>
