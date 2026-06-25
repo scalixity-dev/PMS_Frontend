@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../../../components/common/Button";
-import { Check } from "lucide-react";
+import { Check, ChevronDown, XCircle, RefreshCw } from "lucide-react";
 import { SubscriptionSettingsLayout } from "../../../../components/common/SubscriptionSettingsLayout";
 import { subscriptionService, type Subscription, type BillingHistoryItem } from "../../../../services/subscription.service";
 import ChangePlanModal from "./components/ChangePlanModal";
+import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
 import { useToast } from "../../../../components/common/Toast";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { useSubscription } from "../../../../context/SubscriptionContext";
@@ -27,6 +28,11 @@ const MyPlanSettings: React.FC = () => {
     endDate: undefined,
   });
   const [isChangePlanModalOpen, setIsChangePlanModalOpen] = useState(false);
+  const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isReactivating, setIsReactivating] = useState(false);
+  const actionDropdownRef = useRef<HTMLDivElement>(null);
 
   // Format date for display
   const formatDate = (dateString: string | null): string => {
@@ -122,20 +128,64 @@ const MyPlanSettings: React.FC = () => {
     }
   };
 
-  // Handle switch to yearly/monthly
+  // Handle switch to yearly/monthly — goes through changePlan so Stripe updates the price
   const handleSwitchBilling = async () => {
     if (!subscription) return;
     setIsUpdating(true);
     try {
-      const updated = await subscriptionService.update({
+      const updated = await subscriptionService.changePlan({
+        planId: subscription.planId,
         isYearly: !subscription.isYearly,
       });
       setSubscription(updated);
+      toast.success(
+        !subscription.isYearly
+          ? 'Switched to yearly billing. A prorated charge has been applied.'
+          : 'Switched to monthly billing.'
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update subscription");
-      console.error("Error updating subscription:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to switch billing cycle");
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (actionDropdownRef.current && !actionDropdownRef.current.contains(e.target as Node)) {
+        setIsActionDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleCancelSubscription = async () => {
+    setIsCancelling(true);
+    try {
+      const updated = await subscriptionService.cancel();
+      setSubscription(updated);
+      toast.success('Subscription cancelled. Access continues until the end of your billing period.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to cancel subscription');
+    } finally {
+      setIsCancelling(false);
+      setIsCancelModalOpen(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    setIsReactivating(true);
+    try {
+      const updated = await subscriptionService.renew();
+      setSubscription(updated);
+      toast.success('Subscription reactivated successfully.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to reactivate subscription');
+    } finally {
+      setIsReactivating(false);
+      setIsActionDropdownOpen(false);
     }
   };
 
@@ -166,9 +216,39 @@ const MyPlanSettings: React.FC = () => {
           >
             Change Plan
           </Button>
-          <Button className="bg-[#7BD747] hover:bg-[#6bc238] text-white px-8 py-2 rounded-lg font-medium">
-            Action
-          </Button>
+          {/* Action dropdown — only shown for active/cancelled paid subscriptions */}
+          {subscription && !isTrialing && !isExpired && (
+            <div className="relative" ref={actionDropdownRef}>
+              <Button
+                onClick={() => setIsActionDropdownOpen((o) => !o)}
+                className="bg-[#7BD747] hover:bg-[#6bc238] text-white px-5 py-2 rounded-lg font-medium flex items-center gap-1"
+              >
+                Action <ChevronDown className="w-4 h-4" />
+              </Button>
+              {isActionDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                  {subscription.status === 'CANCELED' ? (
+                    <button
+                      onClick={handleReactivate}
+                      disabled={isReactivating}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 text-left"
+                    >
+                      <RefreshCw className="w-4 h-4 text-green-600 shrink-0" />
+                      {isReactivating ? 'Reactivating...' : 'Reactivate Plan'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setIsActionDropdownOpen(false); setIsCancelModalOpen(true); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                    >
+                      <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                      Cancel Subscription
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </>
       }
     >
@@ -452,6 +532,28 @@ const MyPlanSettings: React.FC = () => {
         onClose={() => setIsChangePlanModalOpen(false)}
         currentSubscription={subscription}
         onPlanChanged={handlePlanChanged}
+      />
+
+      {/* Cancel Subscription Confirmation */}
+      <DeleteConfirmationModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={handleCancelSubscription}
+        isLoading={isCancelling}
+        title="Cancel Subscription"
+        headerClassName="bg-[#486370]"
+        confirmText="Yes, Cancel"
+        confirmButtonClass="bg-red-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-sm"
+        message={
+          <p className="text-gray-600 text-sm">
+            Your subscription will be cancelled at the end of the current billing period.{' '}
+            <span className="font-semibold text-gray-800">
+              You'll keep access until {formatDate(subscription?.nextBillingDate ?? null)}.
+            </span>
+            <br /><br />
+            You can reactivate at any time before that date.
+          </p>
+        }
       />
     </SubscriptionSettingsLayout>
   );
