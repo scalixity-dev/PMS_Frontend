@@ -5,6 +5,11 @@ import { subscriptionService } from '../services/subscription.service';
 interface SubscriptionContextValue {
   planId: string;
   planName: string;
+  status: string;
+  isTrialing: boolean;
+  isExpired: boolean;
+  daysLeftInTrial: number;
+  trialEndsAt: string | null;
   isLoading: boolean;
   refetch: () => void;
 }
@@ -12,6 +17,11 @@ interface SubscriptionContextValue {
 const SubscriptionContext = createContext<SubscriptionContextValue>({
   planId: 'starter',
   planName: 'Starter',
+  status: '',
+  isTrialing: false,
+  isExpired: false,
+  daysLeftInTrial: 0,
+  trialEndsAt: null,
   isLoading: false,
   refetch: () => {},
 });
@@ -27,15 +37,24 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     retry: false,
   });
 
-  const value = useMemo<SubscriptionContextValue>(
-    () => ({
+  const value = useMemo<SubscriptionContextValue>(() => {
+    const status = data?.status ?? '';
+    const isTrialing = status === 'TRIALING';
+    const isExpired = status === 'EXPIRED' || status === 'PAST_DUE' ||
+      (isTrialing && !!data?.trialEndsAt && new Date(data.trialEndsAt) < new Date());
+
+    return {
       planId: data?.planId ?? 'starter',
       planName: data?.planName ?? 'Starter',
+      status,
+      isTrialing: isTrialing && !isExpired,
+      isExpired,
+      daysLeftInTrial: data?.daysLeftInTrial ?? 0,
+      trialEndsAt: data?.trialEndsAt ?? null,
       isLoading,
       refetch,
-    }),
-    [data, isLoading, refetch],
-  );
+    };
+  }, [data, isLoading, refetch]);
 
   return (
     <SubscriptionContext.Provider value={value}>

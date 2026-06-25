@@ -44,7 +44,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
-  const { refetch: refetchSubscription } = useSubscription();
+  const { refetch: refetchSubscription, isExpired } = useSubscription();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isYearly, setIsYearly] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
@@ -135,6 +135,10 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
     return "";
   };
 
+  const trialedPlanId = currentSubscription?.planId?.toLowerCase() ?? null;
+  const isResumingTrialPlan =
+    isExpired && selectedPlan?.toLowerCase() === trialedPlanId;
+
   const handlePlanChange = async () => {
     if (!selectedPlan) {
       setError("Please select a plan");
@@ -147,8 +151,10 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
       return;
     }
 
-    // Don't change if it's the same plan and billing cycle
+    // Don't change if it's the same plan and billing cycle — BUT skip this guard
+    // when the trial has expired, since the user needs to actually create a subscription
     if (
+      !isExpired &&
       currentSubscription &&
       currentSubscription.planId.toLowerCase() === selectedPlan.toLowerCase() &&
       currentSubscription.isYearly === isYearly
@@ -193,7 +199,9 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
       <div className="bg-white w-full max-w-6xl rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-[#486370] px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">Change Subscription Plan</h2>
+          <h2 className="text-xl font-bold text-white">
+            {isExpired ? "Choose a Plan to Continue" : "Change Subscription Plan"}
+          </h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-white/10 rounded-full transition-colors"
@@ -310,8 +318,8 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
                     } w-full shrink-0 sm:w-auto sm:min-w-[280px] md:min-w-0 md:shrink md:w-auto snap-center`}
                 >
                   {isCurrentPlan && (
-                    <div className="absolute top-2 right-2 bg-[#7BD747] text-white text-xs px-2 py-1 rounded-full font-semibold">
-                      Current
+                    <div className={`absolute top-2 right-2 text-white text-xs px-2 py-1 rounded-full font-semibold ${isExpired ? 'bg-red-400' : 'bg-[#7BD747]'}`}>
+                      {isExpired ? 'Trial Ended' : 'Current'}
                     </div>
                   )}
 
@@ -395,8 +403,12 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
               {isBusinessSelected
                 ? "Contact Sales"
                 : isChanging
-                  ? "Changing Plan..."
-                  : "Change Plan"}
+                  ? "Processing..."
+                  : isResumingTrialPlan
+                    ? `Continue with ${currentSubscription?.planName ?? selectedPlan}`
+                    : isExpired
+                      ? "Choose Plan"
+                      : "Change Plan"}
             </button>
           </div>
         </div>

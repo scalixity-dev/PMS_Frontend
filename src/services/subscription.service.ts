@@ -11,6 +11,8 @@ export interface Subscription {
   cancelledAt: string | null;
   isYearly: boolean;
   amount: number;
+  trialEndsAt: string | null;
+  daysLeftInTrial: number;
   createdAt: string;
   updatedAt: string;
 }
