@@ -329,17 +329,18 @@ const App: React.FC = () => {
               <Route path="/forgot-password" element={<GuestRoute><LoginPage /></GuestRoute>} />
               <Route path="/signup" element={<GuestRoute><SignUpPage /></GuestRoute>} />
               <Route path="/" element={<GuestRoute><HomePage /></GuestRoute>} />
-              <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
-              <Route path="/usecases/tenant" element={<TenantPage />} />
-              <Route path="/usecases/servicepros" element={<ServiceProsPage />} />
-              <Route path="/become-service-provider" element={<BecomeServiceProvider />} />
-              <Route path="/features/screening" element={<ScreeningPage />} />
-              <Route path="/features/lease" element={<LeasePage />} />
-              <Route path="/features/finance" element={<FinancePage />} />
-              <Route path="/features/leads" element={<LeadsPage />} />
-              <Route path="/features/team" element={<TeamPage />} />
-              <Route path="/resources" element={<ResourcePage />} />
-              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/usecases/landlord" element={<GuestRoute><LandlordUseCasesPage /></GuestRoute>} />
+              <Route path="/usecases/tenant" element={<GuestRoute><TenantPage /></GuestRoute>} />
+              <Route path="/usecases/servicepros" element={<GuestRoute><ServiceProsPage /></GuestRoute>} />
+              <Route path="/become-service-provider" element={<GuestRoute><BecomeServiceProvider /></GuestRoute>} />
+              <Route path="/features/screening" element={<GuestRoute><ScreeningPage /></GuestRoute>} />
+              <Route path="/features/lease" element={<GuestRoute><LeasePage /></GuestRoute>} />
+              <Route path="/features/finance" element={<GuestRoute><FinancePage /></GuestRoute>} />
+              <Route path="/features/leads" element={<GuestRoute><LeadsPage /></GuestRoute>} />
+              <Route path="/features/team" element={<GuestRoute><TeamPage /></GuestRoute>} />
+              <Route path="/resources" element={<GuestRoute><ResourcePage /></GuestRoute>} />
+              <Route path="/pricing" element={<GuestRoute><PricingPage /></GuestRoute>} />
+              {/* Legal pages remain accessible regardless of auth state */}
               <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/cookie-policy" element={<CookiePolicy />} />
