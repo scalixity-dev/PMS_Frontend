@@ -3,6 +3,7 @@ import { Plus, Trash2, Building2, Pencil } from 'lucide-react';
 import DatePicker from '../../../../../../components/ui/DatePicker';
 import DeleteConfirmationModal from '../../../../../../components/common/modals/DeleteConfirmationModal';
 import { serviceProviderService } from '../../../../../../services/service-provider.service';
+import { useToast } from '../../../../../../components/common/Toast';
 
 type TaxIdType = 'PAN' | 'GST' | 'CIN' | 'TAN' | 'EIN';
 const TAX_ID_TYPES: TaxIdType[] = ['PAN', 'GST', 'CIN', 'TAN', 'EIN'];
@@ -48,6 +49,7 @@ interface Entity {
 }
 
 const Entities = () => {
+    const toast = useToast();
     const [entities, setEntities] = useState<Entity[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -85,7 +87,7 @@ const Entities = () => {
             const docs = await serviceProviderService.getMyDocuments('ENTITY');
             setEntities(docs.map(mapDocToEntity));
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to load entities');
+            toast.error(err instanceof Error ? err.message : 'Failed to load entities');
             setEntities([]);
         } finally {
             setIsLoading(false);
@@ -180,7 +182,7 @@ const Entities = () => {
                 await serviceProviderService.deleteMyDocument(entityToDelete);
                 await fetchEntities();
             } catch (err) {
-                alert(err instanceof Error ? err.message : 'Failed to delete entity');
+                toast.error(err instanceof Error ? err.message : 'Failed to delete entity');
             } finally {
                 setDeleteModalOpen(false);
                 setEntityToDelete(null);

@@ -18,6 +18,7 @@ import { useGetCurrentUser } from '../../../../../../hooks/useAuthQueries';
 import { serviceProviderService, type BackendServiceProvider, type CreateServiceProviderDto } from '../../../../../../services/service-provider.service';
 import { authService } from '../../../../../../services/auth.service';
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { useToast } from '../../../../../../components/common/Toast';
 
 // Define service categories and their options
 const SERVICE_CATEGORIES = [
@@ -44,6 +45,7 @@ const SERVICE_CATEGORIES = [
 ];
 
 const ServiceBusinessProfile = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -177,21 +179,21 @@ const ServiceBusinessProfile = () => {
 
     const handleSavePassword = async () => {
         if (!passwordForm.oldPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-            alert("All password fields are required.");
+            toast.error("All password fields are required.");
             return;
         }
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-            alert("New passwords do not match.");
+            toast.error("New passwords do not match.");
             return;
         }
         try {
             setIsSavingPassword(true);
             await authService.changePassword(passwordForm.oldPassword, passwordForm.newPassword);
-            alert("Password updated successfully.");
+            toast.success("Password updated successfully.");
             setIsChangingPassword(false);
             setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to update password');
+            toast.error(err instanceof Error ? err.message : 'Failed to update password');
         } finally {
             setIsSavingPassword(false);
         }
@@ -413,11 +415,11 @@ const ServiceBusinessProfile = () => {
             // Validation
             const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
             if (!validTypes.includes(file.type)) {
-                alert("Please upload a valid image (JPEG, PNG, GIF, WEBP, SVG).");
+                toast.error("Please upload a valid image (JPEG, PNG, GIF, WEBP, SVG).");
                 return;
             }
             if (file.size > 5 * 1024 * 1024) { // 5MB
-                alert("Image size must be less than 5MB.");
+                toast.error("Image size must be less than 5MB.");
                 return;
             }
 

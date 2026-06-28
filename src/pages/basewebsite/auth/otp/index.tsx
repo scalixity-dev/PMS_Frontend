@@ -6,8 +6,10 @@ import { authService } from '../../../../services/auth.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { useOtpSessionStore } from '../store/otpSessionStore';
 import { queryClient } from '../../../../lib/queryClient';
+import { useToast } from '../../../../components/common/Toast';
 
 const OtpPage: React.FC = () => {
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setOtpSession, clearOtpSession, userId: storeUserId, email: storeEmail } = useOtpSessionStore();
@@ -125,7 +127,7 @@ const OtpPage: React.FC = () => {
   const handleOtpSubmit = async (otpCode: string) => {
     // Check for missing userId and handle gracefully
     if (!userId) {
-      alert('User ID is missing. Please try logging in again.');
+      toast.error('User ID is missing. Please try logging in again.');
       navigate('/login', { replace: true });
       return;
     }
@@ -145,7 +147,7 @@ const OtpPage: React.FC = () => {
       const errorMessage = error instanceof Error 
         ? error.message 
         : 'OTP verification failed. Please try again.';
-      alert(errorMessage);
+      toast.error(errorMessage);
       // Re-throw to let OtpForm handle UI state (clearing OTP, etc.)
       throw error;
     }
@@ -153,7 +155,7 @@ const OtpPage: React.FC = () => {
 
   const handleResendOtp = async () => {
     if (!userId) {
-      alert('User ID is missing. Please try logging in again.');
+      toast.error('User ID is missing. Please try logging in again.');
       navigate('/login', { replace: true });
       return;
     }
@@ -169,7 +171,7 @@ const OtpPage: React.FC = () => {
       const errorMessage = error instanceof Error 
         ? error.message 
         : 'Failed to resend OTP. Please try again.';
-      alert(errorMessage);
+      toast.error(errorMessage);
       // Re-throw to let OtpForm handle UI state
       throw error;
     }

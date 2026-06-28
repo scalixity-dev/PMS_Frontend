@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Sparkles } from 'lucide-react';
+import { usePlanFeatures } from '../../../../hooks/usePlanFeatures';
+import UpgradeModal from '../../../../components/common/UpgradeModal';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import MaintenanceStepper from './components/MaintenanceStepper';
@@ -101,6 +103,8 @@ const AddMaintenanceRequest: React.FC = () => {
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showAIChat, setShowAIChat] = useState(false);
+    const [aiUpgradeOpen, setAiUpgradeOpen] = useState(false);
+    const { canAccess } = usePlanFeatures();
     const [aiPrefillData, setAiPrefillData] = useState<any>(null); // To pass AI data to form
     const [createdRequestId, setCreatedRequestId] = useState<string>('');
     const [submitError, setSubmitError] = useState<string>('');
@@ -311,7 +315,7 @@ const AddMaintenanceRequest: React.FC = () => {
                             Back
                         </button>
                         <button
-                            onClick={() => setShowAIChat(true)}
+                            onClick={() => canAccess('ai-assistant') ? setShowAIChat(true) : setAiUpgradeOpen(true)}
                             className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 active:scale-95"
                             style={{
                                 background: 'linear-gradient(135deg, #2D6A6A 0%, #3D9B6B 50%, #52C97A 100%)',
@@ -428,6 +432,12 @@ const AddMaintenanceRequest: React.FC = () => {
                         isOpen={showAIChat}
                         onClose={() => setShowAIChat(false)}
                         onFormDataReceived={handleAIChatDataReceived}
+                    />
+                    <UpgradeModal
+                        isOpen={aiUpgradeOpen}
+                        onClose={() => setAiUpgradeOpen(false)}
+                        requiredPlan="growth"
+                        featureLabel="AI Maintenance Assistant"
                     />
                 </div>
             </div>

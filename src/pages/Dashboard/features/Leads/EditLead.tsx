@@ -7,8 +7,10 @@ import PrimaryActionButton from '../../../../components/common/buttons/PrimaryAc
 import { useGetLead, useUpdateLead, useCreateActivity } from '../../../../hooks/useLeadQueries';
 import type { LeadType } from '../../../../services/lead.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useToast } from '../../../../components/common/Toast';
 
 const EditLead = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { id } = useParams();
     const { data: lead, isLoading, error } = useGetLead(id || null, !!id);
@@ -155,7 +157,7 @@ const EditLead = () => {
                     }
                 } catch (activityError) {
                     console.error('Failed to create activity for lead update:', activityError);
-                    alert(`Warning: Lead updated but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
+                    toast.error(`Warning: Lead updated but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
                     // Don't block navigation if activity creation fails
                 }
 

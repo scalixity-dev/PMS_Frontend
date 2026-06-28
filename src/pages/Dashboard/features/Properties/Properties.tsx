@@ -11,6 +11,7 @@ import PropertyCard from './components/PropertyCard';
 import { propertyService, type BackendProperty } from '../../../../services/property.service';
 import { useGetAllProperties, propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
 import { usePropertyStore } from '../../../../stores/propertyStore';
+import { useToast } from '../../../../components/common/Toast';
 
 // Property interface for the component
 interface Property {
@@ -30,6 +31,7 @@ interface Property {
 }
 
 const Properties: React.FC = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const { isTeamMember, canManage } = useTeamPermissions();
@@ -442,9 +444,9 @@ const Properties: React.FC = () => {
                             const filtered = existing.filter((f: any) => f.name !== name);
                             filtered.push({ name, filters: filtersToSave, savedAt: new Date().toISOString() });
                             localStorage.setItem(key, JSON.stringify(filtered));
-                            alert(`Filter "${name}" saved successfully`);
+                            toast.success(`Filter "${name}" saved successfully`);
                         } catch (e) {
-                            alert('Failed to save filter');
+                            toast.error('Failed to save filter');
                         }
                     }}
                     searchPlaceholder="Search properties..."

@@ -7,6 +7,7 @@ import PrimaryActionButton from '../../../../../components/common/buttons/Primar
 import CustomDropdown from '../../../../Dashboard/components/CustomDropdown';
 import { API_ENDPOINTS } from '../../../../../config/api.config';
 import { authService } from '../../../../../services/auth.service';
+import { useToast } from '../../../../../components/common/Toast';
 
 const RENTAL_TYPES = [
   'Room',
@@ -52,6 +53,7 @@ const STEPS = [
 ];
 
 export const TenantOnboardingFlow: React.FC = () => {
+  const toast = useToast();
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
@@ -207,13 +209,13 @@ export const TenantOnboardingFlow: React.FC = () => {
     // Validate required fields before proceeding
     if (!country || !stateRegion || !city) {
       console.error('Location fields are required');
-      alert('Please complete all location fields');
+      toast.error('Please complete all location fields');
       return;
     }
 
     if (!selectedTypes || selectedTypes.length === 0) {
       console.error('At least one rental type is required');
-      alert('Please select at least one rental type');
+      toast.error('Please select at least one rental type');
       return;
     }
 
@@ -273,11 +275,11 @@ export const TenantOnboardingFlow: React.FC = () => {
 
           // Show user-friendly error message
           if (response.status === 401) {
-            alert('Please log in again to save your preferences');
+            toast.error('Please log in again to save your preferences');
           } else if (response.status === 403) {
-            alert('Only tenants can save preferences');
+            toast.error('Only tenants can save preferences');
           } else {
-            alert(`Failed to save preferences: ${errorData.message || 'Unknown error'}`);
+            toast.error(`Failed to save preferences: ${errorData.message || 'Unknown error'}`);
           }
 
           // Still navigate even if save fails (preferences saved to localStorage)
@@ -294,14 +296,14 @@ export const TenantOnboardingFlow: React.FC = () => {
         }
       } catch (error) {
         console.error('Error saving preferences to backend:', error);
-        alert('Failed to save preferences to server. Your preferences have been saved locally.');
+        toast.error('Failed to save preferences to server. Your preferences have been saved locally.');
         // Still navigate even if save fails
       }
 
       navigate('/userdashboard');
     } catch (error) {
       console.error('Error preparing preferences:', error);
-      alert(error instanceof Error ? error.message : 'An error occurred while saving preferences');
+      toast.error(error instanceof Error ? error.message : 'An error occurred while saving preferences');
       setIsSaving(false);
       // Don't navigate if there's a validation error
     } finally {

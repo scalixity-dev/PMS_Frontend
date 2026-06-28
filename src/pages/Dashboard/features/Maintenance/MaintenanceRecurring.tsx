@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
+import { useToast } from '../../../../components/common/Toast';
 import { ChevronLeft, Plus, Check, Trash2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
@@ -12,9 +13,11 @@ import {
     type RecurringMaintenance,
 } from '../../../../hooks/useMaintenanceRecurringQueries';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
+import PlanLimitBanner from '../../../../components/common/PlanLimitBanner';
 
 
 const MaintenanceRecurring: React.FC = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const { isTeamMember, canManage } = useTeamPermissions();
@@ -59,7 +62,7 @@ const MaintenanceRecurring: React.FC = () => {
             await deleteMutation.mutateAsync(requestToDelete);
             setSelectedItems(prev => prev.filter(id => id !== requestToDelete));
         } catch {
-            alert('Failed to delete recurring request. Please try again.');
+            toast.error('Failed to delete recurring request. Please try again.');
         } finally {
             setIsDeleteModalOpen(false);
             setRequestToDelete(null);
@@ -194,6 +197,8 @@ const MaintenanceRecurring: React.FC = () => {
                         )}
                     </div>
                 </div>
+
+                <PlanLimitBanner resource="recurringRequests" currentCount={recurringRequests.length} className="mb-6" />
 
                 {/* Filters */}
                 <DashboardFilter

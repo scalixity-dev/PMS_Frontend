@@ -21,6 +21,7 @@ import type { BackendLease } from '../../../../services/lease.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
+import { useToast } from '../../../../components/common/Toast';
 
 
 const INVOICE_SCHEDULE_TO_DISPLAY: Record<string, string> = {
@@ -35,6 +36,7 @@ const INVOICE_SCHEDULE_TO_DISPLAY: Record<string, string> = {
 };
 
 const LeaseDetail: React.FC = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const queryClient = useQueryClient();
@@ -330,7 +332,7 @@ const LeaseDetail: React.FC = () => {
             navigate('/dashboard/leasing/leases');
         } catch (error) {
             console.error('Failed to delete lease:', error);
-            alert(error instanceof Error ? error.message : 'Failed to delete lease. Please try again.');
+            toast.error(error instanceof Error ? error.message : 'Failed to delete lease. Please try again.');
         }
     };
 
@@ -348,7 +350,7 @@ const LeaseDetail: React.FC = () => {
             setIsEndLeaseModalOpen(false);
         } catch (error) {
             console.error('Failed to end lease:', error);
-            alert(error instanceof Error ? error.message : 'Failed to end lease. Please try again.');
+            toast.error(error instanceof Error ? error.message : 'Failed to end lease. Please try again.');
         }
     };
 
@@ -375,7 +377,7 @@ const LeaseDetail: React.FC = () => {
             setIsEditModalOpen(false);
         } catch (error) {
             console.error('Failed to update lease:', error);
-            alert(error instanceof Error ? error.message : 'Failed to update lease. Please try again.');
+            toast.error(error instanceof Error ? error.message : 'Failed to update lease. Please try again.');
         }
     };
 
@@ -412,7 +414,7 @@ const LeaseDetail: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['transactions', 'recurring'] });
         } catch (error) {
             console.error('Failed to save recurring transaction:', error);
-            alert(error instanceof Error ? error.message : 'Failed to save recurring transaction');
+            toast.error(error instanceof Error ? error.message : 'Failed to save recurring transaction');
         }
     };
 
@@ -434,9 +436,8 @@ const LeaseDetail: React.FC = () => {
             setTransactionToDelete(null);
         } catch (error) {
             const msg = error instanceof Error ? error.message : 'Failed to delete recurring transaction';
-            // Only remove from local state if backend confirmed delete; otherwise keep the row + alert.
-            // eslint-disable-next-line no-alert
-            alert(msg);
+            // Only remove from local state if backend confirmed delete; otherwise keep the row + toast.
+            toast.error(msg);
             // eslint-disable-next-line no-console
             console.error('Failed to delete recurring transaction', error);
         }
@@ -490,7 +491,7 @@ const LeaseDetail: React.FC = () => {
             setIsEditExtraFeesModalOpen(false);
         } catch (error) {
             console.error('Failed to update extra fees:', error);
-            alert(error instanceof Error ? error.message : 'Failed to update extra fees. Please try again.');
+            toast.error(error instanceof Error ? error.message : 'Failed to update extra fees. Please try again.');
         }
     };
 
@@ -512,7 +513,7 @@ const LeaseDetail: React.FC = () => {
                     throw new Error(data.message || 'Failed to delete attachment');
                 }
             } catch (error) {
-                alert(error instanceof Error ? error.message : 'Failed to delete attachment');
+                toast.error(error instanceof Error ? error.message : 'Failed to delete attachment');
                 return;
             }
         }
@@ -539,7 +540,7 @@ const LeaseDetail: React.FC = () => {
             });
         } catch (error) {
             console.error('Failed to update utilities:', error);
-            alert(error instanceof Error ? error.message : 'Failed to update utilities. Please try again.');
+            toast.error(error instanceof Error ? error.message : 'Failed to update utilities. Please try again.');
         }
     };
 
@@ -1480,7 +1481,7 @@ const LeaseDetail: React.FC = () => {
                         queryClient.invalidateQueries({ queryKey: leaseQueryKeys.detail(id as string) });
                     } catch (error) {
                         console.error('Failed to upload lease documents:', error);
-                        alert(error instanceof Error ? error.message : 'Failed to upload documents. Please try again.');
+                        toast.error(error instanceof Error ? error.message : 'Failed to upload documents. Please try again.');
                         // On failure, refresh anyway to reset state to what's actually in DB
                         queryClient.invalidateQueries({ queryKey: leaseQueryKeys.detail(id as string) });
                     }
@@ -1547,7 +1548,7 @@ const LeaseDetail: React.FC = () => {
                         setIsRentScheduleModalOpen(false);
                     } catch (error) {
                         console.error('Failed to update rent schedule:', error);
-                        alert(error instanceof Error ? error.message : 'Failed to update rent schedule');
+                        toast.error(error instanceof Error ? error.message : 'Failed to update rent schedule');
                     }
                 }}
                 currentRent={typeof lease.rentAmount === 'number' ? lease.rentAmount : 12000}

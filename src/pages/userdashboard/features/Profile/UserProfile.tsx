@@ -4,6 +4,7 @@ import BaseModal from "../../../../components/common/modals/BaseModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import UserAccountSettingsLayout from "../../components/layout/UserAccountSettingsLayout";
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { useToast } from "../../../../components/common/Toast";
 
 
 import { useAuthStore } from "./store/authStore";
@@ -15,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 
 
 const Profile: React.FC = () => {
+  const toast = useToast();
   const navigate = useNavigate();
   const { userInfo, setUserInfo } = useAuthStore();
 
@@ -229,11 +231,11 @@ const Profile: React.FC = () => {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 if (!file.type.startsWith('image/')) {
-                  alert('Please select an image file');
+                  toast.error('Please select an image file');
                   return;
                 }
                 if (file.size > 5 * 1024 * 1024) {
-                  alert(`Profile photo must be under 5 MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
+                  toast.error(`Profile photo must be under 5 MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
                   return;
                 }
                 try {

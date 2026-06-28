@@ -237,10 +237,10 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
           // Property managers go to pricing page to select a plan
           if (userId) {
             // Use provided userId
-            navigate(`/pricing?userId=${userId}&email=${encodeURIComponent(user?.email || '')}&newAccount=true&oauth=true`, { replace: true });
+            navigate(`/onboarding/plan?userId=${userId}&email=${encodeURIComponent(user?.email || '')}&newAccount=true&oauth=true`, { replace: true });
           } else if (user) {
             // Fallback: get userId from current user
-            navigate(`/pricing?userId=${user.userId}&email=${encodeURIComponent(user.email)}&newAccount=true&oauth=true`, { replace: true });
+            navigate(`/onboarding/plan?userId=${user.userId}&email=${encodeURIComponent(user.email)}&newAccount=true&oauth=true`, { replace: true });
           }
         } else {
           // Tenants and Service Pros have free accounts - redirect to dashboard or login
@@ -337,7 +337,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
       });
 
       if (accountType === 'manage') {
-        navigate(`/pricing?userId=${response.id}&email=${encodeURIComponent(formData.email!)}&newAccount=true`);
+        navigate(`/onboarding/plan?userId=${response.id}&email=${encodeURIComponent(formData.email!)}&newAccount=true`);
       } else {
         navigate('/login', {
           state: {

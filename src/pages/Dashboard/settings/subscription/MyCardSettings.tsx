@@ -1,54 +1,50 @@
 import React, { useEffect, useState } from "react";
+import { CreditCard, Loader2, Plus, Trash2 } from "lucide-react";
+import { loadStripe, type Stripe } from "@stripe/stripe-js";
+import { CardElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js";
 import Button from "../../../../components/common/Button";
-import { CreditCard, Trash2, Plus } from "lucide-react";
 import { SubscriptionSettingsLayout } from "../../../../components/common/SubscriptionSettingsLayout";
-import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
+import { paymentsService, type SavedCard } from "../../../../services/payments.service";
+import { useToast } from "../../../../components/common/Toast";
+import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
 
-interface SavedCard {
-  id: number;
-  last4: string;
-  brand: string;
-  expiryMonth: number;
-  expiryYear: number;
-  isDefault: boolean;
-}
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+const stripePromise: Promise<Stripe | null> | null = STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(STRIPE_PUBLISHABLE_KEY)
+  : null;
 
-const CardBrandBadge: React.FC<{ brand: string }> = ({ brand }) => {
-  const normalizedBrand = brand.toLowerCase();
+const CARD_ELEMENT_OPTIONS = {
+  style: {
+    base: {
+      fontSize: "15px",
+      color: "#1f2937",
+      fontFamily: "system-ui, sans-serif",
+      "::placeholder": { color: "#9ca3af" },
+    },
+    invalid: { color: "#ef4444" },
+  },
+};
 
-  if (normalizedBrand.includes("visa")) {
-    return (
-      <div className="w-12 h-12 shrink-0 rounded-lg bg-[#1434CB] flex items-center justify-center">
-        <span className="text-white text-[10px] font-bold tracking-wide">VISA</span>
-      </div>
-    );
-  }
+// ─── Brand badge ────────────────────────────────────────────────────────────
 
-  if (normalizedBrand.includes("master")) {
-    return (
-      <div className="w-12 h-12 shrink-0 rounded-lg bg-[#1F2937] flex items-center justify-center relative">
-        <span className="w-4 h-4 rounded-full bg-[#EB001B] opacity-90 absolute left-3" />
-        <span className="w-4 h-4 rounded-full bg-[#F79E1B] opacity-90 absolute right-3" />
-      </div>
-    );
-  }
-
-  if (normalizedBrand.includes("paypal")) {
-    return (
-      <div className="w-12 h-12 shrink-0 rounded-lg bg-[#003087] flex items-center justify-center">
-        <span className="text-white text-[9px] font-bold tracking-wide">PayPal</span>
-      </div>
-    );
-  }
-
-  if (normalizedBrand.includes("amex") || normalizedBrand.includes("american express")) {
-    return (
-      <div className="w-12 h-12 shrink-0 rounded-lg bg-[#2E77BC] flex items-center justify-center">
-        <span className="text-white text-[8px] font-bold tracking-wide text-center leading-tight">AMEX</span>
-      </div>
-    );
-  }
-
+const CardBrandBadge: React.FC<{ brand?: string | null }> = ({ brand }) => {
+  const b = (brand ?? "").toLowerCase();
+  if (b === "visa") return (
+    <div className="w-12 h-12 shrink-0 rounded-lg bg-[#1434CB] flex items-center justify-center">
+      <span className="text-white text-[10px] font-bold tracking-wide">VISA</span>
+    </div>
+  );
+  if (b === "mastercard") return (
+    <div className="w-12 h-12 shrink-0 rounded-lg bg-[#1F2937] flex items-center justify-center relative">
+      <span className="w-4 h-4 rounded-full bg-[#EB001B] opacity-90 absolute left-3" />
+      <span className="w-4 h-4 rounded-full bg-[#F79E1B] opacity-90 absolute right-3" />
+    </div>
+  );
+  if (b === "amex" || b === "american express") return (
+    <div className="w-12 h-12 shrink-0 rounded-lg bg-[#2E77BC] flex items-center justify-center">
+      <span className="text-white text-[8px] font-bold tracking-wide text-center leading-tight">AMEX</span>
+    </div>
+  );
   return (
     <div className="w-12 h-12 shrink-0 rounded-lg bg-gradient-to-br from-[#7CD947] to-[#6bc238] flex items-center justify-center">
       <CreditCard className="text-white" size={24} />
@@ -56,141 +52,185 @@ const CardBrandBadge: React.FC<{ brand: string }> = ({ brand }) => {
   );
 };
 
-const MyCardSettings: React.FC = () => {
-  const { data } = useGetSettingsSection<{ savedCards: SavedCard[] }>("subscription_my_card");
-  const updateSettings = useUpdateSettingsSection<{ savedCards: SavedCard[] }>("subscription_my_card");
-  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+// ─── Add card form (must be inside <Elements>) ───────────────────────────────
 
-  useEffect(() => {
-    const nextCards = data?.values?.savedCards;
-    if (nextCards && Array.isArray(nextCards)) {
-      setSavedCards(nextCards);
-    }
-  }, [data]);
-
-  const persistSavedCards = (nextCards: SavedCard[]) => {
-    setSavedCards(nextCards);
-    updateSettings.mutate({ savedCards: nextCards });
-  };
-
-  const [showAddCard, setShowAddCard] = useState(false);
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [expiryMonth, setExpiryMonth] = useState("");
-  const [expiryYear, setExpiryYear] = useState("");
-  const [cvv, setCvv] = useState("");
+const AddCardForm: React.FC<{
+  hasExistingCards: boolean;
+  onSaved: (card: SavedCard) => void;
+  onCancel: () => void;
+}> = ({ hasExistingCards, onSaved, onCancel }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const toast = useToast();
+  const [cardholderName, setCardholderName] = useState("");
+  const [setAsDefault, setSetAsDefault] = useState(!hasExistingCards);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const validateLuhn = (number: string) => {
-    let sum = 0;
-    let shouldDouble = false;
-    for (let i = number.length - 1; i >= 0; i--) {
-      let digit = parseInt(number.charAt(i));
-      if (shouldDouble) {
-        digit *= 2;
-        if (digit > 9) digit -= 9;
-      }
-      sum += digit;
-      shouldDouble = !shouldDouble;
-    }
-    return sum % 10 === 0;
-  };
-
-  const getCardBrand = (number: string) => {
-    if (number.startsWith("4")) return "Visa";
-    if (/^5[1-5]/.test(number) || /^2[2-7]/.test(number)) return "Mastercard";
-    if (/^3[47]/.test(number)) return "Amex";
-    if (/^6(?:011|5)/.test(number)) return "Discover";
-    return "Unknown";
-  };
-
-  const handleDeleteCard = (cardId: number) => {
-    const cardToDelete = savedCards.find((card) => card.id === cardId);
-    const remainingCards = savedCards.filter((card) => card.id !== cardId);
-
-    // If deleting the default card and there are remaining cards, set the first one as default
-    if (cardToDelete?.isDefault && remainingCards.length > 0) {
-      persistSavedCards(
-        remainingCards.map((card, index) => ({
-          ...card,
-          isDefault: index === 0,
-        }))
-      );
-    } else {
-      persistSavedCards(remainingCards);
-    }
-  };
-
-  const handleSetDefault = (cardId: number) => {
-    persistSavedCards(
-      savedCards.map((card) => ({
-        ...card,
-        isDefault: card.id === cardId,
-      }))
-    );
-  };
-
-  const handleAddCard = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!stripe || !elements) return;
     setErrorMsg("");
+    setIsSubmitting(true);
+    try {
+      const { clientSecret } = await paymentsService.createSetupIntent();
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) throw new Error("Card element not found");
 
-    // Basic Validation
-    if (!cardNumber || !cardName || !expiryMonth || !expiryYear || !cvv) {
-      setErrorMsg("Please fill in all fields.");
-      return;
+      const { setupIntent, error } = await stripe.confirmCardSetup(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: { name: cardholderName || undefined },
+        },
+      });
+
+      if (error) {
+        setErrorMsg(error.message ?? "Card setup failed");
+        return;
+      }
+
+      const pmId = typeof setupIntent?.payment_method === "string"
+        ? setupIntent.payment_method
+        : setupIntent?.payment_method?.id;
+
+      if (!pmId) throw new Error("No payment method returned");
+
+      const saved = await paymentsService.saveCard(pmId, setAsDefault);
+      toast.success("Card added successfully");
+      cardElement.clear();
+      onSaved(saved);
+    } catch (err: any) {
+      setErrorMsg(err.message ?? "Failed to add card");
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    const brand = getCardBrand(cardNumber);
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {errorMsg && (
+        <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
+          {errorMsg}
+        </div>
+      )}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Cardholder Name</label>
+        <input
+          type="text"
+          value={cardholderName}
+          onChange={(e) => setCardholderName(e.target.value)}
+          className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
+          placeholder="Name on card"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Card Details</label>
+        <div className="px-4 py-3 border border-[#E8E8E8] rounded-lg bg-white">
+          <CardElement options={CARD_ELEMENT_OPTIONS} />
+        </div>
+        <p className="mt-1.5 text-xs text-gray-400 flex items-center gap-1">
+          <span>🔒</span> Secured by Stripe — your card details never touch our servers
+        </p>
+      </div>
+      {hasExistingCards && (
+        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={setAsDefault}
+            onChange={(e) => setSetAsDefault(e.target.checked)}
+            className="rounded"
+          />
+          Set as default payment method
+        </label>
+      )}
+      <div className="flex gap-3 pt-2">
+        <Button
+          type="submit"
+          disabled={!stripe || isSubmitting}
+          className="bg-[#486370] hover:bg-[#3a505b] text-white px-8 py-2 rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
+        >
+          {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+          {isSubmitting ? "Saving…" : "Add Card"}
+        </Button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-6 py-2 text-gray-600 hover:text-gray-900 text-sm font-medium"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+};
 
-    // Card Number Length & Luhn
-    if (cardNumber.length < 13 || cardNumber.length > 19 || !validateLuhn(cardNumber)) {
-      setErrorMsg("Invalid card number.");
-      return;
-    }
+// ─── Main component ───────────────────────────────────────────────────────────
 
-    // CVV Validation
-    const expectedCvvLength = brand === "Amex" ? 4 : 3;
-    if (cvv.length !== expectedCvvLength) {
-      setErrorMsg(`Invalid CVV for ${brand}.`);
-      return;
-    }
+type DeleteTarget = { id: string; label: string } | null;
 
-    // Expiry Date Validation
-    const month = parseInt(expiryMonth);
-    const year = parseInt(expiryYear);
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
+const MyCardSettings: React.FC = () => {
+  const toast = useToast();
+  const [cards, setCards] = useState<SavedCard[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAddCard, setShowAddCard] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
 
-    if (isNaN(month) || isNaN(year) || year < currentYear || (year === currentYear && month < currentMonth)) {
-      setErrorMsg("Card has expired.");
-      return;
-    }
+  useEffect(() => {
+    paymentsService.listCards()
+      .then(setCards)
+      .catch(() => toast.error("Failed to load saved cards"))
+      .finally(() => setIsLoading(false));
+  }, []);
 
-    const newCard = {
-      id: Date.now(), // Unique ID generation
-      last4: cardNumber.slice(-4),
-      brand: brand === "Unknown" ? "Credit Card" : brand,
-      expiryMonth: month,
-      expiryYear: year,
-      isDefault: savedCards.length === 0,
-    };
-
-    persistSavedCards([...savedCards, newCard]);
+  const handleCardSaved = (card: SavedCard) => {
+    setCards((prev) => {
+      const updated = card.isDefault
+        ? prev.map((c) => ({ ...c, isDefault: false }))
+        : [...prev];
+      return [...updated, card];
+    });
     setShowAddCard(false);
+  };
 
-    // Reset form
-    setCardNumber("");
-    setCardName("");
-    setExpiryMonth("");
-    setExpiryYear("");
-    setCvv("");
-    setErrorMsg("");
+  const handleSetDefault = async (id: string) => {
+    setSettingDefaultId(id);
+    try {
+      await paymentsService.setDefaultCard(id);
+      setCards((prev) => prev.map((c) => ({ ...c, isDefault: c.id === id })));
+      toast.success("Default card updated");
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to update default card");
+    } finally {
+      setSettingDefaultId(null);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      const result = await paymentsService.deleteCard(deleteTarget.id);
+      setCards((prev) => {
+        const remaining = prev.filter((c) => c.id !== deleteTarget.id);
+        if (result.newDefaultCardId) {
+          return remaining.map((c) => ({ ...c, isDefault: c.id === result.newDefaultCardId }));
+        }
+        return remaining;
+      });
+      toast.success("Card removed");
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to remove card");
+    } finally {
+      setIsDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   return (
     <SubscriptionSettingsLayout activeTab="my-card">
-      {/* Saved Cards Section */}
+      {/* Saved Cards */}
       <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5 space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-lg font-semibold text-gray-900">Saved Cards</h2>
@@ -205,10 +245,19 @@ const MyCardSettings: React.FC = () => {
           )}
         </div>
 
-        {/* Cards List */}
-        {savedCards.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-8 text-gray-500 flex items-center justify-center gap-2">
+            <Loader2 size={18} className="animate-spin" />
+            Loading cards…
+          </div>
+        ) : cards.length === 0 && !showAddCard ? (
+          <div className="text-center py-8 text-gray-500">
+            <CreditCard className="mx-auto mb-3 text-gray-400" size={48} />
+            <p>No saved cards. Add a card to get started.</p>
+          </div>
+        ) : (
           <div className="space-y-3">
-            {savedCards.map((card) => (
+            {cards.map((card) => (
               <div
                 key={card.id}
                 className="border border-[#E8E8E8] rounded-xl bg-white p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
@@ -218,7 +267,8 @@ const MyCardSettings: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-semibold text-gray-900">
-                        {card.brand} •••• {card.last4}
+                        {card.brand ? card.brand.charAt(0).toUpperCase() + card.brand.slice(1) : "Card"} ••••{" "}
+                        {card.last4}
                       </h3>
                       {card.isDefault && (
                         <span className="px-2 py-1 bg-[#7CD947] text-white text-xs font-semibold rounded">
@@ -226,23 +276,35 @@ const MyCardSettings: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Expires {card.expiryMonth.toString().padStart(2, "0")}/{card.expiryYear}
-                    </p>
+                    {card.expMonth && card.expYear && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        Expires {String(card.expMonth).padStart(2, "0")}/{card.expYear}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 w-full sm:w-auto justify-end sm:justify-start">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
                   {!card.isDefault && (
                     <Button
                       variant="ghost"
                       className="text-[#486370] hover:bg-gray-100 px-4 py-2 text-sm"
                       onClick={() => handleSetDefault(card.id)}
+                      disabled={settingDefaultId === card.id}
                     >
-                      Set as Default
+                      {settingDefaultId === card.id ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        "Set as Default"
+                      )}
                     </Button>
                   )}
                   <button
-                    onClick={() => handleDeleteCard(card.id)}
+                    onClick={() =>
+                      setDeleteTarget({
+                        id: card.id,
+                        label: `${card.brand ?? "card"} ending in ${card.last4}`,
+                      })
+                    }
                     className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 size={18} />
@@ -251,130 +313,39 @@ const MyCardSettings: React.FC = () => {
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <CreditCard className="mx-auto mb-3 text-gray-400" size={48} />
-            <p>No saved cards. Add a card to get started.</p>
-          </div>
         )}
       </section>
 
       {/* Add New Card Form */}
       {showAddCard && (
         <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">Add New Card</h2>
-            <button
-              onClick={() => {
-                setShowAddCard(false);
-                setErrorMsg("");
-              }}
-              className="text-gray-500 hover:text-gray-700 text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-
-          {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
-              {errorMsg}
-            </div>
+          <h2 className="text-lg font-semibold text-gray-900">Add New Card</h2>
+          {stripePromise ? (
+            <Elements stripe={stripePromise}>
+              <AddCardForm
+                hasExistingCards={cards.length > 0}
+                onSaved={handleCardSaved}
+                onCancel={() => setShowAddCard(false)}
+              />
+            </Elements>
+          ) : (
+            <p className="text-red-500 text-sm">
+              Stripe is not configured. Set VITE_STRIPE_PUBLISHABLE_KEY to enable card management.
+            </p>
           )}
-
-          <form onSubmit={handleAddCard} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cardholder Name
-              </label>
-              <input
-                type="text"
-                value={cardName}
-                onChange={(e) => setCardName(e.target.value)}
-                className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
-                placeholder="John Doe"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Card Number
-              </label>
-              <input
-                type="text"
-                value={cardNumber}
-                onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, "").slice(0, 16))}
-                className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
-                placeholder="1234 5678 9012 3456"
-                maxLength={16}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Month
-                </label>
-                <select
-                  value={expiryMonth}
-                  onChange={(e) => setExpiryMonth(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
-                  required
-                >
-                  <option value="">MM</option>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                    <option key={month} value={month.toString().padStart(2, "0")}>
-                      {month.toString().padStart(2, "0")}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Year
-                </label>
-                <select
-                  value={expiryYear}
-                  onChange={(e) => setExpiryYear(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
-                  required
-                >
-                  <option value="">YYYY</option>
-                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  CVV
-                </label>
-                <input
-                  type="text"
-                  value={cvv}
-                  onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
-                  placeholder="123"
-                  maxLength={4}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <Button
-                type="submit"
-                className="bg-[#486370] hover:bg-[#3a505b] text-white px-8 py-2 rounded-lg font-medium"
-              >
-                Add Card
-              </Button>
-            </div>
-          </form>
         </section>
       )}
+
+      {/* Delete confirmation */}
+      <DeleteConfirmationModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Remove Card"
+        message={`Remove ${deleteTarget?.label ?? "this card"}? This action cannot be undone.`}
+        confirmText="Remove"
+        isLoading={isDeleting}
+      />
     </SubscriptionSettingsLayout>
   );
 };

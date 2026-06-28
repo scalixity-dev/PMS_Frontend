@@ -46,7 +46,7 @@ const OAuthCallbackPage: React.FC = () => {
         const errorMessage = err instanceof Error ? err.message : '';
         if (errorMessage.includes('subscription') || errorMessage.includes('activate')) {
           // User exists but needs subscription - redirect to pricing
-          navigate(`/pricing?userId=${userId}&oauth=true`, {
+          navigate(`/onboarding/plan?userId=${userId}&oauth=true`, {
             replace: true
           });
         } else {

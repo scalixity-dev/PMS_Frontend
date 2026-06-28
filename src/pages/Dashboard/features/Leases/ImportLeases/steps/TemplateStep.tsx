@@ -1,16 +1,18 @@
 import React from 'react';
 // We might need a generateLeaseImportTemplate utility similar to properties
 // import { generateLeaseImportTemplate } from '../utils/generateExcelTemplate';
+import { useToast } from '../../../../../../components/common/Toast';
 
 const TemplateStep: React.FC = () => {
+    const toast = useToast();
     const handleDownload = () => {
         try {
             // Placeholder for now
-            alert('Template download for Leases coming soon!');
+            toast.error('Template download for Leases coming soon!');
             // generateLeaseImportTemplate();
         } catch (error) {
             console.error('Error generating template:', error);
-            alert('Failed to generate template. Please try again.');
+            toast.error('Failed to generate template. Please try again.');
         }
     };
 

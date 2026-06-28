@@ -6,6 +6,7 @@ import { useUpdateProfile } from "../../../../hooks/useAuthQueries";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { useToast } from "../../../../components/common/Toast";
 
 
 interface ProfileUser {
@@ -454,6 +455,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
 }
 
 export default function ProfileSettings() {
+  const toast = useToast();
   const [user, setUser] = useState<ProfileUser>({
     fullName: "",
     email: "",
@@ -525,7 +527,7 @@ export default function ProfileSettings() {
     phoneNumber: string;
   }): Promise<boolean> => {
     if (!isValidPhoneNumber(values.phoneNumber)) {
-      alert("Phone number must be between 4 and 15 digits.");
+      toast.error("Phone number must be between 4 and 15 digits.");
       return false;
     }
 
@@ -549,25 +551,25 @@ export default function ProfileSettings() {
       });
       return true;
     } catch (err: any) {
-      alert(err?.message || "Failed to update personal information");
+      toast.error(err?.message || "Failed to update personal information");
       return false;
     }
   };
 
   const handleSavePassword = async (currentPassword: string, newPassword: string, confirmPassword: string) => {
     if (newPassword !== confirmPassword) {
-      alert('New passwords do not match');
+      toast.error('New passwords do not match');
       return;
     }
     if (newPassword.length < 8) {
-      alert('Password must be at least 8 characters');
+      toast.error('Password must be at least 8 characters');
       return;
     }
     try {
       await authService.changePassword(currentPassword, newPassword);
-      alert('Password updated successfully');
+      toast.success('Password updated successfully');
     } catch (err: any) {
-      alert(err?.message || 'Failed to update password');
+      toast.error(err?.message || 'Failed to update password');
       throw err;
     }
   };
@@ -575,11 +577,11 @@ export default function ProfileSettings() {
   const handleProfilePhotoUpload = async (file?: File) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      alert("Only image files are allowed.");
+      toast.error("Only image files are allowed.");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert("Profile photo must be 5 MB or smaller.");
+      toast.error("Profile photo must be 5 MB or smaller.");
       return;
     }
 
@@ -600,7 +602,7 @@ export default function ProfileSettings() {
       await updateProfile.mutateAsync({ profilePhotoUrl: url } as any);
       setUser((previous) => ({ ...previous, profilePhotoUrl: url }));
     } catch (err: any) {
-      alert(err?.message || "Failed to upload profile photo");
+      toast.error(err?.message || "Failed to upload profile photo");
     } finally {
       setIsUploadingPhoto(false);
     }

@@ -4,6 +4,7 @@ import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import ImageCropModal from '../../Tenants/components/ImageCropModal';
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { useToast } from '../../../../../components/common/Toast';
 
 
 interface FormData {
@@ -38,6 +39,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     submitLabel = 'Continue',
     onCancel
 }) => {
+    const toast = useToast();
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const phoneCodeRef = React.useRef<HTMLDivElement>(null);
     const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
@@ -129,12 +131,12 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             if (!file.type.startsWith('image/')) {
-                alert('Please select an image file (JPG, PNG, etc.)');
+                toast.error('Please select an image file (JPG, PNG, etc.)');
                 e.target.value = '';
                 return;
             }
             if (file.size > MAX_PROFILE_IMAGE_BYTES) {
-                alert(`Profile image must be under 5 MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
+                toast.error(`Profile image must be under 5 MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
                 e.target.value = '';
                 return;
             }

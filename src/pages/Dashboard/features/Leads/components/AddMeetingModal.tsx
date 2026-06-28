@@ -4,6 +4,7 @@ import { X, ChevronLeft, Paperclip } from 'lucide-react';
 import { format } from 'date-fns';
 import DatePicker from '@/components/ui/DatePicker';
 import PreciseTimePicker from '@/components/ui/PreciseTimePicker';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface AddMeetingModalProps {
     isOpen: boolean;
@@ -13,6 +14,7 @@ interface AddMeetingModalProps {
 }
 
 const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCreate, initialData }) => {
+    const toast = useToast();
     const [details, setDetails] = useState(initialData?.details || '');
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
         if (!initialData?.date) return undefined;
@@ -102,7 +104,7 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
 
     const handleCreate = () => {
         if (!details.trim() || !selectedDate || !selectedTime) {
-            alert('Please provide details, date, and time');
+            toast.error('Please provide details, date, and time');
             return;
         }
 
@@ -142,7 +144,7 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
             onClose();
         } catch (error) {
             console.error('Error processing date/time:', error);
-            alert('Invalid date or time');
+            toast.error('Invalid date or time');
         }
     };
 

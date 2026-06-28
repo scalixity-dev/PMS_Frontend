@@ -5,6 +5,7 @@ import { format, parse } from 'date-fns';
 import DatePicker from '@/components/ui/DatePicker';
 import PreciseTimePicker from '@/components/ui/PreciseTimePicker';
 import SearchableDropdown from '@/components/ui/SearchableDropdown';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface AddTaskModalProps {
     isOpen: boolean;
@@ -21,6 +22,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
     initialData,
     assignees = ['Admin', 'Manager', 'Staff', 'Maintenance']
 }) => {
+    const toast = useToast();
     const [details, setDetails] = useState(initialData?.details || '');
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(
         initialData?.date ? new Date(initialData.date) : undefined
@@ -123,12 +125,12 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
 
     const handleCreate = () => {
         if (!selectedDate || !selectedTime) {
-            alert('Please select both date and time');
+            toast.error('Please select both date and time');
             return;
         }
 
         if (!assignee) {
-            alert('Please select an assignee');
+            toast.error('Please select an assignee');
             return;
         }
 
@@ -148,7 +150,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
             onClose();
         } catch (error) {
             console.error('Error processing date/time:', error);
-            alert('Invalid date or time');
+            toast.error('Invalid date or time');
         }
     };
 

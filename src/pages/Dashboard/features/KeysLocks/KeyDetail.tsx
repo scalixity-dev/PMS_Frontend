@@ -9,6 +9,7 @@ import DeleteConfirmationModal from '../../../../components/common/modals/Delete
 import ConfirmationModal from './ConfirmationModal';
 import { useGetKey, useUpdateKey, useDeleteKey, useGetAllKeys } from '../../../../hooks/useKeysQueries';
 import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
+import { useToast } from '../../../../components/common/Toast';
 
 // Map backend key type to display format
 const mapKeyType = (keyType: string): string => {
@@ -24,6 +25,7 @@ const mapKeyType = (keyType: string): string => {
 };
 
 const KeyDetail = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { id } = useParams();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
@@ -104,7 +106,7 @@ const KeyDetail = () => {
             setIsAssignModalOpen(false);
         } catch (error) {
             console.error('Error assigning key:', error);
-            alert(error instanceof Error ? error.message : 'Failed to assign key');
+            toast.error(error instanceof Error ? error.message : 'Failed to assign key');
         }
     };
 
@@ -123,7 +125,7 @@ const KeyDetail = () => {
             setIsUnassignModalOpen(false);
         } catch (error) {
             console.error('Error unassigning key:', error);
-            alert(error instanceof Error ? error.message : 'Failed to unassign key');
+            toast.error(error instanceof Error ? error.message : 'Failed to unassign key');
         }
     };
 
@@ -136,7 +138,7 @@ const KeyDetail = () => {
             navigate('/dashboard/portfolio/keys-locks');
         } catch (error) {
             console.error('Error deleting key:', error);
-            alert(error instanceof Error ? error.message : 'Failed to delete key');
+            toast.error(error instanceof Error ? error.message : 'Failed to delete key');
         }
     };
 

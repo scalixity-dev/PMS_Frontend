@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft, Upload, Plus } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
+import { useToast } from '../../../../../components/common/Toast';
 
 export interface PetFormData {
     type: string;
@@ -37,6 +38,7 @@ const MAX_PHOTOS = 5;
 const MAX_BYTES = 5 * 1024 * 1024;
 
 const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
+    const toast = useToast();
     const [formData, setFormData] = useState<PetFormData>({
         type: '',
         name: '',
@@ -85,11 +87,11 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
         const valid: File[] = [];
         for (const file of incoming.slice(0, remaining)) {
             if (!file.type.startsWith('image/')) {
-                alert(`"${file.name}" is not an image file and was skipped.`);
+                toast.error(`"${file.name}" is not an image file and was skipped.`);
                 continue;
             }
             if (file.size > MAX_BYTES) {
-                alert(`"${file.name}" exceeds 5 MB and was skipped.`);
+                toast.error(`"${file.name}" exceeds 5 MB and was skipped.`);
                 continue;
             }
             valid.push(file);

@@ -1,13 +1,15 @@
 import React from 'react';
 import { generatePropertyImportTemplate } from '../utils/generateExcelTemplate';
+import { useToast } from '../../../../../../components/common/Toast';
 
 const TemplateStep: React.FC = () => {
+    const toast = useToast();
     const handleDownload = () => {
         try {
             generatePropertyImportTemplate();
         } catch (error) {
             console.error('Error generating template:', error);
-            alert('Failed to generate template. Please try again.');
+            toast.error('Failed to generate template. Please try again.');
         }
     };
 

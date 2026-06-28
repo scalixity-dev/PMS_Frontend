@@ -32,8 +32,10 @@ import { getCurrencySymbol } from '../../../../utils/currency.utils';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
+import { useToast } from '../../../../components/common/Toast';
 
 const ListingDetail: React.FC = () => {
+    const toast = useToast();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { isTeamMember, canManage } = useTeamPermissions();
@@ -161,7 +163,7 @@ const ListingDetail: React.FC = () => {
             }
             queryClient.invalidateQueries({ queryKey: listingQueryKeys.detail(backendListing.id) });
         } catch (err: any) {
-            alert(err?.message || 'Failed to update lease terms');
+            toast.error(err?.message || 'Failed to update lease terms');
         }
     };
 
@@ -291,7 +293,7 @@ const ListingDetail: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: listingQueryKeys.detail(backendListing.id) });
             setIsPetPolicyEditing(false);
         } catch (err: any) {
-            alert(err?.message || 'Failed to update pet policy');
+            toast.error(err?.message || 'Failed to update pet policy');
         } finally {
             setIsSavingPetPolicy(false);
         }

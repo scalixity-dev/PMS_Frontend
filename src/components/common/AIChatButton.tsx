@@ -5,6 +5,8 @@ import aiAvatar from '@/assets/images/ai-avatar.svg';
 import { aiChatService } from '@/services/aiChat.service';
 import type { ChatMessage } from '@/services/aiChat.service';
 import { authService } from '@/services/auth.service';
+import { usePlanFeatures } from '../../hooks/usePlanFeatures';
+import UpgradeModal from './UpgradeModal';
 import AIChatInput from '@/pages/Dashboard/features/AIChat/components/AIChatInput';
 import AIMessageBubble from '@/pages/Dashboard/features/AIChat/components/AIMessageBubble';
 
@@ -13,6 +15,8 @@ const AIChatButton: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
   const [isOpen, setIsOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { canAccess } = usePlanFeatures();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -130,7 +134,7 @@ const AIChatButton: React.FC = () => {
   return (
     <>
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => canAccess('ai-assistant') ? setIsOpen(true) : setUpgradeOpen(true)}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full hover:scale-110 active:scale-95 transition-all duration-300 overflow-hidden p-0"
         style={{ boxShadow: '0 0 0 3px rgba(61,116,117,0.25), 0 4px 20px rgba(61,116,117,0.45)' }}
         onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 0 0 4px rgba(61,116,117,0.4), 0 6px 28px rgba(61,116,117,0.65)')}
@@ -244,6 +248,12 @@ const AIChatButton: React.FC = () => {
           </div>
         </>
       )}
+      <UpgradeModal
+        isOpen={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        requiredPlan="growth"
+        featureLabel="AI Assistant"
+      />
     </>
   );
 };

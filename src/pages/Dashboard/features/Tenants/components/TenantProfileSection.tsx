@@ -79,7 +79,7 @@ const TenantProfileSection = ({ tenantId, tenant }: TenantProfileSectionProps) =
         if (file) {
             // Validate file type
             if (!allowedFileTypes.includes(file.type)) {
-                alert(`Invalid file type. Please select one of the following: ${allowedFileExtensions.join(', ')}`);
+                toast.error(`Invalid file type. Please select one of the following: ${allowedFileExtensions.join(', ')}`);
                 if (fileInputRef.current) {
                     fileInputRef.current.value = '';
                 }
@@ -92,7 +92,7 @@ const TenantProfileSection = ({ tenantId, tenant }: TenantProfileSectionProps) =
 
     const handleUploadDocument = async () => {
         if (!selectedFile || !documentType) {
-            alert('Please select a file and document type');
+            toast.error('Please select a file and document type');
             return;
         }
 
@@ -113,7 +113,7 @@ const TenantProfileSection = ({ tenantId, tenant }: TenantProfileSectionProps) =
             }
         } catch (error) {
             console.error('Failed to upload document:', error);
-            alert(`Failed to upload document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast.error(`Failed to upload document: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setIsUploading(false);
         }

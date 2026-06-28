@@ -1,8 +1,13 @@
-import React, { useState, useRef } from "react";
-import { X, Check } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { X, Check, CreditCard, Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { pricingPlans } from "../../../../../pages/basewebsite/pricing/sections/PricingAndTableData";
 import { subscriptionService } from "../../../../../services/subscription.service";
 import type { Subscription } from "../../../../../services/subscription.service";
+import { paymentsService } from "../../../../../services/payments.service";
+import { useToast } from "../../../../../components/common/Toast";
+import { useSubscription } from "../../../../../context/SubscriptionContext";
 
 interface ChangePlanModalProps {
   isOpen: boolean;
@@ -28,17 +33,25 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ text, isDark = false }) => (
   </div>
 );
 
+const BUSINESS_CONTACT_EMAIL = "support@smarttenantai.com";
+
 const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
   isOpen,
   onClose,
   currentSubscription,
   onPlanChanged,
 }) => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { refetch: refetchSubscription, isExpired } = useSubscription();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isYearly, setIsYearly] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [hasNoCard, setHasNoCard] = useState(false);
+  const [cardsLoading, setCardsLoading] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -82,16 +95,25 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
     }
   };
 
-  // Initialize with current subscription if available
-  React.useEffect(() => {
-    if (currentSubscription && isOpen) {
+  // Initialize with current subscription if available; also prefetch saved cards
+  useEffect(() => {
+    if (!isOpen) return;
+    if (currentSubscription) {
       setSelectedPlan(currentSubscription.planId);
       setIsYearly(currentSubscription.isYearly);
-      setError(null);
     }
-  }, [currentSubscription, isOpen]);
+    setError(null);
+    setHasNoCard(false);
+    setCardsLoading(true);
+    paymentsService.listCards()
+      .then((cards) => setHasNoCard(cards.length === 0))
+      .catch(() => {}) // non-fatal — guard will surface on submit
+      .finally(() => setCardsLoading(false));
+  }, [isOpen, currentSubscription]);
 
   if (!isOpen) return null;
+
+  const isBusinessSelected = selectedPlan?.toLowerCase() === "business";
 
   // Helper function to extract price from annualBillingText
   const extractAnnualPrice = (text: string): string => {
@@ -113,19 +135,37 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
     return "";
   };
 
+  const trialedPlanId = currentSubscription?.planId?.toLowerCase() ?? null;
+  const isResumingTrialPlan =
+    isExpired && selectedPlan?.toLowerCase() === trialedPlanId;
+
   const handlePlanChange = async () => {
     if (!selectedPlan) {
       setError("Please select a plan");
       return;
     }
 
-    // Don't change if it's the same plan and billing cycle
+    // Business plan → contact sales, no Stripe checkout
+    if (isBusinessSelected) {
+      window.location.href = `mailto:${BUSINESS_CONTACT_EMAIL}?subject=Business Plan Inquiry`;
+      return;
+    }
+
+    // Don't change if it's the same plan and billing cycle — BUT skip this guard
+    // when the trial has expired, since the user needs to actually create a subscription
     if (
+      !isExpired &&
       currentSubscription &&
       currentSubscription.planId.toLowerCase() === selectedPlan.toLowerCase() &&
       currentSubscription.isYearly === isYearly
     ) {
       onClose();
+      return;
+    }
+
+    // No-card guard
+    if (hasNoCard) {
+      setError("You need a payment method on file before subscribing.");
       return;
     }
 
@@ -137,11 +177,13 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
         planId: selectedPlan.toLowerCase(),
         isYearly,
       });
+      await queryClient.invalidateQueries({ queryKey: ['subscription', 'current'] });
+      refetchSubscription();
+      toast.success("Plan changed successfully! Your card on file has been charged.");
       onPlanChanged(updated);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to change plan");
-      console.error("Error changing plan:", err);
     } finally {
       setIsChanging(false);
     }
@@ -157,7 +199,9 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
       <div className="bg-white w-full max-w-6xl rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-[#486370] px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">Change Subscription Plan</h2>
+          <h2 className="text-xl font-bold text-white">
+            {isExpired ? "Choose a Plan to Continue" : "Change Subscription Plan"}
+          </h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-white/10 rounded-full transition-colors"
@@ -191,6 +235,23 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
               </button>
             </div>
           </div>
+
+          {/* No-card warning */}
+          {hasNoCard && !cardsLoading && !isBusinessSelected && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-start gap-2">
+              <CreditCard size={16} className="mt-0.5 shrink-0" />
+              <span>
+                No payment method on file.{" "}
+                <button
+                  onClick={() => { onClose(); navigate("/dashboard/settings/subscription/my-card"); }}
+                  className="underline font-medium hover:text-amber-900"
+                >
+                  Add a card
+                </button>{" "}
+                before subscribing.
+              </span>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -257,8 +318,8 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
                     } w-full shrink-0 sm:w-auto sm:min-w-[280px] md:min-w-0 md:shrink md:w-auto snap-center`}
                 >
                   {isCurrentPlan && (
-                    <div className="absolute top-2 right-2 bg-[#7BD747] text-white text-xs px-2 py-1 rounded-full font-semibold">
-                      Current
+                    <div className={`absolute top-2 right-2 text-white text-xs px-2 py-1 rounded-full font-semibold ${isExpired ? 'bg-red-400' : 'bg-[#7BD747]'}`}>
+                      {isExpired ? 'Trial Ended' : 'Current'}
                     </div>
                   )}
 
@@ -335,32 +396,19 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
             </button>
             <button
               onClick={handlePlanChange}
-              disabled={isChanging || !selectedPlan}
+              disabled={isChanging || !selectedPlan || cardsLoading}
               className="px-6 py-2 bg-[#486370] text-white rounded-lg font-medium hover:bg-[#3a505b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full sm:w-auto"
             >
-              {isChanging && (
-                <svg
-                  className="animate-spin h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-              )}
-              {isChanging ? "Changing Plan..." : "Change Plan"}
+              {(isChanging || cardsLoading) && <Loader2 className="animate-spin h-4 w-4 text-white" />}
+              {isBusinessSelected
+                ? "Contact Sales"
+                : isChanging
+                  ? "Processing..."
+                  : isResumingTrialPlan
+                    ? `Continue with ${currentSubscription?.planName ?? selectedPlan}`
+                    : isExpired
+                      ? "Choose Plan"
+                      : "Change Plan"}
             </button>
           </div>
         </div>

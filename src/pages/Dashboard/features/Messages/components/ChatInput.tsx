@@ -1,5 +1,6 @@
 import React, { useState, useRef, memo, useCallback, useEffect, lazy, Suspense } from 'react';
 import type { Theme, EmojiClickData } from 'emoji-picker-react';
+import { useToast } from '../../../../../components/common/Toast';
 
 // Lazy-load the emoji picker (~150KB) — only fetched when the user opens it.
 const EmojiPicker = lazy(() => import('emoji-picker-react'));
@@ -20,6 +21,7 @@ const ALLOWED_FILE_TYPES = [
 ];
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping, isUploading }) => {
+    const toast = useToast();
     const [inputText, setInputText] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -78,11 +80,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping, isUpload
         const file = e.target.files?.[0];
         if (file) {
             if (file.size > MAX_FILE_SIZE) {
-                alert('File size exceeds 10MB limit.');
+                toast.error('File size exceeds 10MB limit.');
                 return;
             }
             if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-                alert('Invalid file type. Only images, PDFs, and Word documents are allowed.');
+                toast.error('Invalid file type. Only images, PDFs, and Word documents are allowed.');
                 return;
             }
             setPendingFile(file);

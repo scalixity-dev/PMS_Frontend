@@ -28,7 +28,7 @@ const BankAccount = () => {
             // Redirect to Stripe-hosted onboarding
             window.location.href = res.onboardingUrl;
         } catch (err: any) {
-            alert(err?.message || 'Failed to start onboarding');
+            toast.error(err?.message || 'Failed to start onboarding');
         }
     };
 

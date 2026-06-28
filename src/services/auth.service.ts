@@ -37,6 +37,7 @@ export interface ActivateAccountRequest {
 export interface ActivateAccountResponse {
   success: boolean;
   message: string;
+  requiresEmailVerification?: boolean;
 }
 
 export interface LoginRequest {

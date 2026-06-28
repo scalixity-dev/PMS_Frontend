@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useToast } from '../../../../components/common/Toast';
 
 import MoveInStepper from './components/MoveInStepper';
 import MoveInPropertySelection from './steps/MoveInPropertySelection';
@@ -28,6 +29,7 @@ const getVisualStep = (step: number) => {
 };
 
 const MoveIn: React.FC = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const location = useLocation();
     const {
@@ -144,7 +146,7 @@ const MoveIn: React.FC = () => {
     const handleCompleteMoveIn = useDebouncedCallback(async () => {
         // Validate required fields
         if (!formData.tenantId || !formData.propertyId) {
-            alert('Please complete all required fields (Property and Tenant)');
+            toast.error('Please complete all required fields (Property and Tenant)');
             return;
         }
 
@@ -219,7 +221,7 @@ const MoveIn: React.FC = () => {
             resetForm();
         } catch (error) {
             console.error('Failed to create/update lease:', error);
-            alert(error instanceof Error ? error.message : 'Failed to create/update lease. Please try again.');
+            toast.error(error instanceof Error ? error.message : 'Failed to create/update lease. Please try again.');
         }
     });
 

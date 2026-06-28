@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import successAnimationUrl from '../../ListUnit/Success.lottie?url';
 import { API_ENDPOINTS } from '../../../../../config/api.config';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface MoveInSuccessModalProps {
     isOpen: boolean;
@@ -27,6 +28,7 @@ const MoveInSuccessModal: React.FC<MoveInSuccessModalProps> = ({
     leaseId,
     propertyId,
 }) => {
+    const toast = useToast();
     const navigate = useNavigate();
     const [isClosing, setIsClosing] = useState(false);
     const timeoutRef = useRef<number | null>(null);
@@ -75,7 +77,7 @@ const MoveInSuccessModal: React.FC<MoveInSuccessModalProps> = ({
 
     const handleUploadClick = () => {
         if (!leaseId) {
-            alert('Lease information is not available. Please go back to the lease and try again.');
+            toast.error('Lease information is not available. Please go back to the lease and try again.');
             return;
         }
         if (fileInputRef.current) {

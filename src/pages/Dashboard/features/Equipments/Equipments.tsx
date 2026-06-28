@@ -7,7 +7,9 @@ import Pagination from '../../components/Pagination';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import { useGetAllEquipment, useDeleteEquipment, useGetEquipmentCategories } from '../../../../hooks/useEquipmentQueries';
+import PlanLimitBanner from '../../../../components/common/PlanLimitBanner';
 import type { BackendEquipment } from '../../../../services/equipment.service';
+import { useToast } from '../../../../components/common/Toast';
 
 // Map backend status to display format
 const mapStatus = (status: string): string => {
@@ -35,6 +37,7 @@ const findSubcategoryName = (categories: any[], subcategoryId: string): string =
 const ITEMS_PER_PAGE = 9;
 
 const Equipments: React.FC = () => {
+    const toast = useToast();
     const navigate = useNavigate();
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed?: boolean }>() || {};
     const [searchQuery, setSearchQuery] = useState('');
@@ -290,7 +293,7 @@ const Equipments: React.FC = () => {
             closeDeleteModal();
         } catch (error) {
             console.error('Error deleting equipment:', error);
-            alert(error instanceof Error ? error.message : 'Failed to delete equipment');
+            toast.error(error instanceof Error ? error.message : 'Failed to delete equipment');
         }
     };
 
@@ -325,6 +328,8 @@ const Equipments: React.FC = () => {
                         </button>
                     )}
                 </div>
+
+                <PlanLimitBanner resource="equipment" currentCount={equipment.length} className="mb-6" />
 
                 <DashboardFilter
                     filterOptions={filterOptions}

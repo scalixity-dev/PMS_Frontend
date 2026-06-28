@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { X, Check, ZoomIn, ZoomOut } from 'lucide-react';
 import type { Area, Point } from 'react-easy-crop';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface ImageCropModalProps {
   image: string;
@@ -20,6 +21,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
   circularCrop = true,
   containerSize = 256, // Default 256px (128px * 2 for better visibility)
 }) => {
+  const toast = useToast();
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -121,7 +123,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Error cropping image:', error);
-      alert('Failed to crop image. Please try again.');
+      toast.error('Failed to crop image. Please try again.');
     } finally {
       setIsProcessing(false);
     }

@@ -13,6 +13,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
+import { usePlanFeatures } from '../../../../hooks/usePlanFeatures';
+import UpgradeModal from '../../../../components/common/UpgradeModal';
+import { useToast } from '../../../../components/common/Toast';
 
 interface Unit {
   unitNumber: string;
@@ -25,6 +28,7 @@ interface Unit {
 }
 
 const AddProperty: React.FC = () => {
+  const toast = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
@@ -78,6 +82,8 @@ const AddProperty: React.FC = () => {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigationPath, setPendingNavigationPath] = useState<string | null>(null);
   const [showAIChat, setShowAIChat] = useState(false);
+  const [aiUpgradeOpen, setAiUpgradeOpen] = useState(false);
+  const { canAccess } = usePlanFeatures();
 
   // Allowed MIME types for document attachments
   const allowedDocumentTypes = [
@@ -297,7 +303,7 @@ const AddProperty: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > MAX_IMAGE_BYTES) {
-        alert(`Cover photo must be under ${MAX_IMAGE_SIZE_MB} MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
+        toast.error(`Cover photo must be under ${MAX_IMAGE_SIZE_MB} MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
         e.target.value = '';
         return;
       }
@@ -313,7 +319,7 @@ const AddProperty: React.FC = () => {
       const tooBig = newPhotos.filter(f => f.size > MAX_IMAGE_BYTES);
       const valid = newPhotos.filter(f => f.size <= MAX_IMAGE_BYTES);
       if (tooBig.length > 0) {
-        alert(`${tooBig.length} photo(s) exceed ${MAX_IMAGE_SIZE_MB} MB limit and were skipped: ${tooBig.map(f => f.name).join(', ')}`);
+        toast.error(`${tooBig.length} photo(s) exceed ${MAX_IMAGE_SIZE_MB} MB limit and were skipped: ${tooBig.map(f => f.name).join(', ')}`);
       }
       setFormData(prev => ({ ...prev, galleryPhotos: [...prev.galleryPhotos, ...valid] }));
       e.target.value = '';
@@ -338,7 +344,7 @@ const AddProperty: React.FC = () => {
       });
 
       if (oversizeFiles.length > 0) {
-        alert(`${oversizeFiles.length} file(s) exceed ${MAX_ATTACHMENT_SIZE_MB} MB limit: ${oversizeFiles.join(', ')}`);
+        toast.error(`${oversizeFiles.length} file(s) exceed ${MAX_ATTACHMENT_SIZE_MB} MB limit: ${oversizeFiles.join(', ')}`);
       }
 
       if (invalidFiles.length > 0) {
@@ -936,7 +942,7 @@ const AddProperty: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setShowAIChat(true)}
+          onClick={() => canAccess('ai-property-assistant') ? setShowAIChat(true) : setAiUpgradeOpen(true)}
           className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 active:scale-95"
           style={{
             background: 'linear-gradient(135deg, #2D6A6A 0%, #3D9B6B 50%, #52C97A 100%)',
@@ -959,6 +965,12 @@ const AddProperty: React.FC = () => {
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
         onFormDataReceived={handleAIFormData}
+      />
+      <UpgradeModal
+        isOpen={aiUpgradeOpen}
+        onClose={() => setAiUpgradeOpen(false)}
+        requiredPlan="growth"
+        featureLabel="AI Property Assistant"
       />
 
       <div className={`bg-[#E0E8E7] min-h-screen p-4 md:p-8 font-sans rounded-[1.5rem] md:rounded-[2rem] text-[#4B5563]`}>

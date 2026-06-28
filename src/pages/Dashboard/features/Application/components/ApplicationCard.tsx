@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
+import { useToast } from '../../../../../components/common/Toast';
 
 interface ApplicationCardProps {
     id: string | number;
@@ -51,6 +52,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
     onStatusChange,
     onMoveIn
 }) => {
+    const toast = useToast();
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [confirmModal, setConfirmModal] = useState<{
@@ -85,7 +87,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
             setConfirmModal({ type: null, isOpen: false });
         } catch (error) {
             console.error('Failed to update application status:', error);
-            alert('Failed to update application status. Please try again.');
+            toast.error('Failed to update application status. Please try again.');
         } finally {
             setIsUpdating(false);
         }
