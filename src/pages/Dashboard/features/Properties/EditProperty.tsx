@@ -543,13 +543,15 @@ const EditProperty: React.FC = () => {
       errors.country = 'Country is required';
     }
 
-    // Year Built validation (must be integer if provided)
+    // Year Built validation (must be integer within the last 100 years, if provided)
     if (formData.yearBuilt && formData.yearBuilt.trim() !== '') {
+      const currentYear = new Date().getFullYear();
+      const minYear = currentYear - 100;
       const yearValue = parseInt(formData.yearBuilt);
       if (isNaN(yearValue) || !Number.isInteger(yearValue)) {
         errors.yearBuilt = 'Year built must be a valid integer';
-      } else if (yearValue < 1000 || yearValue > new Date().getFullYear() + 1) {
-        errors.yearBuilt = `Year built must be between 1000 and ${new Date().getFullYear() + 1}`;
+      } else if (yearValue < minYear || yearValue > currentYear + 1) {
+        errors.yearBuilt = `Year built must be between ${minYear} and ${currentYear + 1}`;
       }
     }
 
@@ -1067,11 +1069,21 @@ const EditProperty: React.FC = () => {
                     value={formData.yearBuilt}
                     onChange={(e) => {
                       updateFormData('yearBuilt', e.target.value);
+                      if (validationErrors.yearBuilt) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.yearBuilt;
+                          return newErrors;
+                        });
+                      }
                     }}
-                    className={`bg-white border-gray-200 ${submitted && !formData.yearBuilt.trim() ? 'border-red-500' : ''}`}
+                    className={`bg-white border-gray-200 ${(submitted && !formData.yearBuilt.trim()) || validationErrors.yearBuilt ? 'border-red-500' : ''}`}
                   />
                   {submitted && !formData.yearBuilt.trim() && (
                     <p className="text-red-500 text-xs mt-1 ml-1">Year built is required</p>
+                  )}
+                  {validationErrors.yearBuilt && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.yearBuilt}</p>
                   )}
                 </div>
                 <div>

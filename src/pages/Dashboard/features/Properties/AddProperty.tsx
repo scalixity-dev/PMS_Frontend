@@ -98,6 +98,7 @@ const AddProperty: React.FC = () => {
   const coverPhotoInputRef = useRef<HTMLInputElement>(null);
   const galleryPhotosInputRef = useRef<HTMLInputElement>(null);
   const attachmentsInputRef = useRef<HTMLInputElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
 
   // Load all countries on mount
   useEffect(() => {
@@ -188,7 +189,7 @@ const AddProperty: React.FC = () => {
   ];
 
   const bedsOptions = [
-    { value: '', label: 'Studio' },
+    { value: '0', label: 'Studio' },
     { value: '1', label: '1' },
     { value: '2', label: '2' },
     { value: '3', label: '3' },
@@ -202,7 +203,7 @@ const AddProperty: React.FC = () => {
   ];
 
   const bathsOptions = [
-    { value: '', label: 'None' },
+    { value: '0', label: 'None' },
     { value: '1', label: '1' },
     { value: '2', label: '2' },
     { value: '3', label: '3' },
@@ -494,13 +495,15 @@ const AddProperty: React.FC = () => {
       errors.country = 'Country is required';
     }
 
-    // Year Built validation (must be integer if provided)
+    // Year Built validation (must be integer within the last 100 years, if provided)
     if (formData.yearBuilt && formData.yearBuilt.trim() !== '') {
+      const currentYear = new Date().getFullYear();
+      const minYear = currentYear - 100;
       const yearValue = parseInt(formData.yearBuilt);
       if (isNaN(yearValue) || !Number.isInteger(yearValue)) {
         errors.yearBuilt = 'Year built must be a valid integer';
-      } else if (yearValue < 1000 || yearValue > new Date().getFullYear() + 1) {
-        errors.yearBuilt = `Year built must be between 1000 and ${new Date().getFullYear() + 1}`;
+      } else if (yearValue < minYear || yearValue > currentYear + 1) {
+        errors.yearBuilt = `Year built must be between ${minYear} and ${currentYear + 1}`;
       }
     }
 
@@ -627,47 +630,6 @@ const AddProperty: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const isFormValid = useMemo(() => {
-    const hasGeneralInfo = !!(
-      String(formData.propertyName || '').trim() &&
-      String(formData.yearBuilt || '').trim() &&
-      String(formData.streetAddress || '').trim() &&
-      formData.city &&
-      formData.stateRegion &&
-      String(formData.zip || '').trim() &&
-      formData.country
-    );
-
-    if (!hasGeneralInfo) return false;
-
-    if (formData.propertyType === 'single') {
-      return !!(
-        formData.beds &&
-        formData.baths &&
-        String(formData.size || '').trim() && Number(formData.size) > 0 &&
-        String(formData.marketRent || '').trim() && Number(formData.marketRent) > 0 &&
-        String(formData.deposit || '').trim() && Number(formData.deposit) > 0 &&
-        formData.parking &&
-        formData.laundry &&
-        formData.ac
-      );
-    }
-
-    if (formData.propertyType === 'multi') {
-      if (formData.units.length === 0) return false;
-      return formData.units.every(unit => 
-        unit.unitNumber.trim() &&
-        unit.unitType.trim() &&
-        unit.size.trim() && Number(unit.size) > 0 &&
-        unit.beds.trim() &&
-        unit.baths.trim() &&
-        unit.rent.trim() && Number(unit.rent) > 0 &&
-        unit.deposit.trim() && Number(unit.deposit) > 0
-      );
-    }
-
-    return true;
-  }, [formData]);
 
   const submitForm = useDebouncedCallback(async () => {
     setLoading(true);
@@ -679,6 +641,7 @@ const AddProperty: React.FC = () => {
     if (!validateForm()) {
       setLoading(false);
       setError('Please fix the validation errors before submitting');
+      topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
 
@@ -755,20 +718,8 @@ const AddProperty: React.FC = () => {
 
       // Add single unit details for SINGLE property type
       if (formData.propertyType === 'single') {
-        // Map beds: "Studio" = 0, "1" = 1, "2" = 2, "3+" = 3
-        let bedsValue: number | undefined;
-        if (formData.beds) {
-          if (formData.beds === 'Studio') {
-            bedsValue = 0;
-          } else if (formData.beds === '3+') {
-            bedsValue = 3;
-          } else {
-            bedsValue = parseInt(formData.beds);
-          }
-        }
-
         propertyData.singleUnitDetails = {
-          beds: bedsValue,
+          beds: formData.beds !== '' ? parseInt(formData.beds) : undefined,
           baths: formData.baths ? parseFloat(formData.baths) : undefined,
           marketRent: formData.marketRent ? parseFloat(formData.marketRent) : undefined,
           deposit: formData.deposit ? parseFloat(formData.deposit) : undefined,
@@ -921,7 +872,7 @@ const AddProperty: React.FC = () => {
   };
 
   return (
-    <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
+    <div ref={topRef} className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
       <UnsavedChangesModal
         isOpen={showUnsavedModal}
         onClose={() => {
@@ -1110,11 +1061,21 @@ const AddProperty: React.FC = () => {
                     value={formData.yearBuilt}
                     onChange={(e) => {
                       updateFormData('yearBuilt', e.target.value);
+                      if (validationErrors.yearBuilt) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.yearBuilt;
+                          return newErrors;
+                        });
+                      }
                     }}
-                    className={`bg-white border-gray-200 ${submitted && !formData.yearBuilt.trim() ? 'border-red-500' : ''}`}
+                    className={`bg-white border-gray-200 ${(submitted && !formData.yearBuilt.trim()) || validationErrors.yearBuilt ? 'border-red-500' : ''}`}
                   />
                   {submitted && !formData.yearBuilt.trim() && (
                     <p className="text-red-500 text-xs mt-1 ml-1">Year built is required</p>
+                  )}
+                  {validationErrors.yearBuilt && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.yearBuilt}</p>
                   )}
                 </div>
                 <div>
@@ -1951,7 +1912,7 @@ const AddProperty: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={loading || !isFormValid}
+              disabled={loading}
               className="px-8 py-2 bg-[#376F7E] text-white rounded-lg font-medium hover:bg-[#2c5a66] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating...' : 'Create'}
