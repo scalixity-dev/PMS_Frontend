@@ -24,13 +24,10 @@ const PLAN_DISPLAY: Record<PlanId, { name: string; price: string; highlights: st
       'Income & Expense Accounting',
       'Recurring Transactions',
       'AI Assistants',
-      'Bulk Payments',
       'Custom Document Templates',
       'Invoice Customization & Tags',
-      'Maintenance Board',
       'Advanced Reports',
       'Google Calendar Integration',
-      'Service Pro Invoicing',
     ],
   },
   pro: {

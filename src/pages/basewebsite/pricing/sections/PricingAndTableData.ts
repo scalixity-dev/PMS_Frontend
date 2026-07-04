@@ -88,9 +88,7 @@ export const allFeatureTables = [
       { name: "Recurring Requests",               starter: "10",        growth: "20",        pro: "100",       business: "Unlimited" },
       { name: "Service Provider Assignment",       starter: "check",     growth: "check",     pro: "check",     business: "check" },
       { name: "Service Pro Portal",                starter: "check",     growth: "check",     pro: "check",     business: "check" },
-      { name: "Service Pro Invoicing & Statements", starter: "-",        growth: "check",     pro: "check",     business: "check" },
       { name: "Auto-assign Maintenance Requests", starter: "-",         growth: "-",         pro: "check",     business: "check" },
-      { name: "Maintenance Board",                 starter: "-",         growth: "check",     pro: "check",     business: "check" },
     ],
   },
   {
@@ -100,7 +98,6 @@ export const allFeatureTables = [
       { name: "Income & Expense Invoicing",     starter: "check", growth: "check", pro: "check", business: "check" },
       { name: "Recurring Transactions",         starter: "-",     growth: "check", pro: "check", business: "check" },
       { name: "Deposits & Credits",             starter: "check", growth: "check", pro: "check", business: "check" },
-      { name: "Bulk Payments",                  starter: "-",     growth: "check", pro: "check", business: "check" },
       { name: "Refunds & Discounts",            starter: "check", growth: "check", pro: "check", business: "check" },
       { name: "Invoice Customization & Tags",   starter: "-",     growth: "check", pro: "check", business: "check" },
     ],
