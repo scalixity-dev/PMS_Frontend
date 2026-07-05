@@ -28,6 +28,7 @@ const PLAN_DISPLAY: Record<PlanId, { name: string; price: string; highlights: st
       'Invoice Customization & Tags',
       'Advanced Reports',
       'Google Calendar Integration',
+      'Team Management (1 member)',
     ],
   },
   pro: {
@@ -37,7 +38,7 @@ const PLAN_DISPLAY: Record<PlanId, { name: string; price: string; highlights: st
       'Everything in Growth',
       'Custom Application Forms',
       'Auto-assign Maintenance',
-      'Team Management & Permissions',
+      'Team Management (3 members)',
       'Property-level Permissions',
       'Document Inspector',
     ],
@@ -48,6 +49,7 @@ const PLAN_DISPLAY: Record<PlanId, { name: string; price: string; highlights: st
     highlights: [
       'Everything in Pro',
       'Unlimited Leases & Storage',
+      'Unlimited Team Members',
       'Dedicated Account Manager',
       'Priority Support',
       'Custom Integrations',
