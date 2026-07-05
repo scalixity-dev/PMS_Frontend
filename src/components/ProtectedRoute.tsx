@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/auth.service';
 import { API_ENDPOINTS } from '../config/api.config';
 
@@ -13,9 +13,21 @@ const FullScreenLoader: React.FC = () => (
   </div>
 );
 
+/** Builds a `/login` target that preserves the intended destination and any `?email=` pre-fill. */
+function loginRedirectTarget(location: { pathname: string; search: string }): string {
+  const currentPath = `${location.pathname}${location.search}`;
+  const params = new URLSearchParams(location.search);
+  const loginParams = new URLSearchParams();
+  loginParams.set('redirect', currentPath);
+  const email = params.get('email');
+  if (email) loginParams.set('email', email);
+  return `/login?${loginParams.toString()}`;
+}
+
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -81,13 +93,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }, []);
 
   if (isLoading) return <FullScreenLoader />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to={loginRedirectTarget(location)} replace />;
   return <>{children}</>;
 };
 
 export const TenantProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -106,13 +119,14 @@ export const TenantProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }
   }, []);
 
   if (isLoading) return <FullScreenLoader />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to={loginRedirectTarget(location)} replace />;
   return <>{children}</>;
 };
 
 export const ServiceProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     // Once authenticated in session storage, skip re-check for subsequent route
@@ -162,7 +176,7 @@ export const ServiceProtectedRoute: React.FC<ProtectedRouteProps> = ({ children 
   }, []);
 
   if (isLoading) return <FullScreenLoader />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to={loginRedirectTarget(location)} replace />;
   return <>{children}</>;
 };
 

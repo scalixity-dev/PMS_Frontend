@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronDown,
@@ -107,6 +107,7 @@ const Section = ({
 const ApplicationDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() || {};
     const { isTeamMember, canManage } = useTeamPermissions();
     const canEdit = !isTeamMember || canManage('rental-applications');
@@ -542,6 +543,25 @@ const ApplicationDetail = () => {
     }
 
     if (error || !application) {
+        const isAuthError = error instanceof Error && /401|unauthorized|authentication token/i.test(error.message);
+
+        if (isAuthError) {
+            const redirectTarget = `${location.pathname}${location.search}`;
+            return (
+                <div className="max-w-6xl mx-auto p-6">
+                    <div className="bg-red-50 text-red-800 p-4 rounded-lg">
+                        Your session has expired. Please sign in to view this application.
+                    </div>
+                    <button
+                        onClick={() => navigate(`/login?redirect=${encodeURIComponent(redirectTarget)}`)}
+                        className="mt-4 text-[#3A6D6C] hover:underline"
+                    >
+                        Sign in
+                    </button>
+                </div>
+            );
+        }
+
         return (
             <div className="max-w-6xl mx-auto p-6">
                 <div className="bg-red-50 text-red-800 p-4 rounded-lg">

@@ -6,6 +6,15 @@ import { AppleIcon, FacebookIcon, GoogleIcon } from '../../../../../components/A
 import { authService } from '../../../../../services/auth.service';
 import { API_ENDPOINTS } from '../../../../../config/api.config';
 
+/** Only allow redirecting back into the dashboard — never to an external/absolute URL. */
+function getSafeDashboardRedirect(search: string): string | null {
+    try {
+        const redirect = new URLSearchParams(search).get('redirect');
+        if (redirect && redirect.startsWith('/dashboard')) return redirect;
+    } catch { /* ignore */ }
+    return null;
+}
+
 const LoginForm: React.FC = () => {
     const location = useLocation();
     const [email, setEmail] = useState('');
@@ -152,10 +161,10 @@ const LoginForm: React.FC = () => {
                     return;
                 }
 
-                // Team members go straight to the dashboard
+                // Team members go straight to the dashboard (or back to where they came from)
                 if (userRole === 'TEAM_MEMBER') {
                     console.log('Navigating team member to dashboard');
-                    navigate('/dashboard', { replace: true });
+                    navigate(getSafeDashboardRedirect(location.search) || '/dashboard', { replace: true });
                     return;
                 }
 
@@ -258,7 +267,7 @@ const LoginForm: React.FC = () => {
                     navigate('/service-dashboard', { replace: true });
                 } else {
                     console.log('Navigating to property manager dashboard');
-                    navigate('/dashboard', { replace: true });
+                    navigate(getSafeDashboardRedirect(location.search) || '/dashboard', { replace: true });
                 }
             }
         } catch (err) {
