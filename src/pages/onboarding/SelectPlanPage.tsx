@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { authService } from "../../services/auth.service";
-import logo from "../../assets/images/logo.png";
+import { landlordIcon as logo } from "../../utils/roleIcon";
 import { pricingPlans, allFeatureTables } from "../basewebsite/pricing/sections/PricingAndTableData";
 import { AppfolioPricingTable } from "../basewebsite/pricing/sections/FeaturesTable";
 import RequestDemoCard from "../basewebsite/pricing/sections/RequestDemo";
@@ -175,7 +175,7 @@ export default function SelectPlanPage() {
     <div className="min-h-screen bg-[#f7fdf9]">
       {/* Minimal header — logo only */}
       <header className="flex items-center justify-center py-6 border-b border-gray-100 bg-white">
-        <img src={logo} alt="SmartTenantAI" className="h-8 w-auto" />
+        <img src={logo} alt="SmartTenantAI" className="h-8 w-8 rounded-md object-cover" />
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-12">
