@@ -10,6 +10,7 @@ const RESOURCE_LABELS: Record<PlanLimitKey, string> = {
   equipment: 'equipment items',
   recurringRequests: 'recurring maintenance requests',
   storageBytes: 'storage',
+  teamMembers: 'team members',
 };
 
 const UPGRADE_FEATURE: Record<PlanLimitKey, string> = {
@@ -18,6 +19,7 @@ const UPGRADE_FEATURE: Record<PlanLimitKey, string> = {
   equipment: 'recurring-transactions',
   recurringRequests: 'maintenance-board',
   storageBytes: 'recurring-transactions',
+  teamMembers: 'team-management',
 };
 
 interface PlanLimitBannerProps {
