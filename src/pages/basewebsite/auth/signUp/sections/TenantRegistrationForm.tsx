@@ -45,6 +45,10 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
       return 'Password must contain at least one number';
     }
 
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      return 'Password must contain at least one symbol';
+    }
+
     return undefined;
   };
 
@@ -115,9 +119,9 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
     }
 
     // Validate password strength
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/;
     if (formData.password.length < 8 || !passwordRegex.test(formData.password)) {
-      setError('Password must be at least 8 characters and contain uppercase, lowercase, and a number');
+      setError('Password must be at least 8 characters and contain uppercase, lowercase, a number, and a symbol');
       return;
     }
 
@@ -270,7 +274,7 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
           </div>
 
           <p className="text-xs text-gray-600">
-            Password must be at least 8 characters and contain 1 number, both upper & lowercase letters
+            Password must be at least 8 characters and contain 1 number, 1 symbol, both upper & lowercase letters
           </p>
 
           {/* Terms and Conditions */}

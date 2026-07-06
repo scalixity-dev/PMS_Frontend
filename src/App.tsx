@@ -437,7 +437,7 @@ const App: React.FC = () => {
               <Route element={<TeamPermissionGuard module="rental-applications"><Outlet /></TeamPermissionGuard>}>
                 <Route path="/dashboard/leasing/applications" element={<Application />} />
                 <Route path="/dashboard/application/new" element={<NewApplication />} />
-                <Route path="/dashboard/application/:id" element={<ApplicationDetail />} />
+                <Route path="/dashboard/application/:id" element={<ProtectedRoute><ApplicationDetail /></ProtectedRoute>} />
               </Route>
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
               <Route path="/dashboard/leasing/leases/import" element={<ImportLeases />} />

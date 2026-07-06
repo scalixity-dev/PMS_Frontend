@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { authService } from "../../services/auth.service";
 import logo from "../../assets/images/logo.png";
-import { pricingPlans } from "../basewebsite/pricing/sections/PricingAndTableData";
+import { pricingPlans, allFeatureTables } from "../basewebsite/pricing/sections/PricingAndTableData";
+import { AppfolioPricingTable } from "../basewebsite/pricing/sections/FeaturesTable";
+import RequestDemoCard from "../basewebsite/pricing/sections/RequestDemo";
 
 const CheckIcon = ({ dark }: { dark?: boolean }) => (
   <svg width="16" height="16" viewBox="0 0 17 17" fill="none">
@@ -20,10 +22,20 @@ interface PlanCardProps {
   onSelect: (planId: string) => void;
   loading: boolean;
   selectedPlan: string | null;
+  isHighlighted: boolean;
+  onHighlight: (planId: string) => void;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({ plan, isYearly, onSelect, loading, selectedPlan }) => {
-  const isPro = plan.isPro;
+const PlanCard: React.FC<PlanCardProps> = ({
+  plan,
+  isYearly,
+  onSelect,
+  loading,
+  selectedPlan,
+  isHighlighted,
+  onHighlight,
+}) => {
+  const isPro = isHighlighted;
   const isCustom = plan.priceText.toLowerCase() === "custom";
   const isThisLoading = loading && selectedPlan === plan.plan.toLowerCase();
 
@@ -42,13 +54,14 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, isYearly, onSelect, loading, 
 
   return (
     <div
-      className={`relative flex flex-col rounded-2xl p-6 transition-all duration-200 border-2 ${
+      onClick={() => onHighlight(plan.plan.toLowerCase())}
+      className={`relative flex flex-col rounded-2xl p-6 transition-all duration-200 border-2 cursor-pointer ${
         isPro
           ? "bg-[#20CC95] border-white shadow-xl shadow-[#20CC95]/30 text-white"
           : "bg-white border-gray-100 hover:border-[#20CC95] hover:shadow-lg shadow-sm"
       }`}
     >
-      {isPro && (
+      {plan.isPopular && (
         <span className="absolute -top-3 right-5 bg-[#FEC74E] text-white text-xs font-bold px-3 py-1 rounded-full shadow">
           Most Popular
         </span>
@@ -71,7 +84,10 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, isYearly, onSelect, loading, 
       </div>
 
       <button
-        onClick={() => onSelect(plan.plan.toLowerCase())}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(plan.plan.toLowerCase());
+        }}
         disabled={loading}
         className={`w-full py-3 rounded-lg font-semibold text-sm transition-all duration-200 mb-6 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
           isPro
@@ -116,6 +132,10 @@ export default function SelectPlanPage() {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [highlightedPlan, setHighlightedPlan] = useState<string>(
+    () => pricingPlans.find((p) => p.isPopular)?.plan.toLowerCase() ?? pricingPlans[0].plan.toLowerCase()
+  );
+  const [isTableOpen, setIsTableOpen] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -216,6 +236,8 @@ export default function SelectPlanPage() {
               onSelect={handleSelect}
               loading={loading}
               selectedPlan={selectedPlan}
+              isHighlighted={highlightedPlan === plan.plan.toLowerCase()}
+              onHighlight={setHighlightedPlan}
             />
           ))}
         </div>
@@ -225,6 +247,17 @@ export default function SelectPlanPage() {
           <a href="/terms" className="underline hover:text-gray-600">Terms of Service</a>.
         </p>
       </main>
+
+      <AppfolioPricingTable
+        categories={allFeatureTables}
+        isOpen={isTableOpen}
+        onToggle={() => setIsTableOpen((v) => !v)}
+        showTrialButtons={false}
+      />
+
+      <div className="mt-12 pb-16">
+        <RequestDemoCard />
+      </div>
     </div>
   );
 }

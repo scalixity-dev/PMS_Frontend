@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import DemoRequestModal from './DemoRequestModal';
 
 const RequestDemoCard: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="max-w-7xl mb-8 mx-auto px-4 sm:px-6 bg-[#819A78]/20 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between">
 
@@ -12,7 +15,10 @@ const RequestDemoCard: React.FC = () => {
           We're happy to answer any questions you have <br className="hidden md:inline" /> about SmartTenantAICloud.
         </p>
 
-        <button className="bg-gradient-to-r from-[#3A4E33] to-[#85B474]  hover:from-[#3A4E33] hover:to-[#3A4E33] text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 flex items-center justify-center mx-auto md:mx-0">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-gradient-to-r from-[#3A4E33] to-[#85B474]  hover:from-[#3A4E33] hover:to-[#3A4E33] text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 flex items-center justify-center mx-auto md:mx-0"
+        >
           Request A Demo
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -38,6 +44,8 @@ const RequestDemoCard: React.FC = () => {
           className="rounded-lg lg:rounded-xl md:rounded-xl shadow-lg w-full max-w-[420px] h-auto object-cover mx-auto md:mx-0"
         />
       </div>
+
+      <DemoRequestModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

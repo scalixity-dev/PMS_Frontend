@@ -244,6 +244,18 @@ const Calendar: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPrepend, setIsPrepend] = useState(false);
     const previousScrollHeightRef = useRef(0);
+    // While true, scroll-driven month detection (IntersectionObserver + handleScrollForHeader)
+    // is suppressed so it can't race with and override a month/year picked from the dropdown.
+    const isProgrammaticScrollRef = useRef(false);
+    const programmaticScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (programmaticScrollTimeoutRef.current) {
+                clearTimeout(programmaticScrollTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Debounced month loading to prevent rapid additions
     const isLoadingMonths = useRef(false);
@@ -317,6 +329,7 @@ const Calendar: React.FC = () => {
 
         const observer = new IntersectionObserver(
             (entries) => {
+                if (isProgrammaticScrollRef.current) return;
                 entries.forEach((entry) => {
                     if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
                         const dateStr = entry.target.getAttribute('data-date');
@@ -377,57 +390,61 @@ const Calendar: React.FC = () => {
     );
 
     const onScroll = () => {
+        if (isProgrammaticScrollRef.current) return;
         debouncedScrollHandler();
     };
 
-    const handleDateChange = (newDate: Date) => {
+    const handleDateChange = (newDate: Date, scrollToToday = false) => {
         setCurrentDate(newDate);
         setMonths([
             subMonths(newDate, 1),
             newDate,
             addMonths(newDate, 1),
         ]);
+
+        isProgrammaticScrollRef.current = true;
+        if (programmaticScrollTimeoutRef.current) {
+            clearTimeout(programmaticScrollTimeoutRef.current);
+        }
+
         // Scroll to the new date
         setTimeout(() => {
             if (containerRef.current) {
-                // Try to find the specific day cell first (e.g. for Today)
-                const todayEl = containerRef.current.querySelector('.today-cell');
+                const todayEl = scrollToToday ? containerRef.current.querySelector('.today-cell') : null;
                 if (todayEl) {
                     todayEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
                 } else {
-                    // Fallback to month start
+                    // Scroll to the picked month's start
                     const el = containerRef.current.querySelector(`[data-date="${newDate.toISOString()}"]`);
                     if (el) {
                         el.scrollIntoView({ block: 'start', behavior: 'smooth' });
                     }
                 }
             }
+            programmaticScrollTimeoutRef.current = setTimeout(() => {
+                isProgrammaticScrollRef.current = false;
+            }, 700);
         }, 100);
     };
 
     const handleTodayClick = () => {
-        handleDateChange(new Date());
+        handleDateChange(new Date(), true);
     };
 
-    // Scroll to current month on initial render
+  
     useEffect(() => {
+        if (showFullLoader) return;
         const timer = setTimeout(() => {
             if (containerRef.current) {
-                const todayEl = containerRef.current.querySelector('.today-cell');
-                if (todayEl) {
-                    todayEl.scrollIntoView({ block: 'center', behavior: 'auto' });
-                } else {
-                    // Fallback: scroll to the current month section
-                    const currentMonthIso = startOfMonth(new Date()).toISOString();
-                    const el = containerRef.current.querySelector(`[data-date="${currentMonthIso}"]`);
-                    if (el) {
-                        (el as HTMLElement).scrollIntoView({ block: 'start', behavior: 'auto' });
-                    }
+                const currentMonthIso = startOfMonth(new Date()).toISOString();
+                const el = containerRef.current.querySelector(`[data-date="${currentMonthIso}"]`);
+                if (el) {
+                    (el as HTMLElement).scrollIntoView({ block: 'start', behavior: 'auto' });
                 }
             }
         }, 100);
         return () => clearTimeout(timer);
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [showFullLoader]);
 
     const weekDays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
