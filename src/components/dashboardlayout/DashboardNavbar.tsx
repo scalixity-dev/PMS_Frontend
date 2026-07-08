@@ -21,7 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { API_BASE_URL } from "../../config/api.config";
-import logo from "../../assets/images/logo.png";
+import { landlordIcon as logo } from "../../utils/roleIcon";
 import { authService } from "../../services/auth.service";
 import { useGetCurrentUser } from "../../hooks/useAuthQueries";
 import { propertyQueryKeys } from "../../hooks/usePropertyQueries";
@@ -370,7 +370,7 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
 
             {/* Desktop Logo */}
             <div className="flex items-center gap-2 text-white">
-              <img src={logo} alt="SmartTenantAI" className="w-7 h-7" style={{ filter: "invert(1) brightness(2)" }} />
+              <img src={logo} alt="SmartTenantAI" className="w-7 h-7 rounded-md object-cover" />
               <span className="text-lg font-bold hidden sm:inline-block tracking-tight">SmartTenantAI</span>
             </div>
           </div>

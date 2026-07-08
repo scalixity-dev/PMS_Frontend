@@ -26,6 +26,7 @@ import AIChatButton from './components/common/AIChatButton';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
 import { GlobalLoader } from './components/common/GlobalLoader';
+import { FaviconManager } from './components/common/FaviconManager';
 import Welcome from './pages/ServiceDashboard/pages/onboarding/Welcome';
 import SelectProfession from './pages/ServiceDashboard/pages/onboarding/SelectProfession';
 import ProfessionDetails from './pages/ServiceDashboard/pages/onboarding/ProfessionDetails';
@@ -259,10 +260,15 @@ const Notification = lazy(() => import('./pages/Dashboard/features/Notification/
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 
-// Inner component so usePageTracking can sit inside <BrowserRouter>.
+// Inner component so usePageTracking/FaviconManager can sit inside <BrowserRouter>.
 const RoutedApp: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   usePageTracking();
-  return <>{children}</>;
+  return (
+    <>
+      <FaviconManager />
+      {children}
+    </>
+  );
 };
 
 const App: React.FC = () => {

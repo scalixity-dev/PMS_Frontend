@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import type { KeyboardEvent, ClipboardEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import logo from '../../../../../assets/images/logo.png';
+import { tenantIcon as logo } from '../../../../../utils/roleIcon';
 import { authService } from '../../../../../services/auth.service';
 
 type Step = 'email' | 'otp' | 'done';
@@ -151,7 +151,7 @@ const ForgotPasswordForm: React.FC = () => {
         return (
             <div className="w-full lg:w-1/2 p-2 sm:p-10 lg:p-6 flex flex-col justify-center">
                 <div className="text-center lg:text-left mb-8">
-                    <img src={logo} alt="SmartTenantAI Logo" className="h-8 w-8 mx-auto lg:mx-0 mb-2 brightness-0" />
+                    <img src={logo} alt="SmartTenantAI Logo" className="h-8 w-8 mx-auto lg:mx-0 mb-2 rounded-md object-cover" />
                     <h1 className="text-md font-body text-gray-800 font-bold mb-2">SmartTenantAI</h1>
                     <h2 className="text-xl font-heading font-semibold text-gray-900 mb-2">Password reset</h2>
                     <p className="text-gray-600 text-sm">Your password has been reset successfully. You can now sign in with your new password.</p>
@@ -180,7 +180,7 @@ const ForgotPasswordForm: React.FC = () => {
         return (
             <div className="w-full lg:w-1/2 p-2 sm:p-10 lg:p-6 flex flex-col justify-center">
                 <div className="text-center lg:text-left mb-8">
-                    <img src={logo} alt="SmartTenantAI Logo" className="h-8 w-8 mx-auto lg:mx-0 mb-2 brightness-0" />
+                    <img src={logo} alt="SmartTenantAI Logo" className="h-8 w-8 mx-auto lg:mx-0 mb-2 rounded-md object-cover" />
                     <h1 className="text-md font-body text-gray-800 font-bold mb-2">SmartTenantAI</h1>
                     <h2 className="text-xl font-heading font-semibold text-gray-900 mb-2">Enter OTP & new password</h2>
                     <p className="text-gray-600 text-sm">
@@ -294,7 +294,7 @@ const ForgotPasswordForm: React.FC = () => {
     return (
         <div className="w-full lg:w-1/2 p-2 sm:p-10 lg:p-6 flex flex-col justify-center">
             <div className="text-center lg:text-left mb-8">
-                <img src={logo} alt="SmartTenantAI Logo" className="h-8 w-8 mx-auto lg:mx-0 mb-2 brightness-0" />
+                <img src={logo} alt="SmartTenantAI Logo" className="h-8 w-8 mx-auto lg:mx-0 mb-2 rounded-md object-cover" />
                 <h1 className="text-md font-body text-gray-800 font-bold mb-2">SmartTenantAI</h1>
                 <h2 className="text-xl font-heading font-semibold text-gray-900 mb-2">Forgot password?</h2>
                 <p className="text-gray-600 text-sm">Enter your email and we'll send you an OTP code to reset your password.</p>

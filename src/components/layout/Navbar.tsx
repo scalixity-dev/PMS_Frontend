@@ -5,7 +5,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom';
-import logo from '../../assets/images/logo.png';
+import { tenantIcon as logo } from '../../utils/roleIcon';
 import { ClipboardCheck, FileText, DollarSign, Users, UserCog, User, Wrench } from 'lucide-react';
 
 const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-[var(--color-primary)]';
@@ -118,7 +118,7 @@ const Navbar: React.FC = () => {
             <img
               src={logo}
               alt="SmartTenantAI Logo"
-              className="h-6 w-6 md:h-8 md:w-8 lg:h-10 lg:w-10 brightness-0 invert"
+              className="h-6 w-6 md:h-8 md:w-8 lg:h-10 lg:w-10 rounded-lg object-cover"
             />
             <span className="font-body text-md md:text-lg lg:text-xl font-bold leading-[150%] tracking-normal">SmartTenantAI</span>
           </Link>

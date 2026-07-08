@@ -1,6 +1,6 @@
 import React from "react";
 import { Mail, Send, Facebook, Linkedin, Twitter, Youtube } from "lucide-react";
-import logo from '../../assets/images/logo.png';
+import { tenantIcon as logo } from '../../utils/roleIcon';
 import { useLocation, Link } from "react-router-dom";
 
 const Footer: React.FC = () => {
