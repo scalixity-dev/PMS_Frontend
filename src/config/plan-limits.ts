@@ -21,6 +21,7 @@ export const PLAN_LIMITS = {
     equipment: 10,
     recurringRequests: 10,
     storageBytes: 1 * 1024 * 1024 * 1024,
+    teamMembers: 0,
   },
   growth: {
     leases: 30,
@@ -28,6 +29,7 @@ export const PLAN_LIMITS = {
     equipment: 25,
     recurringRequests: 20,
     storageBytes: 10 * 1024 * 1024 * 1024,
+    teamMembers: 1,
   },
   pro: {
     leases: 60,
@@ -35,6 +37,7 @@ export const PLAN_LIMITS = {
     equipment: 100,
     recurringRequests: 100,
     storageBytes: 25 * 1024 * 1024 * 1024,
+    teamMembers: 3,
   },
   business: {
     leases: UNLIMITED,
@@ -42,6 +45,7 @@ export const PLAN_LIMITS = {
     equipment: UNLIMITED,
     recurringRequests: UNLIMITED,
     storageBytes: UNLIMITED,
+    teamMembers: UNLIMITED,
   },
 } satisfies Record<PlanId, Record<string, number>>;
 
@@ -62,4 +66,5 @@ export const PLAN_LIMIT_DISPLAY: Record<PlanLimitKey, (limit: number) => string>
     const gb = n / (1024 * 1024 * 1024);
     return `${gb} GB storage`;
   },
+  teamMembers: (n) => (isFinite(n) ? `${n} team member${n === 1 ? '' : 's'}` : 'Unlimited team members'),
 };

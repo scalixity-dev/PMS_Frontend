@@ -107,7 +107,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const mainRef = useRef<HTMLElement>(null);
 
   const { isLoading: sidebarLoading } = useTeamPermissions();
-  const { isTrialing, isExpired, daysLeftInTrial, trialEndsAt, isLoading: subLoading } = useSubscription();
+  const { isTrialing, isExpired, daysLeftInTrial, trialEndsAt, isLoading: subLoading, refetch: refetchSubscription } = useSubscription();
 
   // Redirect expired users to plan settings; allow subscription settings through
   const isSubscriptionSettingsRoute = location.pathname.startsWith('/dashboard/settings/subscription');
@@ -119,6 +119,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
     window.scrollTo(0, 0);
   }, [location.pathname]);
+
+  // SubscriptionProvider lives above the router and never remounts on
+  // logout/login, so its cached data can belong to the previous account.
+  // DashboardLayout itself mounts fresh every time a session enters the
+  // dashboard, so force a refetch here to pick up the current user's plan.
+  useEffect(() => {
+    refetchSubscription();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={`flex min-h-screen ${isMessagesPage ? 'bg-white' : 'bg-gray-100'} flex-col`}>

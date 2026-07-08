@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams, useOutletContext } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     ChevronLeft,
     ChevronDown,
@@ -18,7 +19,7 @@ import DeletePropertyModal from './components/DeletePropertyModal';
 import AssignTeamModal from './components/AssignTeamModal';
 import DetailTabs from '../../components/DetailTabs';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
-import { useGetProperty } from '../../../../hooks/usePropertyQueries';
+import { useGetProperty, propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
 import { useGetUnit } from '../../../../hooks/useUnitQueries';
 import { propertyService, isSummaryUnits } from '../../../../services/property.service';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -35,6 +36,7 @@ const PropertyDetail: React.FC = () => {
     const [searchParams] = useSearchParams();
     const unitId = searchParams.get('unitId'); // Get unit ID from query parameter
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const queryClient = useQueryClient();
 
     // All hooks must be declared before any early returns
     const [activeTab, setActiveTab] = useState('profile');
@@ -93,6 +95,8 @@ const PropertyDetail: React.FC = () => {
 
         try {
             await propertyService.delete(id);
+            // Refresh the properties list cache so the deleted property disappears immediately.
+            await queryClient.invalidateQueries({ queryKey: propertyQueryKeys.all });
             // Navigate to properties list after successful deletion
             navigate('/dashboard/properties');
         } catch (err) {

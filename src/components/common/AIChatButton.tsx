@@ -131,6 +131,10 @@ const AIChatButton: React.FC = () => {
     );
   }, [threadId, isStreaming, isAuthenticated, userEmail]);
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <>
       <button

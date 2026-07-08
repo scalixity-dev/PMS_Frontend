@@ -111,22 +111,12 @@ const ToastItemView: React.FC<{ toast: ToastItem; onClose: () => void }> = ({ to
 export const useToast = (): ToastContextValue => {
     const ctx = useContext(ToastContext);
     if (!ctx) {
-        // Fallback so components don't crash if provider is missing.
-        // Logs to console + falls back to window.alert for errors.
+        // Fallback so components don't crash if provider is missing. Console-only —
+        // never fall back to a native window.alert/confirm dialog.
         return {
-            show: (msg, type = 'info') => {
-                if (type === 'error') {
-                    console.error('[Toast fallback]', msg);
-                    if (typeof window !== 'undefined') window.alert(msg);
-                } else {
-                    console.log('[Toast fallback]', type, msg);
-                }
-            },
+            show: (msg, type = 'info') => console.log(`[Toast fallback] ${type}:`, msg),
             success: (msg) => console.log('[Toast success]', msg),
-            error: (msg) => {
-                console.error('[Toast error]', msg);
-                if (typeof window !== 'undefined') window.alert(msg);
-            },
+            error: (msg) => console.error('[Toast error]', msg),
             warning: (msg) => console.warn('[Toast warning]', msg),
             info: (msg) => console.info('[Toast info]', msg),
         };

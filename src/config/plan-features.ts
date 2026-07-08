@@ -24,7 +24,7 @@ export const PLAN_FEATURE_REQUIREMENTS: Record<string, PlanId> = {
   // Pro+ features
   'custom-application-forms':   'pro',
   'auto-assign-maintenance':    'pro',
-  'team-management':            'pro',
+  'team-management':            'growth',
   'property-level-permissions': 'pro',
   'document-inspector':         'pro',
 };

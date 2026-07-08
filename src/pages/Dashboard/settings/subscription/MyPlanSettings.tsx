@@ -31,6 +31,7 @@ const MyPlanSettings: React.FC = () => {
   const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isSwitchBillingModalOpen, setIsSwitchBillingModalOpen] = useState(false);
   const [isReactivating, setIsReactivating] = useState(false);
   const [isFiltered, setIsFiltered] = useState(false);
   const actionDropdownRef = useRef<HTMLDivElement>(null);
@@ -162,6 +163,7 @@ const MyPlanSettings: React.FC = () => {
       toast.error(err instanceof Error ? err.message : "Failed to switch billing cycle");
     } finally {
       setIsUpdating(false);
+      setIsSwitchBillingModalOpen(false);
     }
   };
 
@@ -223,16 +225,17 @@ const MyPlanSettings: React.FC = () => {
     <SubscriptionSettingsLayout
       activeTab="my-plan"
       headerActions={
-        <>
-          <Button
-            variant="primary"
-            onClick={handleChangePlan}
-            className="bg-[#486370] hover:bg-[#486370] text-white px-5 py-2 rounded-lg font-medium"
-          >
-            Change Plan
-          </Button>
-          {/* Action dropdown — only shown for active/cancelled paid subscriptions */}
-          {subscription && !isTrialing && !isExpired && (
+        // While trialing/expired, the plan card already shows its own
+        // "Change plan" / "Choose a plan" button — don't duplicate it here.
+        subscription && !isTrialing && !isExpired && (
+          <>
+            <Button
+              variant="primary"
+              onClick={handleChangePlan}
+              className="bg-[#486370] hover:bg-[#486370] text-white px-5 py-2 rounded-lg font-medium"
+            >
+              Change Plan
+            </Button>
             <div className="relative" ref={actionDropdownRef}>
               <Button
                 onClick={() => setIsActionDropdownOpen((o) => !o)}
@@ -263,8 +266,8 @@ const MyPlanSettings: React.FC = () => {
                 </div>
               )}
             </div>
-          )}
-        </>
+          </>
+        )
       }
     >
       {/* Current Plan Section */}
@@ -369,7 +372,7 @@ const MyPlanSettings: React.FC = () => {
                 </>
               ) : (
                 <Button
-                  onClick={handleSwitchBilling}
+                  onClick={() => setIsSwitchBillingModalOpen(true)}
                   disabled={isUpdating}
                   className="bg-[#486370] hover:bg-[#3a505b] text-white px-5 py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
                 >
@@ -585,6 +588,35 @@ const MyPlanSettings: React.FC = () => {
             </span>
             <br /><br />
             You can reactivate at any time before that date.
+          </p>
+        }
+      />
+
+      {/* Switch Billing Cycle Confirmation */}
+      <DeleteConfirmationModal
+        isOpen={isSwitchBillingModalOpen}
+        onClose={() => setIsSwitchBillingModalOpen(false)}
+        onConfirm={handleSwitchBilling}
+        isLoading={isUpdating}
+        title={subscription?.isYearly ? "Switch to Monthly Billing" : "Switch to Yearly Billing"}
+        headerClassName="bg-[#486370]"
+        confirmText={subscription?.isYearly ? "Yes, Switch to Monthly" : "Yes, Switch to Yearly"}
+        confirmButtonClass="bg-[#486370] text-white px-4 py-2.5 rounded-lg font-bold hover:bg-[#3a505b] transition-colors shadow-sm"
+        message={
+          <p className="text-gray-600 text-sm">
+            {subscription?.isYearly ? (
+              <>
+                You'll be switched from yearly to monthly billing for your{' '}
+                <span className="font-semibold text-gray-800">{subscription?.planName}</span> plan.
+              </>
+            ) : (
+              <>
+                You'll be switched from monthly to yearly billing for your{' '}
+                <span className="font-semibold text-gray-800">{subscription?.planName}</span> plan.
+                <br /><br />
+                A prorated charge will be applied to your card on file immediately.
+              </>
+            )}
           </p>
         }
       />

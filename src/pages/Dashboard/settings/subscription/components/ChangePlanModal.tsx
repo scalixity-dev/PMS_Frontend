@@ -44,7 +44,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
-  const { refetch: refetchSubscription, isExpired } = useSubscription();
+  const { refetch: refetchSubscription, isExpired, isTrialing } = useSubscription();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isYearly, setIsYearly] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
@@ -136,8 +136,17 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
   };
 
   const trialedPlanId = currentSubscription?.planId?.toLowerCase() ?? null;
-  const isResumingTrialPlan =
-    isExpired && selectedPlan?.toLowerCase() === trialedPlanId;
+  const isSamePlanSelected = selectedPlan?.toLowerCase() === trialedPlanId;
+  // Still trialing (or the trial expired) and the user selected the same plan
+  // they're trialing — clicking through should actually convert the trial into
+  // a real paid subscription now (ends the trial, charges the card).
+  const isConvertingTrialPlan = (isTrialing || isExpired) && isSamePlanSelected;
+  // Already an active paying subscriber and nothing changed — a true no-op.
+  const isNoOpPlanSelected =
+    !isTrialing &&
+    !isExpired &&
+    isSamePlanSelected &&
+    currentSubscription?.isYearly === isYearly;
 
   const handlePlanChange = async () => {
     if (!selectedPlan) {
@@ -151,9 +160,11 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
       return;
     }
 
-    // Don't change if it's the same plan and billing cycle — BUT skip this guard
-    // when the trial has expired, since the user needs to actually create a subscription
+    // Don't hit the API if the user is already an active paying subscriber
+    // on this exact plan/cycle — nothing to change. Trialing users selecting
+    // their trial plan fall through and actually convert (see isConvertingTrialPlan).
     if (
+      !isTrialing &&
       !isExpired &&
       currentSubscription &&
       currentSubscription.planId.toLowerCase() === selectedPlan.toLowerCase() &&
@@ -395,7 +406,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
               Cancel
             </button>
             <button
-              onClick={handlePlanChange}
+              onClick={isNoOpPlanSelected ? onClose : handlePlanChange}
               disabled={isChanging || !selectedPlan || cardsLoading}
               className="px-6 py-2 bg-[#486370] text-white rounded-lg font-medium hover:bg-[#3a505b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full sm:w-auto"
             >
@@ -404,7 +415,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
                 ? "Contact Sales"
                 : isChanging
                   ? "Processing..."
-                  : isResumingTrialPlan
+                  : isConvertingTrialPlan || isNoOpPlanSelected
                     ? `Continue with ${currentSubscription?.planName ?? selectedPlan}`
                     : isExpired
                       ? "Choose Plan"

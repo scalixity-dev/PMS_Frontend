@@ -55,11 +55,17 @@ interface AppfolioPricingTableProps {
   categories: Category[];
   isOpen?: boolean;
   onToggle?: () => void;
+  showTrialButtons?: boolean;
 }
 
 // --- New Component Logic ---
 
-export const AppfolioPricingTable: React.FC<AppfolioPricingTableProps> = ({ categories, isOpen = false, onToggle }) => {
+export const AppfolioPricingTable: React.FC<AppfolioPricingTableProps> = ({
+  categories,
+  isOpen = false,
+  onToggle,
+  showTrialButtons = true,
+}) => {
   // State for mobile tab selection
   const [selectedPlan, setSelectedPlan] = useState<Plan>('growth');
 
@@ -108,7 +114,7 @@ export const AppfolioPricingTable: React.FC<AppfolioPricingTableProps> = ({ cate
                 <th key={plan} className="w-1/6 border-r border-gray-200 p-4 text-center bg-transparent">
                   <div className="flex flex-col items-center justify-center space-y-2">
                     <span className="text-sm sm:text-base font-bold">{planNames[plan]}</span>
-                    <TrialButton />
+                    {showTrialButtons && <TrialButton />}
                   </div>
                 </th>
               ))}
@@ -178,9 +184,11 @@ export const AppfolioPricingTable: React.FC<AppfolioPricingTableProps> = ({ cate
         </div>
 
         {/* Trial Button for selected plan */}
-        <div className="p-4 border-b border-x border-gray-200">
-            <TrialButton />
-        </div>
+        {showTrialButtons && (
+          <div className="p-4 border-b border-x border-gray-200">
+              <TrialButton />
+          </div>
+        )}
 
         {/* Feature List by Category */}
         <div className="border border-t-0 border-gray-200 rounded-b-md overflow-hidden">

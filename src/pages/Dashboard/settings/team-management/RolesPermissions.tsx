@@ -12,11 +12,10 @@ import {
 } from "../../../../hooks/useTeamQueries";
 import { useToast } from "../../../../components/common/Toast";
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { usePlanFeatures } from "../../../../hooks/usePlanFeatures";
 
 
 const INPUT_CLASS = "w-full px-4 py-3 border-b border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors";
-
-const TEAM_LIMIT = 10;
 
 interface PermissionMap {
     [module: string]: { view: boolean; manage: boolean };
@@ -550,6 +549,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 export default function RolesPermissions() {
     const { data: members = [], isLoading } = useGetTeamMembers();
+    const { checkLimit } = usePlanFeatures();
     const inviteMutation = useInviteTeamMember();
     const deleteMutation = useDeleteTeamMember();
     const resendMutation = useResendInvitation();
@@ -574,6 +574,13 @@ export default function RolesPermissions() {
                 .includes(q),
         );
     }, [members, searchQuery]);
+
+    // Revoked seats free up the slot, so they don't count against the plan limit
+    const activeMemberCount = useMemo(
+        () => members.filter((m) => m.status !== 'REVOKED').length,
+        [members],
+    );
+    const teamLimitInfo = checkLimit('teamMembers', activeMemberCount);
 
     const handleInvite = useCallback(async (data: InviteFormData) => {
         try {
@@ -655,7 +662,9 @@ export default function RolesPermissions() {
         <button
             type="button"
             onClick={() => setIsInviteModalOpen(true)}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-white font-medium text-sm bg-[#7CD947] hover:bg-[#6bc93a] border border-white shadow-md hover:shadow-lg transition-shadow"
+            disabled={!teamLimitInfo.withinLimit}
+            title={!teamLimitInfo.withinLimit ? 'You have reached your plan\'s team member limit. Upgrade to invite more.' : undefined}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-white font-medium text-sm bg-[#7CD947] hover:bg-[#6bc93a] border border-white shadow-md hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#7CD947]"
         >
             Invite Team Member
         </button>
@@ -816,7 +825,9 @@ export default function RolesPermissions() {
                 {/* Team limit */}
                 {!isLoading && (
                     <div className="mt-6 text-center text-sm text-gray-500">
-                        Team limit: <span className="font-semibold text-gray-700">{members.length} of {TEAM_LIMIT}</span>
+                        Team limit: <span className="font-semibold text-gray-700">
+                            {activeMemberCount} of {teamLimitInfo.isUnlimited ? 'Unlimited' : teamLimitInfo.limit}
+                        </span>
                     </div>
                 )}
             </TeamManagementSettingsLayout>

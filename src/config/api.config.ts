@@ -454,4 +454,7 @@ export const API_ENDPOINTS = {
     RENTABILITY: (params: string) => `${API_BASE_URL}/api/v1/reports/rentability${params}`,
     PROVIDER_STATEMENT: (params: string) => `${API_BASE_URL}/api/v1/reports/provider-statement${params}`,
   },
+  DEMO_REQUESTS: {
+    CREATE: `${API_BASE_URL}/demo-requests`,
+  },
 };
