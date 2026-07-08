@@ -1,6 +1,6 @@
 import { Archive, ChevronLeft, Settings } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { useGetNotifications, useMarkAllAsRead } from '../../../../hooks/useNotificationQueries';
+import { useGetNotifications, useMarkAllAsRead, useMarkAsRead } from '../../../../hooks/useNotificationQueries';
 
 interface DashboardContext {
     sidebarCollapsed: boolean;
@@ -11,6 +11,7 @@ const Notification = () => {
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
     const { data: notificationsData, isLoading } = useGetNotifications();
     const markAllAsRead = useMarkAllAsRead();
+    const markAsRead = useMarkAsRead();
 
     const notifications = notificationsData?.data || [];
 
@@ -21,6 +22,11 @@ const Notification = () => {
             'PAYMENT': 'payment',
             'LEASE': 'lease',
             'GENERAL': 'general',
+            'DOCUMENT': 'document',
+            'TEAM': 'team',
+            'LISTING': 'listing',
+            'SUBSCRIPTION': 'subscription',
+            'REMINDER': 'reminder',
         };
         return typeMap[type] || 'general';
     };
@@ -36,7 +42,13 @@ const Notification = () => {
         markAllAsRead.mutate();
     };
 
-    const handleNotificationClick = (type: string) => {
+    const handleNotificationClick = (notification: any) => {
+        // Mark as read if unread
+        if (!notification.isRead) {
+            markAsRead.mutate(notification.id);
+        }
+
+        const type = getTypeFromNotificationType(notification.type);
         switch (type) {
             case 'maintenance':
                 navigate('/dashboard/maintenance/requests');
@@ -44,8 +56,27 @@ const Notification = () => {
             case 'application':
                 navigate('/dashboard/leasing/applications');
                 break;
+            case 'payment':
+                navigate('/dashboard/accounting/payments');
+                break;
+            case 'document':
+                navigate('/dashboard/documents/file-manager');
+                break;
+            case 'team':
+                navigate('/dashboard/settings/team-management/roles-permissions');
+                break;
             case 'listing':
-                navigate('/dashboard/properties');
+                if (notification.entityId) {
+                    navigate(`/dashboard/properties/${notification.entityId}`);
+                } else {
+                    navigate('/dashboard/properties');
+                }
+                break;
+            case 'subscription':
+                navigate('/dashboard/settings/subscription/my-plan');
+                break;
+            case 'reminder':
+                navigate('/dashboard/calendar');
                 break;
             default:
                 break;
@@ -107,11 +138,10 @@ const Notification = () => {
                     <div className="space-y-4">
                         {notifications.map((notification: any) => {
                             const { date, time } = formatDateTime(notification.createdAt);
-                            const type = getTypeFromNotificationType(notification.type);
                             return (
                                 <div
                                     key={notification.id}
-                                    onClick={() => handleNotificationClick(type)}
+                                    onClick={() => handleNotificationClick(notification)}
                                     className="group relative bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.99]"
                                 >
                                     {/* Teal Left Border */}

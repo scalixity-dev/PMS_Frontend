@@ -17,6 +17,11 @@ const UserNotificationFeed = () => {
             'PAYMENT': 'payment',
             'LEASE': 'lease',
             'GENERAL': 'general',
+            'DOCUMENT': 'document',
+            'TEAM': 'team',
+            'LISTING': 'listing',
+            'SUBSCRIPTION': 'subscription',
+            'REMINDER': 'reminder',
         };
         return typeMap[type] || 'general';
     };
@@ -47,14 +52,22 @@ const UserNotificationFeed = () => {
                 navigate('/userdashboard/applications');
                 break;
             case 'payment':
-                navigate('/userdashboard/rent');
+                if (notification.entityType === 'transaction' && notification.entityId) {
+                    navigate(`/userdashboard/transactions/${notification.entityId}`);
+                } else {
+                    navigate('/userdashboard/rent');
+                }
                 break;
             case 'lease':
                 if (notification.entityId) {
                     navigate(`/userdashboard/leases/${notification.entityId}`);
                 }
                 break;
+            case 'document':
+                navigate('/userdashboard/downloads');
+                break;
             default:
+                // reminder, subscription, team, listing and unknown types stay on the feed
                 break;
         }
     };

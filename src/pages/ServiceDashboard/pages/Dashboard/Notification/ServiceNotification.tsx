@@ -1,6 +1,7 @@
 import { Archive, ChevronLeft } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import ServiceBreadCrumb from '@/pages/ServiceDashboard/components/ServiceBreadCrumb';
+import { useGetNotifications, useMarkAllAsRead, useMarkAsRead } from '@/hooks/useNotificationQueries';
 
 interface DashboardContext {
     sidebarCollapsed: boolean;
@@ -9,61 +10,39 @@ interface DashboardContext {
 const ServiceNotification = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
+    const { data: notificationsData, isLoading } = useGetNotifications();
+    const markAllAsRead = useMarkAllAsRead();
+    const markAsRead = useMarkAsRead();
 
-    const notifications = [
-        {
-            id: 1,
-            title: "New Job Available",
-            description: "A new electrical repair job matching your skills is available at Luxury Apartment Complex. Potentially high payout!",
-            date: "04/04/19",
-            time: "01:44 PM",
-            isNew: true,
-            type: "job"
-        },
-        {
-            id: 2,
-            title: "Message from Property Manager",
-            description: "You received a new message regarding the 'Water Leak' job at Downtown Residences.",
-            date: "04/04/19",
-            time: "10:30 AM",
-            isNew: true,
-            type: "message"
-        },
-        {
-            id: 3,
-            title: "Payout Processed",
-            description: "Your payout of $350 for the 'HVAC Repair' job has been processed successfully.",
-            date: "04/03/19",
-            time: "05:15 PM",
-            isNew: false,
-            type: "payout"
-        },
-        {
-            id: 4,
-            title: "Reminder: Scheduled Maintenance",
-            description: "Don't forget your scheduled visit to Sunset Towers tomorrow at 9:00 AM.",
-            date: "04/03/19",
-            time: "09:00 AM",
-            isNew: false,
-            type: "calendar"
+    const notifications = notificationsData?.data || [];
+
+    const formatDateTime = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const dateOnly = date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
+        const timeOnly = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        return { date: dateOnly, time: timeOnly };
+    };
+
+    const handleMarkAllAsRead = () => {
+        markAllAsRead.mutate();
+    };
+
+    const handleNotificationClick = (notification: any) => {
+        // Mark as read if unread
+        if (!notification.isRead) {
+            markAsRead.mutate(notification.id);
         }
-    ];
 
-    const handleNotificationClick = (type: string) => {
-        switch (type) {
-            case 'job':
-                navigate('/service-dashboard/find-job');
-                break;
-            case 'message':
-                navigate('/service-dashboard/messages');
-                break;
-            case 'payout':
-                navigate('/service-dashboard/accounting');
-                break;
-            case 'calendar':
-                navigate('/service-dashboard/calendar');
+        switch (notification.type) {
+            case 'MAINTENANCE':
+                if (notification.entityType === 'maintenance_request' && notification.entityId) {
+                    navigate(`/service-dashboard/requests/${notification.entityId}`);
+                } else {
+                    navigate('/service-dashboard/requests');
+                }
                 break;
             default:
+                // GENERAL and other types stay on the feed
                 break;
         }
     };
@@ -99,49 +78,62 @@ const ServiceNotification = () => {
                         <span className="font-bold text-sm">What's New</span>
                         <Archive size={16} className="text-gray-800" />
                     </div>
-                    <button className="text-sm font-medium hover:text-white/80 transition-colors w-full md:w-auto text-center md:text-right md:mr-4">
-                        Mark all as read
+                    <button
+                        onClick={handleMarkAllAsRead}
+                        disabled={markAllAsRead.isPending}
+                        className="text-sm font-medium hover:text-white/80 transition-colors w-full md:w-auto text-center md:text-right md:mr-4 disabled:opacity-50"
+                    >
+                        {markAllAsRead.isPending ? 'Marking...' : 'Mark all as read'}
                     </button>
                 </div>
 
                 {/* Notifications List */}
-                <div className="space-y-4">
-                    {notifications.map((notification, index) => (
-                        <div
-                            key={index}
-                            onClick={() => handleNotificationClick(notification.type)}
-                            className="group relative bg-white rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.99] border border-gray-100"
-                        >
-                            {/* Green Left Border */}
-                            <div className="absolute left-0 top-0 bottom-0 w-3 bg-[#7CD947] rounded-l-xl"></div>
+                {isLoading ? (
+                    <div className="text-center py-8 text-gray-500">Loading notifications...</div>
+                ) : notifications.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">No notifications</div>
+                ) : (
+                    <div className="space-y-4">
+                        {notifications.map((notification: any) => {
+                            const { date, time } = formatDateTime(notification.createdAt);
+                            return (
+                                <div
+                                    key={notification.id}
+                                    onClick={() => handleNotificationClick(notification)}
+                                    className="group relative bg-white rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.99] border border-gray-100"
+                                >
+                                    {/* Green Left Border */}
+                                    <div className={`absolute left-0 top-0 bottom-0 w-3 ${notification.isRead ? 'bg-gray-300' : 'bg-[#7CD947]'} rounded-l-xl`}></div>
 
-                            <div className="flex flex-col md:flex-row justify-between items-start gap-4 pl-5 md:pl-6">
-                                <div className="space-y-2 max-w-4xl w-full">
-                                    <h3 className="text-gray-900 font-bold text-base">
-                                        {notification.title}
-                                    </h3>
-                                    <p className="text-gray-500 text-sm leading-relaxed">
-                                        {notification.description}
-                                    </p>
-                                </div>
-
-                                <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start w-full md:w-auto gap-2 flex-shrink-0 border-t md:border-t-0 border-gray-100 pt-3 md:pt-0 mt-1 md:mt-0">
-                                    {notification.isNew && (
-                                        <span className="text-[#7CD947] text-xs font-bold animate-pulse order-2 md:order-1">New</span>
-                                    )}
-                                    <div className="flex flex-col items-start md:items-end text-left md:text-right order-1 md:order-2">
-                                        <div className="text-gray-500 text-sm font-medium">
-                                            {notification.date}
+                                    <div className="flex flex-col md:flex-row justify-between items-start gap-4 pl-5 md:pl-6">
+                                        <div className="space-y-2 max-w-4xl w-full">
+                                            <h3 className="text-gray-900 font-bold text-base">
+                                                {notification.title}
+                                            </h3>
+                                            <p className="text-gray-500 text-sm leading-relaxed">
+                                                {notification.body}
+                                            </p>
                                         </div>
-                                        <div className="text-gray-400 text-xs font-medium">
-                                            {notification.time}
+
+                                        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start w-full md:w-auto gap-2 flex-shrink-0 border-t md:border-t-0 border-gray-100 pt-3 md:pt-0 mt-1 md:mt-0">
+                                            {!notification.isRead && (
+                                                <span className="text-[#7CD947] text-xs font-bold animate-pulse order-2 md:order-1">New</span>
+                                            )}
+                                            <div className="flex flex-col items-start md:items-end text-left md:text-right order-1 md:order-2">
+                                                <div className="text-gray-500 text-sm font-medium">
+                                                    {date}
+                                                </div>
+                                                <div className="text-gray-400 text-xs font-medium">
+                                                    {time}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );

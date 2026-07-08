@@ -24,6 +24,7 @@ import { API_BASE_URL } from "../../config/api.config";
 import logo from "../../assets/images/logo.png";
 import { authService } from "../../services/auth.service";
 import { useGetCurrentUser } from "../../hooks/useAuthQueries";
+import { useGetUnreadCount } from "../../hooks/useNotificationQueries";
 import { propertyQueryKeys } from "../../hooks/usePropertyQueries";
 import AccountSwitcherModal from "../common/AccountSwitcherModal";
 import DownloadsModal from "../common/DownloadsModal";
@@ -111,6 +112,8 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
 
   const { isTeamMember, canView } = useTeamPermissions();
   const { data: currentUser, isLoading } = useGetCurrentUser();
+  const { data: unreadData } = useGetUnreadCount();
+  const unreadCount = unreadData?.unreadCount ?? 0;
   const userName = currentUser?.fullName || "User";
   const userEmail = currentUser?.email || "";
   const userRole = currentUser?.role || "";
@@ -526,10 +529,18 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
                       }}
                       className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      <div className="relative w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                         <Bell size={16} className="text-gray-700" />
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-[#3A6D6C] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center min-w-[16px]">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                          </span>
+                        )}
                       </div>
                       <span className="font-medium">Notifications</span>
+                      {unreadCount > 0 && (
+                        <span className="ml-auto text-xs font-bold text-[#3A6D6C]">{unreadCount}</span>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -575,10 +586,15 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
               {/* Notification (Bell) Icon */}
               <button
                 aria-label="Notifications"
-                className="w-8 h-8 md:mr-6 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
+                className="relative w-8 h-8 md:mr-6 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
                 onClick={() => navigate('/dashboard/notifications')}
               >
                 <Bell size={18} className="text-gray-800" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#3A6D6C] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center min-w-[16px]">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </button>
             </div>
 
