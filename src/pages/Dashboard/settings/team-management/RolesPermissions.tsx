@@ -12,6 +12,7 @@ import {
 } from "../../../../hooks/useTeamQueries";
 import { useToast } from "../../../../components/common/Toast";
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatRole } from '@/utils/roleIcon';
 import { usePlanFeatures } from "../../../../hooks/usePlanFeatures";
 
 
@@ -735,7 +736,7 @@ export default function RolesPermissions() {
                         {filteredMembers.map((member) => (
                             <div key={member.id} className="relative h-full">
                                 <div className="absolute -top-3 left-6 z-10 px-4 py-1.5 bg-[#E8F0EE] border border-[#3D7475] rounded-xl">
-                                    <h3 className="text-xs font-bold text-[#3D7475] uppercase tracking-wide">{member.role.replace(/_/g, ' ')}</h3>
+                                    <h3 className="text-xs font-bold text-[#3D7475] uppercase tracking-wide">{formatRole(member.role)}</h3>
                                 </div>
 
                                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 pt-10 flex flex-col h-full">

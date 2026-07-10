@@ -15,6 +15,7 @@ import { useChatToken, useChatWebSocket } from '../../../../hooks/useChatWebSock
 import { useOfflineQueue } from '../../../../hooks/useOfflineQueue';
 import { useChatToastStore } from '../../../../store/chatToastStore';
 import { useGetCurrentUser } from '../../../../hooks/useAuthQueries';
+import { formatRole } from '../../../../utils/roleIcon';
 import type { Chat, Message, ChatCategory } from './types';
 import { uploadChatMedia, type ChatMessage, type ChatConversation } from '../../../../services/chat.service';
 import ChatSidebar from './components/ChatSidebar';
@@ -199,7 +200,7 @@ const ChatPage: React.FC = () => {
         id: c.id,
         applicationId: c.applicationId ?? null,
         name,
-        role: contact?.contactType?.replace('_', ' ') ?? 'Contact',
+        role: contact?.contactType ? formatRole(contact.contactType) : 'Contact',
         category,
         status: isOnline ? 'Active Now' : 'Offline',
         avatar: avatarUrl(name),

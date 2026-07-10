@@ -6,6 +6,7 @@ import { X, Loader2, Users, MapPin } from "lucide-react";
 import { useGetAllPropertiesTransformed } from "../../../../hooks/usePropertyQueries";
 import { useGetTeamMembers, useUpdateTeamMember } from "../../../../hooks/useTeamQueries";
 import { useToast } from "../../../../components/common/Toast";
+import { formatRole } from "../../../../utils/roleIcon";
 
 interface Property {
     id: string;
@@ -103,7 +104,7 @@ const AssignTeamModal = ({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-medium text-gray-900 truncate">{member.name}</div>
-                                        <div className="text-xs text-gray-500 truncate">{member.email} · {member.role.replace(/_/g, ' ')}</div>
+                                        <div className="text-xs text-gray-500 truncate">{member.email} · {formatRole(member.role)}</div>
                                     </div>
                                 </label>
                             ))}

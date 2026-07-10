@@ -280,8 +280,6 @@ const App: React.FC = () => {
         <BrowserRouter>
           <RoutedApp>
           <AutoLoginProvider>
-          <TeamPermissionProvider>
-          <SubscriptionProvider>
           <GlobalLoader />
           <AIChatButton />
           <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>Loading…</div>}>
@@ -352,7 +350,15 @@ const App: React.FC = () => {
               <Route path="/cookie-policy" element={<CookiePolicy />} />
             </Route>
             <Route path="/team/accept-invitation" element={<AcceptInvitation />} />
-            <Route element={<DashboardLayout />}>
+            <Route
+              element={
+                <TeamPermissionProvider>
+                  <SubscriptionProvider>
+                    <DashboardLayout />
+                  </SubscriptionProvider>
+                </TeamPermissionProvider>
+              }
+            >
               <Route
                 path="/dashboard"
                 element={
@@ -840,8 +846,6 @@ const App: React.FC = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
-          </SubscriptionProvider>
-          </TeamPermissionProvider>
           </AutoLoginProvider>
           </RoutedApp>
         </BrowserRouter>

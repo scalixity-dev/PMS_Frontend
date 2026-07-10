@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, Loader2, XCircle, CheckCircle, Users, Smartphone } from 'lucide-react';
 import { useGetInvitation, useAcceptInvitation } from '../../../hooks/useTeamQueries';
+import { formatRole } from '../../../utils/roleIcon';
 
 const AcceptInvitation: React.FC = () => {
     const navigate = useNavigate();
@@ -127,7 +128,7 @@ const AcceptInvitation: React.FC = () => {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <p className="text-sm text-gray-600 mb-5">
-                                You've been invited to join as <span className="font-semibold text-[#3D7475]">{invite.role}</span>. Set a password to activate your account.
+                                You've been invited to join as <span className="font-semibold text-[#3D7475]">{formatRole(invite.role)}</span>. Set a password to activate your account.
                             </p>
 
                             <label className="block text-xs font-semibold text-gray-600 mb-1">Email</label>

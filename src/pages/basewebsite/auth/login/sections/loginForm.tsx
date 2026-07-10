@@ -41,6 +41,9 @@ const LoginForm: React.FC = () => {
             if (propertyId) {
                 sessionStorage.setItem('redirect_property_id', propertyId);
             }
+            if (params.get('sessionExpired') === '1') {
+                setError('Your session has expired. Please sign in again.');
+            }
         } catch { /* ignore */ }
     }, [location.state, location.search]);
 
