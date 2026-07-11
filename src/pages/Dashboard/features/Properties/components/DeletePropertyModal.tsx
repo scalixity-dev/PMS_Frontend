@@ -44,7 +44,7 @@ const DeletePropertyModal: React.FC<DeletePropertyModalProps> = ({
             Are you sure you want to delete <span className="font-semibold text-gray-900">"{propertyName}"</span>?
           </p>
           <p className="text-sm text-gray-500 mb-6">
-            This action cannot be undone. All associated data including units, listings, and attachments will be permanently deleted.
+            It will move to the Deleted tab and be permanently deleted in 30 days. You can recover it any time before then.
           </p>
 
           {/* Actions */}

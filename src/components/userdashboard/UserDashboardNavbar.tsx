@@ -14,7 +14,7 @@ import {
     MoreHorizontal,
     Building2,
 } from "lucide-react";
-import { tenantIcon as logo } from "../../utils/roleIcon";
+import { tenantIcon as logo, formatRole } from "../../utils/roleIcon";
 import { authService } from "../../services/auth.service";
 import { useGetCurrentUser } from "../../hooks/useAuthQueries";
 import { useGetUnreadCount } from "../../hooks/useNotificationQueries";
@@ -39,7 +39,7 @@ export default function UserDashboardNavbar({ sidebarOpen: _, setSidebarOpen }: 
     const { data: currentUser, isLoading } = useGetCurrentUser();
     const userName = currentUser?.fullName || "User";
     const userEmail = currentUser?.email || "";
-    const userRole = currentUser?.role || "";
+    const userRole = formatRole(currentUser?.role) || "";
     const profilePhotoUrl = currentUser?.profilePhotoUrl || "";
 
     // Close dropdown when clicking outside

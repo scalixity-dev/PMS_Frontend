@@ -10,7 +10,7 @@ import {
     X,
     MoreHorizontal,
 } from "lucide-react";
-import { tenantIcon as logo } from "../../../utils/roleIcon";
+import { tenantIcon as logo, formatRole } from "../../../utils/roleIcon";
 
 import { authService } from "../../../services/auth.service";
 import { useGetCurrentUser } from "../../../hooks/useAuthQueries";
@@ -28,7 +28,7 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
     const { data: currentUser, isLoading } = useGetCurrentUser();
     const userName = currentUser?.fullName ?? "";
     const userEmail = currentUser?.email ?? "";
-    const userRole = currentUser?.role ?? "Service Provider";
+    const userRole = currentUser?.role ? formatRole(currentUser.role) : "Service Provider";
 
     const userInitials = userName
         ? userName

@@ -21,7 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { API_BASE_URL } from "../../config/api.config";
-import { landlordIcon as logo } from "../../utils/roleIcon";
+import { landlordIcon as logo, formatRole } from "../../utils/roleIcon";
 import { authService } from "../../services/auth.service";
 import { useGetCurrentUser } from "../../hooks/useAuthQueries";
 import { useGetUnreadCount } from "../../hooks/useNotificationQueries";
@@ -116,7 +116,7 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
   const unreadCount = unreadData?.unreadCount ?? 0;
   const userName = currentUser?.fullName || "User";
   const userEmail = currentUser?.email || "";
-  const userRole = currentUser?.role || "";
+  const userRole = formatRole(currentUser?.role) || "";
   const profilePhotoUrl = currentUser?.profilePhotoUrl || "";
 
   // Close dropdown when clicking outside

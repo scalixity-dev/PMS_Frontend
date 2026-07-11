@@ -2,6 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Trash2, LogIn } from 'lucide-react';
 import { rememberedAccountsStore, type RememberedAccount } from '../../stores/rememberedAccountsStore';
+import { formatRole } from '../../utils/roleIcon';
 
 interface AccountSwitcherModalProps {
     isOpen: boolean;
@@ -105,7 +106,7 @@ const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({
                                         <p className="text-xs text-gray-500 truncate">{acc.email}</p>
                                         {acc.role && (
                                             <span className="inline-block text-[10px] font-medium text-[#3A6D6C] mt-0.5">
-                                                {acc.role}
+                                                {formatRole(acc.role)}
                                             </span>
                                         )}
                                     </div>

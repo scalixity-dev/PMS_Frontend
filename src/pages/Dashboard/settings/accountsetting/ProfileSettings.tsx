@@ -6,6 +6,7 @@ import { useUpdateProfile } from "../../../../hooks/useAuthQueries";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatRole } from '@/utils/roleIcon';
 import { useToast } from "../../../../components/common/Toast";
 
 
@@ -230,6 +231,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
   const [error, setError] = useState("");
   const firstInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isSavingPwd, setIsSavingPwd] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -307,8 +309,6 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
     setError("");
     return true;
   };
-
-  const [isSavingPwd, setIsSavingPwd] = useState(false);
 
   const handleSaveClick = async () => {
     if (!validatePassword()) return;
@@ -643,7 +643,7 @@ export default function ProfileSettings() {
           </div>
           <div>
             <p className="text-xl font-semibold text-gray-900">{user.fullName}</p>
-            <p className="text-sm text-gray-500">{user.role}</p>
+            <p className="text-sm text-gray-500">{formatRole(user.role)}</p>
             <p className="text-sm text-gray-600">{user.email}</p>
             {isUploadingPhoto && <p className="text-xs text-gray-500 mt-1">Uploading photo...</p>}
           </div>
@@ -700,7 +700,7 @@ export default function ProfileSettings() {
             <label className="text-xs font-semibold text-gray-600">User Role</label>
             <input
               disabled
-              value={user.role}
+              value={formatRole(user.role)}
               className="w-full h-10 rounded-md border border-[#7CD947]/30 bg-[#F7F7F7] px-3 text-sm text-gray-800 outline-none focus:ring-0"
             />
           </div>

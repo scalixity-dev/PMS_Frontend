@@ -9,6 +9,7 @@ export const propertyQueryKeys = {
   details: () => [...propertyQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...propertyQueryKeys.details(), id] as const,
   units: () => [...propertyQueryKeys.all, 'units'] as const,
+  deleted: () => [...propertyQueryKeys.all, 'deleted'] as const,
 };
 
 // Cache preset for multi-step flows (e.g. List a Unit) that read the same
@@ -180,6 +181,35 @@ export const useUpdateProperty = () => {
         queryKey: propertyQueryKeys.detail(variables.propertyId),
         refetchType: 'active',
       });
+    },
+  });
+};
+
+/**
+ * Hook to get the current manager's soft-deleted properties (the "Deleted" tab).
+ */
+export const useGetDeletedProperties = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: propertyQueryKeys.deleted(),
+    queryFn: () => propertyService.getDeleted(),
+    enabled,
+    staleTime: 30 * 1000,
+    gcTime: 2 * 60 * 1000,
+    retry: 1,
+  });
+};
+
+/**
+ * Hook to recover a soft-deleted property back to active.
+ */
+export const useRecoverProperty = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (propertyId: string) => propertyService.recover(propertyId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: propertyQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: propertyQueryKeys.deleted() });
     },
   });
 };

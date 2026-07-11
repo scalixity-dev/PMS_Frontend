@@ -71,6 +71,13 @@ export function isSummaryUnits(units: DetailedUnitsArray | SummaryUnits | undefi
 }
 
 // Backend Property Response Types
+/** A soft-deleted property, as returned by GET /property/deleted. */
+export interface DeletedBackendProperty extends BackendProperty {
+  deletedAt: string;
+  permanentDeleteAt: string;
+  daysRemaining: number;
+}
+
 export interface BackendProperty {
   id: string;
   propertyName: string;
@@ -738,6 +745,57 @@ class PropertyService {
         console.error('Failed to parse error response:', parseError);
       }
       
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * List the current manager's soft-deleted properties (the "Deleted" tab).
+   * Each entry carries `daysRemaining` until the purge cron hard-deletes it.
+   */
+  async getDeleted(): Promise<DeletedBackendProperty[]> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_DELETED, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch deleted properties';
+      try {
+        const errorData = await response.json();
+        errorMessage = Array.isArray(errorData.message)
+          ? errorData.message.join('. ')
+          : errorData.message || errorData.error || errorMessage;
+      } catch (parseError) {
+        console.error('Failed to parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /** Restore a soft-deleted property so it's active again. */
+  async recover(propertyId: string): Promise<{ message: string }> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.RECOVER(propertyId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to recover property';
+      try {
+        const errorData = await response.json();
+        errorMessage = Array.isArray(errorData.message)
+          ? errorData.message.join('. ')
+          : errorData.message || errorData.error || errorMessage;
+      } catch (parseError) {
+        console.error('Failed to parse error response:', parseError);
+      }
       throw new Error(errorMessage);
     }
 

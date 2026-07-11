@@ -39,6 +39,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/property/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/property/${id}`,
     BULK_DELETE: `${API_BASE_URL}/property/bulk/delete`,
+    GET_DELETED: `${API_BASE_URL}/property/deleted`,
+    RECOVER: (id: string) => `${API_BASE_URL}/property/${id}/recover`,
     GET_ALL_UNITS: `${API_BASE_URL}/property/units/all`,
     IMPORT_EXCEL: `${API_BASE_URL}/property/import-excel`,
     VALIDATE_EXCEL: `${API_BASE_URL}/property/validate-excel`,

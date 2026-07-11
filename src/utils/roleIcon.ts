@@ -19,3 +19,13 @@ export function getRoleIcon(role?: string | null): string {
 export function getRoleFavicon(role?: string | null): string {
   return role && LANDLORD_ROLES.has(role.toUpperCase()) ? landlordFavicon : tenantFavicon;
 }
+
+/** Human-readable label for a raw role enum, e.g. "PROPERTY_MANAGER" -> "Property Manager". */
+export function formatRole(role?: string | null): string {
+  if (!role) return '';
+  return role
+    .toLowerCase()
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
