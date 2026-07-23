@@ -441,6 +441,9 @@ export const API_ENDPOINTS = {
     LIST_RENDERED: `${API_BASE_URL}/api/v1/documents/rendered`,
     GET_RENDERED: (id: string) => `${API_BASE_URL}/api/v1/documents/rendered/${id}`,
     DELETE_RENDERED: (id: string) => `${API_BASE_URL}/api/v1/documents/rendered/${id}`,
+    SEND_FOR_SIGNATURE: (id: string) => `${API_BASE_URL}/api/v1/documents/${id}/send-for-signature`,
+    GET_SIGNING_URL: (id: string) => `${API_BASE_URL}/api/v1/documents/${id}/signing-url`,
+    GET_SIGNATURE_STATUS: (id: string) => `${API_BASE_URL}/api/v1/documents/${id}/signature-status`,
   },
   REPORTS: {
     RENT_ROLL: `${API_BASE_URL}/api/v1/reports/rent-roll`,

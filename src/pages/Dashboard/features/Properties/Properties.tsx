@@ -48,9 +48,9 @@ const Properties: React.FC = () => {
 
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active');
-    const { data: backendProperties = [], isLoading: loading, error: fetchError } = useGetAllProperties(true, true);
+    const { data: backendProperties, isLoading: loading, error: fetchError } = useGetAllProperties(true, true);
     const {
-        data: deletedProperties = [],
+        data: deletedProperties,
         isLoading: loadingDeleted,
         error: deletedFetchError,
     } = useGetDeletedProperties();
@@ -223,13 +223,13 @@ const Properties: React.FC = () => {
             setProperties([]);
         } else {
             setError(null);
-            setProperties(backendProperties.map(transformProperty));
+            setProperties((backendProperties || []).map(transformProperty));
         }
     }, [backendProperties, fetchError]);
 
     // Transform deleted properties for the Deleted tab (keeps daysRemaining for the countdown banner)
     const transformedDeletedProperties = useMemo(() => {
-        return deletedProperties.map((p: DeletedBackendProperty) => ({
+        return (deletedProperties || []).map((p: DeletedBackendProperty) => ({
             ...transformProperty(p),
             daysRemaining: p.daysRemaining,
         }));
@@ -430,7 +430,7 @@ const Properties: React.FC = () => {
                             : 'bg-white text-gray-600 hover:bg-gray-50'
                             }`}
                     >
-                        Deleted ({deletedProperties.length})
+                        Deleted ({deletedProperties?.length || 0})
                     </button>
                 </div>
 

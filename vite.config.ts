@@ -16,6 +16,17 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    // Wildcard so any localtunnel/ngrok subdomain works without editing this
+    // each time a new tunnel session gets a new random hostname (local DocuSign
+    // embedded-signing testing only).
+    allowedHosts: ['.loca.lt', '.ngrok-free.app', '.ngrok-free.dev'],
+    hmr: {
+      // When accessed through an HTTPS tunnel, the HMR client must reconnect
+      // over 443 (the tunnel's public port), not the dev server's actual 5173.
+      clientPort: 443,
+    },
+  },
   build: {
     // Warn earlier so large chunks don't silently regress.
     chunkSizeWarningLimit: 700,

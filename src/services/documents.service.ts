@@ -58,7 +58,27 @@ export interface RenderTemplateDto {
   leaseId?: string;
   sendToTenant?: boolean;
   appendSignature?: boolean;
-  managerSignatureUrl?: string;
+}
+
+export type SignatureRequestStatus = 'CREATED' | 'SENT' | 'DELIVERED' | 'COMPLETED' | 'DECLINED' | 'VOIDED';
+
+export interface SignatureRequest {
+  id: string;
+  renderedDocumentId: string;
+  leaseId: string | null;
+  tenantId: string;
+  userId: string;
+  envelopeId: string;
+  status: SignatureRequestStatus;
+  signerEmail: string;
+  signerName: string;
+  sentAt: string | null;
+  landlordSignedAt: string | null;
+  completedAt: string | null;
+  declinedReason: string | null;
+  signedDocumentUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -143,5 +163,26 @@ export const documentsService = {
     return request<{ success: boolean }>(API_ENDPOINTS.DOCUMENTS.DELETE_RENDERED(id), {
       method: 'DELETE',
     });
+  },
+
+  // ─── Signature (DocuSign) ────────────────────────────────────────────────
+
+  sendForSignature(renderedDocumentId: string): Promise<SignatureRequest> {
+    return request<SignatureRequest>(API_ENDPOINTS.DOCUMENTS.SEND_FOR_SIGNATURE(renderedDocumentId), {
+      method: 'POST',
+    });
+  },
+
+  getSigningUrl(renderedDocumentId: string, returnUrl: string): Promise<{ url: string }> {
+    return request<{ url: string }>(API_ENDPOINTS.DOCUMENTS.GET_SIGNING_URL(renderedDocumentId), {
+      method: 'POST',
+      body: JSON.stringify({ returnUrl }),
+    });
+  },
+
+  getSignatureStatus(renderedDocumentId: string): Promise<SignatureRequest | { status: null }> {
+    return request<SignatureRequest | { status: null }>(
+      API_ENDPOINTS.DOCUMENTS.GET_SIGNATURE_STATUS(renderedDocumentId),
+    );
   },
 };

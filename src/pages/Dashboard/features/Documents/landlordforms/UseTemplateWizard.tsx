@@ -9,8 +9,10 @@ import successAnimationUrl from '../../ListUnit/Success.lottie?url';
 import { useGetAllProperties } from '../../../../../hooks/usePropertyQueries';
 import { useGetAllLeases } from '../../../../../hooks/useLeaseQueries';
 import { useGetAllTenants } from '../../../../../hooks/useTenantQueries';
-import { useGetTemplates, useRenderTemplate } from '../../../../../hooks/useDocumentsQueries';
+import { useGetTemplates, useRenderTemplate, useSendForSignature } from '../../../../../hooks/useDocumentsQueries';
 import type { DocumentTemplate } from '../../../../../services/documents.service';
+import { LandlordSigningModal } from '../components/LandlordSigningModal';
+import { useToast } from '../../../../../components/common/Toast';
 
 // --- Constants & Types ---
 
@@ -215,6 +217,8 @@ const UseTemplateWizard: React.FC = () => {
     const { data: apiTemplates = [] } = useGetTemplates({ category: 'LANDLORD_FORM', includeSystem: true });
 
     const renderMutation = useRenderTemplate();
+    const sendForSignatureMutation = useSendForSignature();
+    const toast = useToast();
 
     const propertyOptions = useMemo(() => {
         const arr = Array.isArray(propertiesData) ? propertiesData : [];
@@ -444,38 +448,57 @@ const UseTemplateWizard: React.FC = () => {
     };
 
     const [appendSignature, setAppendSignature] = useState(true);
-    const [managerSigned, setManagerSigned] = useState(false);
-    const [managerSignatureUrl, setManagerSignatureUrl] = useState<string | undefined>(undefined);
+    const [signingDocumentId, setSigningDocumentId] = useState<string | null>(null);
+    const [isSending, setIsSending] = useState(false);
 
     const handleSignatureToggle = (enabled: boolean) => {
         setAppendSignature(enabled);
-        if (!enabled) {
-            setManagerSigned(false);
-            setManagerSignatureUrl(undefined);
-        }
-    };
-
-    const handleManagerSign = (dataUrl: string) => {
-        setManagerSignatureUrl(dataUrl);
-        setManagerSigned(true);
     };
 
     const handleSendToReview = async () => {
-        if (activeTemplateId) {
-            try {
-                await renderMutation.mutateAsync({
-                    id: activeTemplateId,
-                    dto: {
-                        values: templateValues,
-                        leaseId: selectedLeaseId,
-                        sendToTenant: true,
-                        appendSignature: appendSignature,
-                        managerSignatureUrl: managerSignatureUrl,
-                    }
-                });
-            } catch {
-                // non-blocking — show success either way
+        if (!activeTemplateId) {
+            setIsSuccessModalOpen(true);
+            return;
+        }
+
+        setIsSending(true);
+        try {
+            const rendered = await renderMutation.mutateAsync({
+                id: activeTemplateId,
+                dto: {
+                    values: templateValues,
+                    leaseId: selectedLeaseId,
+                    sendToTenant: true,
+                    appendSignature: appendSignature,
+                },
+            });
+
+            if (appendSignature && rendered.tenantId) {
+                await sendForSignatureMutation.mutateAsync(rendered.id);
+                // Opens the landlord's own embedded DocuSign signing session inline —
+                // the tenant is notified automatically once the landlord finishes.
+                setSigningDocumentId(rendered.id);
+                setIsSending(false);
+                return;
             }
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to send document.');
+            setIsSending(false);
+            return;
+        }
+
+        setIsSending(false);
+        setIsSuccessModalOpen(true);
+    };
+
+    const handleLandlordSigningComplete = (event: string) => {
+        setSigningDocumentId(null);
+        if (event === 'signing_complete') {
+            toast.success('Signed. Your tenant will be notified to sign next.');
+        } else if (event === 'decline') {
+            toast.warning('You declined to sign — the document was not sent to the tenant.');
+        } else {
+            toast.info('Signing session ended before completion.');
         }
         setIsSuccessModalOpen(true);
     };
@@ -675,9 +698,6 @@ const UseTemplateWizard: React.FC = () => {
                                         previewValues={templateValues}
                                         isDefaultSignature={appendSignature}
                                         onSignatureToggle={handleSignatureToggle}
-                                        managerSigned={managerSigned}
-                                        managerSignatureUrl={managerSignatureUrl}
-                                        onManagerSign={handleManagerSign}
                                     />
                                 </div>
 
@@ -689,9 +709,9 @@ const UseTemplateWizard: React.FC = () => {
                                     />
                                     <PrimaryActionButton
                                         onClick={handleSendToReview}
-                                        disabled={appendSignature && !managerSigned}
-                                        text={appendSignature && !managerSigned ? 'Sign document first' : 'Send to Review'}
-                                        className={`!w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] transition-colors ${appendSignature && !managerSigned ? '!bg-gray-300 !text-gray-500 cursor-not-allowed' : '!bg-[#3A6D6C] hover:!bg-[#2d5650]'}`}
+                                        disabled={isSending}
+                                        text={isSending ? 'Sending…' : appendSignature ? 'Send for Signature' : 'Send to Review'}
+                                        className={`!w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] transition-colors ${isSending ? '!bg-gray-300 !text-gray-500 cursor-not-allowed' : '!bg-[#3A6D6C] hover:!bg-[#2d5650]'}`}
                                     />
                                 </div>
                             </>
@@ -744,6 +764,14 @@ const UseTemplateWizard: React.FC = () => {
                 title="Well Done !"
                 description={isAgreement ? 'Your lease agreement request has been sent successfully.' : 'Your notice has been sent successfully.'}
             />
+
+            {signingDocumentId && (
+                <LandlordSigningModal
+                    renderedDocumentId={signingDocumentId}
+                    onClose={() => setSigningDocumentId(null)}
+                    onComplete={handleLandlordSigningComplete}
+                />
+            )}
         </div>
     );
 };
