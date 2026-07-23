@@ -33,6 +33,7 @@ export interface RenderedDocument {
   tenantId: string | null;
   leaseId: string | null;
   url: string | null;
+  sentToTenantAt: string | null;
   createdAt: string;
 }
 
@@ -169,6 +170,12 @@ export const documentsService = {
 
   sendForSignature(renderedDocumentId: string): Promise<SignatureRequest> {
     return request<SignatureRequest>(API_ENDPOINTS.DOCUMENTS.SEND_FOR_SIGNATURE(renderedDocumentId), {
+      method: 'POST',
+    });
+  },
+
+  sendToTenant(renderedDocumentId: string): Promise<{ sentToTenantAt: string }> {
+    return request<{ sentToTenantAt: string }>(API_ENDPOINTS.DOCUMENTS.SEND_TO_TENANT(renderedDocumentId), {
       method: 'POST',
     });
   },

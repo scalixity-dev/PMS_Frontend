@@ -125,6 +125,18 @@ export const useSendForSignature = () => {
   });
 };
 
+export const useSendToTenant = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (renderedDocumentId: string) => documentsService.sendToTenant(renderedDocumentId),
+    onSuccess: (_data, renderedDocumentId) => {
+      queryClient.invalidateQueries({ queryKey: documentsQueryKeys.signatureStatus(renderedDocumentId) });
+      queryClient.invalidateQueries({ queryKey: documentsQueryKeys.renderedOne(renderedDocumentId) });
+      queryClient.invalidateQueries({ queryKey: documentsQueryKeys.rendered() });
+    },
+  });
+};
+
 export const useGetSigningUrl = () => {
   return useMutation({
     mutationFn: ({ renderedDocumentId, returnUrl }: { renderedDocumentId: string; returnUrl: string }) =>

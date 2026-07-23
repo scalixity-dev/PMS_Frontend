@@ -15,7 +15,7 @@ import PropertyAttachmentsModal from './components/PropertyAttachmentsModal';
 import ResponsibilityModal, { type ResponsibilityItem } from '../Properties/components/ResponsibilityModal';
 import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useRenewLease, leaseQueryKeys } from '../../../../hooks/useLeaseQueries';
 import { useDeleteRecurringTransaction, useGetRecurringTransactions, useCreateRecurringIncome, useUpdateRecurringTransaction } from '../../../../hooks/useTransactionQueries';
-import { useGetRenderedDocuments, useGetSignatureStatus } from '../../../../hooks/useDocumentsQueries';
+import { useGetRenderedDocuments, useGetSignatureStatus, useSendToTenant } from '../../../../hooks/useDocumentsQueries';
 import { useGetTenantByUserId } from '../../../../hooks/useTenantQueries';
 import type { BackendLease } from '../../../../services/lease.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
@@ -35,10 +35,14 @@ const INVOICE_SCHEDULE_TO_DISPLAY: Record<string, string> = {
     'YEARLY': 'Yearly',
 };
 
-// Pure status display — sending happens automatically when the document is
-// rendered (see UseTemplateWizard), so there's no action to take here.
-const DocumentSignatureStatus = ({ documentId }: { documentId: string }) => {
+// Sending to the tenant normally happens inline in the wizard right after the
+// landlord signs. This is the fallback for when that step gets interrupted
+// (e.g. browser closed before confirming) — without it a signed document
+// could get stranded with no way to actually reach the tenant.
+const DocumentSignatureStatus = ({ documentId, sentToTenantAt }: { documentId: string; sentToTenantAt: string | null }) => {
+    const toast = useToast();
     const { data } = useGetSignatureStatus(documentId);
+    const { mutate: sendToTenant, isPending: isSending } = useSendToTenant();
     const status = data && 'status' in data ? data.status : null;
     const landlordSignedAt = data && 'landlordSignedAt' in data ? data.landlordSignedAt : null;
 
@@ -51,13 +55,33 @@ const DocumentSignatureStatus = ({ documentId }: { documentId: string }) => {
     }
 
     if (status === 'SENT' || status === 'DELIVERED') {
-        return landlordSignedAt ? (
+        if (!landlordSignedAt) {
+            return (
+                <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
+                    <Clock size={13} /> Awaiting your signature
+                </span>
+            );
+        }
+        if (!sentToTenantAt) {
+            return (
+                <button
+                    onClick={() =>
+                        sendToTenant(documentId, {
+                            onSuccess: () => toast.success('Document sent to the tenant for signature.'),
+                            onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to send document.'),
+                        })
+                    }
+                    disabled={isSending}
+                    className="flex items-center gap-1.5 text-sm text-white bg-[#3A6D6C] hover:bg-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg disabled:opacity-60"
+                >
+                    {isSending ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+                    Send to Tenant
+                </button>
+            );
+        }
+        return (
             <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
                 <Clock size={13} /> Awaiting tenant signature
-            </span>
-        ) : (
-            <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
-                <Clock size={13} /> Awaiting your signature
             </span>
         );
     }
@@ -1354,7 +1378,7 @@ const LeaseDetail: React.FC = () => {
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        {doc.tenantId && <DocumentSignatureStatus documentId={doc.id} />}
+                                                        {doc.tenantId && <DocumentSignatureStatus documentId={doc.id} sentToTenantAt={doc.sentToTenantAt ?? null} />}
                                                         <button
                                                             onClick={() => setPreviewDoc(doc)}
                                                             className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
