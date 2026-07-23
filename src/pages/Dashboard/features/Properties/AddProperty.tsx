@@ -1,4 +1,6 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useJsApiLoader, Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
+import type { Libraries } from '@react-google-maps/api';
 import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Upload, Trash2, Plus, X, Check, FileText, Undo2, ChevronLeft, Sparkles } from 'lucide-react';
@@ -27,6 +29,9 @@ interface Unit {
   beds: string;
 }
 
+const libraries: Libraries = ['places'];
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+
 const AddProperty: React.FC = () => {
   const toast = useToast();
   const navigate = useNavigate();
@@ -34,6 +39,12 @@ const AddProperty: React.FC = () => {
   const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { isLoaded: isMapLoaded } = useJsApiLoader({
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries,
+  });
+  const [autocompleteRef, setAutocompleteRef] = useState<google.maps.places.Autocomplete | null>(null);
 
   // Location data
   const [countries, setCountries] = useState<ICountry[]>([]);
@@ -68,6 +79,8 @@ const AddProperty: React.FC = () => {
     galleryPhotos: [] as File[],
     attachments: [] as File[],
     units: [] as Unit[],
+    latitude: null as number | null,
+    longitude: null as number | null,
   });
 
   const [customFeatureInput, setCustomFeatureInput] = useState('');
@@ -669,6 +682,8 @@ const AddProperty: React.FC = () => {
           stateRegion: formData.stateRegion,
           zipCode: formData.zip,
           country: formData.country,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
         },
       };
 
@@ -1104,17 +1119,127 @@ const AddProperty: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-medium mb-1 ml-1">Street address*</label>
-                <Input
-                  id="streetAddress"
-                  placeholder="Street Address"
-                  value={formData.streetAddress}
-                  onChange={(e) => {
-                    updateFormData('streetAddress', e.target.value);
-                  }}
-                  className={`bg-white border-gray-200 ${submitted && !formData.streetAddress.trim() ? 'border-red-500' : ''}`}
-                />
+                {isMapLoaded ? (
+                  <Autocomplete
+                    onLoad={(ref) => setAutocompleteRef(ref)}
+                    onPlaceChanged={() => {
+                      if (autocompleteRef !== null) {
+                        const place = autocompleteRef.getPlace();
+                        if (place && place.geometry && place.geometry.location) {
+                          const lat = place.geometry.location.lat();
+                          const lng = place.geometry.location.lng();
+                          
+                          let street = '';
+                          let rawCityName = '';
+                          let rawStateName = '';
+                          let newZip = formData.zip;
+                          let newCountry = formData.country;
+
+                          place.address_components?.forEach((component) => {
+                            const types = component.types;
+                            if (types.includes('street_number')) {
+                              street = component.long_name;
+                            }
+                            if (types.includes('route')) {
+                              street = street ? `${street} ${component.long_name}` : component.long_name;
+                            }
+                            if (types.includes('locality')) {
+                              rawCityName = component.long_name;
+                            }
+                            if (types.includes('administrative_area_level_1')) {
+                              rawStateName = component.long_name;
+                            }
+                            if (types.includes('postal_code')) {
+                              newZip = component.long_name;
+                            }
+                            if (types.includes('country')) {
+                              newCountry = component.short_name; // ISO code usually
+                            }
+                          });
+
+                          // Resolve the state name Google returns into the isoCode
+                          // that the State/City dropdowns key off of.
+                          let newState = formData.stateRegion;
+                          let newCity = rawCityName || formData.city;
+                          const countryStates = State.getStatesOfCountry(newCountry);
+                          setStates(countryStates);
+
+                          const foundState = rawStateName
+                            ? countryStates.find(
+                                s => s.name.toLowerCase() === rawStateName.toLowerCase() || s.isoCode === rawStateName
+                              )
+                            : undefined;
+
+                          if (foundState) {
+                            newState = foundState.isoCode;
+
+                            const stateCities = City.getCitiesOfState(newCountry, foundState.isoCode);
+                            setCities(stateCities);
+
+                            if (rawCityName) {
+                              const foundCity = stateCities.find(
+                                c => c.name.toLowerCase() === rawCityName.toLowerCase()
+                              );
+                              if (foundCity) {
+                                newCity = foundCity.name;
+                              }
+                            }
+                          }
+
+                          setFormData(prev => ({
+                            ...prev,
+                            streetAddress: street || place.name || '',
+                            city: newCity,
+                            stateRegion: newState,
+                            zip: newZip,
+                            country: newCountry,
+                            latitude: lat,
+                            longitude: lng
+                          }));
+                          setIsDirty(true);
+                        }
+                      }
+                    }}
+                  >
+                    <Input
+                      id="streetAddress"
+                      placeholder="Search for an address"
+                      value={formData.streetAddress}
+                      onChange={(e) => {
+                        updateFormData('streetAddress', e.target.value);
+                      }}
+                      className={`bg-white border-gray-200 ${submitted && !formData.streetAddress.trim() ? 'border-red-500' : ''}`}
+                    />
+                  </Autocomplete>
+                ) : (
+                  <Input
+                    id="streetAddress"
+                    placeholder="Street Address"
+                    value={formData.streetAddress}
+                    onChange={(e) => {
+                      updateFormData('streetAddress', e.target.value);
+                    }}
+                    className={`bg-white border-gray-200 ${submitted && !formData.streetAddress.trim() ? 'border-red-500' : ''}`}
+                  />
+                )}
                 {submitted && !formData.streetAddress.trim() && (
                   <p className="text-red-500 text-xs mt-1 ml-1">Street address is required</p>
+                )}
+                
+                {isMapLoaded && formData.latitude && formData.longitude && (
+                  <div className="mt-4 w-full h-64 rounded-lg overflow-hidden border border-gray-200">
+                    <GoogleMap
+                      mapContainerStyle={{ width: '100%', height: '100%' }}
+                      center={{ lat: formData.latitude, lng: formData.longitude }}
+                      zoom={15}
+                      options={{
+                        disableDefaultUI: true,
+                        zoomControl: true,
+                      }}
+                    >
+                      <Marker position={{ lat: formData.latitude, lng: formData.longitude }} />
+                    </GoogleMap>
+                  </div>
                 )}
               </div>
 

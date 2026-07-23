@@ -203,6 +203,7 @@ const UserMyCards = lazy(() => import('./pages/userdashboard/features/Profile/Us
 const UserNotifications = lazy(() => import('./pages/userdashboard/features/Profile/UserNotifications'));
 const UserPublicRenterProfile = lazy(() => import('./pages/userdashboard/features/Profile/UserPublicRenterProfile'));
 const UserLeaseDetails = lazy(() => import('./pages/userdashboard/features/Leases/UserLeaseDetails'));
+const SignatureCeremony = lazy(() => import('./pages/userdashboard/features/Leases/SignatureCeremony'));
 const UserTransactionDetails = lazy(() => import('./pages/userdashboard/features/Transactions/UserTransactionDetails'));
 const UserRequestDetails = lazy(() => import('./pages/userdashboard/features/Requests/UserRequestDetails'));
 const UserMessages = lazy(() => import('./pages/userdashboard/features/Messages/UserMessages'));
@@ -838,6 +839,7 @@ const App: React.FC = () => {
               <Route path="/userdashboard/settings/account/notifications" element={<UserNotifications />} />
               <Route path="/userdashboard/settings/public-renter-profile" element={<UserPublicRenterProfile />} />
               <Route path="/userdashboard/leases/:id" element={<UserLeaseDetails />} />
+              <Route path="/userdashboard/documents/:renderedDocumentId/signature" element={<SignatureCeremony />} />
               <Route path="/userdashboard/transactions/:id" element={<UserTransactionDetails />} />
               <Route path="/userdashboard/notifications" element={<UserNotificationFeed />} />
             </Route>

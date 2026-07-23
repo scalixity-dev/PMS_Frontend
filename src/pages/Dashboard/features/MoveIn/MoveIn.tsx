@@ -356,10 +356,14 @@ const MoveIn: React.FC = () => {
                 }}
                 onRequestSignature={() => {
                     setIsSuccessModalOpen(false);
-                    // Logic for e-signature request
+                    // No document has been generated for this lease yet, so there's
+                    // nothing to send for signature — take the manager to the lease's
+                    // Documents & Notices section where they can render one and send
+                    // it via "Send for Signature".
                     const leaseId = createdLeaseId || existingLeaseId;
                     if (leaseId) {
-                        navigate(`/dashboard/leasing/leases/${leaseId}/signature`);
+                        toast.info('Render a lease document from the Documents & Notices section, then send it for signature.');
+                        navigate(`/dashboard/leasing/leases/${leaseId}`);
                     }
                 }}
                 propertyName={propertyName}

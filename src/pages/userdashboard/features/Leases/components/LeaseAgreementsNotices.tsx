@@ -1,13 +1,63 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, FileText, X, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronUp, FileText, X, Eye, PenLine, CheckCircle2, Clock } from 'lucide-react';
 import type { Lease } from '../../../utils/types';
 import type { RenderedDocument } from '../../../../../services/documents.service';
 import { useToast } from '../../../../../components/common/Toast';
+import { useGetSignatureStatus } from '../../../../../hooks/useDocumentsQueries';
 
 interface LeaseAgreementsNoticesProps {
     lease: Lease;
     renderedDocuments?: RenderedDocument[];
 }
+
+const SignatureStatusBadge = ({ documentId }: { documentId: string }) => {
+    const navigate = useNavigate();
+    const { data } = useGetSignatureStatus(documentId);
+    const status = data && 'status' in data ? data.status : null;
+    const landlordSignedAt = data && 'landlordSignedAt' in data ? data.landlordSignedAt : null;
+
+    if (!status) return null;
+
+    if (status === 'COMPLETED') {
+        return (
+            <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
+                <CheckCircle2 size={13} /> Signed
+            </span>
+        );
+    }
+
+    if (status === 'SENT' || status === 'DELIVERED') {
+        // Sequential routing — the landlord signs first, so it isn't the
+        // tenant's turn yet until landlordSignedAt is set.
+        if (!landlordSignedAt) {
+            return (
+                <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
+                    <Clock size={13} /> Awaiting manager signature
+                </span>
+            );
+        }
+        return (
+            <button
+                onClick={() => navigate(`/userdashboard/documents/${documentId}/signature`)}
+                className="flex items-center gap-1.5 text-sm text-white bg-[#3A6D6C] hover:bg-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg"
+            >
+                <PenLine size={16} />
+                Sign now
+            </button>
+        );
+    }
+
+    if (status === 'DECLINED') {
+        return (
+            <span className="flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 px-2.5 py-1 rounded-full">
+                <Clock size={13} /> Declined
+            </span>
+        );
+    }
+
+    return null;
+};
 
 export const LeaseAgreementsNotices = ({ lease, renderedDocuments = [] }: LeaseAgreementsNoticesProps) => {
     const toast = useToast();
@@ -119,13 +169,16 @@ export const LeaseAgreementsNotices = ({ lease, renderedDocuments = [] }: LeaseA
                                                 </span>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => setPreviewDoc(doc)}
-                                            className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
-                                        >
-                                            <Eye size={16} />
-                                            View
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <SignatureStatusBadge documentId={doc.id} />
+                                            <button
+                                                onClick={() => setPreviewDoc(doc)}
+                                                className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
+                                            >
+                                                <Eye size={16} />
+                                                View
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
