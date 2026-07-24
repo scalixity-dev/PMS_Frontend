@@ -1,25 +1,52 @@
-import { useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, CheckCircle2, XCircle, AlertTriangle, X } from 'lucide-react';
 import { useGetSigningUrl, useGetSignatureStatus } from '../../../../hooks/useDocumentsQueries';
+
+// Marker path only — never actually rendered. DocuSign redirects the IFRAME
+// (not the outer page) back to this URL when signing ends; we detect that
+// navigation from the outer page via contentWindow.location (same-origin,
+// so readable once DocuSign hands control back to us) rather than relying on
+// the outer page's own URL, which never changes since everything happens
+// inside the iframe.
+const RETURN_MARKER_PATH = '/userdashboard/__docusign-return__';
 
 const SignatureCeremony = () => {
   const { renderedDocumentId } = useParams<{ renderedDocumentId: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const event = searchParams.get('event');
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [event, setEvent] = useState<string | null>(null);
 
   useGetSignatureStatus(renderedDocumentId || '');
   const { mutate: fetchSigningUrl, data: signingUrlData, isPending, error } = useGetSigningUrl();
 
   useEffect(() => {
-    // Once DocuSign redirects back here with an ?event=, don't fetch a new
-    // (already-consumed) signing URL — just show the completion screen below.
-    if (!renderedDocumentId || event) return;
-    const returnUrl = `${window.location.origin}/userdashboard/documents/${renderedDocumentId}/signature`;
+    if (!renderedDocumentId) return;
+    const returnUrl = `${window.location.origin}${RETURN_MARKER_PATH}`;
     fetchSigningUrl({ renderedDocumentId, returnUrl });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [renderedDocumentId, event]);
+  }, [renderedDocumentId]);
+
+  useEffect(() => {
+    if (!signingUrlData?.url || event) return;
+
+    const interval = setInterval(() => {
+      const win = iframeRef.current?.contentWindow;
+      if (!win) return;
+      let href: string;
+      try {
+        href = win.location.href;
+      } catch {
+        return; // still on DocuSign's cross-origin domain — expected while signing
+      }
+      if (href.includes(RETURN_MARKER_PATH)) {
+        clearInterval(interval);
+        setEvent(new URL(href).searchParams.get('event') || 'unknown');
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [signingUrlData?.url, event]);
 
   if (event) {
     const isSuccess = event === 'signing_complete';
@@ -92,7 +119,7 @@ const SignatureCeremony = () => {
         >
           <X size={20} />
         </button>
-        <iframe src={signingUrlData.url} className="w-full h-full border-0" title="Sign document" />
+        <iframe ref={iframeRef} src={signingUrlData.url} className="w-full h-full border-0" title="Sign document" />
       </div>
     </div>
   );

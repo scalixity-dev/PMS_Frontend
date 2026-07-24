@@ -11,14 +11,44 @@ interface LeaseAgreementsNoticesProps {
     renderedDocuments?: RenderedDocument[];
 }
 
-const SignatureStatusBadge = ({ documentId }: { documentId: string }) => {
+const SignatureStatusBadge = ({ documentId, onPreviewRaw }: { documentId: string; onPreviewRaw: () => void }) => {
     const navigate = useNavigate();
-    const { data } = useGetSignatureStatus(documentId);
+    const { data, isPending: isStatusLoading } = useGetSignatureStatus(documentId);
     const status = data && 'status' in data ? data.status : null;
     const landlordSignedAt = data && 'landlordSignedAt' in data ? data.landlordSignedAt : null;
     const signedDocumentUrl = data && 'signedDocumentUrl' in data ? data.signedDocumentUrl : null;
 
-    if (!status) return null;
+    // Avoid flashing the raw-preview fallback before we actually know the
+    // real status — show a skeleton until the first fetch resolves.
+    if (isStatusLoading) {
+        return <div className="h-7 w-28 bg-gray-200 rounded-full animate-pulse" />;
+    }
+
+    // Once a real DocuSign PDF exists, it replaces the raw template preview
+    // entirely — no point showing the unsigned version alongside it.
+    const rawPreviewButton = !signedDocumentUrl && (
+        <button
+            onClick={onPreviewRaw}
+            className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
+        >
+            <Eye size={16} />
+            View
+        </button>
+    );
+
+    // Available as soon as the landlord signs (a partial version), and
+    // automatically points to the fully-signed version once you sign too.
+    const viewDocumentLink = signedDocumentUrl && (
+        <a
+            href={signedDocumentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
+        >
+            <Eye size={16} />
+            {status === 'COMPLETED' ? 'View Signed Document' : 'View Document'}
+        </a>
+    );
 
     if (status === 'COMPLETED') {
         return (
@@ -26,17 +56,8 @@ const SignatureStatusBadge = ({ documentId }: { documentId: string }) => {
                 <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
                     <CheckCircle2 size={13} /> Signed
                 </span>
-                {signedDocumentUrl && (
-                    <a
-                        href={signedDocumentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
-                    >
-                        <Eye size={16} />
-                        View Signed Document
-                    </a>
-                )}
+                {viewDocumentLink}
+                {rawPreviewButton}
             </div>
         );
     }
@@ -46,31 +67,41 @@ const SignatureStatusBadge = ({ documentId }: { documentId: string }) => {
         // tenant's turn yet until landlordSignedAt is set.
         if (!landlordSignedAt) {
             return (
-                <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
-                    <Clock size={13} /> Awaiting manager signature
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
+                        <Clock size={13} /> Awaiting manager signature
+                    </span>
+                    {rawPreviewButton}
+                </div>
             );
         }
         return (
-            <button
-                onClick={() => navigate(`/userdashboard/documents/${documentId}/signature`)}
-                className="flex items-center gap-1.5 text-sm text-white bg-[#3A6D6C] hover:bg-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg"
-            >
-                <PenLine size={16} />
-                Sign now
-            </button>
+            <div className="flex items-center gap-2">
+                {viewDocumentLink}
+                {rawPreviewButton}
+                <button
+                    onClick={() => navigate(`/userdashboard/documents/${documentId}/signature`)}
+                    className="flex items-center gap-1.5 text-sm text-white bg-[#3A6D6C] hover:bg-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg"
+                >
+                    <PenLine size={16} />
+                    Sign now
+                </button>
+            </div>
         );
     }
 
     if (status === 'DECLINED') {
         return (
-            <span className="flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 px-2.5 py-1 rounded-full">
-                <Clock size={13} /> Declined
-            </span>
+            <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 px-2.5 py-1 rounded-full">
+                    <Clock size={13} /> Declined
+                </span>
+                {rawPreviewButton}
+            </div>
         );
     }
 
-    return null;
+    return <>{rawPreviewButton}</>;
 };
 
 export const LeaseAgreementsNotices = ({ lease, renderedDocuments = [] }: LeaseAgreementsNoticesProps) => {
@@ -184,14 +215,7 @@ export const LeaseAgreementsNotices = ({ lease, renderedDocuments = [] }: LeaseA
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <SignatureStatusBadge documentId={doc.id} />
-                                            <button
-                                                onClick={() => setPreviewDoc(doc)}
-                                                className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
-                                            >
-                                                <Eye size={16} />
-                                                View
-                                            </button>
+                                            <SignatureStatusBadge documentId={doc.id} onPreviewRaw={() => setPreviewDoc(doc)} />
                                         </div>
                                     </div>
                                 ))}
