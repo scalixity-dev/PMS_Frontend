@@ -153,8 +153,19 @@ export const useGetSignatureStatus = (renderedDocumentId: string) => {
     gcTime: 2 * 60 * 1000,
     retry: 1,
     refetchInterval: (query) => {
-      const status = (query.state.data as { status: string | null } | undefined)?.status ?? null;
-      return NON_TERMINAL_SIGNATURE_STATUSES.has(status) ? 10 * 1000 : false;
+      const data = query.state.data as { status: string | null; completedAt?: string | null } | undefined;
+      const status = data?.status ?? null;
+      if (NON_TERMINAL_SIGNATURE_STATUSES.has(status)) return 10 * 1000;
+      // Just reached COMPLETED — the fully-signed PDF is fetched from DocuSign
+      // and uploaded to S3 asynchronously in the background, a few seconds
+      // behind the status flip. Keep polling briefly to pick up the final
+      // signedDocumentUrl once it lands, instead of freezing on the
+      // landlord-only version that was there before the tenant signed.
+      if (status === 'COMPLETED' && data?.completedAt) {
+        const completedAgo = Date.now() - new Date(data.completedAt).getTime();
+        if (completedAgo < 30 * 1000) return 3 * 1000;
+      }
+      return false;
     },
   });
 };
