@@ -13,6 +13,8 @@ interface TemplateEditorProps {
     previewValues?: Record<string, string>;
     isDefaultSignature?: boolean;
     onSignatureToggle?: (enabled: boolean) => void;
+    /** Rendered directly below the "Add landlord + tenant signature block" toggle (e.g. a "Sign as Landlord" action). */
+    signatureActionsSlot?: React.ReactNode;
 }
 
 const AUTO_FILL_MAPPINGS: Record<string, string> = {
@@ -38,6 +40,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     previewValues = {},
     isDefaultSignature: isDefaultSignatureProp,
     onSignatureToggle,
+    signatureActionsSlot,
 }) => {
     const [activeTab, setActiveTab] = useState<'fields' | 'autoFill'>('fields');
     const [editorContent, setEditorContent] = useState(initialEditorContent);
@@ -352,6 +355,10 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                         </label>
                         <span className="text-sm font-normal text-gray-900">Add landlord + tenant signature block</span>
                     </div>
+
+                    {isDefaultSignature && signatureActionsSlot && (
+                        <div className="mt-5">{signatureActionsSlot}</div>
+                    )}
                 </div>
             )}
         </div>

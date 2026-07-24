@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronLeft, Plus, X, CheckCircle } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Plus, X, CheckCircle, Loader2, PenLine } from 'lucide-react';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TemplateEditor from '../components/TemplateEditor';
 import { Dialog, Transition } from '@headlessui/react';
@@ -141,50 +141,6 @@ interface SuccessModalProps {
     title: string;
     description: string;
 }
-
-interface SendToTenantModalProps {
-    isOpen: boolean;
-    onSend: () => void;
-    isSending: boolean;
-}
-
-const SendToTenantModal: React.FC<SendToTenantModalProps> = ({ isOpen, onSend, isSending }) => {
-    return (
-        <Transition appear show={isOpen} as={React.Fragment}>
-            <Dialog as="div" className="relative z-[300]" onClose={() => { /* must explicitly send or the document stays unsent */ }}>
-                <Transition.Child as={React.Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
-                    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" />
-                </Transition.Child>
-                <div className="fixed inset-0 overflow-y-auto">
-                    <div className="flex min-h-full items-center justify-center p-4 text-center">
-                        <Transition.Child as={React.Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-                            <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
-                                <div className="bg-[#3A6D6C] p-3" />
-                                <div className="p-6 flex flex-col items-center text-center">
-                                    <div className="w-16 h-16 mb-4 rounded-full bg-[#eafaf3] flex items-center justify-center">
-                                        <CheckCircle size={32} className="text-[#22c55e]" />
-                                    </div>
-                                    <Dialog.Title as="h3" className="text-xl font-bold text-gray-900 mb-2">You're signed</Dialog.Title>
-                                    <p className="text-gray-600 font-medium mb-8">
-                                        The document is signed on your end. Send it to the tenant now so they can review and sign their part.
-                                    </p>
-                                    <button
-                                        type="button"
-                                        disabled={isSending}
-                                        className="w-full max-w-[240px] justify-center rounded-lg bg-[#3A6D6C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#2c5251] focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] focus:ring-offset-2 transition-colors disabled:opacity-60"
-                                        onClick={onSend}
-                                    >
-                                        {isSending ? 'Sending…' : 'Send Document to Tenant'}
-                                    </button>
-                                </div>
-                            </Dialog.Panel>
-                        </Transition.Child>
-                    </div>
-                </div>
-            </Dialog>
-        </Transition>
-    );
-};
 
 const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, title, description }) => {
     return (
@@ -493,75 +449,95 @@ const UseTemplateWizard: React.FC = () => {
     };
 
     const [appendSignature, setAppendSignature] = useState(true);
+    const [renderedDocId, setRenderedDocId] = useState<string | null>(null);
     const [signingDocumentId, setSigningDocumentId] = useState<string | null>(null);
-    const [readyToSendId, setReadyToSendId] = useState<string | null>(null);
+    const [landlordSigned, setLandlordSigned] = useState(false);
+    const [isPreparingSignature, setIsPreparingSignature] = useState(false);
     const [isSending, setIsSending] = useState(false);
 
     const handleSignatureToggle = (enabled: boolean) => {
         setAppendSignature(enabled);
     };
 
+    // "Sign as Landlord" — renders the document (if not already), creates the
+    // DocuSign envelope, and opens the landlord's own embedded signing session.
+    const handleSignAsLandlord = async () => {
+        if (!activeTemplateId) return;
+        setIsPreparingSignature(true);
+        try {
+            let docId = renderedDocId;
+            if (!docId) {
+                const rendered = await renderMutation.mutateAsync({
+                    id: activeTemplateId,
+                    dto: {
+                        values: templateValues,
+                        leaseId: selectedLeaseId,
+                        appendSignature: true,
+                    },
+                });
+                if (!rendered.tenantId) {
+                    toast.error('This document has no tenant assigned — cannot request a signature.');
+                    setIsPreparingSignature(false);
+                    return;
+                }
+                docId = rendered.id;
+                setRenderedDocId(docId);
+                await sendForSignatureMutation.mutateAsync(docId);
+            }
+            setSigningDocumentId(docId);
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to start signing.');
+        } finally {
+            setIsPreparingSignature(false);
+        }
+    };
+
+    const handleLandlordSigningComplete = (event: string) => {
+        setSigningDocumentId(null);
+        if (event === 'signing_complete') {
+            setLandlordSigned(true);
+            toast.success('Signed. Click "Send to Tenant" when you\'re ready.');
+        } else if (event === 'decline') {
+            toast.warning('You declined to sign this document.');
+        } else {
+            toast.info('Signing session ended before completion.');
+        }
+    };
+
+    // Bottom action button. When a signature block is required, this is only
+    // enabled once the landlord has actually signed (see handleSignAsLandlord).
     const handleSendToReview = async () => {
-        if (!activeTemplateId) {
+        if (!appendSignature) {
+            if (activeTemplateId) {
+                try {
+                    await renderMutation.mutateAsync({
+                        id: activeTemplateId,
+                        dto: { values: templateValues, leaseId: selectedLeaseId, appendSignature: false },
+                    });
+                } catch (err) {
+                    toast.error(err instanceof Error ? err.message : 'Failed to send document.');
+                    return;
+                }
+            }
             setIsSuccessModalOpen(true);
+            return;
+        }
+
+        if (!renderedDocId || !landlordSigned) {
+            toast.error('Please sign the document first.');
             return;
         }
 
         setIsSending(true);
         try {
-            const rendered = await renderMutation.mutateAsync({
-                id: activeTemplateId,
-                dto: {
-                    values: templateValues,
-                    leaseId: selectedLeaseId,
-                    sendToTenant: true,
-                    appendSignature: appendSignature,
-                },
-            });
-
-            if (appendSignature && rendered.tenantId) {
-                await sendForSignatureMutation.mutateAsync(rendered.id);
-                // Opens the landlord's own embedded DocuSign signing session inline —
-                // the tenant is notified automatically once the landlord finishes.
-                setSigningDocumentId(rendered.id);
-                setIsSending(false);
-                return;
-            }
-        } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to send document.');
-            setIsSending(false);
-            return;
-        }
-
-        setIsSending(false);
-        setIsSuccessModalOpen(true);
-    };
-
-    const handleLandlordSigningComplete = (event: string) => {
-        const justSignedId = signingDocumentId;
-        setSigningDocumentId(null);
-        if (event === 'signing_complete' && justSignedId) {
-            // Don't notify the tenant yet — the landlord confirms that separately.
-            setReadyToSendId(justSignedId);
-        } else if (event === 'decline') {
-            toast.warning('You declined to sign — the document was not sent to the tenant.');
-            setIsSuccessModalOpen(true);
-        } else {
-            toast.info('Signing session ended before completion.');
-            setIsSuccessModalOpen(true);
-        }
-    };
-
-    const handleSendToTenant = async () => {
-        if (!readyToSendId) return;
-        try {
-            await sendToTenantMutation.mutateAsync(readyToSendId);
+            await sendToTenantMutation.mutateAsync(renderedDocId);
             toast.success('Document sent to the tenant for signature.');
+            setIsSuccessModalOpen(true);
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'Failed to send document to tenant.');
+        } finally {
+            setIsSending(false);
         }
-        setReadyToSendId(null);
-        setIsSuccessModalOpen(true);
     };
 
     const handleCloseSuccessModal = () => {
@@ -759,6 +735,24 @@ const UseTemplateWizard: React.FC = () => {
                                         previewValues={templateValues}
                                         isDefaultSignature={appendSignature}
                                         onSignatureToggle={handleSignatureToggle}
+                                        signatureActionsSlot={
+                                            landlordSigned ? (
+                                                <div className="flex items-center gap-2 text-sm font-semibold text-[#22c55e]">
+                                                    <CheckCircle size={18} />
+                                                    You've signed this document
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSignAsLandlord}
+                                                    disabled={isPreparingSignature}
+                                                    className="flex items-center gap-2 bg-[#3A6D6C] hover:bg-[#2d5650] text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors shadow-sm disabled:opacity-60"
+                                                >
+                                                    {isPreparingSignature ? <Loader2 size={16} className="animate-spin" /> : <PenLine size={16} />}
+                                                    {isPreparingSignature ? 'Preparing…' : 'Sign as Landlord'}
+                                                </button>
+                                            )
+                                        }
                                     />
                                 </div>
 
@@ -770,9 +764,9 @@ const UseTemplateWizard: React.FC = () => {
                                     />
                                     <PrimaryActionButton
                                         onClick={handleSendToReview}
-                                        disabled={isSending}
-                                        text={isSending ? 'Sending…' : appendSignature ? 'Send for Signature' : 'Send to Review'}
-                                        className={`!w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] transition-colors ${isSending ? '!bg-gray-300 !text-gray-500 cursor-not-allowed' : '!bg-[#3A6D6C] hover:!bg-[#2d5650]'}`}
+                                        disabled={isSending || (appendSignature && !landlordSigned)}
+                                        text={isSending ? 'Sending…' : appendSignature && !landlordSigned ? 'Sign document first' : appendSignature ? 'Send to Tenant' : 'Send to Review'}
+                                        className={`!w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] transition-colors ${isSending || (appendSignature && !landlordSigned) ? '!bg-gray-300 !text-gray-500 cursor-not-allowed' : '!bg-[#3A6D6C] hover:!bg-[#2d5650]'}`}
                                     />
                                 </div>
                             </>
@@ -833,12 +827,6 @@ const UseTemplateWizard: React.FC = () => {
                     onComplete={handleLandlordSigningComplete}
                 />
             )}
-
-            <SendToTenantModal
-                isOpen={!!readyToSendId}
-                onSend={handleSendToTenant}
-                isSending={sendToTenantMutation.isPending}
-            />
         </div>
     );
 };
