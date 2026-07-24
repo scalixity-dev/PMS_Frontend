@@ -104,6 +104,8 @@ export interface BackendProperty {
     stateRegion: string;
     zipCode: string;
     country: string;
+    latitude?: string | number | null;
+    longitude?: string | number | null;
   } | null;
   singleUnitDetails?: {
     beds: number;
