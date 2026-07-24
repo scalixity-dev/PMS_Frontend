@@ -45,12 +45,26 @@ const DocumentSignatureStatus = ({ documentId, sentToTenantAt }: { documentId: s
     const { mutate: sendToTenant, isPending: isSending } = useSendToTenant();
     const status = data && 'status' in data ? data.status : null;
     const landlordSignedAt = data && 'landlordSignedAt' in data ? data.landlordSignedAt : null;
+    const signedDocumentUrl = data && 'signedDocumentUrl' in data ? data.signedDocumentUrl : null;
 
     if (status === 'COMPLETED') {
         return (
-            <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
-                <CheckCircle size={13} /> Signed
-            </span>
+            <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
+                    <CheckCircle size={13} /> Signed
+                </span>
+                {signedDocumentUrl && (
+                    <a
+                        href={signedDocumentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
+                    >
+                        <Eye size={16} />
+                        View Signed Document
+                    </a>
+                )}
+            </div>
         );
     }
 

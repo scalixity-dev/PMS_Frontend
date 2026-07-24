@@ -68,26 +68,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 content = content.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
             }
         }
-        if (isDefaultSignature) {
-            // Both parties sign via DocuSign after sending — nothing to pre-fill here.
-            const SIGNATURE_BLOCK_HTML = `
-<div style="margin-top:48px;padding-top:24px;border-top:1px solid #d1d5db;">
-  <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;margin-bottom:24px;">Signatures</p>
-  <div style="display:flex;gap:48px;">
-    <div style="flex:1;">
-      <div style="height:40px;border-bottom:2px solid #374151;margin-bottom:8px;"></div>
-      <p style="font-size:12px;font-weight:600;color:#374151;margin:0;">Landlord Signature</p>
-      <p style="font-size:12px;color:#9ca3af;margin:4px 0 0;">Date: _______________</p>
-    </div>
-    <div style="flex:1;">
-      <div style="height:40px;border-bottom:2px solid #374151;margin-bottom:8px;"></div>
-      <p style="font-size:12px;font-weight:600;color:#374151;margin:0;">Tenant Signature</p>
-      <p style="font-size:12px;color:#9ca3af;margin:4px 0 0;">Date: _______________</p>
-    </div>
-  </div>
-</div>`;
-            content += SIGNATURE_BLOCK_HTML;
-        }
+        // No signature block here — signing happens entirely on DocuSign after
+        // sending, so this preview has no real signature data to show.
         return content;
     };
 
