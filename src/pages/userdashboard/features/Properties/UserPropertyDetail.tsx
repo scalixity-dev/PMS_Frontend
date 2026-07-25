@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useJsApiLoader, GoogleMap, Marker } from "@react-google-maps/api";
 import {
     BedDouble,
     Bath,
@@ -14,7 +15,8 @@ import {
     X,
     ChevronLeft,
     ChevronRight,
-    FileText
+    FileText,
+    MapPin
 } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
@@ -26,11 +28,15 @@ import { formatAmenityLabel } from "../../../../utils/string.utils";
 import { useGetPublicPropertyDetail } from "../../../../hooks/usePropertyQueries";
 
 
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+
 // --- Types ---
 interface PropertyData {
     id: string;
     title: string;
     address: string;
+    latitude: number | null;
+    longitude: number | null;
     availabilityDate: string;
     rent: number;
     currency: string;
@@ -260,6 +266,9 @@ const PropertyDetailUser: React.FC = () => {
     const navigate = useNavigate();
     const [activeBottomTab, setActiveBottomTab] = useState("Description");
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+    const { isLoaded: isMapLoaded } = useJsApiLoader({
+        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    });
 
     // Normalize ID — composite IDs like "propertyId-listingId" sliced to plain UUID
     const normalizedPropertyId = id ? (id.length > 36 ? id.substring(0, 36) : id) : null;
@@ -410,6 +419,8 @@ const PropertyDetailUser: React.FC = () => {
                     id: data.id,
                     title: title,
                     address: addressString,
+                    latitude: address?.latitude !== null && address?.latitude !== undefined ? Number(address.latitude) : null,
+                    longitude: address?.longitude !== null && address?.longitude !== undefined ? Number(address.longitude) : null,
                     availabilityDate: formatDate(data.listing?.availableFrom),
                     rent: price,
                     currency: currencyInfo.symbol,
@@ -511,6 +522,28 @@ const PropertyDetailUser: React.FC = () => {
                     </div>
 
                     <FeaturesGrid features={propertyData.features} />
+
+                    {isMapLoaded && propertyData.latitude !== null && propertyData.longitude !== null && (
+                        <div className="mb-8 sm:mb-12">
+                            <h2 className="text-lg sm:text-xl font-semibold text-[var(--dashboard-text-main)] mb-3 sm:mb-4 flex items-center gap-2">
+                                <MapPin size={20} className="text-[var(--dashboard-accent)]" />
+                                Location
+                            </h2>
+                            <div className="w-full h-64 sm:h-80 rounded-lg sm:rounded-[var(--radius-lg)] overflow-hidden border border-gray-100 shadow-[0px_3.68px_3.68px_0px_rgba(0,0,0,0.2)]">
+                                <GoogleMap
+                                    mapContainerStyle={{ width: '100%', height: '100%' }}
+                                    center={{ lat: propertyData.latitude, lng: propertyData.longitude }}
+                                    zoom={15}
+                                    options={{
+                                        disableDefaultUI: true,
+                                        zoomControl: true,
+                                    }}
+                                >
+                                    <Marker position={{ lat: propertyData.latitude, lng: propertyData.longitude }} />
+                                </GoogleMap>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="mb-6 sm:mb-8">
                         <style>{`

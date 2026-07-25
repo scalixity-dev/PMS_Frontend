@@ -836,7 +836,7 @@ const ListUnit: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <ListingContact onSubmit={handleNext} />
+                        <ListingContact onSubmit={handleNext} isSubmitting={isSubmitting} />
                         {error && (
                           <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
                             <p className="text-red-800 text-sm">{error}</p>
