@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { formatPhoneNumber } from '@/utils/phone.utils';
 
 import { useNavigate, useParams } from 'react-router-dom';
@@ -1802,7 +1803,10 @@ const LeaseDetail: React.FC = () => {
                         </div>
                         <div
                             className="overflow-y-auto p-6 prose prose-sm max-w-none"
-                            dangerouslySetInnerHTML={{ __html: previewDoc.content }}
+                            // Document HTML is assembled server-side from template text and
+                            // form values, so treat it as untrusted here too rather than
+                            // relying on the backend being the only place it is cleaned.
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewDoc.content) }}
                         />
                         <div className="p-4 border-t border-gray-200 flex justify-end">
                             <button
@@ -1841,3 +1845,9 @@ const LeaseDetail: React.FC = () => {
 };
 
 export default LeaseDetail;
+
+// Changed here: the document preview modal now runs previewDoc.content through
+// DOMPurify before handing it to dangerouslySetInnerHTML. It used to inject the
+// server's HTML verbatim, so a crafted template value stored by the render
+// endpoint executed in this page. The backend sanitizes on write now as well —
+// this is the second layer, and it also covers documents stored before that fix.

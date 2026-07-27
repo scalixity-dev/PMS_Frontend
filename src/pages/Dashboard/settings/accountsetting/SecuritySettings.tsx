@@ -2,8 +2,13 @@ import { useEffect, useState } from "react";
 import Button from "../../../../components/common/Button";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
 import { useGetSecuritySessions, useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
-import TwoFactorModal from "../../../../components/common/TwoFactorModal";
-import { twoFactorService } from "../../../../services/two-factor.service";
+// The 2FA section is hidden. The backend never enforced it at login — a user
+// could turn it on and a password alone still logged them in — so the /2fa/*
+// routes were disabled server-side and this card would only advertise
+// protection that does not exist. Restore it together with real enforcement in
+// AuthService.login().
+// import TwoFactorModal from "../../../../components/common/TwoFactorModal";
+// import { twoFactorService } from "../../../../services/two-factor.service";
 import { exportUserData } from "../../../../utils/export-user-data";
 import { useToast } from "../../../../components/common/Toast";
 
@@ -44,30 +49,30 @@ export default function SecuritySettings() {
 
   const sessions: LoginSession[] = sessionsData?.sessions ?? [];
 
-  // Real TOTP 2FA status (source of truth is /2fa/status, not the settings blob).
-  const [twoFaEnabled, setTwoFaEnabled] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    twoFactorService.status().then((s) => setTwoFaEnabled(s.enabled)).catch(() => { /* ignore initial status failures */ });
-  }, []);
-
-  const refreshStatus = async () => {
-    try {
-      const s = await twoFactorService.status();
-      setTwoFaEnabled(s.enabled);
-      // Keep legacy settings blob in sync for existing consumers.
-      const nextValues = { ...localValues, twoStepAuthenticationEnabled: s.enabled };
-      setLocalValues(nextValues);
-      updateSecurity.mutate(nextValues);
-    } catch {
-      /* noop */
-    }
-  };
-
-  const handleEnable2FA = () => {
-    setIsModalOpen(true);
-  };
+  // 2FA state removed along with the card below. Kept here for reference.
+  // const [twoFaEnabled, setTwoFaEnabled] = useState(false);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
+  //
+  // useEffect(() => {
+  //   twoFactorService.status().then((s) => setTwoFaEnabled(s.enabled)).catch(() => { /* ignore initial status failures */ });
+  // }, []);
+  //
+  // const refreshStatus = async () => {
+  //   try {
+  //     const s = await twoFactorService.status();
+  //     setTwoFaEnabled(s.enabled);
+  //     // Keep legacy settings blob in sync for existing consumers.
+  //     const nextValues = { ...localValues, twoStepAuthenticationEnabled: s.enabled };
+  //     setLocalValues(nextValues);
+  //     updateSecurity.mutate(nextValues);
+  //   } catch {
+  //     /* noop */
+  //   }
+  // };
+  //
+  // const handleEnable2FA = () => {
+  //   setIsModalOpen(true);
+  // };
 
   const handleExportData = async () => {
     try {
@@ -112,6 +117,8 @@ export default function SecuritySettings() {
         </div>
       </section>
 
+      {/* Two Steps Authentication card hidden — the backend never enforced 2FA
+          at login, so this switch reported a protection the account did not have.
       <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-4 sm:px-6 py-5">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
@@ -131,6 +138,7 @@ export default function SecuritySettings() {
           </Button>
         </div>
       </section>
+      */}
 
       <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Login sessions</h2>
@@ -167,12 +175,20 @@ export default function SecuritySettings() {
           </div>
         )}
       </section>
+      {/* 2FA modal removed with the card above.
       <TwoFactorModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onStatusChange={refreshStatus}
         currentlyEnabled={twoFaEnabled}
       />
+      */}
     </AccountSettingsLayout>
   );
 }
+
+// Changed here: the Two Steps Authentication card, its modal and the status
+// state were commented out. The backend never checked users.twoFactorEnabled at
+// login, so turning the switch on changed nothing about how the account was
+// protected — and the /2fa/* routes it called have since been disabled. The
+// markup is kept in place so it can come back with real login enforcement.

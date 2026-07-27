@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ServiceBreadCrumb from '../../../../components/ServiceBreadCrumb';
 import ServiceTabs from '../../../../components/ServiceTabs';
 import DashboardButton from '../../../../components/DashboardButton';
-import TwoFactorModal from '../../../../../../components/common/TwoFactorModal';
-import { twoFactorService } from '../../../../../../services/two-factor.service';
+// The 2FA section is hidden. The backend never enforced it at login — a user
+// could turn it on and a password alone still logged them in — so the /2fa/*
+// routes were disabled server-side and this card would only advertise
+// protection that does not exist. Restore it together with real enforcement in
+// AuthService.login().
+// import TwoFactorModal from '../../../../../../components/common/TwoFactorModal';
+// import { twoFactorService } from '../../../../../../services/two-factor.service';
 import { useToast } from '../../../../../../components/common/Toast';
 
 interface LoginSession {
@@ -41,19 +46,20 @@ const SecuritySettings = () => {
 
     // -- State --
     const [activeTab, setActiveTab] = useState('security');
-    const [twoFaEnabled, setTwoFaEnabled] = useState(false);
-    const [isTwoFaModalOpen, setIsTwoFaModalOpen] = useState(false);
-
-    useEffect(() => {
-        twoFactorService.status().then((s) => setTwoFaEnabled(s.enabled)).catch(() => { /* noop */ });
-    }, []);
-
-    const refreshTwoFaStatus = async () => {
-        try {
-            const s = await twoFactorService.status();
-            setTwoFaEnabled(s.enabled);
-        } catch { /* noop */ }
-    };
+    // 2FA state removed along with the card below. Kept here for reference.
+    // const [twoFaEnabled, setTwoFaEnabled] = useState(false);
+    // const [isTwoFaModalOpen, setIsTwoFaModalOpen] = useState(false);
+    //
+    // useEffect(() => {
+    //     twoFactorService.status().then((s) => setTwoFaEnabled(s.enabled)).catch(() => { /* noop */ });
+    // }, []);
+    //
+    // const refreshTwoFaStatus = async () => {
+    //     try {
+    //         const s = await twoFactorService.status();
+    //         setTwoFaEnabled(s.enabled);
+    //     } catch { /* noop */ }
+    // };
 
     // -- Handlers --
     const handleTabChange = (val: string) => {
@@ -154,7 +160,9 @@ const SecuritySettings = () => {
                             </div>
                         </section>
 
-                        {/* Two Steps Authentication Section */}
+                        {/* Two Steps Authentication section hidden — the backend never
+                            enforced 2FA at login, so this switch reported a protection the
+                            account did not have.
                         <section className="border border-[#E8E8E8] rounded-2xl bg-white shadow-lg px-4 sm:px-6 py-5">
                             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                 <div className="flex-1 space-y-2">
@@ -174,6 +182,7 @@ const SecuritySettings = () => {
                                 </DashboardButton>
                             </div>
                         </section>
+                        */}
 
                         {/* Login Sessions Section */}
                         <section className="border border-[#E8E8E8] rounded-2xl bg-white shadow-lg px-4 sm:px-6 py-5 space-y-6">
@@ -234,14 +243,21 @@ const SecuritySettings = () => {
                     </div>
                 </div>
             </div>
+            {/* 2FA modal removed with the section above.
             <TwoFactorModal
                 isOpen={isTwoFaModalOpen}
                 onClose={() => setIsTwoFaModalOpen(false)}
                 onStatusChange={refreshTwoFaStatus}
                 currentlyEnabled={twoFaEnabled}
             />
+            */}
         </div>
     );
 };
 
 export default SecuritySettings;
+
+// Changed here: the Two Steps Authentication section, its modal and the status
+// state were commented out, same as the landlord-side Security Settings page.
+// Login never checked users.twoFactorEnabled, so the switch reported protection
+// the account did not have, and the /2fa/* routes behind it are now disabled.
