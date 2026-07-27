@@ -1,10 +1,8 @@
 import React, { useState, useRef } from 'react';
 import type { EditorView } from '@tiptap/pm/view';
-import { CheckCircle, PenLine } from 'lucide-react';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TiptapEditor from '../../../../../components/common/Editor/TiptapEditor';
 import DocumentPreviewModal from './DocumentPreviewModal';
-import SignaturePadModal from './SignaturePadModal';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
 
 interface TemplateEditorProps {
@@ -15,9 +13,8 @@ interface TemplateEditorProps {
     previewValues?: Record<string, string>;
     isDefaultSignature?: boolean;
     onSignatureToggle?: (enabled: boolean) => void;
-    managerSigned?: boolean;
-    managerSignatureUrl?: string;
-    onManagerSign?: (signatureDataUrl: string) => void;
+    /** Rendered directly below the "Add landlord + tenant signature block" toggle (e.g. a "Sign as Landlord" action). */
+    signatureActionsSlot?: React.ReactNode;
 }
 
 const AUTO_FILL_MAPPINGS: Record<string, string> = {
@@ -43,15 +40,12 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     previewValues = {},
     isDefaultSignature: isDefaultSignatureProp,
     onSignatureToggle,
-    managerSigned = false,
-    managerSignatureUrl,
-    onManagerSign,
+    signatureActionsSlot,
 }) => {
     const [activeTab, setActiveTab] = useState<'fields' | 'autoFill'>('fields');
     const [editorContent, setEditorContent] = useState(initialEditorContent);
     const [localDefaultSignature, setLocalDefaultSignature] = useState(true);
     const isDefaultSignature = isDefaultSignatureProp !== undefined ? isDefaultSignatureProp : localDefaultSignature;
-    const [isSignPadOpen, setIsSignPadOpen] = useState(false);
 
     const handleSignatureToggle = () => {
         const next = !isDefaultSignature;
@@ -74,30 +68,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 content = content.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
             }
         }
-        if (isDefaultSignature) {
-            const landlordSignatureImg = managerSigned && managerSignatureUrl 
-                ? `<img src="${managerSignatureUrl}" alt="Landlord Signature" style="height:40px;max-width:100%;object-fit:contain;position:absolute;bottom:0;left:0;mix-blend-mode:multiply;" />` 
-                : '';
-            const landlordDate = managerSigned ? new Date().toLocaleDateString() : '_______________';
-            
-            const SIGNATURE_BLOCK_HTML = `
-<div style="margin-top:48px;padding-top:24px;border-top:1px solid #d1d5db;">
-  <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;margin-bottom:24px;">Signatures</p>
-  <div style="display:flex;gap:48px;">
-    <div style="flex:1;">
-      <div style="height:40px;border-bottom:2px solid #374151;margin-bottom:8px;position:relative;">${landlordSignatureImg}</div>
-      <p style="font-size:12px;font-weight:600;color:#374151;margin:0;">Landlord Signature</p>
-      <p style="font-size:12px;color:#9ca3af;margin:4px 0 0;">Date: ${landlordDate}</p>
-    </div>
-    <div style="flex:1;">
-      <div style="height:40px;border-bottom:2px solid #374151;margin-bottom:8px;"></div>
-      <p style="font-size:12px;font-weight:600;color:#374151;margin:0;">Tenant Signature</p>
-      <p style="font-size:12px;color:#9ca3af;margin:4px 0 0;">Date: _______________</p>
-    </div>
-  </div>
-</div>`;
-            content += SIGNATURE_BLOCK_HTML;
-        }
+        // No signature block here — signing happens entirely on DocuSign after
+        // sending, so this preview has no real signature data to show.
         return content;
     };
 
@@ -230,13 +202,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <p className="text-xs font-semibold text-[#88D94C] uppercase tracking-wider mb-4">Default Signature Block (auto-appended to document)</p>
                     <div className="flex flex-col sm:flex-row gap-8">
                         <div className="flex-1">
-                            <div className="h-10 border-b-2 border-gray-400 mb-2 relative">
-                                {managerSigned && managerSignatureUrl && (
-                                    <img src={managerSignatureUrl} alt="Landlord Signature" className="absolute bottom-0 left-0 h-10 max-w-full object-contain mix-blend-multiply" />
-                                )}
-                            </div>
+                            <div className="h-10 border-b-2 border-gray-400 mb-2"></div>
                             <p className="text-xs font-semibold text-gray-600">Landlord Signature</p>
-                            <p className="text-xs text-gray-400 mt-1">Date: {managerSigned ? new Date().toLocaleDateString() : '_______________'}</p>
+                            <p className="text-xs text-gray-400 mt-1">Date: _______________</p>
                         </div>
                         <div className="flex-1">
                             <div className="h-10 border-b-2 border-gray-400 mb-2"></div>
@@ -353,10 +321,11 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 <div className="px-2 mb-10">
                     <h2 className="text-xl font-bold text-gray-800 mb-2">Default Signatures</h2>
                     <p className="text-gray-500 text-sm mb-6 max-w-2xl leading-relaxed">
-                        It will automatically add signatures and assign to your tenant at the bottom of this notice.
+                        Adds a signature block to the bottom of this document. Once sent, you'll sign first via DocuSign,
+                        then your tenant will be notified to sign.
                     </p>
 
-                    <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center gap-3">
                         <label className="relative inline-flex items-center cursor-pointer">
                             <input
                                 type="checkbox"
@@ -366,63 +335,14 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                             />
                             <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-[#88D94C]"></div>
                         </label>
-                        <span className="text-sm font-normal text-gray-900">Auto-add tenant signature block</span>
+                        <span className="text-sm font-normal text-gray-900">Add landlord + tenant signature block</span>
                     </div>
 
-                    {/* Manager Sign Gate — shown only when signature block is enabled */}
-                    {isDefaultSignature && (
-                        <div className={`rounded-xl border-2 p-5 transition-all ${managerSigned ? 'border-[#88D94C] bg-[#f0fdf4]' : 'border-dashed border-gray-300 bg-white'}`}>
-                            <div className="flex items-center justify-between flex-wrap gap-4">
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-800 mb-0.5">Landlord Signature Required</p>
-                                    <p className="text-xs text-gray-500">You must sign this document before it can be sent to the tenant.</p>
-                                </div>
-                                {managerSigned ? (
-                                    <div className="flex flex-col items-end gap-2">
-                                        {managerSignatureUrl && (
-                                            <img
-                                                src={managerSignatureUrl}
-                                                alt="Manager signature"
-                                                className="h-12 object-contain border-b border-gray-400 pb-1"
-                                            />
-                                        )}
-                                        <div className="flex items-center gap-2 text-[#22c55e] font-semibold text-sm">
-                                            <CheckCircle size={18} />
-                                            Signed
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsSignPadOpen(true)}
-                                            className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors"
-                                        >
-                                            Re-sign
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsSignPadOpen(true)}
-                                        className="flex items-center gap-2 bg-[#3A6D6C] hover:bg-[#2d5650] text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors shadow-sm"
-                                    >
-                                        <PenLine size={16} />
-                                        Sign as Landlord
-                                    </button>
-                                )}
-                            </div>
-                        </div>
+                    {isDefaultSignature && signatureActionsSlot && (
+                        <div className="mt-5">{signatureActionsSlot}</div>
                     )}
                 </div>
             )}
-
-            <SignaturePadModal
-                isOpen={isSignPadOpen}
-                onClose={() => setIsSignPadOpen(false)}
-                onConfirm={(dataUrl) => {
-                    if (onManagerSign) onManagerSign(dataUrl);
-                    setIsSignPadOpen(false);
-                }}
-                signerLabel="Landlord"
-            />
         </div>
     );
 };

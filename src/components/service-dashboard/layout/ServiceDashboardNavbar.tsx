@@ -10,13 +10,7 @@ import {
     X,
     MoreHorizontal,
 } from "lucide-react";
-// Use the same logo import
-// import logo from "../../assets/images/logo.png"; // Adjust path if needed or use placeholder to avoid broken image if path is relative
-// Since this is in src/components/service-dashboard/layout/, relative path to assets might be different. 
-// DashboardNavbar is in src/components/dashboardlayout/.
-// Path to assets from there: ../../assets/images/logo.png
-// Path from src/components/service-dashboard/layout/: ../../../assets/images/logo.png
-import logo from "../../../assets/images/logo.png";
+import { tenantIcon as logo, formatRole } from "../../../utils/roleIcon";
 
 import { authService } from "../../../services/auth.service";
 import { useGetCurrentUser } from "../../../hooks/useAuthQueries";
@@ -34,7 +28,7 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
     const { data: currentUser, isLoading } = useGetCurrentUser();
     const userName = currentUser?.fullName ?? "";
     const userEmail = currentUser?.email ?? "";
-    const userRole = currentUser?.role ?? "Service Provider";
+    const userRole = currentUser?.role ? formatRole(currentUser.role) : "Service Provider";
 
     const userInitials = userName
         ? userName
@@ -175,7 +169,7 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
 
                         {/* Desktop Logo */}
                         <div className="flex items-center gap-2 text-white">
-                            <img src={logo} alt="SmartTenantAI" className="w-7 h-7" style={{ filter: "invert(1) brightness(2)" }} />
+                            <img src={logo} alt="SmartTenantAI" className="w-7 h-7 rounded-md object-cover" />
                             <span className="text-lg font-bold hidden sm:inline-block tracking-tight">SmartTenantAi</span>
                         </div>
                     </div>

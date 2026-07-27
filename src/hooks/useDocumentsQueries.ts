@@ -9,7 +9,10 @@ export const documentsQueryKeys = {
   template: (id: string) => ['documents', 'templates', id] as const,
   rendered: () => ['documents', 'rendered'] as const,
   renderedOne: (id: string) => ['documents', 'rendered', id] as const,
+  signatureStatus: (id: string) => ['documents', 'rendered', id, 'signature-status'] as const,
 };
+
+const NON_TERMINAL_SIGNATURE_STATUSES = new Set([null, 'CREATED', 'SENT', 'DELIVERED']);
 
 // ─── Templates ──────────────────────────────────────────────────────────────
 
@@ -106,6 +109,63 @@ export const useDeleteRenderedDocument = () => {
     mutationFn: (id: string) => documentsService.deleteRendered(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentsQueryKeys.rendered() });
+    },
+  });
+};
+
+// ─── Signature (DocuSign) ─────────────────────────────────────────────────
+
+export const useSendForSignature = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (renderedDocumentId: string) => documentsService.sendForSignature(renderedDocumentId),
+    onSuccess: (_data, renderedDocumentId) => {
+      queryClient.invalidateQueries({ queryKey: documentsQueryKeys.signatureStatus(renderedDocumentId) });
+    },
+  });
+};
+
+export const useSendToTenant = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (renderedDocumentId: string) => documentsService.sendToTenant(renderedDocumentId),
+    onSuccess: (_data, renderedDocumentId) => {
+      queryClient.invalidateQueries({ queryKey: documentsQueryKeys.signatureStatus(renderedDocumentId) });
+      queryClient.invalidateQueries({ queryKey: documentsQueryKeys.renderedOne(renderedDocumentId) });
+      queryClient.invalidateQueries({ queryKey: documentsQueryKeys.rendered() });
+    },
+  });
+};
+
+export const useGetSigningUrl = () => {
+  return useMutation({
+    mutationFn: ({ renderedDocumentId, returnUrl }: { renderedDocumentId: string; returnUrl: string }) =>
+      documentsService.getSigningUrl(renderedDocumentId, returnUrl),
+  });
+};
+
+export const useGetSignatureStatus = (renderedDocumentId: string) => {
+  return useQuery({
+    queryKey: documentsQueryKeys.signatureStatus(renderedDocumentId),
+    queryFn: () => documentsService.getSignatureStatus(renderedDocumentId),
+    enabled: !!renderedDocumentId,
+    staleTime: 15 * 1000,
+    gcTime: 2 * 60 * 1000,
+    retry: 1,
+    refetchInterval: (query) => {
+      const data = query.state.data as { status: string | null; completedAt?: string | null } | undefined;
+      const status = data?.status ?? null;
+      if (NON_TERMINAL_SIGNATURE_STATUSES.has(status)) return 10 * 1000;
+      // Just reached COMPLETED — the fully-signed PDF is fetched from DocuSign
+      // and uploaded to S3 asynchronously in the background, a few seconds
+      // behind the status flip. Keep polling briefly to pick up the final
+      // signedDocumentUrl once it lands, instead of freezing on the
+      // landlord-only version that was there before the tenant signed.
+      if (status === 'COMPLETED' && data?.completedAt) {
+        const completedAgo = Date.now() - new Date(data.completedAt).getTime();
+        if (completedAgo < 30 * 1000) return 3 * 1000;
+      }
+      return false;
     },
   });
 };

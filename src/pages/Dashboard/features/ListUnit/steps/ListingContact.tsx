@@ -1,14 +1,15 @@
 import React from 'react';
 import { Listbox } from '@headlessui/react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { useListUnitStore } from '../store/listUnitStore';
 import { formatPhoneNumber } from '@/utils/phone.utils';
 
 interface ListingContactProps {
     onSubmit: () => void;
+    isSubmitting?: boolean;
 }
 
-const ListingContact: React.FC<ListingContactProps> = ({ onSubmit }) => {
+const ListingContact: React.FC<ListingContactProps> = ({ onSubmit, isSubmitting }) => {
     const { formData, updateFormData } = useListUnitStore();
     return (
         <div className="w-full flex flex-col items-center">
@@ -124,10 +125,11 @@ const ListingContact: React.FC<ListingContactProps> = ({ onSubmit }) => {
             <div className="w-full max-w-xs flex justify-center">
                 <button
                     onClick={onSubmit}
-                    disabled={!(formData.contactName && formData.phoneNumber && formData.email)}
-                    className="bg-[#3D7475] text-white text-lg md:text-xl font-bold py-3 px-8 md:px-12 rounded-xl shadow-lg hover:bg-[#2c5556] transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSubmitting || !(formData.contactName && formData.phoneNumber && formData.email)}
+                    className="bg-[#3D7475] text-white text-lg md:text-xl font-bold py-3 px-8 md:px-12 rounded-xl shadow-lg hover:bg-[#2c5556] transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                    Submit Listing
+                    {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
+                    {isSubmitting ? 'Submitting...' : 'Submit Listing'}
                 </button>
             </div>
         </div>

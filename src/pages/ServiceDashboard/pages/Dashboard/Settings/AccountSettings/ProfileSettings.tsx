@@ -12,6 +12,7 @@ import type { ICountry, IState } from 'country-state-city';
 import { authService } from '../../../../../../services/auth.service';
 import { API_ENDPOINTS } from '../../../../../../config/api.config';
 import { useToast } from '../../../../../../components/common/Toast';
+import { formatRole } from '../../../../../../utils/roleIcon';
 
 const ProfileSettings = () => {
     const toast = useToast();
@@ -431,7 +432,7 @@ const ProfileSettings = () => {
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">User Role</label>
                                     <div className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-500 shadow-sm">
-                                        {formData.role}
+                                        {formatRole(formData.role)}
                                     </div>
                                 </div>
                             </div>

@@ -4,6 +4,7 @@ import BaseModal from "../../../../components/common/modals/BaseModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import UserAccountSettingsLayout from "../../components/layout/UserAccountSettingsLayout";
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatRole } from '@/utils/roleIcon';
 import { useToast } from "../../../../components/common/Toast";
 
 
@@ -267,7 +268,7 @@ const Profile: React.FC = () => {
 
         <div className="space-y-0.5 md:space-y-1 text-center md:text-left">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-medium text-[#1A1A1A]">{userInfo.firstName} {userInfo.lastName}</h2>
-          <p className="text-sm md:text-base lg:text-lg text-[#6B7280] font-medium">{userInfo.role}</p>
+          <p className="text-sm md:text-base lg:text-lg text-[#6B7280] font-medium">{formatRole(userInfo.role)}</p>
           <p className="text-sm md:text-base lg:text-lg text-[#6B7280] font-medium break-all">{userInfo.email}</p>
         </div>
       </div>
@@ -355,7 +356,7 @@ const Profile: React.FC = () => {
               </label>
               <input
                 type="text"
-                value={userInfo.role}
+                value={formatRole(userInfo.role)}
                 disabled
                 className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-sm text-[#ADADAD] font-medium"
               />

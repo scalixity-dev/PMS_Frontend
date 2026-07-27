@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
-import logo from '../../../../../assets/images/logo.png';
+import { tenantIcon as logo } from '../../../../../utils/roleIcon';
 import { AppleIcon, FacebookIcon, GoogleIcon } from '../../../../../components/AuthIcons';
 import { authService } from '../../../../../services/auth.service';
 import { API_ENDPOINTS } from '../../../../../config/api.config';
@@ -40,6 +40,9 @@ const LoginForm: React.FC = () => {
             const propertyId = params.get('propertyId');
             if (propertyId) {
                 sessionStorage.setItem('redirect_property_id', propertyId);
+            }
+            if (params.get('sessionExpired') === '1') {
+                setError('Your session has expired. Please sign in again.');
             }
         } catch { /* ignore */ }
     }, [location.state, location.search]);
@@ -288,7 +291,7 @@ const LoginForm: React.FC = () => {
     return (
         <div className="w-full lg:w-1/2 p-2 sm:p-10 lg:p-6 flex flex-col justify-center">
             <div className="text-center lg:text-left mb-8">
-                <img src={logo} alt="SmartTenantAI Logo" className="h-8 w-8 mx-auto lg:mx-0 mb-2 brightness-0" />
+                <img src={logo} alt="SmartTenantAI Logo" className="h-8 w-8 mx-auto lg:mx-0 mb-2 rounded-md object-cover" />
                 <h1 className="text-md font-body text-gray-800 font-bold mb-2">SmartTenantAI</h1>
                 <h2 className="text-xl font-heading font-semibold text-gray-900 mb-2">Sign in</h2>
                 <p className="text-gray-600 text-sm">Sign in to your rental management software.</p>

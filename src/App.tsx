@@ -26,6 +26,7 @@ import AIChatButton from './components/common/AIChatButton';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
 import { GlobalLoader } from './components/common/GlobalLoader';
+import { FaviconManager } from './components/common/FaviconManager';
 import Welcome from './pages/ServiceDashboard/pages/onboarding/Welcome';
 import SelectProfession from './pages/ServiceDashboard/pages/onboarding/SelectProfession';
 import ProfessionDetails from './pages/ServiceDashboard/pages/onboarding/ProfessionDetails';
@@ -202,6 +203,7 @@ const UserMyCards = lazy(() => import('./pages/userdashboard/features/Profile/Us
 const UserNotifications = lazy(() => import('./pages/userdashboard/features/Profile/UserNotifications'));
 const UserPublicRenterProfile = lazy(() => import('./pages/userdashboard/features/Profile/UserPublicRenterProfile'));
 const UserLeaseDetails = lazy(() => import('./pages/userdashboard/features/Leases/UserLeaseDetails'));
+const SignatureCeremony = lazy(() => import('./pages/userdashboard/features/Leases/SignatureCeremony'));
 const UserTransactionDetails = lazy(() => import('./pages/userdashboard/features/Transactions/UserTransactionDetails'));
 const UserRequestDetails = lazy(() => import('./pages/userdashboard/features/Requests/UserRequestDetails'));
 const UserMessages = lazy(() => import('./pages/userdashboard/features/Messages/UserMessages'));
@@ -259,10 +261,15 @@ const Notification = lazy(() => import('./pages/Dashboard/features/Notification/
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 
-// Inner component so usePageTracking can sit inside <BrowserRouter>.
+// Inner component so usePageTracking/FaviconManager can sit inside <BrowserRouter>.
 const RoutedApp: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   usePageTracking();
-  return <>{children}</>;
+  return (
+    <>
+      <FaviconManager />
+      {children}
+    </>
+  );
 };
 
 const App: React.FC = () => {
@@ -274,8 +281,6 @@ const App: React.FC = () => {
         <BrowserRouter>
           <RoutedApp>
           <AutoLoginProvider>
-          <TeamPermissionProvider>
-          <SubscriptionProvider>
           <GlobalLoader />
           <AIChatButton />
           <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>Loading…</div>}>
@@ -346,7 +351,15 @@ const App: React.FC = () => {
               <Route path="/cookie-policy" element={<CookiePolicy />} />
             </Route>
             <Route path="/team/accept-invitation" element={<AcceptInvitation />} />
-            <Route element={<DashboardLayout />}>
+            <Route
+              element={
+                <TeamPermissionProvider>
+                  <SubscriptionProvider>
+                    <DashboardLayout />
+                  </SubscriptionProvider>
+                </TeamPermissionProvider>
+              }
+            >
               <Route
                 path="/dashboard"
                 element={
@@ -826,6 +839,7 @@ const App: React.FC = () => {
               <Route path="/userdashboard/settings/account/notifications" element={<UserNotifications />} />
               <Route path="/userdashboard/settings/public-renter-profile" element={<UserPublicRenterProfile />} />
               <Route path="/userdashboard/leases/:id" element={<UserLeaseDetails />} />
+              <Route path="/userdashboard/documents/:renderedDocumentId/signature" element={<SignatureCeremony />} />
               <Route path="/userdashboard/transactions/:id" element={<UserTransactionDetails />} />
               <Route path="/userdashboard/notifications" element={<UserNotificationFeed />} />
             </Route>
@@ -834,8 +848,6 @@ const App: React.FC = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
-          </SubscriptionProvider>
-          </TeamPermissionProvider>
           </AutoLoginProvider>
           </RoutedApp>
         </BrowserRouter>

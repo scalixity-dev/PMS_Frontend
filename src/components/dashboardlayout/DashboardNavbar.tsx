@@ -21,7 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { API_BASE_URL } from "../../config/api.config";
-import logo from "../../assets/images/logo.png";
+import { landlordIcon as logo, formatRole } from "../../utils/roleIcon";
 import { authService } from "../../services/auth.service";
 import { useGetCurrentUser } from "../../hooks/useAuthQueries";
 import { useGetUnreadCount } from "../../hooks/useNotificationQueries";
@@ -116,7 +116,7 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
   const unreadCount = unreadData?.unreadCount ?? 0;
   const userName = currentUser?.fullName || "User";
   const userEmail = currentUser?.email || "";
-  const userRole = currentUser?.role || "";
+  const userRole = formatRole(currentUser?.role) || "";
   const profilePhotoUrl = currentUser?.profilePhotoUrl || "";
 
   // Close dropdown when clicking outside
@@ -373,7 +373,7 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
 
             {/* Desktop Logo */}
             <div className="flex items-center gap-2 text-white">
-              <img src={logo} alt="SmartTenantAI" className="w-7 h-7" style={{ filter: "invert(1) brightness(2)" }} />
+              <img src={logo} alt="SmartTenantAI" className="w-7 h-7 rounded-md object-cover" />
               <span className="text-lg font-bold hidden sm:inline-block tracking-tight">SmartTenantAI</span>
             </div>
           </div>

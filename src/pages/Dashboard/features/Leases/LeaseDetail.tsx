@@ -15,7 +15,8 @@ import PropertyAttachmentsModal from './components/PropertyAttachmentsModal';
 import ResponsibilityModal, { type ResponsibilityItem } from '../Properties/components/ResponsibilityModal';
 import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useRenewLease, leaseQueryKeys } from '../../../../hooks/useLeaseQueries';
 import { useDeleteRecurringTransaction, useGetRecurringTransactions, useCreateRecurringIncome, useUpdateRecurringTransaction } from '../../../../hooks/useTransactionQueries';
-import { useGetRenderedDocuments } from '../../../../hooks/useDocumentsQueries';
+import { useGetRenderedDocuments, useGetSignatureStatus, useSendToTenant, documentsQueryKeys } from '../../../../hooks/useDocumentsQueries';
+import { LandlordSigningModal } from '../Documents/components/LandlordSigningModal';
 import { useGetTenantByUserId } from '../../../../hooks/useTenantQueries';
 import type { BackendLease } from '../../../../services/lease.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
@@ -35,6 +36,137 @@ const INVOICE_SCHEDULE_TO_DISPLAY: Record<string, string> = {
     'YEARLY': 'Yearly',
 };
 
+// Sending to the tenant normally happens inline in the wizard right after the
+// landlord signs. This is the fallback for when that step gets interrupted
+// (e.g. browser closed before confirming) — without it a signed document
+// could get stranded with no way to actually reach the tenant.
+const DocumentSignatureStatus = ({
+    documentId,
+    sentToTenantAt,
+    onPreviewRaw,
+    onSign,
+}: {
+    documentId: string;
+    sentToTenantAt: string | null;
+    /** Fallback preview of the raw (unsigned) template — only needed until a real DocuSign PDF exists. */
+    onPreviewRaw: () => void;
+    onSign: () => void;
+}) => {
+    const toast = useToast();
+    const { data, isPending: isStatusLoading } = useGetSignatureStatus(documentId);
+    const { mutate: sendToTenant, isPending: isSending } = useSendToTenant();
+    const status = data && 'status' in data ? data.status : null;
+    const landlordSignedAt = data && 'landlordSignedAt' in data ? data.landlordSignedAt : null;
+    const signedDocumentUrl = data && 'signedDocumentUrl' in data ? data.signedDocumentUrl : null;
+
+    // Avoid flashing the "no signature yet" fallback (raw View button) before
+    // we actually know the real status — show a skeleton until the first
+    // fetch resolves.
+    if (isStatusLoading) {
+        return <div className="h-7 w-28 bg-gray-200 rounded-full animate-pulse" />;
+    }
+
+    // Once a real DocuSign PDF exists, it replaces the raw template preview
+    // entirely — no point showing the unsigned version alongside it.
+    const rawPreviewButton = !signedDocumentUrl && (
+        <button
+            onClick={onPreviewRaw}
+            className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
+        >
+            <Eye size={16} />
+            View
+        </button>
+    );
+
+    // Available as soon as the landlord signs (a partial version), and
+    // automatically points to the fully-signed version once the tenant signs too.
+    const viewDocumentLink = signedDocumentUrl && (
+        <a
+            href={signedDocumentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
+        >
+            <Eye size={16} />
+            {status === 'COMPLETED' ? 'View Signed Document' : 'View Document'}
+        </a>
+    );
+
+    if (status === 'COMPLETED') {
+        return (
+            <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
+                    <CheckCircle size={13} /> Signed
+                </span>
+                {viewDocumentLink}
+                {rawPreviewButton}
+            </div>
+        );
+    }
+
+    if (status === 'SENT' || status === 'DELIVERED') {
+        if (!landlordSignedAt) {
+            return (
+                <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
+                        <Clock size={13} /> Awaiting your signature
+                    </span>
+                    <button
+                        onClick={onSign}
+                        className="flex items-center gap-1.5 text-sm text-white bg-[#3A6D6C] hover:bg-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg"
+                    >
+                        <FileText size={16} />
+                        Sign
+                    </button>
+                </div>
+            );
+        }
+        if (!sentToTenantAt) {
+            return (
+                <div className="flex items-center gap-2">
+                    {viewDocumentLink}
+                    {rawPreviewButton}
+                    <button
+                        onClick={() =>
+                            sendToTenant(documentId, {
+                                onSuccess: () => toast.success('Document sent to the tenant for signature.'),
+                                onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to send document.'),
+                            })
+                        }
+                        disabled={isSending}
+                        className="flex items-center gap-1.5 text-sm text-white bg-[#3A6D6C] hover:bg-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg disabled:opacity-60"
+                    >
+                        {isSending ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+                        Send to Tenant
+                    </button>
+                </div>
+            );
+        }
+        return (
+            <div className="flex items-center gap-2">
+                {viewDocumentLink}
+                {rawPreviewButton}
+                <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
+                    <Clock size={13} /> Awaiting tenant signature
+                </span>
+            </div>
+        );
+    }
+
+    if (status === 'DECLINED') {
+        return (
+            <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 px-2.5 py-1 rounded-full">
+                    <XCircle size={13} /> Declined
+                </span>
+                {rawPreviewButton}
+            </div>
+        );
+    }
+
+    return <>{rawPreviewButton}</>;
+};
+
 const LeaseDetail: React.FC = () => {
     const toast = useToast();
     const navigate = useNavigate();
@@ -48,6 +180,7 @@ const LeaseDetail: React.FC = () => {
     const [isEndLeaseModalOpen, setIsEndLeaseModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [tenantImageError, setTenantImageError] = useState(false);
+    const [signingDocumentId, setSigningDocumentId] = useState<string | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Modal states for recurring rent
@@ -1315,13 +1448,24 @@ const LeaseDetail: React.FC = () => {
                                                             </span>
                                                         </div>
                                                     </div>
-                                                    <button
-                                                        onClick={() => setPreviewDoc(doc)}
-                                                        className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
-                                                    >
-                                                        <Eye size={16} />
-                                                        View
-                                                    </button>
+                                                    <div className="flex items-center gap-2">
+                                                        {doc.tenantId ? (
+                                                            <DocumentSignatureStatus
+                                                                documentId={doc.id}
+                                                                sentToTenantAt={doc.sentToTenantAt ?? null}
+                                                                onPreviewRaw={() => setPreviewDoc(doc)}
+                                                                onSign={() => setSigningDocumentId(doc.id)}
+                                                            />
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => setPreviewDoc(doc)}
+                                                                className="flex items-center gap-1.5 text-sm text-[#3A6D6C] hover:text-[#2a5251] font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-green-50"
+                                                            >
+                                                                <Eye size={16} />
+                                                                View
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -1670,6 +1814,27 @@ const LeaseDetail: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {signingDocumentId && (
+                <LandlordSigningModal
+                    renderedDocumentId={signingDocumentId}
+                    onClose={() => setSigningDocumentId(null)}
+                    onComplete={(event) => {
+                        const justSignedId = signingDocumentId;
+                        setSigningDocumentId(null);
+                        if (event === 'signing_complete') {
+                            toast.success('Signed. You can now send this document to the tenant.');
+                        } else if (event === 'decline') {
+                            toast.warning('You declined to sign this document.');
+                        } else {
+                            toast.info('Signing session ended before completion.');
+                        }
+                        if (justSignedId) {
+                            queryClient.invalidateQueries({ queryKey: documentsQueryKeys.signatureStatus(justSignedId) });
+                        }
+                    }}
+                />
             )}
         </div>
     );

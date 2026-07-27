@@ -8,8 +8,14 @@ import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import PropertyCard from './components/PropertyCard';
-import { propertyService, type BackendProperty } from '../../../../services/property.service';
-import { useGetAllProperties, propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
+import DeletedPropertyCard from './components/DeletedPropertyCard';
+import { propertyService, type BackendProperty, type DeletedBackendProperty } from '../../../../services/property.service';
+import {
+    useGetAllProperties,
+    useGetDeletedProperties,
+    useRecoverProperty,
+    propertyQueryKeys,
+} from '../../../../hooks/usePropertyQueries';
 import { usePropertyStore } from '../../../../stores/propertyStore';
 import { useToast } from '../../../../components/common/Toast';
 
@@ -41,7 +47,14 @@ const Properties: React.FC = () => {
     const { currentPage, itemsPerPage, searchQuery, filters, setCurrentPage, setSearchQuery, setFilters } = usePropertyStore();
 
     const queryClient = useQueryClient();
-    const { data: backendProperties = [], isLoading: loading, error: fetchError } = useGetAllProperties(true, true);
+    const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active');
+    const { data: backendProperties, isLoading: loading, error: fetchError } = useGetAllProperties(true, true);
+    const {
+        data: deletedProperties,
+        isLoading: loadingDeleted,
+        error: deletedFetchError,
+    } = useGetDeletedProperties();
+    const recoverMutation = useRecoverProperty();
 
     // Local state - non-persisted
     const [properties, setProperties] = useState<Property[]>([]);
@@ -50,6 +63,7 @@ const Properties: React.FC = () => {
     const [selectedProperties, setSelectedProperties] = useState<Set<string>>(new Set());
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [recoveringId, setRecoveringId] = useState<string | null>(null);
 
     // Transform backend property to frontend format
     const transformProperty = (backendProperty: BackendProperty): Property => {
@@ -209,9 +223,29 @@ const Properties: React.FC = () => {
             setProperties([]);
         } else {
             setError(null);
-            setProperties(backendProperties.map(transformProperty));
+            setProperties((backendProperties || []).map(transformProperty));
         }
     }, [backendProperties, fetchError]);
+
+    // Transform deleted properties for the Deleted tab (keeps daysRemaining for the countdown banner)
+    const transformedDeletedProperties = useMemo(() => {
+        return (deletedProperties || []).map((p: DeletedBackendProperty) => ({
+            ...transformProperty(p),
+            daysRemaining: p.daysRemaining,
+        }));
+    }, [deletedProperties]);
+
+    const handleRecover = useCallback(async (propertyId: string) => {
+        setRecoveringId(propertyId);
+        try {
+            await recoverMutation.mutateAsync(propertyId);
+            toast.success('Property recovered successfully');
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to recover property');
+        } finally {
+            setRecoveringId(null);
+        }
+    }, [recoverMutation, toast]);
 
     // Callback functions wrapped with useCallback to prevent unnecessary re-renders
     const handleAddProperty = useCallback(() => {
@@ -255,8 +289,9 @@ const Properties: React.FC = () => {
                 setError(`Some properties could not be deleted: ${errorMessages}`);
             }
 
-            // Invalidate React Query cache so the list refetches automatically
+            // Invalidate React Query cache so the active and deleted lists refetch automatically
             await queryClient.invalidateQueries({ queryKey: propertyQueryKeys.lists() });
+            await queryClient.invalidateQueries({ queryKey: propertyQueryKeys.deleted() });
 
             // Clear selection
             setSelectedProperties(new Set());
@@ -377,8 +412,30 @@ const Properties: React.FC = () => {
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
                 <PropertiesHeader onAddProperty={handleAddProperty} onImport={handleImport} canEdit={canEdit} />
 
+                {/* Active / Deleted Tabs */}
+                <div className="mb-4 flex items-center gap-2">
+                    <button
+                        onClick={() => setActiveTab('active')}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === 'active'
+                            ? 'bg-[#3A6D6C] text-white shadow-sm'
+                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                            }`}
+                    >
+                        Active ({properties.length})
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('deleted')}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === 'deleted'
+                            ? 'bg-[#3A6D6C] text-white shadow-sm'
+                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                            }`}
+                    >
+                        Deleted ({deletedProperties?.length || 0})
+                    </button>
+                </div>
+
                 {/* Selection Mode Controls */}
-                {selectionMode && (
+                {activeTab === 'active' && selectionMode && (
                     <div className="mb-4 bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <button
@@ -420,7 +477,7 @@ const Properties: React.FC = () => {
                 )}
 
                 {/* Selection Mode Toggle Button */}
-                {canEdit && !selectionMode && (
+                {activeTab === 'active' && canEdit && !selectionMode && (
                     <div className="mb-4 flex justify-end">
                         <button
                             onClick={handleToggleSelectionMode}
@@ -432,81 +489,123 @@ const Properties: React.FC = () => {
                     </div>
                 )}
 
-                <DashboardFilter
-                    filterOptions={filterOptions}
-                    filterLabels={filterLabels}
-                    onSearchChange={setSearchQuery}
-                    onFiltersChange={(newFilters) => setFilters(newFilters as any)}
-                    onSaveFilter={(name, filtersToSave) => {
-                        try {
-                            const key = 'properties_saved_filters';
-                            const existing = JSON.parse(localStorage.getItem(key) || '[]');
-                            const filtered = existing.filter((f: any) => f.name !== name);
-                            filtered.push({ name, filters: filtersToSave, savedAt: new Date().toISOString() });
-                            localStorage.setItem(key, JSON.stringify(filtered));
-                            toast.success(`Filter "${name}" saved successfully`);
-                        } catch (e) {
-                            toast.error('Failed to save filter');
-                        }
-                    }}
-                    searchPlaceholder="Search properties..."
-                />
-
-                {loading ? (
-                    <div className="text-center py-12 bg-white rounded-2xl mt-4">
-                        <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C] mx-auto mb-4" />
-                        <p className="text-gray-500 text-lg">Loading properties...</p>
-                    </div>
-                ) : error ? (
-                    <div className="text-center py-12 bg-white rounded-2xl mt-4">
-                        <p className="text-red-500 text-lg">Error: {error}</p>
-                        <p className="text-gray-400 text-sm mt-2">Please try refreshing the page</p>
-                    </div>
-                ) : filteredProperties.length > 0 ? (
+                {activeTab === 'active' && (
                     <>
+                        <DashboardFilter
+                            filterOptions={filterOptions}
+                            filterLabels={filterLabels}
+                            onSearchChange={setSearchQuery}
+                            onFiltersChange={(newFilters) => setFilters(newFilters as any)}
+                            onSaveFilter={(name, filtersToSave) => {
+                                try {
+                                    const key = 'properties_saved_filters';
+                                    const existing = JSON.parse(localStorage.getItem(key) || '[]');
+                                    const filtered = existing.filter((f: any) => f.name !== name);
+                                    filtered.push({ name, filters: filtersToSave, savedAt: new Date().toISOString() });
+                                    localStorage.setItem(key, JSON.stringify(filtered));
+                                    toast.success(`Filter "${name}" saved successfully`);
+                                } catch (e) {
+                                    toast.error('Failed to save filter');
+                                }
+                            }}
+                            searchPlaceholder="Search properties..."
+                        />
+
+                        {loading ? (
+                            <div className="text-center py-12 bg-white rounded-2xl mt-4">
+                                <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C] mx-auto mb-4" />
+                                <p className="text-gray-500 text-lg">Loading properties...</p>
+                            </div>
+                        ) : error ? (
+                            <div className="text-center py-12 bg-white rounded-2xl mt-4">
+                                <p className="text-red-500 text-lg">Error: {error}</p>
+                                <p className="text-gray-400 text-sm mt-2">Please try refreshing the page</p>
+                            </div>
+                        ) : filteredProperties.length > 0 ? (
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 mt-4">
+                                    {currentProperties.map((property) => (
+                                        <PropertyCard
+                                            key={property.id}
+                                            id={property.id}
+                                            name={property.name}
+                                            address={property.address}
+                                            balance={property.balance}
+                                            image={property.image}
+                                            type={property.type}
+                                            country={property.country}
+                                            propertyType={property.propertyType}
+                                            isSelected={selectedProperties.has(property.id)}
+                                            onSelect={handleSelectProperty}
+                                            selectionMode={selectionMode}
+                                        />
+                                    ))}
+                                </div>
+
+                                {/* Pagination */}
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={handlePageChange}
+                                    className="mt-auto py-6"
+                                />
+                            </>
+                        ) : (
+                            <div className="text-center py-12 bg-white rounded-2xl mt-4">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-[#F5F5DC] rounded-2xl mb-4">
+                                    <Building2 className="w-8 h-8 text-[#8B8B4A]" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-800 mb-1">No properties yet</h3>
+                                <p className="text-gray-500 text-sm mb-4">Add your first property to get started</p>
+                                {canEdit && (
+                                    <button
+                                        onClick={handleAddProperty}
+                                        className="inline-flex items-center justify-center px-6 py-2.5 bg-[#7BD747] text-white font-medium rounded-full hover:bg-[#6bc93a] transition-colors"
+                                    >
+                                        Add Property
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {activeTab === 'deleted' && (
+                    loadingDeleted ? (
+                        <div className="text-center py-12 bg-white rounded-2xl mt-4">
+                            <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C] mx-auto mb-4" />
+                            <p className="text-gray-500 text-lg">Loading deleted properties...</p>
+                        </div>
+                    ) : deletedFetchError ? (
+                        <div className="text-center py-12 bg-white rounded-2xl mt-4">
+                            <p className="text-red-500 text-lg">
+                                Error: {deletedFetchError instanceof Error ? deletedFetchError.message : 'Failed to load deleted properties'}
+                            </p>
+                        </div>
+                    ) : transformedDeletedProperties.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 mt-4">
-                            {currentProperties.map((property) => (
-                                <PropertyCard
+                            {transformedDeletedProperties.map((property) => (
+                                <DeletedPropertyCard
                                     key={property.id}
-                                    id={property.id}
                                     name={property.name}
                                     address={property.address}
-                                    balance={property.balance}
                                     image={property.image}
                                     type={property.type}
-                                    country={property.country}
-                                    propertyType={property.propertyType}
-                                    isSelected={selectedProperties.has(property.id)}
-                                    onSelect={handleSelectProperty}
-                                    selectionMode={selectionMode}
+                                    daysRemaining={property.daysRemaining}
+                                    onRecover={() => handleRecover(property.id)}
+                                    isRecovering={recoveringId === property.id}
                                 />
                             ))}
                         </div>
-
-                        {/* Pagination */}
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={handlePageChange}
-                            className="mt-auto py-6"
-                        />
-                    </>
-                ) : (
-                    <div className="text-center py-12 bg-white rounded-2xl mt-4">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-[#F5F5DC] rounded-2xl mb-4">
-                            <Building2 className="w-8 h-8 text-[#8B8B4A]" />
+                    ) : (
+                        <div className="text-center py-12 bg-white rounded-2xl mt-4">
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#F5F5DC] rounded-2xl mb-4">
+                                <Trash2 className="w-8 h-8 text-[#8B8B4A]" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-800 mb-1">No deleted properties</h3>
+                            <p className="text-gray-500 text-sm">Properties you delete will show up here for 30 days before being permanently removed.</p>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-1">No properties yet</h3>
-                        <p className="text-gray-500 text-sm mb-4">Add your first property to get started</p>
-                        {canEdit && (
-                            <button
-                                onClick={handleAddProperty}
-                                className="inline-flex items-center justify-center px-6 py-2.5 bg-[#7BD747] text-white font-medium rounded-full hover:bg-[#6bc93a] transition-colors"
-                            >
-                                Add Property
-                            </button>
-                        )}
-                    </div>
+                    )
                 )}
 
                 {/* Delete Confirmation Modal */}
@@ -528,7 +627,7 @@ const Properties: React.FC = () => {
                             </h3>
                             <p className="text-gray-600 mb-6">
                                 Are you sure you want to delete {selectedProperties.size} property(ies)?
-                                This action cannot be undone.
+                                They'll move to the Deleted tab and be permanently deleted in 30 days unless recovered.
                             </p>
                             <div className="flex gap-3 justify-end">
                                 <button

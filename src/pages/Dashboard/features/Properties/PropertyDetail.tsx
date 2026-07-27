@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams, useOutletContext } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { useJsApiLoader, GoogleMap, Marker } from '@react-google-maps/api';
 import {
     ChevronLeft,
     ChevronDown,
@@ -27,12 +28,16 @@ import type { ChartConfig } from "@/components/ui/chart";
 import { Label, Legend, Pie, PieChart } from "recharts";
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 const PropertyDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { isTeamMember, canManage } = useTeamPermissions();
     const canEdit = !isTeamMember || canManage('property-units');
+    const { isLoaded: isMapLoaded } = useJsApiLoader({
+        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    });
     const [searchParams] = useSearchParams();
     const unitId = searchParams.get('unitId'); // Get unit ID from query parameter
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
@@ -143,6 +148,13 @@ const PropertyDetail: React.FC = () => {
                 address = addressParts.join(', ');
             }
         }
+
+        const latitude = backendProperty.address?.latitude !== null && backendProperty.address?.latitude !== undefined
+            ? Number(backendProperty.address.latitude)
+            : null;
+        const longitude = backendProperty.address?.longitude !== null && backendProperty.address?.longitude !== undefined
+            ? Number(backendProperty.address.longitude)
+            : null;
 
         // Get image - for unit view, prioritize unit photos, otherwise use property photos
         let image: string | null = null;
@@ -275,6 +287,8 @@ const PropertyDetail: React.FC = () => {
             name: propertyName,
             address,
             country,
+            latitude,
+            longitude,
             image,
             photos,
             type: selectedUnit ? 'Single Family' : type, // Show as single family when viewing a unit
@@ -499,6 +513,22 @@ const PropertyDetail: React.FC = () => {
                             <MapPin className="w-4 h-4 mr-2" />
                             {property?.address || 'Address not available'}
                         </div>
+
+                        {isMapLoaded && property?.latitude !== null && property?.latitude !== undefined && property?.longitude !== null && property?.longitude !== undefined && (
+                            <div className="w-full max-w-2xl h-64 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                                <GoogleMap
+                                    mapContainerStyle={{ width: '100%', height: '100%' }}
+                                    center={{ lat: property.latitude, lng: property.longitude }}
+                                    zoom={15}
+                                    options={{
+                                        disableDefaultUI: true,
+                                        zoomControl: true,
+                                    }}
+                                >
+                                    <Marker position={{ lat: property.latitude, lng: property.longitude }} />
+                                </GoogleMap>
+                            </div>
+                        )}
 
                     </div>
                 </div>

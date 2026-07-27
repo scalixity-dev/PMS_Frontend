@@ -2,6 +2,7 @@ import { Search, Lightbulb, Microwave, Trees, AlertCircle, Wrench, ListPlus, Mes
 import type { Chat } from '../types';
 import type { ServiceRequest, Publication } from '../../../utils/types';
 import { useAuthStore } from '../../Profile/store/authStore';
+import { formatRole } from '../../../../../utils/roleIcon';
 
 interface ChatSidebarProps {
     chats: Chat[];
@@ -157,7 +158,7 @@ const ChatSidebar = ({
                             <h3 className="text-sm md:text-base font-semibold text-gray-900 truncate">
                                 {userInfo.firstName} {userInfo.lastName}
                             </h3>
-                            <p className="text-[10px] md:text-xs text-gray-500">{userInfo.role}</p>
+                            <p className="text-[10px] md:text-xs text-gray-500">{formatRole(userInfo.role)}</p>
                             <p className="text-[10px] md:text-xs text-gray-400 truncate">{userInfo.email}</p>
                         </div>
                     </div>
