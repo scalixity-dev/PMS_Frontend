@@ -52,15 +52,15 @@ export const paymentsService = {
         return request(API_ENDPOINTS.PAYMENTS.DELETE_CARD(id), { method: 'DELETE' });
     },
     /**
-     * Create PaymentIntent. If savedCardId provided, charges off-session immediately.
+     * Create PaymentIntent for a transaction. Amount is derived server-side from
+     * the transaction's outstanding balance — it cannot be passed from the client.
+     * If savedCardId provided, charges off-session immediately.
      * Otherwise returns clientSecret for client-side Stripe Elements confirmation.
      */
     createPaymentIntent(params: {
-        amount: number;
-        currency?: string;
+        transactionId: string;
         savedCardId?: string;
         description?: string;
-        metadata?: Record<string, string>;
     }): Promise<{
         paymentIntentId: string;
         clientSecret: string;
