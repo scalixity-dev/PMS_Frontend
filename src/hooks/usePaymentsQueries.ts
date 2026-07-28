@@ -72,11 +72,9 @@ export const useDeleteCard = () => {
 export const useCreatePaymentIntent = () => {
   return useMutation({
     mutationFn: (params: {
-      amount: number;
-      currency?: string;
+      transactionId: string;
       savedCardId?: string;
       description?: string;
-      metadata?: Record<string, string>;
     }) => paymentsService.createPaymentIntent(params),
   });
 };
