@@ -1,12 +1,57 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/auth.service';
 
-const EXCLUDED_PATHS = ['/team/accept-invitation'];
+// Routes that own the ?token= param themselves.
+//   /team/accept-invitation - its token is an invitation token, not a login one.
+//   /auth/mobile-login      - MobileAutoLogin redeems the token itself so it can
+//                             route by role afterwards. Mobile redirect tokens
+//                             are single-use, so exactly one of the two
+//                             components may redeem it; letting this provider
+//                             go first would burn the token and leave that page
+//                             with nothing to work with.
+const EXCLUDED_PATHS = ['/team/accept-invitation', '/auth/mobile-login'];
 
 interface AutoLoginProviderProps {
   children: React.ReactNode;
 }
+
+type RedeemResult = { ok: true } | { ok: false; message: string };
+
+/**
+ * Redeem a mobile redirect token and confirm the session cookie took effect.
+ *
+ * Kept outside the component and started exactly once per token: the token is
+ * single-use, so this may never be retried. It resolves rather than rejects so
+ * several effect invocations can await the same promise safely.
+ */
+const redeemMobileToken = async (token: string): Promise<RedeemResult> => {
+  try {
+    await authService.verifyMobileToken(token);
+  } catch (err) {
+    return {
+      ok: false,
+      message: err instanceof Error ? err.message : 'Auto-login failed',
+    };
+  }
+
+  // Wait briefly for cookie to propagate
+  await new Promise(resolve => setTimeout(resolve, 300));
+
+  for (let i = 0; i < 3; i++) {
+    try {
+      const user = await authService.getCurrentUser();
+      if (user?.userId) return { ok: true };
+    } catch {
+      await new Promise(resolve => setTimeout(resolve, 400));
+    }
+  }
+
+  return {
+    ok: false,
+    message: 'Could not verify session. Please try logging in manually.',
+  };
+};
 
 /**
  * Global wrapper that detects ?token= in ANY URL and auto-logs in the user
@@ -27,67 +72,55 @@ const AutoLoginProvider: React.FC<AutoLoginProviderProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobileTokenPath = !EXCLUDED_PATHS.includes(location.pathname);
-  const [state, setState] = useState<'idle' | 'verifying' | 'done' | 'error'>(() => {
-    return isMobileTokenPath && searchParams.has('token') ? 'verifying' : 'idle';
-  });
+
+  // Captured on the first render and kept across re-renders and the URL rewrite
+  // below, so the token survives being stripped from the query string.
+  const tokenRef = useRef<string | null>(
+    isMobileTokenPath ? searchParams.get('token') : null,
+  );
+  // Holds the single in-flight redemption. Because the token can only be spent
+  // once, StrictMode's second effect invocation must re-attach to this promise
+  // instead of starting another request - and must not be left waiting on a
+  // promise whose handlers the first invocation's cleanup already detached.
+  const redeemPromiseRef = useRef<Promise<RedeemResult> | null>(null);
+
+  const [state, setState] = useState<'idle' | 'verifying' | 'done' | 'error'>(
+    () => (tokenRef.current ? 'verifying' : 'idle'),
+  );
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
-    const token = searchParams.get('token');
+    const token = tokenRef.current;
 
-    if (!token || !isMobileTokenPath) {
+    if (!token) {
       setState('idle');
       return;
     }
 
     let cancelled = false;
 
-    const verify = async () => {
-      try {
-        await authService.verifyMobileToken(token);
+    if (!redeemPromiseRef.current) {
+      // Strip ?token= before redeeming rather than after. The token is spent by
+      // the request either way, so leaving it in the URL only means a reload or
+      // a back-navigation retries a token that can no longer work - and it
+      // keeps a credential in browser history and in any Referer header this
+      // page sends.
+      const strippedParams = new URLSearchParams(searchParams);
+      strippedParams.delete('token');
+      setSearchParams(strippedParams, { replace: true });
 
-        if (cancelled) return;
+      redeemPromiseRef.current = redeemMobileToken(token);
+    }
 
-        // Wait briefly for cookie to propagate
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        // Verify cookie is set
-        let verified = false;
-        for (let i = 0; i < 3; i++) {
-          try {
-            const user = await authService.getCurrentUser();
-            if (user?.userId) {
-              verified = true;
-              break;
-            }
-          } catch {
-            await new Promise(resolve => setTimeout(resolve, 400));
-          }
-        }
-
-        if (cancelled) return;
-
-        if (!verified) {
-          setErrorMessage('Could not verify session. Please try logging in manually.');
-          setState('error');
-          return;
-        }
-
-        // Strip ?token= from URL while keeping the current path and other params
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete('token');
-        setSearchParams(newParams, { replace: true });
-
+    void redeemPromiseRef.current.then(result => {
+      if (cancelled) return;
+      if (result.ok) {
         setState('done');
-      } catch (err) {
-        if (cancelled) return;
-        const msg = err instanceof Error ? err.message : 'Auto-login failed';
-        setErrorMessage(msg);
-        setState('error');
+        return;
       }
-    };
-
-    verify();
+      setErrorMessage(result.message);
+      setState('error');
+    });
 
     return () => { cancelled = true; };
     // Only run once on mount when token is present
@@ -127,7 +160,7 @@ const AutoLoginProvider: React.FC<AutoLoginProviderProps> = ({ children }) => {
     );
   }
 
-  // state === 'idle' or 'done' — render children normally
+  // state === 'idle' or 'done' - render children normally
   return <>{children}</>;
 };
 

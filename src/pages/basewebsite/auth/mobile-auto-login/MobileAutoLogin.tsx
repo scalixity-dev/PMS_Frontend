@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../../../../services/auth.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
@@ -8,14 +8,23 @@ const MobileAutoLogin: React.FC = () => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
+  // Mobile redirect tokens are single-use. This effect depends on searchParams
+  // and navigate, and StrictMode invokes effects twice in development, so
+  // without this guard the second run would redeem an already-spent token and
+  // show a spurious "Login Failed" screen.
+  const hasStartedRef = useRef(false);
 
   useEffect(() => {
+    if (hasStartedRef.current) return;
+
     const token = searchParams.get('token');
 
     if (!token) {
       navigate('/login', { replace: true });
       return;
     }
+
+    hasStartedRef.current = true;
 
     const performAutoLogin = async () => {
       try {
