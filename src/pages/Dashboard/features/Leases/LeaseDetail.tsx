@@ -405,11 +405,15 @@ const LeaseDetail: React.FC = () => {
     // Initialize attachments state from backend lease documents
     useEffect(() => {
         if (backendLease && backendLease.documents) {
+            // fileUrl may now be a presigned URL (query string with a signature),
+            // so derive the display name from the path only, never the query string.
+            const deriveName = (doc: any) =>
+                doc.fileUrl?.split('?')[0]?.split('/').pop() || doc.documentCategory;
             const shared = backendLease.documents
                 .filter((doc: any) => doc.visibility === 'SHARED')
                 .map((doc: any) => ({
                     id: doc.id,
-                    name: doc.fileUrl?.split('/').pop() || doc.documentCategory,
+                    name: deriveName(doc),
                     size: doc.fileSize || 0,
                     type: doc.fileType,
                     url: doc.fileUrl
@@ -418,7 +422,7 @@ const LeaseDetail: React.FC = () => {
                 .filter((doc: any) => doc.visibility === 'PRIVATE')
                 .map((doc: any) => ({
                     id: doc.id,
-                    name: doc.fileUrl?.split('/').pop() || doc.documentCategory,
+                    name: deriveName(doc),
                     size: doc.fileSize || 0,
                     type: doc.fileType,
                     url: doc.fileUrl
@@ -634,13 +638,16 @@ const LeaseDetail: React.FC = () => {
         if (!attachmentToDelete) return;
         const { type, index } = attachmentToDelete;
         const file = attachments[type][index];
-        if (file?.url) {
+        if (file?.id) {
             try {
+                // Lease documents are looked up by id, not fileUrl: the value shown
+                // to the client is now a freshly presigned URL that changes on
+                // every fetch, so it can't be used to find the stored row again.
                 const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ fileUrl: file.url }),
+                    body: JSON.stringify({ documentId: file.id }),
                 });
                 if (!response.ok) {
                     const data = await response.json().catch(() => ({}));
