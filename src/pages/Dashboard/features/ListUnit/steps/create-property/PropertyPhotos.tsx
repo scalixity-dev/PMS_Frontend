@@ -92,13 +92,15 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = () => {
     };
 
     // Allowed image MIME types
+    // SVG is intentionally excluded: it can carry inline <script>/event-handler
+    // payloads and browsers execute them when the file is opened directly,
+    // so the backend no longer accepts it (see UploadService.getAllowedMimeTypes).
     const allowedImageTypes = [
         'image/jpeg',
         'image/jpg',
         'image/png',
         'image/gif',
         'image/webp',
-        'image/svg+xml',
         'image/bmp',
         'image/tiff',
         'image/x-icon',
@@ -203,14 +205,14 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = () => {
                     type="file"
                     ref={coverInputRef}
                     onChange={handleCoverChange}
-                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff,image/x-icon"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/tiff,image/x-icon"
                     className="hidden"
                 />
                 <input
                     type="file"
                     ref={galleryInputRef}
                     onChange={handleGalleryChange}
-                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff,image/x-icon"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/tiff,image/x-icon"
                     multiple
                     className="hidden"
                 />
