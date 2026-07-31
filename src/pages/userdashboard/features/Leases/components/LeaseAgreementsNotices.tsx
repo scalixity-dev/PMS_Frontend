@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DOMPurify from 'dompurify';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, FileText, X, Eye, PenLine, CheckCircle2, Clock } from 'lucide-react';
 import type { Lease } from '../../../utils/types';
@@ -242,7 +243,10 @@ export const LeaseAgreementsNotices = ({ lease, renderedDocuments = [] }: LeaseA
                         </div>
                         <div
                             className="overflow-y-auto p-6 prose prose-sm max-w-none"
-                            dangerouslySetInnerHTML={{ __html: previewDoc.content }}
+                            // The landlord controls both the template and the values that go
+                            // into this document, so it is untrusted input from the tenant's
+                            // side and gets cleaned before it reaches their DOM.
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewDoc.content) }}
                         />
                         <div className="p-4 border-t border-gray-200 flex justify-end">
                             <button
@@ -258,3 +262,9 @@ export const LeaseAgreementsNotices = ({ lease, renderedDocuments = [] }: LeaseA
         </div>
     );
 };
+
+// Changed here: the document preview now runs previewDoc.content through
+// DOMPurify before dangerouslySetInnerHTML. This is the tenant-facing view of a
+// document the landlord composed, so it was the landing spot for script planted
+// through the template render endpoint. The backend sanitizes on write now too —
+// this layer also protects against documents stored before that fix.

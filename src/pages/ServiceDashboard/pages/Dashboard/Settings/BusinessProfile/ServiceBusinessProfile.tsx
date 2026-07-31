@@ -413,9 +413,11 @@ const ServiceBusinessProfile = () => {
         const file = e.target.files?.[0];
         if (file) {
             // Validation
-            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+            // SVG is intentionally excluded: it can carry inline <script>/event-handler
+            // payloads and browsers execute them when the file is opened directly.
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             if (!validTypes.includes(file.type)) {
-                toast.error("Please upload a valid image (JPEG, PNG, GIF, WEBP, SVG).");
+                toast.error("Please upload a valid image (JPEG, PNG, GIF, WEBP).");
                 return;
             }
             if (file.size > 5 * 1024 * 1024) { // 5MB
