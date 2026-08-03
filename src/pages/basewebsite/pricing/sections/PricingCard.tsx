@@ -64,41 +64,34 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   const includesColorClass = isDark ? "text-white" : "text-gray-900";
   const learnMoreColorClass = isDark ? "text-white" : "text-[#20CC95]";
 
-  // Helper function to extract price from annualBillingText
-  const extractAnnualPrice = (text: string): string => {
-    // Extract price like "$198.00" or "$100.00 / mo" from text
-    const match = text.match(/\$[\d,]+\.?\d*/);
-    if (match) {
-      return match[0];
-    }
-    return text;
-  };
-
-  // Calculate monthly equivalent from annual price
-  const getMonthlyEquivalent = (annualText: string): string => {
-    const match = annualText.match(/\$[\d,]+\.?\d*/);
-    if (match) {
-      const annualPrice = parseFloat(match[0].replace('$', '').replace(',', ''));
-      const monthlyPrice = (annualPrice / 12).toFixed(2);
-      return `$${monthlyPrice} /m`;
-    }
-    return priceText; // Fallback to original monthly price
-  };
-
   // Handle "Custom" pricing case
   const isCustomPricing = priceText.toLowerCase() === "custom";
 
-  // Determine what to display based on isYearly
-  const displayPrice = isYearly
-    ? (isCustomPricing
-      ? annualBillingText.replace(" / mo", " /year")
-      : extractAnnualPrice(annualBillingText) + " /year")
+  // Yearly plans are discounted 20% off the list price (12 x monthly)
+  const YEARLY_DISCOUNT = 0.2;
+
+  const parsePrice = (text: string): number => {
+    const match = text.match(/[\d,]+\.?\d*/);
+    return match ? parseFloat(match[0].replace(/,/g, "")) : 0;
+  };
+
+  const formatPrice = (num: number): string => {
+    const rounded = Math.round(num * 100) / 100;
+    return `$${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(2)}`;
+  };
+
+  const monthlyPrice = parsePrice(priceText);
+  const listYearlyPrice = monthlyPrice * 12;
+  const discountedYearlyPrice = listYearlyPrice * (1 - YEARLY_DISCOUNT);
+  const discountedMonthlyEquivalent = discountedYearlyPrice / 12;
+
+  // Determine what to display for the monthly view / custom pricing
+  const displayPrice = isYearly && isCustomPricing
+    ? annualBillingText.replace(" / mo", " /year")
     : priceText;
 
-  const displaySubPrice = isYearly
-    ? (isCustomPricing
-      ? "Contact us for annual pricing"
-      : getMonthlyEquivalent(annualBillingText) + " billed monthly")
+  const displaySubPrice = isYearly && isCustomPricing
+    ? "Contact us for annual pricing"
     : annualBillingText;
 
   return (
@@ -120,13 +113,45 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         </p>
       </div>
 
-      <div className="min-h-20 mb-4">
-        <p className={`text-3xl md:text-4xl font-bold ${priceColorClass} mb-1`}>
-          {displayPrice}
-        </p>
-        <p className={`text-xs ${subPriceColorClass}`}>
-          {displaySubPrice}
-        </p>
+      <div className="min-h-24 mb-4">
+        {isYearly && !isCustomPricing ? (
+          <>
+            <div className="flex items-center flex-wrap gap-2">
+              <p className={`text-3xl md:text-4xl font-bold ${priceColorClass}`}>
+                {formatPrice(discountedYearlyPrice)}
+              </p>
+              <span className={`text-sm font-medium ${subPriceColorClass}`}>/year</span>
+              <span
+                className={`inline-flex items-center gap-1 rounded-full text-[11px] font-bold px-2.5 py-1 shadow-sm ${
+                  isDark ? "bg-white text-[#006B49]" : "bg-gradient-to-r from-[#FEC74E] to-[#FFA53E] text-white"
+                }`}
+              >
+                <svg width="10" height="10" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 9V3a1 1 0 011-1h6l9 9-8 8-9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                  <circle cx="6" cy="6" r="1" fill="currentColor" />
+                </svg>
+                SAVE 20%
+              </span>
+            </div>
+            <div className="flex items-baseline flex-wrap gap-x-2 mt-1.5">
+              <span className={`text-sm line-through decoration-2 ${subPriceColorClass}`}>
+                {formatPrice(listYearlyPrice)}
+              </span>
+              <span className={`text-xs ${subPriceColorClass}`}>
+                {formatPrice(discountedMonthlyEquivalent)}/mo billed annually
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className={`text-3xl md:text-4xl font-bold ${priceColorClass} mb-1`}>
+              {displayPrice}
+            </p>
+            <p className={`text-xs ${subPriceColorClass}`}>
+              {displaySubPrice}
+            </p>
+          </>
+        )}
       </div>
 
       <div className="mb-6">
