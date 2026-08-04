@@ -35,8 +35,8 @@ export const useGetGoogleCalendarStatus = () => {
  */
 export const useGetGoogleCalendarConnectUrl = () => {
   return useMutation({
-    mutationFn: (redirectUrl?: string): Promise<GoogleCalendarConnectResponse> => {
-      return googleCalendarIntegrationService.getConnectUrl(redirectUrl);
+    mutationFn: (): Promise<GoogleCalendarConnectResponse> => {
+      return googleCalendarIntegrationService.getConnectUrl();
     },
   });
 };
