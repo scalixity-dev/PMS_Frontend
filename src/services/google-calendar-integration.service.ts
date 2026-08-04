@@ -59,13 +59,15 @@ class GoogleCalendarIntegrationService {
   }
 
   /**
-   * Get Google OAuth authorization URL
+   * Get Google OAuth authorization URL.
+   *
+   * Takes no redirect argument. The callback address is server-side
+   * configuration (GOOGLE_REDIRECT_URL) and has to match what is registered in
+   * the Google console, so a client-supplied value could only ever break the
+   * flow or redirect the authorization code somewhere it does not belong.
    */
-  async getConnectUrl(redirectUrl?: string): Promise<GoogleCalendarConnectResponse> {
+  async getConnectUrl(): Promise<GoogleCalendarConnectResponse> {
     const url = new URL(API_ENDPOINTS.GOOGLE_CALENDAR.CONNECT);
-    if (redirectUrl) {
-      url.searchParams.set('redirectUrl', redirectUrl);
-    }
 
     try {
       const response = await fetch(url.toString(), {
@@ -80,7 +82,7 @@ class GoogleCalendarIntegrationService {
       }
 
       return response.json();
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
         throw new Error('Unable to connect to the server. Please ensure the backend server is running and accessible.');
       }
