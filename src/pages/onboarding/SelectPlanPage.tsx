@@ -39,17 +39,30 @@ const PlanCard: React.FC<PlanCardProps> = ({
   const isCustom = plan.priceText.toLowerCase() === "custom";
   const isThisLoading = loading && selectedPlan === plan.plan.toLowerCase();
 
-  const yearlyPrice = plan.annualBillingText.match(/\$[\d,]+\.?\d*/)?.[0] ?? "";
-  const displayPrice = isYearly
-    ? isCustom
-      ? plan.annualBillingText.replace(" / mo", " /yr")
-      : `${yearlyPrice} /yr`
+  // Yearly plans are discounted 20% off the list price (12 x monthly)
+  const YEARLY_DISCOUNT = 0.2;
+
+  const parsePrice = (text: string): number => {
+    const match = text.match(/[\d,]+\.?\d*/);
+    return match ? parseFloat(match[0].replace(/,/g, "")) : 0;
+  };
+
+  const formatPrice = (num: number): string => {
+    const rounded = Math.round(num * 100) / 100;
+    return `$${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(2)}`;
+  };
+
+  const monthlyPrice = parsePrice(plan.priceText);
+  const listYearlyPrice = monthlyPrice * 12;
+  const discountedYearlyPrice = listYearlyPrice * (1 - YEARLY_DISCOUNT);
+  const discountedMonthlyEquivalent = discountedYearlyPrice / 12;
+
+  const displayPrice = isYearly && isCustom
+    ? plan.annualBillingText.replace(" / mo", " /yr")
     : plan.priceText;
 
-  const displaySub = isYearly
-    ? isCustom
-      ? "Contact us for annual pricing"
-      : `${plan.priceText.replace("/m", "/mo")} billed monthly`
+  const displaySub = isYearly && isCustom
+    ? "Contact us for annual pricing"
     : plan.annualBillingText;
 
   return (
@@ -75,12 +88,44 @@ const PlanCard: React.FC<PlanCardProps> = ({
       </p>
 
       <div className="mb-6">
-        <p className={`text-3xl font-bold ${isPro ? "text-white" : "text-gray-900"}`}>
-          {displayPrice}
-        </p>
-        <p className={`text-xs mt-1 ${isPro ? "text-white/70" : "text-gray-400"}`}>
-          {displaySub}
-        </p>
+        {isYearly && !isCustom ? (
+          <>
+            <div className="flex items-center flex-wrap gap-2">
+              <p className={`text-3xl font-bold ${isPro ? "text-white" : "text-gray-900"}`}>
+                {formatPrice(discountedYearlyPrice)}
+              </p>
+              <span className={`text-sm font-medium ${isPro ? "text-white/70" : "text-gray-400"}`}>/yr</span>
+              <span
+                className={`inline-flex items-center gap-1 rounded-full text-[11px] font-bold px-2.5 py-1 shadow-sm ${
+                  isPro ? "bg-white text-[#0f7a56]" : "bg-gradient-to-r from-[#FEC74E] to-[#FFA53E] text-white"
+                }`}
+              >
+                <svg width="10" height="10" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 9V3a1 1 0 011-1h6l9 9-8 8-9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                  <circle cx="6" cy="6" r="1" fill="currentColor" />
+                </svg>
+                SAVE 20%
+              </span>
+            </div>
+            <div className="flex items-baseline flex-wrap gap-x-2 mt-1">
+              <span className={`text-xs line-through decoration-2 ${isPro ? "text-white/70" : "text-gray-400"}`}>
+                {formatPrice(listYearlyPrice)}
+              </span>
+              <span className={`text-xs ${isPro ? "text-white/70" : "text-gray-400"}`}>
+                {formatPrice(discountedMonthlyEquivalent)}/mo billed annually
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className={`text-3xl font-bold ${isPro ? "text-white" : "text-gray-900"}`}>
+              {displayPrice}
+            </p>
+            <p className={`text-xs mt-1 ${isPro ? "text-white/70" : "text-gray-400"}`}>
+              {displaySub}
+            </p>
+          </>
+        )}
       </div>
 
       <button
@@ -212,11 +257,6 @@ export default function SelectPlanPage() {
           <span className={`text-sm font-medium ${isYearly ? "text-gray-900" : "text-gray-400"}`}>
             Yearly
           </span>
-          {isYearly && (
-            <span className="bg-[#20CC95]/10 text-[#20CC95] text-xs font-semibold px-2 py-0.5 rounded-full">
-              Save up to 20%
-            </span>
-          )}
         </div>
 
         {/* Error */}
