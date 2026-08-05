@@ -27,7 +27,10 @@ const SignUpPage: React.FC = () => {
       // account. Nothing was created - the backend deliberately refuses to,
       // since no account type was chosen there - so explain why they are here
       // and pre-fill the address they already proved they own.
-      if (searchParams.get('noAccount') === 'true') {
+      const cameFromGoogleWithNoAccount =
+        searchParams.get('noAccount') === 'true';
+
+      if (cameFromGoogleWithNoAccount) {
         setNoAccountEmail(email ?? '');
         if (email) updateFormData('email', email);
       }
@@ -43,11 +46,16 @@ const SignUpPage: React.FC = () => {
           }
           // Direct to step 3 (TenantRegistrationForm)
           setCurrentStep(3);
-        } else if (email) {
+        } else if (email && !cameFromGoogleWithNoAccount) {
           updateFormData('email', email);
           // Direct to step 2 (EmailSignup)
           setCurrentStep(2);
         }
+        // Deliberately no jump for the no-account case. Skipping ahead just
+        // because an email is present is what made this land on step 2 with
+        // the store's default account type, so everyone arriving from a Google
+        // login became a property manager. Choosing the type is the entire
+        // reason they were sent here, so stay on step 1.
       }
     } catch (e) {
       console.error('Error parsing signup query parameters:', e);
