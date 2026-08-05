@@ -205,15 +205,36 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
     }
   }, [isOAuthSignup, formData.email, formData.password, formData.firstName, formData.lastName, formData.agreedToTerms, formData.confirmPassword, passwordErrors.strength]);
 
-  // Mirrors the backend rule (6-15 digits) so a mistyped number is caught here
-  // rather than coming back as a validation error after a round trip. Phone is
-  // optional, so an empty field passes.
-  const phoneLengthError = (): string | null => {
+  // Some countries have no states in the dataset, so a missing state is only a
+  // problem when there was something to pick.
+  const countryHasStates = states.length > 0;
+
+  // One place that decides what is wrong with the address and phone block, so
+  // the message names the field the user has to fix. These mirror the backend
+  // rules, which previously only surfaced after a failed round trip.
+  const profileFieldError = (): string | null => {
+    if (!formData.country) return 'Please select your country';
+    if (countryHasStates && !formData.state) return 'Please select your state';
+
+    const pincode = (formData.pincode ?? '').trim();
+    if (!pincode) return 'Please enter your pincode';
+    if (!/^[A-Za-z0-9\s-]{3,12}$/.test(pincode)) {
+      return 'Pincode must be 3-12 characters (letters, digits, spaces and hyphens only)';
+    }
+
+    // Phone is optional, but a half-typed number should not reach the API.
     const digits = toPhoneDigits(formData.phone);
-    if (!digits) return null;
-    if (digits.length < 6 || digits.length > 15) {
+    if (digits && (digits.length < 6 || digits.length > 15)) {
       return 'Please enter a valid phone number (6-15 digits)';
     }
+    if (digits && !formData.phoneCountryCode) {
+      return 'Please select a country code for your phone number';
+    }
+
+    if ((formData.address ?? '').length > 500) {
+      return 'Address is too long (maximum 500 characters)';
+    }
+
     return null;
   };
 
@@ -227,9 +248,9 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
         return;
       }
 
-      const oauthPhoneError = phoneLengthError();
-      if (oauthPhoneError) {
-        setError(oauthPhoneError);
+      const oauthFieldError = profileFieldError();
+      if (oauthFieldError) {
+        setError(oauthFieldError);
         return;
       }
 
@@ -299,9 +320,9 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
       return;
     }
 
-    const signupPhoneError = phoneLengthError();
-    if (signupPhoneError) {
-      setError(signupPhoneError);
+    const signupFieldError = profileFieldError();
+    if (signupFieldError) {
+      setError(signupFieldError);
       return;
     }
 
@@ -513,9 +534,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                               key={code.value}
                               type="button"
                               onClick={() => {
-                                const [countryIso] = code.value.split('|');
+                                // Only the dialling code. This used to also set
+                                // the address country, and changing the code
+                                // after filling the address silently wiped the
+                                // state and pincode via the country effect.
                                 updateFormData('phoneCountryCode', code.value);
-                                updateFormData('country', countryIso);
                                 setIsPhoneCodeOpen(false);
                                 setPhoneCodeSearch('');
                               }}
@@ -591,7 +614,13 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                 className={inputClasses(!!formData.state)}
                 disabled={!formData.country || states.length === 0} // Disable if no country selected or no states exist
               >
-                <option value="" disabled>Select State</option>
+                <option value="" disabled>
+                  {!formData.country
+                    ? 'Select a country first'
+                    : countryHasStates
+                      ? 'Select State'
+                      : 'No states for this country'}
+                </option>
                 {states.map((state) => (
                   <option className='bg-teal-50 text-black' key={state.isoCode} value={state.isoCode}>
                     {state.name}
@@ -606,7 +635,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                 value={formData.pincode || ''}
                 onChange={(e) => updateFormData('pincode', e.target.value)}
                 className={inputClasses(!!formData.pincode)}
-                disabled={!formData.state}
+                placeholder={formData.country && !countryHasStates ? 'Ex: 12345' : undefined}
+                // Countries with no states in the dataset leave the state
+                // select disabled forever, which used to lock pincode too and
+                // made the form impossible to complete there.
+                disabled={!formData.country || (countryHasStates && !formData.state)}
               />
             </div>
           </div>
