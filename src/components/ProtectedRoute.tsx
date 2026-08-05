@@ -193,6 +193,20 @@ export const GuestRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       } else if (role === 'SERVICE_PRO') {
         setRedirectTo('/service-dashboard');
         setStatus('authenticated');
+      } else if (role === 'PROPERTY_MANAGER' && !user.isActive) {
+        // Signed in but onboarding is not finished, so /dashboard would reject
+        // them. Sending them there anyway produced an infinite loop: GuestRoute
+        // -> /dashboard -> ProtectedRoute rejects isActive === false -> /login
+        // -> GuestRoute again, which showed a spinner and a stream of 401s.
+        // Resume onboarding instead. SelectPlanPage reads these two params, so
+        // they have to travel with the redirect.
+        const params = new URLSearchParams({
+          userId: user.userId,
+          email: user.email,
+          newAccount: 'true',
+        });
+        setRedirectTo(`/onboarding/plan?${params.toString()}`);
+        setStatus('authenticated');
       } else if (role === 'PROPERTY_MANAGER' || role === 'TEAM_MEMBER') {
         setRedirectTo('/dashboard');
         setStatus('authenticated');
