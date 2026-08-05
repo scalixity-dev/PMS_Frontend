@@ -727,14 +727,27 @@ class AuthService {
   /**
    * Initiate OAuth flow
    */
-  initiateOAuth(provider: 'google' | 'facebook' | 'apple'): void {
+  /**
+   * @param accountType Which kind of account to create, when this is a signup.
+   *   Sent up front so the backend can create the account with the right role
+   *   the first time. Ignored for anyone who already has an account, which is
+   *   why there is no endpoint anywhere that changes a role after the fact.
+   *   Omit it on the login screen, where the user's role is already settled.
+   */
+  initiateOAuth(
+    provider: 'google' | 'facebook' | 'apple',
+    accountType?: 'manage' | 'renting' | 'fix',
+  ): void {
     const providerMap: Record<'google' | 'facebook' | 'apple', 'GOOGLE' | 'FACEBOOK' | 'APPLE'> = {
       google: 'GOOGLE',
       facebook: 'FACEBOOK',
       apple: 'APPLE',
     };
     const endpoint = API_ENDPOINTS.AUTH[providerMap[provider]];
-    window.location.href = endpoint;
+    const url = accountType
+      ? `${endpoint}?role=${encodeURIComponent(accountType)}`
+      : endpoint;
+    window.location.href = url;
   }
 
   /**

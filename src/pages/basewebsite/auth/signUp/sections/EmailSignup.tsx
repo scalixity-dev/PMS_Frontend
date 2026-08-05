@@ -140,7 +140,17 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext }) => {
       <div className="space-y-3 sm:space-y-3.5">
         <button 
           type="button" 
-          onClick={() => authService.initiateOAuth('google')}
+          // The account type was chosen on the previous step, so pass it along:
+          // the backend creates the account with that role rather than
+          // defaulting everyone to property manager.
+          onClick={() =>
+            authService.initiateOAuth(
+              'google',
+              // The store types this loosely; the backend ignores anything it
+              // does not recognise and falls back to property manager.
+              formData.accountType as 'manage' | 'renting' | 'fix' | undefined,
+            )
+          }
           className="w-full inline-flex justify-center items-center py-3 sm:py-3.5 px-4 border-2 border-gray-200 rounded-lg bg-white text-sm sm:text-base font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
         >
           <GoogleIcon />

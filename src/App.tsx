@@ -42,6 +42,7 @@ const OAuthCallbackPage = lazy(() => import('./pages/basewebsite/auth/oauth-call
 const OAuthCompletePage = lazy(() => import('./pages/basewebsite/auth/signUp/oauth-complete'));
 const MobileAutoLogin = lazy(() => import('./pages/basewebsite/auth/mobile-auto-login/MobileAutoLogin'));
 import AutoLoginProvider from './components/AutoLoginProvider';
+import AccountNotice from './components/AccountNotice';
 import { TeamPermissionProvider, useTeamPermissions } from './context/TeamPermissionContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { Navigate, Outlet } from 'react-router-dom';
@@ -282,6 +283,9 @@ const App: React.FC = () => {
           <RoutedApp>
           <AutoLoginProvider>
           <GlobalLoader />
+          {/* Sits at app level so it shows wherever the OAuth callback lands
+              the user - the dashboard or the plan screen. */}
+          <AccountNotice />
           <AIChatButton />
           <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>Loading…</div>}>
           <Routes>
