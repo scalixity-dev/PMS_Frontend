@@ -7,7 +7,7 @@ import { Eye, EyeOff, Search, ChevronDown } from 'lucide-react';
 import { useSignUpStore } from '../store/signUpStore';
 import { useRegister, useUpdateProfile, useGetCurrentUser } from '../../../../../hooks/useAuthQueries';
 import { authService } from '../../../../../services/auth.service';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, extractDialCode, toPhoneDigits } from '@/utils/phone.utils';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = (hasValue: boolean = true) =>
@@ -205,6 +205,18 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
     }
   }, [isOAuthSignup, formData.email, formData.password, formData.firstName, formData.lastName, formData.agreedToTerms, formData.confirmPassword, passwordErrors.strength]);
 
+  // Mirrors the backend rule (6-15 digits) so a mistyped number is caught here
+  // rather than coming back as a validation error after a round trip. Phone is
+  // optional, so an empty field passes.
+  const phoneLengthError = (): string | null => {
+    const digits = toPhoneDigits(formData.phone);
+    if (!digits) return null;
+    if (digits.length < 6 || digits.length > 15) {
+      return 'Please enter a valid phone number (6-15 digits)';
+    }
+    return null;
+  };
+
   // Handle registration
   const handleRegistration = async () => {
     if (isOAuthSignup) {
@@ -215,13 +227,19 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
         return;
       }
 
+      const oauthPhoneError = phoneLengthError();
+      if (oauthPhoneError) {
+        setError(oauthPhoneError);
+        return;
+      }
+
       setError(null);
 
       try {
-        // Extract phone country code and number
-        const [phoneCountryCode, phoneNumber] = formData.phoneCountryCode
-          ? formData.phoneCountryCode.split('|')
-          : [undefined, formData.phone];
+        // The selector holds "IN|91", so the ISO half is not a dialling code
+        // and the number lives in formData.phone, not in this value.
+        const phoneCountryCode = extractDialCode(formData.phoneCountryCode);
+        const phoneNumber = toPhoneDigits(formData.phone);
 
         await updateProfileMutation.mutateAsync({
           phoneCountryCode: phoneCountryCode,
@@ -281,6 +299,12 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
       return;
     }
 
+    const signupPhoneError = phoneLengthError();
+    if (signupPhoneError) {
+      setError(signupPhoneError);
+      return;
+    }
+
     setError(null);
 
     try {
@@ -300,8 +324,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
             email: formData.email,
           },
           replace: true,
-          window: undefined
-        } as any);
+        });
         return;
       }
 
@@ -318,15 +341,13 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
             email: formData.email,
           },
           replace: true,
-          window: undefined
-        } as any);
+        });
         return;
       }
 
       // Default: property manager registration (manage)
-      const [phoneCountryCode, phoneNumber] = formData.phoneCountryCode
-        ? formData.phoneCountryCode.split('|')
-        : [undefined, formData.phone];
+      const phoneCountryCode = extractDialCode(formData.phoneCountryCode);
+      const phoneNumber = toPhoneDigits(formData.phone);
 
       const response = await registerMutation.mutateAsync({
         email: formData.email!,
