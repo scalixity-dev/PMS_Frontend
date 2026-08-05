@@ -11,6 +11,16 @@ interface SubscriptionContextValue {
   daysLeftInTrial: number;
   trialEndsAt: string | null;
   isLoading: boolean;
+  /**
+   * False when this account has no subscription at all.
+   *
+   * `planId` falls back to 'starter' when the fetch returns nothing, and the
+   * backend answers 404 for an account that never chose a plan - so planId
+   * alone cannot tell "on Starter" apart from "has no plan", and reading it
+   * would silently grant Starter features to someone who never picked one.
+   * Gate on this before trusting planId.
+   */
+  hasPlan: boolean;
   refetch: () => void;
 }
 
@@ -23,6 +33,7 @@ const SubscriptionContext = createContext<SubscriptionContextValue>({
   daysLeftInTrial: 0,
   trialEndsAt: null,
   isLoading: false,
+  hasPlan: false,
   refetch: () => {},
 });
 
@@ -52,6 +63,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       daysLeftInTrial: data?.daysLeftInTrial ?? 0,
       trialEndsAt: data?.trialEndsAt ?? null,
       isLoading,
+      // The query has retry:false and the backend 404s when there is no
+      // subscription, so a missing planId here means "no plan", not "Starter".
+      hasPlan: !!data?.planId,
       refetch,
     };
   }, [data, isLoading, refetch]);
