@@ -67,6 +67,14 @@ export interface LoginResponse {
   token?: string;
 }
 
+/** The plan attached to an account. Mirrors what the backend returns. */
+export interface UserSubscription {
+  planId: string;
+  status: 'ACTIVE' | 'CANCELED' | 'PAST_DUE' | 'EXPIRED' | 'TRIALING';
+  startDate: string | null;
+  endDate: string | null;
+}
+
 export interface CurrentUser {
   userId: string;
   email: string;
@@ -82,6 +90,21 @@ export interface CurrentUser {
   state?: string;
   pincode?: string;
   profilePhotoUrl?: string;
+  /**
+   * null when the account has never chosen a plan. That is different from an
+   * expired or cancelled one, which still has a row here - the first needs the
+   * plan screen, the second needs billing.
+   */
+  subscription: UserSubscription | null;
+  /**
+   * Whether this account still has to pick a plan before it can use the app.
+   * Only property managers pay, so it is never true for anyone else.
+   *
+   * Route on this rather than on `isActive`: isActive is also false for an
+   * account an admin deactivated, and sending that person to the plan screen
+   * would be wrong.
+   */
+  requiresPlanSelection: boolean;
 }
 
 export interface UpdateProfileRequest {
@@ -662,7 +685,17 @@ class AuthService {
           throw new Error(errorData.message || 'Failed to get user information');
         }
         const data = await response.json();
-        const user: CurrentUser = data.user || data;
+        const raw = data.user || data;
+        // requiresPlanSelection sits at the response root, next to `user`, so
+        // it has to be lifted in explicitly. Defaulted rather than assumed
+        // present: an older backend would omit it, and defaulting to false
+        // keeps an existing paying user out of the plan screen.
+        const user: CurrentUser = {
+          ...raw,
+          subscription: raw.subscription ?? null,
+          requiresPlanSelection:
+            data.requiresPlanSelection ?? raw.requiresPlanSelection ?? false,
+        };
         this._currentUserCache = { user, expiresAt: Date.now() + 30_000 };
         return user;
       } finally {

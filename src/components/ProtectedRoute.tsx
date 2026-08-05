@@ -13,6 +13,22 @@ const FullScreenLoader: React.FC = () => (
   </div>
 );
 
+/**
+ * Where an account that still owes us a plan choice should go.
+ *
+ * SelectPlanPage reads `userId` and `email` from the query string and posts
+ * them to activateAccount, so they have to travel with every redirect here.
+ * Without them activation fires with an empty userId and fails silently.
+ */
+function planSelectionPath(user: { userId: string; email: string }): string {
+  const params = new URLSearchParams({
+    userId: user.userId,
+    email: user.email,
+    newAccount: 'true',
+  });
+  return `/onboarding/plan?${params.toString()}`;
+}
+
 /** Builds a `/login` target that preserves the intended destination and any `?email=` pre-fill. */
 function loginRedirectTarget(location: { pathname: string; search: string }): string {
   const currentPath = `${location.pathname}${location.search}`;
@@ -27,6 +43,10 @@ function loginRedirectTarget(location: { pathname: string; search: string }): st
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Set when the user is legitimately signed in but has not chosen a plan yet.
+  // They should land on the plan screen, not be bounced to /login as if their
+  // session were invalid.
+  const [planRedirect, setPlanRedirect] = useState<string | null>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -34,6 +54,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       try {
         console.log('ProtectedRoute: Checking authentication...');
         const user = await authService.getCurrentUser();
+
+        if (user.requiresPlanSelection) {
+          // Covers a direct link or refresh of a guarded page before onboarding
+          // is finished. Without this the user is sent to /login, which is a
+          // GuestRoute, which sends them straight back here.
+          setPlanRedirect(planSelectionPath(user));
+          setIsAuthenticated(false);
+          return;
+        }
         console.log('ProtectedRoute: User retrieved:', {
           userId: user.userId,
           email: user.email,
@@ -93,6 +122,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }, []);
 
   if (isLoading) return <FullScreenLoader />;
+  // Checked before the /login fallback: this user is signed in, they just have
+  // not finished onboarding, so /login would be both wrong and a loop.
+  if (planRedirect) return <Navigate to={planRedirect} replace />;
   if (!isAuthenticated) return <Navigate to={loginRedirectTarget(location)} replace />;
   return <>{children}</>;
 };
@@ -193,19 +225,16 @@ export const GuestRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       } else if (role === 'SERVICE_PRO') {
         setRedirectTo('/service-dashboard');
         setStatus('authenticated');
-      } else if (role === 'PROPERTY_MANAGER' && !user.isActive) {
-        // Signed in but onboarding is not finished, so /dashboard would reject
-        // them. Sending them there anyway produced an infinite loop: GuestRoute
-        // -> /dashboard -> ProtectedRoute rejects isActive === false -> /login
-        // -> GuestRoute again, which showed a spinner and a stream of 401s.
-        // Resume onboarding instead. SelectPlanPage reads these two params, so
-        // they have to travel with the redirect.
-        const params = new URLSearchParams({
-          userId: user.userId,
-          email: user.email,
-          newAccount: 'true',
-        });
-        setRedirectTo(`/onboarding/plan?${params.toString()}`);
+      } else if (user.requiresPlanSelection) {
+        // Signed in but no plan chosen yet, so /dashboard would reject them.
+        // Sending them there anyway produced an infinite loop: GuestRoute ->
+        // /dashboard -> ProtectedRoute rejects -> /login -> GuestRoute again,
+        // which showed a spinner and a stream of 401s.
+        //
+        // Keyed on requiresPlanSelection rather than !isActive because
+        // isActive is also false for an account an admin deactivated, and
+        // sending that person to the plan screen would be wrong.
+        setRedirectTo(planSelectionPath(user));
         setStatus('authenticated');
       } else if (role === 'PROPERTY_MANAGER' || role === 'TEAM_MEMBER') {
         setRedirectTo('/dashboard');

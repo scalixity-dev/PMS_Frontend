@@ -188,6 +188,16 @@ export default function SelectPlanPage() {
   const email = searchParams.get("email") ?? "";
   const isOAuth = searchParams.get("oauth") === "true";
 
+  // Params are how the page is normally reached, but they do not survive a
+  // refresh, a bookmark, or a link shared out of the address bar. Falling back
+  // to the signed-in user keeps activation working from anywhere; without it
+  // activateAccount posts an empty userId and fails with a confusing error.
+  const resolveAccount = async (): Promise<{ userId: string; email: string }> => {
+    if (userId) return { userId, email };
+    const current = await authService.getCurrentUser();
+    return { userId: current.userId, email: current.email };
+  };
+
   const handleSelect = async (planId: string) => {
     if (planId === "business") {
       window.location.href = "mailto:support@smarttenantai.com?subject=Business Plan Inquiry";
@@ -199,13 +209,19 @@ export default function SelectPlanPage() {
     setError(null);
 
     try {
-      const result = await authService.activateAccount(userId, { planId, isYearly });
+      const account = await resolveAccount();
+      const result = await authService.activateAccount(account.userId, { planId, isYearly });
+
+      // The cached /auth/me answer still says requiresPlanSelection, so the
+      // guards would bounce the user straight back to this page. Drop it so the
+      // next check sees the subscription that was just created.
+      authService.invalidateCurrentUserCache();
 
       if (isOAuth || !result.requiresEmailVerification) {
         navigate("/dashboard", { replace: true });
       } else {
         navigate(
-          `/otp?userId=${userId}&email=${encodeURIComponent(email)}&role=PROPERTY_MANAGER&activated=true`,
+          `/otp?userId=${account.userId}&email=${encodeURIComponent(account.email)}&role=PROPERTY_MANAGER&activated=true`,
           { replace: true }
         );
       }
