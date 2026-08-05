@@ -402,7 +402,10 @@ const LoginForm: React.FC = () => {
                 <div className="mt-6 space-y-3">
                     <button
                         type="button"
-                        onClick={() => authService.initiateOAuth('google')}
+                        // 'login' so the backend does not create an account for
+                        // someone who has none. They have not chosen an account
+                        // type here, so they are sent to signup to pick one.
+                        onClick={() => authService.initiateOAuth('google', undefined, 'login')}
                         className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] gap-3"
                     >
                         <GoogleIcon /> Sign in with Google

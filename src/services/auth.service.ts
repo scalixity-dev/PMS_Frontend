@@ -734,9 +734,18 @@ class AuthService {
    *   why there is no endpoint anywhere that changes a role after the fact.
    *   Omit it on the login screen, where the user's role is already settled.
    */
+  /**
+   * @param intent 'login' tells the backend not to create an account for an
+   *   unknown visitor. Someone pressing this on the login screen has not chosen
+   *   an account type, and quietly making them a property manager would drop
+   *   them into an experience they never asked for; they are sent to signup
+   *   instead. Omitted means "may create", which is what the signup screen
+   *   wants and what older clients relied on.
+   */
   initiateOAuth(
     provider: 'google' | 'facebook' | 'apple',
     accountType?: 'manage' | 'renting' | 'fix',
+    intent?: 'login' | 'signup',
   ): void {
     const providerMap: Record<'google' | 'facebook' | 'apple', 'GOOGLE' | 'FACEBOOK' | 'APPLE'> = {
       google: 'GOOGLE',
@@ -744,10 +753,11 @@ class AuthService {
       apple: 'APPLE',
     };
     const endpoint = API_ENDPOINTS.AUTH[providerMap[provider]];
-    const url = accountType
-      ? `${endpoint}?role=${encodeURIComponent(accountType)}`
-      : endpoint;
-    window.location.href = url;
+    const params = new URLSearchParams();
+    if (accountType) params.set('role', accountType);
+    if (intent) params.set('intent', intent);
+    const query = params.toString();
+    window.location.href = query ? `${endpoint}?${query}` : endpoint;
   }
 
   /**
