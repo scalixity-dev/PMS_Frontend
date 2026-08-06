@@ -65,7 +65,7 @@ export const Sidebar = () => {
                     )}
                 </div>
 
-                <div className="text-left lg:text-center overflow-hidden">
+                <div className="text-left lg:text-center overflow-hidden min-w-0 flex-1 lg:flex-none w-full">
                     <h2 className="text-xl lg:text-3xl font-medium text-[var(--dashboard-text-main)] mb-1 truncate">{userName}</h2>
                     <p className="text-gray-500 text-sm font-normal truncate">{userEmail}</p>
                 </div>

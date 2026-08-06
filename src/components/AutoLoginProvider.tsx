@@ -19,15 +19,25 @@ interface AutoLoginProviderProps {
 type RedeemResult = { ok: true } | { ok: false; message: string };
 
 /**
- * Redeem a mobile redirect token and confirm the session cookie took effect.
+ * Redeem a redirect token and confirm the session cookie took effect.
  *
  * Kept outside the component and started exactly once per token: the token is
  * single-use, so this may never be retried. It resolves rather than rejects so
  * several effect invocations can await the same promise safely.
+ *
+ * `verify` is which backend redemption to call - ?token= (mobile hand-off,
+ * requires an already-active account) and ?oauthToken= (Apple's web OAuth
+ * hand-off, which must tolerate a brand-new not-yet-active property manager)
+ * are different tokens verified by different endpoints. See
+ * AuthService.verifyOAuthRedirectToken on the backend for why they can't share
+ * one.
  */
-const redeemMobileToken = async (token: string): Promise<RedeemResult> => {
+const redeemToken = async (
+  token: string,
+  verify: (token: string) => Promise<unknown>,
+): Promise<RedeemResult> => {
   try {
-    await authService.verifyMobileToken(token);
+    await verify(token);
   } catch (err) {
     return {
       ok: false,
@@ -54,18 +64,19 @@ const redeemMobileToken = async (token: string): Promise<RedeemResult> => {
 };
 
 /**
- * Global wrapper that detects ?token= in ANY URL and auto-logs in the user
- * before rendering the page. This enables mobile-to-web deep linking:
+ * Global wrapper that detects ?token= or ?oauthToken= in ANY URL and
+ * auto-logs in the user before rendering the page. This enables mobile-to-web
+ * deep linking and Apple's web OAuth hand-off:
  *
  *   https://frontend.com/dashboard/properties/123?token=xxx
  *
  * The provider will:
- * 1. Detect ?token= in the URL
+ * 1. Detect ?token=/?oauthToken= in the URL
  * 2. Call the backend to verify the token and set the auth cookie
- * 3. Strip ?token= from the URL (clean URL)
+ * 3. Strip it from the URL (clean URL)
  * 4. Render the page normally (ProtectedRoute will find the cookie and allow access)
  *
- * If there's no ?token= param, children render immediately with zero delay.
+ * If neither param is present, children render immediately with zero delay.
  */
 const AutoLoginProvider: React.FC<AutoLoginProviderProps> = ({ children }) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -75,8 +86,14 @@ const AutoLoginProvider: React.FC<AutoLoginProviderProps> = ({ children }) => {
 
   // Captured on the first render and kept across re-renders and the URL rewrite
   // below, so the token survives being stripped from the query string.
+  // Mobile hand-off (?token=) and Apple's web OAuth hand-off (?oauthToken=)
+  // are mutually exclusive in practice, but both are read so either can drive
+  // the same redemption flow below.
   const tokenRef = useRef<string | null>(
     isMobileTokenPath ? searchParams.get('token') : null,
+  );
+  const oauthTokenRef = useRef<string | null>(
+    isMobileTokenPath ? searchParams.get('oauthToken') : null,
   );
   // Holds the single in-flight redemption. Because the token can only be spent
   // once, StrictMode's second effect invocation must re-attach to this promise
@@ -85,14 +102,15 @@ const AutoLoginProvider: React.FC<AutoLoginProviderProps> = ({ children }) => {
   const redeemPromiseRef = useRef<Promise<RedeemResult> | null>(null);
 
   const [state, setState] = useState<'idle' | 'verifying' | 'done' | 'error'>(
-    () => (tokenRef.current ? 'verifying' : 'idle'),
+    () => (tokenRef.current || oauthTokenRef.current ? 'verifying' : 'idle'),
   );
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     const token = tokenRef.current;
+    const oauthToken = oauthTokenRef.current;
 
-    if (!token) {
+    if (!token && !oauthToken) {
       setState('idle');
       return;
     }
@@ -100,16 +118,21 @@ const AutoLoginProvider: React.FC<AutoLoginProviderProps> = ({ children }) => {
     let cancelled = false;
 
     if (!redeemPromiseRef.current) {
-      // Strip ?token= before redeeming rather than after. The token is spent by
-      // the request either way, so leaving it in the URL only means a reload or
-      // a back-navigation retries a token that can no longer work - and it
-      // keeps a credential in browser history and in any Referer header this
-      // page sends.
+      // Strip the token before redeeming rather than after. The token is
+      // spent by the request either way, so leaving it in the URL only means
+      // a reload or a back-navigation retries a token that can no longer
+      // work - and it keeps a credential in browser history and in any
+      // Referer header this page sends.
       const strippedParams = new URLSearchParams(searchParams);
       strippedParams.delete('token');
+      strippedParams.delete('oauthToken');
       setSearchParams(strippedParams, { replace: true });
 
-      redeemPromiseRef.current = redeemMobileToken(token);
+      redeemPromiseRef.current = token
+        ? redeemToken(token, (t) => authService.verifyMobileToken(t))
+        : redeemToken(oauthToken as string, (t) =>
+            authService.verifyOAuthToken(t),
+          );
     }
 
     void redeemPromiseRef.current.then(result => {
@@ -123,7 +146,7 @@ const AutoLoginProvider: React.FC<AutoLoginProviderProps> = ({ children }) => {
     });
 
     return () => { cancelled = true; };
-    // Only run once on mount when token is present
+    // Only run once on mount when a token is present
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

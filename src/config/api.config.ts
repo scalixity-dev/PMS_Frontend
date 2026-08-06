@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
     UPDATE_PROFILE: `${API_BASE_URL}/auth/profile`,
     DELETE_ACCOUNT: `${API_BASE_URL}/auth/account`,
     VERIFY_MOBILE_TOKEN: `${API_BASE_URL}/auth/verify-mobile-token`,
+    VERIFY_OAUTH_TOKEN: `${API_BASE_URL}/auth/verify-oauth-token`,
     INVITE_LANDLORD: `${API_BASE_URL}/auth/invite-landlord`,
     GOOGLE: `${API_BASE_URL}/auth/google`,
     FACEBOOK: `${API_BASE_URL}/auth/facebook`,

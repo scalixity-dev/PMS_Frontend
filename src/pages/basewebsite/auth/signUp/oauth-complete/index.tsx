@@ -19,13 +19,17 @@ const OAuthCompletePage: React.FC = () => {
 
     if (!userId) return;
 
-    // Initialize OAuth signup data
+    // Initialize OAuth signup data. setFormData replaces the whole object
+    // rather than merging, so this has to spread the reset defaults (country:
+    // 'US', phoneCountryCode: 'US|1') back in - passing only these three keys
+    // silently wiped them, leaving the country/phone-code selectors blank.
     resetForm(); // Reset form first
-    setFormData({
+    setFormData((prev) => ({
+      ...prev,
       email: decodeURIComponent(email),
       fullName: decodeURIComponent(fullName),
       accountType: 'manage',
-    });
+    }));
     setIsOAuthSignup(true);
     setUserId(userId);
 

@@ -904,6 +904,47 @@ class AuthService {
 
     return response.json();
   }
+
+  /**
+   * Verify an OAuth callback hand-off token for auto-login.
+   * Called when the frontend detects ?oauthToken= in the URL - a separate
+   * param from ?token= because, unlike the mobile hand-off, a brand-new OAuth
+   * property-manager signup is legitimately not yet active (pending plan
+   * selection) and verify-mobile-token would reject it for that.
+   */
+  async verifyOAuthToken(token: string): Promise<{
+    user: {
+      id: string;
+      email: string;
+      fullName: string;
+      role: string;
+      isEmailVerified: boolean;
+      isActive: boolean;
+    };
+    message: string;
+  }> {
+    const response = await fetch(API_ENDPOINTS.AUTH.VERIFY_OAUTH_TOKEN, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ token }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Auto-login failed';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        errorMessage = `Auto-login failed: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
 }
 
 export const authService = new AuthService();
