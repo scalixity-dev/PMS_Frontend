@@ -8,6 +8,7 @@ import { useSignUpStore } from '../store/signUpStore';
 import { useRegister, useUpdateProfile, useGetCurrentUser } from '../../../../../hooks/useAuthQueries';
 import { authService } from '../../../../../services/auth.service';
 import { formatPhoneNumber, extractDialCode, toPhoneDigits } from '@/utils/phone.utils';
+import { API_ENDPOINTS } from '../../../../../config/api.config';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = (hasValue: boolean = true) =>
@@ -296,14 +297,42 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
             // Fallback: get userId from current user
             navigate(`/onboarding/plan?userId=${user.userId}&email=${encodeURIComponent(user.email)}&newAccount=true&oauth=true`, { replace: true });
           }
+        } else if (formData.accountType === 'renting') {
+          // The browser is already authenticated at this point - the OAuth
+          // callback sets the session cookie before this form even renders -
+          // so navigating to /login would just have GuestRoute bounce
+          // straight to /userdashboard without ever collecting rental
+          // preferences (the login form, where that check normally happens,
+          // never gets a chance to mount). Check directly instead, the same
+          // way the email/password path does in otp/index.tsx and loginForm.tsx.
+          try {
+            const preferencesResponse = await fetch(API_ENDPOINTS.TENANT.GET_PREFERENCES, {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+            });
+
+            if (preferencesResponse.ok) {
+              const preferences = await preferencesResponse.json();
+              const hasPreferences = preferences && (
+                (preferences.location && preferences.location.country && preferences.location.state && preferences.location.city) ||
+                (preferences.rentalTypes && preferences.rentalTypes.length > 0)
+              );
+              navigate(hasPreferences ? '/userdashboard' : '/signup/tenant-onboarding-flow', { replace: true });
+            } else {
+              navigate('/signup/tenant-onboarding-flow', { replace: true });
+            }
+          } catch {
+            navigate('/signup/tenant-onboarding-flow', { replace: true });
+          }
         } else {
-          // Tenants and Service Pros have free accounts - redirect to dashboard or login
-          navigate('/login', { 
-            state: { 
+          // Service Pros have free accounts - redirect to dashboard or login
+          navigate('/login', {
+            state: {
               message: 'Account created successfully! Please log in to continue.',
-              email: user?.email 
+              email: user?.email
             },
-            replace: true 
+            replace: true
           });
         }
       } catch (err) {
