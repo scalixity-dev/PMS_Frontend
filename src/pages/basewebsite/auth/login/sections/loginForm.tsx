@@ -412,7 +412,10 @@ const LoginForm: React.FC = () => {
                     </button>
                     <button
                         type="button"
-                        onClick={() => authService.initiateOAuth('apple')}
+                        // 'login' so the backend does not create an account for
+                        // someone who has none. They have not chosen an account
+                        // type here, so they are sent to signup to pick one.
+                        onClick={() => authService.initiateOAuth('apple', undefined, 'login')}
                         className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] gap-3"
                     >
                         <AppleIcon /> Sign in with Apple

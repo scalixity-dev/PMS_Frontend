@@ -156,9 +156,17 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext }) => {
           <GoogleIcon />
           Create with Google
         </button>
-        <button 
-          type="button" 
-          onClick={() => authService.initiateOAuth('apple')}
+        <button
+          type="button"
+          // Same as the Google button above: pass the account type chosen on
+          // the previous step so the backend doesn't default to property
+          // manager for everyone.
+          onClick={() =>
+            authService.initiateOAuth(
+              'apple',
+              formData.accountType as 'manage' | 'renting' | 'fix' | undefined,
+            )
+          }
           className="w-full inline-flex justify-center items-center py-3 sm:py-3.5 px-4 border-2 border-gray-200 rounded-lg bg-white text-sm sm:text-base font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
         >
           <AppleIcon />

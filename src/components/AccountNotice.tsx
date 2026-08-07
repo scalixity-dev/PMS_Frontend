@@ -2,18 +2,18 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 /**
- * Explains why you were signed in as something other than what you picked.
+ * Explains why a Google sign-in was refused instead of completing.
  *
- * Choosing "Tenant" on the signup page and then signing in with a Google
- * address that already belongs to a property manager signs you in as the
- * property manager. That is deliberate: a role is only ever set when the
- * account is created, so there is no way to change one. But it used to happen
- * in silence, and you landed in the manager experience with no idea why.
+ * Choosing "Property Manager" on the signup page and then continuing with a
+ * Google address that already belongs to a Tenant does not sign you in as
+ * that tenant: a role is only ever set when the account is created, so there
+ * is no way to change one, and silently logging someone into an account type
+ * they did not choose right now would be worse than asking again. The backend
+ * refuses the sign-in instead - no session cookie is set - and redirects to
+ * `/login?accountExists=<ROLE>` so this notice can say why.
  *
- * The backend appends `accountExists=<ROLE>` to the redirect when a signup role
- * was requested, the account already existed, and the two disagree. This reads
- * that, says so, and takes the parameter back out of the URL so a refresh or a
- * shared link does not show the message again.
+ * This reads that parameter, shows the message, and takes it back out of the
+ * URL so a refresh or a shared link does not show it again.
  */
 
 const ROLE_LABELS: Record<string, string> = {
@@ -80,7 +80,7 @@ const AccountNotice: React.FC = () => {
       <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-xl ring-1 ring-black/5 backdrop-blur">
         <span
           aria-hidden="true"
-          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-600"
+          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600"
         >
           <svg
             className="h-4 w-4"
@@ -99,12 +99,13 @@ const AccountNotice: React.FC = () => {
 
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-900">
-            Signed in to your existing account
+            This email already has an account
           </p>
           <p className="mt-1 text-sm leading-relaxed text-slate-600">
-            This email is already registered as a{' '}
-            <span className="font-medium text-slate-900">{label}</span>. To use
-            a different account type, sign up with another email address.
+            It's registered as a{' '}
+            <span className="font-medium text-slate-900">{label}</span>. Sign
+            in below instead, or use a different email address to create a
+            different type of account.
           </p>
         </div>
 

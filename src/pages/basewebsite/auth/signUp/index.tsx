@@ -10,8 +10,11 @@ import { useSignUpStore } from './store/signUpStore';
 // Main Signup Component
 const SignUpPage: React.FC = () => {
   const { currentStep, nextStep, resetForm, formData, updateFormData, setCurrentStep } = useSignUpStore();
-  // Set when the visitor was bounced here from a Google login with no account.
+  // Set when the visitor was bounced here from an OAuth login with no account.
   const [noAccountEmail, setNoAccountEmail] = useState<string | null>(null);
+  // Which provider they tried to log in with - drives the wording below.
+  // Defaults to a generic phrasing for older links that predate this param.
+  const [noAccountProvider, setNoAccountProvider] = useState<string | null>(null);
 
   // Reset form when component mounts
   useEffect(() => {
@@ -23,15 +26,16 @@ const SignUpPage: React.FC = () => {
       const role = searchParams.get('role');
       const propertyId = searchParams.get('propertyId');
 
-      // Arrived from "Continue with Google" on the login screen with no
+      // Arrived from "Continue with <Provider>" on the login screen with no
       // account. Nothing was created - the backend deliberately refuses to,
       // since no account type was chosen there - so explain why they are here
       // and pre-fill the address they already proved they own.
-      const cameFromGoogleWithNoAccount =
+      const cameFromOAuthWithNoAccount =
         searchParams.get('noAccount') === 'true';
 
-      if (cameFromGoogleWithNoAccount) {
+      if (cameFromOAuthWithNoAccount) {
         setNoAccountEmail(email ?? '');
+        setNoAccountProvider(searchParams.get('provider'));
         if (email) updateFormData('email', email);
       }
 
@@ -46,16 +50,16 @@ const SignUpPage: React.FC = () => {
           }
           // Direct to step 3 (TenantRegistrationForm)
           setCurrentStep(3);
-        } else if (email && !cameFromGoogleWithNoAccount) {
+        } else if (email && !cameFromOAuthWithNoAccount) {
           updateFormData('email', email);
           // Direct to step 2 (EmailSignup)
           setCurrentStep(2);
         }
         // Deliberately no jump for the no-account case. Skipping ahead just
         // because an email is present is what made this land on step 2 with
-        // the store's default account type, so everyone arriving from a Google
-        // login became a property manager. Choosing the type is the entire
-        // reason they were sent here, so stay on step 1.
+        // the store's default account type, so everyone arriving from an
+        // OAuth login became a property manager. Choosing the type is the
+        // entire reason they were sent here, so stay on step 1.
       }
     } catch (e) {
       console.error('Error parsing signup query parameters:', e);
@@ -65,6 +69,17 @@ const SignUpPage: React.FC = () => {
   const handleNext = (): void => {
     nextStep();
   };
+
+  // Unrecognized or absent provider values (older links predating this
+  // param) fall back to the generic wording rather than showing a raw slug.
+  const PROVIDER_LABELS: Record<string, string> = {
+    google: 'Google',
+    apple: 'Apple',
+    facebook: 'Facebook',
+  };
+  const providerLabel = noAccountProvider
+    ? PROVIDER_LABELS[noAccountProvider]
+    : undefined;
 
   return (
     <>
@@ -89,7 +104,7 @@ const SignUpPage: React.FC = () => {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-slate-900">
-              No account yet for this Google address
+              No account yet{providerLabel ? ` for this ${providerLabel} address` : ''}
             </p>
             <p className="mt-1 text-sm leading-relaxed text-slate-600">
               {noAccountEmail ? (
@@ -98,9 +113,11 @@ const SignUpPage: React.FC = () => {
                   <span className="font-medium text-slate-900">{noAccountEmail}</span>.{' '}
                 </>
               ) : (
-                <>We could not find an account for that Google address. </>
+                <>We could not find an account for that{providerLabel ? ` ${providerLabel}` : ''} address. </>
               )}
-              Choose how you will use SmartTenantAI below to finish signing up.
+              {providerLabel
+                ? `Use "Create account with ${providerLabel}" below to finish signing up.`
+                : 'Choose how you will use SmartTenantAI below to finish signing up.'}
             </p>
           </div>
           <button
