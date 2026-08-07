@@ -136,20 +136,16 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
 
     try {
       // Use tenant-specific registration endpoint
-      await authService.registerTenant({
+      const response = await authService.registerTenant({
         email: formData.email!,
         password: formData.password!,
         fullName: `${formData.firstName || ''} ${formData.lastName || ''}`.trim(),
       });
 
-      // Registration successful - redirect to login
-      // User needs to login first, then they'll be redirected to onboarding if needed
-      navigate('/login', { 
-        state: { 
-          email: formData.email,
-          message: 'Registration successful! Please log in to continue.' 
-        },
-        replace: true 
+      // Registration already sent an OTP email - go straight to verification
+      // instead of forcing the user to log in again with the password they just set.
+      navigate(`/otp?userId=${response.id}&email=${encodeURIComponent(response.email)}&type=email&role=${response.role}`, {
+        replace: true,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');

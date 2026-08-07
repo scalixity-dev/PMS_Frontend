@@ -48,7 +48,7 @@ const OAuthCompletePage: React.FC = () => {
           SERVICE_PRO: 'fix',
         };
         const accountType = byRole[user.role?.toUpperCase() ?? ''];
-        if (accountType) setFormData({ accountType });
+        if (accountType) setFormData((prev) => ({ ...prev, accountType }));
       })
       .catch(() => {
         // Leave the default in place; the form still works and the backend

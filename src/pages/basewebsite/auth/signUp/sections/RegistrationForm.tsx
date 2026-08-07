@@ -52,6 +52,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
   const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
   const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const phoneCodeRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -209,6 +210,21 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
   // problem when there was something to pick.
   const countryHasStates = states.length > 0;
 
+  // Phone is optional, but a half-typed number should not reach the API.
+  // Shared by the on-blur inline error and the submit-time check below so the
+  // two never drift out of sync.
+  const getPhoneError = (rawPhone: string | null | undefined): string | null => {
+    const digits = toPhoneDigits(rawPhone);
+    if (!digits) return null;
+    if (digits.length < 6 || digits.length > 15) {
+      return 'Please enter a valid phone number (6-15 digits)';
+    }
+    if (!formData.phoneCountryCode) {
+      return 'Please select a country code for your phone number';
+    }
+    return null;
+  };
+
   // One place that decides what is wrong with the address and phone block, so
   // the message names the field the user has to fix. These mirror the backend
   // rules, which previously only surfaced after a failed round trip.
@@ -222,14 +238,8 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
       return 'Pincode must be 3-12 characters (letters, digits, spaces and hyphens only)';
     }
 
-    // Phone is optional, but a half-typed number should not reach the API.
-    const digits = toPhoneDigits(formData.phone);
-    if (digits && (digits.length < 6 || digits.length > 15)) {
-      return 'Please enter a valid phone number (6-15 digits)';
-    }
-    if (digits && !formData.phoneCountryCode) {
-      return 'Please select a country code for your phone number';
-    }
+    const phoneErr = getPhoneError(formData.phone);
+    if (phoneErr) return phoneErr;
 
     if ((formData.address ?? '').length > 500) {
       return 'Address is too long (maximum 500 characters)';
@@ -248,6 +258,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
         return;
       }
 
+      setPhoneError(getPhoneError(formData.phone));
       const oauthFieldError = profileFieldError();
       if (oauthFieldError) {
         setError(oauthFieldError);
@@ -320,6 +331,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
       return;
     }
 
+    setPhoneError(getPhoneError(formData.phone));
     const signupFieldError = profileFieldError();
     if (signupFieldError) {
       setError(signupFieldError);
@@ -487,7 +499,10 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClasses}>Phone Number</label>
-              <div className="flex border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-teal-500 transition-all">
+              <div className={`flex border rounded-md focus-within:ring-2 transition-all ${phoneError
+                ? 'border-red-500 focus-within:ring-red-500 focus-within:border-red-500'
+                : 'border-gray-300 focus-within:ring-teal-500 focus-within:border-teal-500'
+                }`}>
                 {/* Phone Code Selector */}
                 <div className="relative" ref={phoneCodeRef}>
                   <button
@@ -564,11 +579,18 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                 <input
                   type="tel"
                   value={formData.phone || ''}
-                  onChange={(e) => updateFormData('phone', formatPhoneNumber(e.target.value))}
+                  onChange={(e) => {
+                    updateFormData('phone', formatPhoneNumber(e.target.value));
+                    if (phoneError) setPhoneError(null);
+                  }}
+                  onBlur={() => setPhoneError(getPhoneError(formData.phone))}
                   placeholder="Type your phone"
                   className="flex-1 px-4 py-3 rounded-r-md focus:outline-none text-sm placeholder-gray-400 border-0"
                 />
               </div>
+              {phoneError && (
+                <span className="block text-xs text-red-500 mt-1 ml-1">{phoneError}</span>
+              )}
             </div>
 
             {!isOAuthSignup && (
