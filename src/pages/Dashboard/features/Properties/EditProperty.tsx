@@ -653,6 +653,8 @@ const EditProperty: React.FC = () => {
           }
           if (!unit.beds || unit.beds.trim() === '') {
             errors[`unit_${index}_beds`] = `Unit ${index + 1} beds is required`;
+          } else if (Number(unit.beds) < 0) {
+            errors[`unit_${index}_beds`] = `Unit ${index + 1} beds cannot be negative`;
           }
           if (!unit.baths || unit.baths.trim() === '') {
             errors[`unit_${index}_baths`] = `Unit ${index + 1} baths is required`;
@@ -1803,10 +1805,16 @@ const EditProperty: React.FC = () => {
                         <label className="block text-xs font-medium mb-1 ml-1">Beds*</label>
                         <Input
                           type="number"
+                          min="0"
+                          step="1"
                           placeholder="Select beds"
                           value={unit.beds}
                           onChange={(e) => {
-                            updateUnit(index, 'beds', e.target.value);
+                            const value = e.target.value;
+                            if (value !== '' && Number(value) < 0) {
+                              return;
+                            }
+                            updateUnit(index, 'beds', value);
                             const errorKey = `unit_${index}_beds`;
                             if (validationErrors[errorKey]) {
                               setValidationErrors(prev => {
