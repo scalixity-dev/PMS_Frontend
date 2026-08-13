@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useJsApiLoader, Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
-import type { Libraries } from '@react-google-maps/api';
 import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { Upload, Trash2, Plus, X, Check, FileText, Undo2, ChevronLeft } from 'lucide-react';
@@ -13,6 +12,8 @@ import { useGetProperty, useUpdateProperty } from '../../../../hooks/useProperty
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
 import { isSummaryUnits } from '../../../../services/property.service';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
+import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES } from '../../../../config/googleMaps.config';
 
 interface Unit {
   unitNumber: string;
@@ -23,9 +24,6 @@ interface Unit {
   deposit: string;
   beds: string;
 }
-
-const libraries: Libraries = ['places'];
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 const EditProperty: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,7 +36,7 @@ const EditProperty: React.FC = () => {
 
   const { isLoaded: isMapLoaded } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries,
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
   const [autocompleteRef, setAutocompleteRef] = useState<google.maps.places.Autocomplete | null>(null);
 
@@ -750,7 +748,6 @@ const EditProperty: React.FC = () => {
     // Validate form before submission
     if (!validateForm()) {
       setLoading(false);
-      setError('Please fix the validation errors before submitting');
       return;
     }
 
@@ -877,7 +874,7 @@ const EditProperty: React.FC = () => {
       navigate('/dashboard/properties');
     } catch (err) {
       console.error('Error updating property:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update property');
+      setError(toFriendlyErrorMessage(err, 'We could not update this property. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -937,12 +934,7 @@ const EditProperty: React.FC = () => {
             <h1 className="text-lg md:text-2xl font-bold text-gray-800">Back to Properties</h1>
           </div>
         </div>
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            <p className="font-semibold">Error:</p>
-            <p>{error}</p>
-          </div>
-        )}
+        {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
         <form onSubmit={handleSubmit} className="max-w-6xl mx-auto space-y-8">
 
           {/* Property Photo */}

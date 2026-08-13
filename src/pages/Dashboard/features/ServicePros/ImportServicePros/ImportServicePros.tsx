@@ -8,6 +8,7 @@ import ValidationStep from './steps/ValidationStep';
 import MappingStep from './steps/MappingStep';
 import ImportSuccessModal from './components/ImportSuccessModal';
 import { serviceProviderService } from '../../../../../services/service-provider.service';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 interface ValidationError {
     row: number;
@@ -95,8 +96,7 @@ const ImportServicePros: React.FC = () => {
             // Go to validation step
             setCurrentStep(3);
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to validate file';
-            setError(errorMessage);
+            setError(toFriendlyErrorMessage(err, 'We could not validate this file. Please try again.'));
             console.error('Validation error:', err);
         } finally {
             setIsValidating(false);
@@ -141,8 +141,7 @@ const ImportServicePros: React.FC = () => {
                 setCurrentStep(3);
             }
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to import service pros';
-            setError(errorMessage);
+            setError(toFriendlyErrorMessage(err, 'We could not import these service pros. Please try again.'));
             console.error('Import error:', err);
             // If there are validation errors from a previous validation, show them
             if (validationErrors.length > 0) {

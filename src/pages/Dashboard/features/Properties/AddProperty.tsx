@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useJsApiLoader, Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
-import type { Libraries } from '@react-google-maps/api';
 import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Upload, Trash2, Plus, X, Check, FileText, Undo2, ChevronLeft, Sparkles } from 'lucide-react';
@@ -18,6 +17,8 @@ import { getCurrencySymbol } from '../../../../utils/currency.utils';
 import { usePlanFeatures } from '../../../../hooks/usePlanFeatures';
 import UpgradeModal from '../../../../components/common/UpgradeModal';
 import { useToast } from '../../../../components/common/Toast';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
+import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES } from '../../../../config/googleMaps.config';
 
 interface Unit {
   unitNumber: string;
@@ -29,9 +30,6 @@ interface Unit {
   beds: string;
 }
 
-const libraries: Libraries = ['places'];
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-
 const AddProperty: React.FC = () => {
   const toast = useToast();
   const navigate = useNavigate();
@@ -42,7 +40,7 @@ const AddProperty: React.FC = () => {
 
   const { isLoaded: isMapLoaded } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries,
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
   const [autocompleteRef, setAutocompleteRef] = useState<google.maps.places.Autocomplete | null>(null);
 
@@ -655,7 +653,6 @@ const AddProperty: React.FC = () => {
     // Validate form before submission
     if (!validateForm()) {
       setLoading(false);
-      setError('Please fix the validation errors before submitting');
       topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
@@ -774,7 +771,7 @@ const AddProperty: React.FC = () => {
       navigate('/dashboard/properties');
     } catch (err) {
       console.error('Error creating property:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create property');
+      setError(toFriendlyErrorMessage(err, 'We could not create this property. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -954,12 +951,7 @@ const AddProperty: React.FC = () => {
             <h1 className="text-lg md:text-2xl font-bold text-gray-800">Back to Properties</h1>
           </div>
         </div>
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            <p className="font-semibold">Error:</p>
-            <p>{error}</p>
-          </div>
-        )}
+        {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
         <form onSubmit={handleSubmit} className="max-w-6xl mx-auto space-y-8">
 
           {/* Property Photo */}

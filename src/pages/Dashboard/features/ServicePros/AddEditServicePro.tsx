@@ -5,6 +5,7 @@ import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from '../../components/CustomDropdown';
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 import ImageCropModal from '../Tenants/components/ImageCropModal';
 
 import { serviceProviderService, type CreateServiceProviderDto } from '../../../../services/service-provider.service';
@@ -328,7 +329,7 @@ const AddEditServicePro = () => {
                         isInitialLoadRef.current = false;
                     }, 100);
                 } catch (err) {
-                    setSubmitError(err instanceof Error ? err.message : 'Failed to load service provider data');
+                    setSubmitError(toFriendlyErrorMessage(err, 'Failed to load service provider data'));
                     console.error('Error fetching service provider:', err);
                 } finally {
                     setIsLoading(false);
@@ -559,7 +560,7 @@ const AddEditServicePro = () => {
                 try {
                     photoUrl = await uploadImage(profilePhotoFile);
                 } catch (uploadError) {
-                    setSubmitError(uploadError instanceof Error ? uploadError.message : 'Failed to upload profile photo');
+                    setSubmitError(toFriendlyErrorMessage(uploadError, 'Failed to upload profile photo'));
                     setIsLoading(false);
                     return;
                 }
@@ -618,7 +619,7 @@ const AddEditServicePro = () => {
                         await uploadDocument(serviceProviderId, doc, 'General');
                     }
                 } catch (uploadError) {
-                    const errorMessage = uploadError instanceof Error ? uploadError.message : 'Failed to upload some documents';
+                    const errorMessage = toFriendlyErrorMessage(uploadError, 'We could not upload some documents');
 
                     // If this is a new provider (not edit mode), attempt rollback by deleting it
                     if (isNewProvider && serviceProviderId) {
@@ -628,7 +629,7 @@ const AddEditServicePro = () => {
                         } catch (rollbackError) {
                             // Log rollback error but don't crash the UI
                             console.error('Failed to rollback service provider creation:', rollbackError);
-                            const rollbackMessage = rollbackError instanceof Error ? rollbackError.message : 'Failed to cleanup';
+                            const rollbackMessage = toFriendlyErrorMessage(rollbackError, 'automatic cleanup failed');
 
                             // Notify user about the cleanup failure
                             setSubmitError(
@@ -657,7 +658,7 @@ const AddEditServicePro = () => {
 
             navigate('/dashboard/contacts/service-pros');
         } catch (err) {
-            setSubmitError(err instanceof Error ? err.message : 'Failed to create service provider');
+            setSubmitError(toFriendlyErrorMessage(err, isEditMode ? 'Failed to update service provider' : 'Failed to create service provider'));
             console.error('Error creating service provider:', err);
         } finally {
             setIsLoading(false);
@@ -679,9 +680,7 @@ const AddEditServicePro = () => {
 
                 {/* Error Message */}
                 {submitError && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg" role="alert" aria-live="assertive" aria-atomic="true">
-                        <p className="text-red-600 text-sm font-medium">{submitError}</p>
-                    </div>
+                    <p className="mb-4 text-sm text-red-600 font-medium" role="alert" aria-live="assertive" aria-atomic="true">{submitError}</p>
                 )}
 
                 {/* Profile Photo - Centered & Circular (Matches AddEditTenant) */}

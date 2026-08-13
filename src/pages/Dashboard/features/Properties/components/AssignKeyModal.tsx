@@ -4,6 +4,7 @@ import { X, Loader2, Search, AlertTriangle, Check } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import { useNavigate } from 'react-router-dom';
 import { useGetAllKeys, useUpdateKey, useCreateKey } from '../../../../../hooks/useKeysQueries';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 interface AssignKeyModalProps {
     isOpen: boolean;
@@ -41,6 +42,7 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
     const [description, setDescription] = useState('');
     const [issuedTo, setIssuedTo] = useState('');
     const [error, setError] = useState('');
+    const [keyNameError, setKeyNameError] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [search, setSearch] = useState('');
     // Reassign confirmation: stores the key whose property link will be replaced.
@@ -87,6 +89,7 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
         setDescription('');
         setIssuedTo('');
         setError('');
+        setKeyNameError('');
         setSearch('');
         setConfirmReassign(null);
     };
@@ -98,13 +101,14 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
 
     const handleCreate = async () => {
         if (!propertyId) {
-            setError('Property ID missing');
+            setError('We could not tell which property this key belongs to. Please close and try again.');
             return;
         }
         if (!keyName.trim()) {
-            setError('Key name is required');
+            setKeyNameError('Key name is required');
             return;
         }
+        setKeyNameError('');
         if (!keyType) {
             setError('Key type is required');
             return;
@@ -124,8 +128,8 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
             });
             onAssign(newKey.id);
             handleClose();
-        } catch (e: any) {
-            setError(e?.message || 'Failed to create key');
+        } catch (e) {
+            setError(toFriendlyErrorMessage(e, 'We could not create this key. Please try again.'));
         } finally {
             setIsSaving(false);
         }
@@ -146,8 +150,8 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
             });
             onAssign(keyId);
             handleClose();
-        } catch (e: any) {
-            setError(e?.message || 'Failed to assign key');
+        } catch (e) {
+            setError(toFriendlyErrorMessage(e, 'We could not assign this key. Please try again.'));
         } finally {
             setIsSaving(false);
         }
@@ -298,10 +302,11 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
                                 <input
                                     type="text"
                                     value={keyName}
-                                    onChange={(e) => { setKeyName(e.target.value); setError(''); }}
-                                    className={inputCls}
+                                    onChange={(e) => { setKeyName(e.target.value); setKeyNameError(''); }}
+                                    className={`${inputCls} ${keyNameError ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                                     placeholder="e.g. Main Entry"
                                 />
+                                {keyNameError && <p className="text-red-500 text-xs mt-1">{keyNameError}</p>}
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold text-gray-700 mb-1">Key Type *</label>
