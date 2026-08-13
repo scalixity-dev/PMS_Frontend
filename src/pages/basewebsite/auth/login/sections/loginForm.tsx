@@ -5,6 +5,7 @@ import { tenantIcon as logo } from '../../../../../utils/roleIcon';
 import { AppleIcon, FacebookIcon, GoogleIcon } from '../../../../../components/AuthIcons';
 import { authService } from '../../../../../services/auth.service';
 import { API_ENDPOINTS } from '../../../../../config/api.config';
+import { toFriendlyErrorMessage } from '../../../../../utils/errorMessage.utils';
 
 /** Only allow redirecting back into the dashboard — never to an external/absolute URL. */
 function getSafeDashboardRedirect(search: string): string | null {
@@ -21,7 +22,10 @@ const LoginForm: React.FC = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string>('');
+    // Form-level notice for errors that aren't about the email/password values
+    // themselves (session expiry, post-login cookie verification) — rendered
+    // inline near the submit button rather than a generic banner.
+    const [formNotice, setFormNotice] = useState<string>('');
     const [emailError, setEmailError] = useState<string>('');
     const [passwordError, setPasswordError] = useState<string>('');
     const navigate = useNavigate();
@@ -42,7 +46,7 @@ const LoginForm: React.FC = () => {
                 sessionStorage.setItem('redirect_property_id', propertyId);
             }
             if (params.get('sessionExpired') === '1') {
-                setError('Your session has expired. Please sign in again.');
+                setFormNotice('Your session has expired. Please sign in again.');
             }
         } catch { /* ignore */ }
     }, [location.state, location.search]);
@@ -76,7 +80,9 @@ const LoginForm: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
+        setFormNotice('');
+        setEmailError('');
+        setPasswordError('');
 
         // Validate inputs
         const isEmailValid = validateEmail(email);
@@ -143,7 +149,7 @@ const LoginForm: React.FC = () => {
                         } else {
                             console.error('Failed to verify authentication after retries:', error);
                             // If we can't verify auth, redirect to login
-                            setError('Authentication failed. Please try logging in again.');
+                            setFormNotice('Authentication failed. Please try logging in again.');
                             return;
                         }
                     }
@@ -151,7 +157,7 @@ const LoginForm: React.FC = () => {
                 
                 if (!isAuthenticated) {
                     console.error('Could not verify authentication');
-                    setError('Authentication failed. Please try logging in again.');
+                    setFormNotice('Authentication failed. Please try logging in again.');
                     return;
                 }
                 
@@ -275,13 +281,15 @@ const LoginForm: React.FC = () => {
             }
         } catch (err) {
             console.error('Login error:', err);
-            const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
+            const rawMessage = err instanceof Error ? err.message : '';
 
-            // Use the backend message if it's specific; fall back to generic for plain credential failures
-            const isGenericUnauthorized = errorMessage === 'Unauthorized' || errorMessage === 'Login failed. Please check your credentials.';
-            setError(isGenericUnauthorized
+            // Use the backend message if it's specific; fall back to generic for plain credential failures.
+            // Shown under the password field rather than a generic banner, since a
+            // failed login is almost always about the email/password combination.
+            const isGenericUnauthorized = rawMessage === 'Unauthorized' || rawMessage === 'Login failed. Please check your credentials.';
+            setPasswordError(isGenericUnauthorized
                 ? 'Invalid email or password. Please check your credentials and try again.'
-                : errorMessage
+                : toFriendlyErrorMessage(err, 'We couldn\'t sign you in right now. Please try again.')
             );
         } finally {
             setIsLoading(false);
@@ -298,12 +306,6 @@ const LoginForm: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-                        {error}
-                    </div>
-                )}
-
                 <div>
                     <label htmlFor="email-address" className="block text-xs font-medium text-gray-700">
                         Email address
@@ -377,6 +379,9 @@ const LoginForm: React.FC = () => {
                 </div>
 
                 <div>
+                    {formNotice && (
+                        <p className="mb-2 text-xs text-red-600">{formNotice}</p>
+                    )}
                     <button
                         type="submit"
                         disabled={isLoading}

@@ -3,6 +3,7 @@ import type { KeyboardEvent, ClipboardEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { tenantIcon as logo } from '../../../../../utils/roleIcon';
 import { authService } from '../../../../../services/auth.service';
+import { toFriendlyErrorMessage } from '../../../../../utils/errorMessage.utils';
 
 type Step = 'email' | 'otp' | 'done';
 
@@ -17,7 +18,9 @@ const ForgotPasswordForm: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isResending, setIsResending] = useState(false);
-    const [error, setError] = useState<string>('');
+    // Errors about the OTP code itself (incomplete code, invalid/expired code
+    // from the API) — shown under the OTP digit boxes, not a page-level banner.
+    const [otpError, setOtpError] = useState<string>('');
     const [emailError, setEmailError] = useState<string>('');
     const [passwordError, setPasswordError] = useState<string>('');
     const [confirmPasswordError, setConfirmPasswordError] = useState<string>('');
@@ -65,7 +68,7 @@ const ForgotPasswordForm: React.FC = () => {
 
     const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
+        setEmailError('');
         if (!validateEmail(email)) return;
         setIsLoading(true);
         try {
@@ -78,8 +81,7 @@ const ForgotPasswordForm: React.FC = () => {
             setConfirmPasswordError('');
             setTimeout(() => inputRefs.current[0]?.focus(), 100);
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
-            setError(errorMessage);
+            setEmailError(toFriendlyErrorMessage(err, 'Something went wrong. Please try again.'));
         } finally {
             setIsLoading(false);
         }
@@ -113,13 +115,13 @@ const ForgotPasswordForm: React.FC = () => {
 
     const handleResendOtp = async () => {
         setIsResending(true);
-        setError('');
+        setOtpError('');
         try {
             await authService.requestPasswordReset(email);
             setOtp(Array(OTP_LENGTH).fill(''));
             inputRefs.current[0]?.focus();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to resend OTP.');
+            setOtpError(toFriendlyErrorMessage(err, 'We could not resend the code. Please try again.'));
         } finally {
             setIsResending(false);
         }
@@ -127,10 +129,10 @@ const ForgotPasswordForm: React.FC = () => {
 
     const handleResetSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
+        setOtpError('');
         const otpCode = otp.join('').trim();
         if (otpCode.length !== OTP_LENGTH || !/^\d{6}$/.test(otpCode)) {
-            setError('Please enter the complete 6-digit code from your email.');
+            setOtpError('Please enter the complete 6-digit code from your email.');
             return;
         }
         if (!validatePassword(newPassword) || !validateConfirmPassword(confirmPassword)) return;
@@ -139,7 +141,7 @@ const ForgotPasswordForm: React.FC = () => {
             await authService.resetPassword(email, otpCode, newPassword);
             setStep('done');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to reset password. Please try again.');
+            setOtpError(toFriendlyErrorMessage(err, 'We could not reset your password. Please try again.'));
             setOtp(Array(OTP_LENGTH).fill(''));
             inputRefs.current[0]?.focus();
         } finally {
@@ -189,12 +191,6 @@ const ForgotPasswordForm: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleResetSubmit} className="space-y-4">
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-                            {error}
-                        </div>
-                    )}
-
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-2">OTP code</label>
                         <div className="flex justify-center gap-2 sm:gap-3">
@@ -212,11 +208,12 @@ const ForgotPasswordForm: React.FC = () => {
                                     onPaste={index === 0 ? handleOtpPaste : undefined}
                                     disabled={isLoading}
                                     className={`w-10 h-12 sm:w-12 sm:h-12 text-center text-lg font-semibold border-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all placeholder:text-gray-400 ${
-                                        digit ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-gray-800 border-gray-300 focus:border-teal-500'
+                                        otpError ? 'bg-white text-gray-800 border-red-500' : digit ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-gray-800 border-gray-300 focus:border-teal-500'
                                     } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 />
                             ))}
                         </div>
+                        {otpError && <p className="mt-1 text-xs text-red-600 text-center">{otpError}</p>}
                     </div>
 
                     <div>
@@ -272,7 +269,7 @@ const ForgotPasswordForm: React.FC = () => {
                         </button>
                         <button
                             type="button"
-                            onClick={() => { setStep('email'); setError(''); }}
+                            onClick={() => { setStep('email'); setOtpError(''); }}
                             disabled={isLoading}
                             className="text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
                         >
@@ -301,12 +298,6 @@ const ForgotPasswordForm: React.FC = () => {
             </div>
 
             <form onSubmit={handleEmailSubmit} className="space-y-4">
-                {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-                        {error}
-                    </div>
-                )}
-
                 <div>
                     <label htmlFor="forgot-email" className="block text-xs font-medium text-gray-700">
                         Email address

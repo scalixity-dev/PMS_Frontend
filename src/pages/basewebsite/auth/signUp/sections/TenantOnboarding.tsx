@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { authService } from '../../../../../services/auth.service';
 import { API_BASE_URL } from '../../../../../config/api.config';
+import { toFriendlyErrorMessage } from '../../../../../utils/errorMessage.utils';
 
 export const TenantOnboarding: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<'yes' | 'no' | null>(null);
@@ -74,9 +75,9 @@ export const TenantOnboarding: React.FC = () => {
         }
         setInviteStatus('success');
         setTimeout(() => navigate('/userdashboard'), 1200);
-      } catch (err: any) {
+      } catch (err) {
         setInviteStatus('error');
-        setInviteError(err?.message || 'Network error sending invite');
+        setInviteError(toFriendlyErrorMessage(err, 'We could not send the invite. Please try again.'));
       }
     } else {
       navigate('/userdashboard');
@@ -240,10 +241,16 @@ export const TenantOnboarding: React.FC = () => {
               <input
                 type="email"
                 value={landlordEmail}
-                onChange={(e) => setLandlordEmail(e.target.value)}
+                onChange={(e) => {
+                  setLandlordEmail(e.target.value);
+                  if (inviteStatus === 'error') { setInviteStatus('idle'); setInviteError(''); }
+                }}
                 placeholder=""
-                className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CAF50] focus:border-transparent text-gray-700 transition-all"
+                className={`w-full px-4 py-3 bg-white border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CAF50] focus:border-transparent text-gray-700 transition-all ${inviteStatus === 'error' ? 'border-red-500' : 'border-gray-300'}`}
               />
+              {inviteStatus === 'error' && (
+                <p className="mt-1.5 text-left text-xs text-red-600">{inviteError || 'Failed to send invite. Please try again.'}</p>
+              )}
             </div>
 
             {/* Skip Link */}
@@ -258,11 +265,6 @@ export const TenantOnboarding: React.FC = () => {
             {inviteStatus === 'success' && (
               <div className="mb-4 text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2">
                 Invite sent! Redirecting...
-              </div>
-            )}
-            {inviteStatus === 'error' && (
-              <div className="mb-4 text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
-                {inviteError || 'Failed to send invite. Please try again.'}
               </div>
             )}
 
