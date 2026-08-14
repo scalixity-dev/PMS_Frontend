@@ -88,12 +88,6 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext }) => {
         className="space-y-4 sm:space-y-5"
         onSubmit={handleSubmit}
       >
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
-        
         <div>
           <label htmlFor="email-address" className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
             Email address
@@ -117,8 +111,9 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext }) => {
               disabled={isLoading}
             />
           </div>
+          {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
         </div>
-        
+
         <button
           type="submit"
           disabled={!formData.email || isLoading}

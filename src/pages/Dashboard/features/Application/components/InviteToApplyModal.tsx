@@ -4,6 +4,7 @@ import { X, ChevronDown, Check, Plus, Trash2 } from 'lucide-react';
 import { useGetAllProperties } from '@/hooks/usePropertyQueries';
 import { authService } from '@/services/auth.service';
 import { applicationService } from '@/services/application.service';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 interface InviteToApplyModalProps {
     isOpen: boolean;
@@ -176,8 +177,7 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
             }
         } catch (error) {
             // Error handling - show error message to user
-            const errorMessage = error instanceof Error ? error.message : 'Failed to send invitation. Please try again.';
-            setGeneralError(errorMessage);
+            setGeneralError(toFriendlyErrorMessage(error, 'We could not send this invitation. Please try again.'));
         } finally {
             setIsSending(false);
         }

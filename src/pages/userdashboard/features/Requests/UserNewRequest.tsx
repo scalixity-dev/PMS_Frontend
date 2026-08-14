@@ -19,6 +19,7 @@ import {
 import { useCreateMaintenanceRequest } from '../../../../hooks/useMaintenanceRequestQueries';
 import { useGetCurrentUser } from '../../../../hooks/useAuthQueries';
 import { useGetLeasesByTenant } from '../../../../hooks/useLeaseQueries';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 const mapCategory = (category: string): MaintenanceCategory => {
     const normalized = category.toLowerCase();
@@ -161,7 +162,9 @@ const NewRequest: React.FC = () => {
             setShowSuccessModal(true);
             reset();
         } catch (error) {
-            setSubmitError(error instanceof Error ? error.message : 'Failed to create maintenance request');
+            setSubmitError(
+                toFriendlyErrorMessage(error, 'We could not submit this request. Please try again.'),
+            );
         }
     };
 
@@ -192,16 +195,7 @@ const NewRequest: React.FC = () => {
                         </h1>
                         <MaintenanceStepper currentStep={mainStep} steps={steps} />
                         {submitError && (
-                            <div className="mt-4 mx-auto max-w-2xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm flex items-start justify-between gap-3">
-                                <span>{submitError}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => setSubmitError('')}
-                                    className="text-red-500 hover:text-red-700 font-bold"
-                                >
-                                    ×
-                                </button>
-                            </div>
+                            <p className="mt-4 text-center text-sm text-red-600">{submitError}</p>
                         )}
                     </div>
 

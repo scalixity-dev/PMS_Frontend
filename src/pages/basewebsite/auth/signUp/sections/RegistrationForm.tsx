@@ -9,6 +9,7 @@ import { useRegister, useUpdateProfile, useGetCurrentUser } from '../../../../..
 import { authService } from '../../../../../services/auth.service';
 import { formatPhoneNumber, extractDialCode, toPhoneDigits } from '@/utils/phone.utils';
 import { API_ENDPOINTS } from '../../../../../config/api.config';
+import { toFriendlyErrorMessage } from '../../../../../utils/errorMessage.utils';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = (hasValue: boolean = true) =>
@@ -52,8 +53,19 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
   }>({});
   const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
   const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
+  // Reserved for errors that aren't about any one field (e.g. the account
+  // update/creation call itself failing) — rendered inline near the submit
+  // button rather than a generic banner.
   const [error, setError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [firstNameError, setFirstNameError] = useState<string | null>(null);
+  const [lastNameError, setLastNameError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [countryError, setCountryError] = useState<string | null>(null);
+  const [stateError, setStateError] = useState<string | null>(null);
+  const [pincodeError, setPincodeError] = useState<string | null>(null);
+  const [addressError, setAddressError] = useState<string | null>(null);
+  const [termsError, setTermsError] = useState<string | null>(null);
   const phoneCodeRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -227,26 +239,49 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
   };
 
   // One place that decides what is wrong with the address and phone block, so
-  // the message names the field the user has to fix. These mirror the backend
-  // rules, which previously only surfaced after a failed round trip.
-  const profileFieldError = (): string | null => {
-    if (!formData.country) return 'Please select your country';
-    if (countryHasStates && !formData.state) return 'Please select your state';
+  // each message lands under the field the user has to fix instead of a
+  // single banner. These mirror the backend rules, which previously only
+  // surfaced after a failed round trip.
+  const validateProfileFields = (): boolean => {
+    let isValid = true;
+
+    if (!formData.country) {
+      setCountryError('Please select your country');
+      isValid = false;
+    } else {
+      setCountryError(null);
+    }
+
+    if (countryHasStates && !formData.state) {
+      setStateError('Please select your state');
+      isValid = false;
+    } else {
+      setStateError(null);
+    }
 
     const pincode = (formData.pincode ?? '').trim();
-    if (!pincode) return 'Please enter your pincode';
-    if (!/^[A-Za-z0-9\s-]{3,12}$/.test(pincode)) {
-      return 'Pincode must be 3-12 characters (letters, digits, spaces and hyphens only)';
+    if (!pincode) {
+      setPincodeError('Please enter your pincode');
+      isValid = false;
+    } else if (!/^[A-Za-z0-9\s-]{3,12}$/.test(pincode)) {
+      setPincodeError('Pincode must be 3-12 characters (letters, digits, spaces and hyphens only)');
+      isValid = false;
+    } else {
+      setPincodeError(null);
     }
 
     const phoneErr = getPhoneError(formData.phone);
-    if (phoneErr) return phoneErr;
+    setPhoneError(phoneErr);
+    if (phoneErr) isValid = false;
 
     if ((formData.address ?? '').length > 500) {
-      return 'Address is too long (maximum 500 characters)';
+      setAddressError('Address is too long (maximum 500 characters)');
+      isValid = false;
+    } else {
+      setAddressError(null);
     }
 
-    return null;
+    return isValid;
   };
 
   // Handle registration
@@ -255,16 +290,12 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
       // OAuth signup - update profile only
       // Validate terms agreement
       if (!formData.agreedToTerms) {
-        setError('Please agree to the terms and conditions');
+        setTermsError('Please agree to the terms and conditions');
         return;
       }
+      setTermsError(null);
 
-      setPhoneError(getPhoneError(formData.phone));
-      const oauthFieldError = profileFieldError();
-      if (oauthFieldError) {
-        setError(oauthFieldError);
-        return;
-      }
+      if (!validateProfileFields()) return;
 
       setError(null);
 
@@ -336,36 +367,38 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
           });
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update profile. Please try again.');
+        setError(toFriendlyErrorMessage(err, 'We could not update your profile. Please try again.'));
       }
       return;
     }
 
-    // Regular email signup - validate all fields
-    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
-      setError('Please fill in all required fields');
+    // Regular email signup - validate all fields. The submit button is
+    // already disabled until these pass (see isFormValid), so this mostly
+    // guards against stale state, but each failure still lands on its field.
+    const missingFirstName = !formData.firstName;
+    const missingLastName = !formData.lastName;
+    const missingEmail = !formData.email;
+    setFirstNameError(missingFirstName ? 'First name is required' : null);
+    setLastNameError(missingLastName ? 'Last name is required' : null);
+    setEmailError(missingEmail ? 'Email is required' : null);
+    if (missingFirstName || missingLastName || missingEmail || !formData.password) {
       return;
     }
 
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setPasswordErrors(prev => ({ ...prev, match: 'Passwords do not match' }));
       return;
     }
 
     // Validate password strength
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/;
     if (formData.password.length < 8 || !passwordRegex.test(formData.password)) {
-      setError('Password must be at least 8 characters and contain uppercase, lowercase, a number, and a symbol');
+      setPasswordErrors(prev => ({ ...prev, strength: 'Password must be at least 8 characters and contain uppercase, lowercase, a number, and a symbol' }));
       return;
     }
 
-    setPhoneError(getPhoneError(formData.phone));
-    const signupFieldError = profileFieldError();
-    if (signupFieldError) {
-      setError(signupFieldError);
-      return;
-    }
+    if (!validateProfileFields()) return;
 
     setError(null);
 
@@ -435,7 +468,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      setError(toFriendlyErrorMessage(err, 'We could not create your account. Please try again.'));
     }
   };
 
@@ -487,11 +520,6 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
         </div>
 
         <div className="space-y-5 sm:space-y-6">
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
           {!isOAuthSignup && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -502,11 +530,13 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                   onChange={(e) => {
                     updateFormData('firstName', e.target.value);
                     updateFormData('fullName', `${e.target.value} ${formData.lastName || ''}`.trim());
+                    if (firstNameError) setFirstNameError(null);
                   }}
                   placeholder="Type first name"
-                  className={inputClasses()}
+                  className={`${inputClasses()} ${firstNameError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                   required
                 />
+                {firstNameError && <p className="text-xs text-red-600 mt-1">{firstNameError}</p>}
               </div>
               <div>
                 <label className={labelClasses}>Last Name *</label>
@@ -516,11 +546,13 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                   onChange={(e) => {
                     updateFormData('lastName', e.target.value);
                     updateFormData('fullName', `${formData.firstName || ''} ${e.target.value}`.trim());
+                    if (lastNameError) setLastNameError(null);
                   }}
                   placeholder="Type last name"
-                  className={inputClasses()}
+                  className={`${inputClasses()} ${lastNameError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                   required
                 />
+                {lastNameError && <p className="text-xs text-red-600 mt-1">{lastNameError}</p>}
               </div>
             </div>
           )}
@@ -628,10 +660,14 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                 <input
                   type="email"
                   value={formData.email || ''}
-                  onChange={(e) => updateFormData('email', e.target.value)}
+                  onChange={(e) => {
+                    updateFormData('email', e.target.value);
+                    if (emailError) setEmailError(null);
+                  }}
                   placeholder="Type email address"
-                  className={inputClasses()}
+                  className={`${inputClasses()} ${emailError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {emailError && <p className="text-xs text-red-600 mt-1">{emailError}</p>}
               </div>
             )}
           </div>
@@ -644,8 +680,9 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                 updateFormData('country', e.target.value);
                 updateFormData('state', '');
                 updateFormData('pincode', '');
+                if (countryError) setCountryError(null);
               }}
-              className={inputClasses(!!formData.country)}
+              className={`${inputClasses(!!formData.country)} ${countryError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
             >
               <option value="" disabled>Select Country</option>
               {countries.map((country) => (
@@ -654,6 +691,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                 </option>
               ))}
             </select>
+            {countryError && <p className="text-xs text-red-600 mt-1">{countryError}</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -661,8 +699,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
               <label className={labelClasses}>State</label>
               <select
                 value={formData.state || ''}
-                onChange={(e) => updateFormData('state', e.target.value)}
-                className={inputClasses(!!formData.state)}
+                onChange={(e) => {
+                  updateFormData('state', e.target.value);
+                  if (stateError) setStateError(null);
+                }}
+                className={`${inputClasses(!!formData.state)} ${stateError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                 disabled={!formData.country || states.length === 0} // Disable if no country selected or no states exist
               >
                 <option value="" disabled>
@@ -678,20 +719,25 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                   </option>
                 ))}
               </select>
+              {stateError && <p className="text-xs text-red-600 mt-1">{stateError}</p>}
             </div>
 
             <div>
               <label className={labelClasses}>Pincode</label>
               <input
                 value={formData.pincode || ''}
-                onChange={(e) => updateFormData('pincode', e.target.value)}
-                className={inputClasses(!!formData.pincode)}
+                onChange={(e) => {
+                  updateFormData('pincode', e.target.value);
+                  if (pincodeError) setPincodeError(null);
+                }}
+                className={`${inputClasses(!!formData.pincode)} ${pincodeError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                 placeholder={formData.country && !countryHasStates ? 'Ex: 12345' : undefined}
                 // Countries with no states in the dataset leave the state
                 // select disabled forever, which used to lock pincode too and
                 // made the form impossible to complete there.
                 disabled={!formData.country || (countryHasStates && !formData.state)}
               />
+              {pincodeError && <p className="text-xs text-red-600 mt-1">{pincodeError}</p>}
             </div>
           </div>
 
@@ -700,10 +746,14 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
             <input
               type="text"
               value={formData.address || ''}
-              onChange={(e) => updateFormData('address', e.target.value)}
+              onChange={(e) => {
+                updateFormData('address', e.target.value);
+                if (addressError) setAddressError(null);
+              }}
               placeholder="Ex: ABC Building, 1890 NY"
-              className={inputClasses()}
+              className={`${inputClasses()} ${addressError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
             />
+            {addressError && <p className="text-xs text-red-600 mt-1">{addressError}</p>}
           </div>
 
           {!isOAuthSignup && (
@@ -764,20 +814,27 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
             </>
           )}
 
-          <div className="flex items-start">
-            <input
-              type="checkbox"
-              id="terms"
-              checked={formData.agreedToTerms || false}
-              onChange={(e) => updateFormData('agreedToTerms', e.target.checked)}
-              className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 transition-all"
-            />
-            <label htmlFor="terms" className="ml-2 text-sm text-gray-600 cursor-pointer">
-              I agree to the terms and conditions
-            </label>
+          <div>
+            <div className="flex items-start">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={formData.agreedToTerms || false}
+                onChange={(e) => {
+                  updateFormData('agreedToTerms', e.target.checked);
+                  if (termsError) setTermsError(null);
+                }}
+                className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 transition-all"
+              />
+              <label htmlFor="terms" className="ml-2 text-sm text-gray-600 cursor-pointer">
+                I agree to the terms and conditions
+              </label>
+            </div>
+            {termsError && <p className="text-xs text-red-600 mt-1">{termsError}</p>}
           </div>
 
-          <div className="flex justify-center pt-2">
+          <div className="flex flex-col items-center gap-2 pt-2">
+            {error && <p className="text-sm text-red-600">{error}</p>}
             <button
               onClick={handleRegistration}
               disabled={!isFormValid || registerMutation.isPending || updateProfileMutation.isPending}

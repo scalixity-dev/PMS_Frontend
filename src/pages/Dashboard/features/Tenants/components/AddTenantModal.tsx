@@ -18,15 +18,32 @@ const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, onSave
     });
 
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     if (!isOpen) return null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     };
 
     const handleSubmit = () => {
+        const newErrors: Record<string, string> = {};
+        if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+        if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+        if (!formData.email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            newErrors.email = 'Please enter a valid email address';
+        }
+        if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
         onSave(formData);
         onClose();
     };
@@ -65,8 +82,9 @@ const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, onSave
                             value={formData.firstName}
                             onChange={handleChange}
                             placeholder="First Name"
-                            className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
+                            className={`w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all ${errors.firstName ? 'ring-2 ring-red-500' : ''}`}
                         />
+                        {errors.firstName && <p className="mt-1.5 ml-1 text-xs text-red-600">{errors.firstName}</p>}
                     </div>
 
                     {/* Last Name */}
@@ -78,8 +96,9 @@ const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, onSave
                             value={formData.lastName}
                             onChange={handleChange}
                             placeholder="Last Name"
-                            className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
+                            className={`w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all ${errors.lastName ? 'ring-2 ring-red-500' : ''}`}
                         />
+                        {errors.lastName && <p className="mt-1.5 ml-1 text-xs text-red-600">{errors.lastName}</p>}
                     </div>
 
                     {/* Email */}
@@ -91,8 +110,9 @@ const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, onSave
                             value={formData.email}
                             onChange={handleChange}
                             placeholder="Email"
-                            className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
+                            className={`w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all ${errors.email ? 'ring-2 ring-red-500' : ''}`}
                         />
+                        {errors.email && <p className="mt-1.5 ml-1 text-xs text-red-600">{errors.email}</p>}
                     </div>
 
                     {/* Phone */}
@@ -105,10 +125,12 @@ const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, onSave
                             onChange={(e) => {
                                 const formatted = formatPhoneNumber(e.target.value);
                                 setFormData(prev => ({ ...prev, phone: formatted }));
+                                if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
                             }}
                             placeholder="111-111-1111"
-                            className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
+                            className={`w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all ${errors.phone ? 'ring-2 ring-red-500' : ''}`}
                         />
+                        {errors.phone && <p className="mt-1.5 ml-1 text-xs text-red-600">{errors.phone}</p>}
                     </div>
 
                     {/* Company Name */}

@@ -27,8 +27,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import type { ChartConfig } from "@/components/ui/chart";
 import { Label, Legend, Pie, PieChart } from "recharts";
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
-
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES } from '../../../../config/googleMaps.config';
 
 const PropertyDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -37,6 +36,7 @@ const PropertyDetail: React.FC = () => {
     const canEdit = !isTeamMember || canManage('property-units');
     const { isLoaded: isMapLoaded } = useJsApiLoader({
         googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+        libraries: GOOGLE_MAPS_LIBRARIES,
     });
     const [searchParams] = useSearchParams();
     const unitId = searchParams.get('unitId'); // Get unit ID from query parameter

@@ -26,9 +26,7 @@ import { API_ENDPOINTS } from "../../../../config/api.config";
 import { formatMoney } from "../../../../utils/currency.utils";
 import { formatAmenityLabel } from "../../../../utils/string.utils";
 import { useGetPublicPropertyDetail } from "../../../../hooks/usePropertyQueries";
-
-
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES } from "../../../../config/googleMaps.config";
 
 // --- Types ---
 interface PropertyData {
@@ -268,6 +266,7 @@ const PropertyDetailUser: React.FC = () => {
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const { isLoaded: isMapLoaded } = useJsApiLoader({
         googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+        libraries: GOOGLE_MAPS_LIBRARIES,
     });
 
     // Normalize ID — composite IDs like "propertyId-listingId" sliced to plain UUID

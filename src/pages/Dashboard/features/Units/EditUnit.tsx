@@ -7,6 +7,7 @@ import { useGetUnit, useUpdateUnit } from '../../../../hooks/useUnitQueries';
 import { useGetProperty } from '../../../../hooks/usePropertyQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 const EditUnit: React.FC = () => {
   const { unitId } = useParams<{ unitId: string }>();
@@ -403,7 +404,6 @@ const EditUnit: React.FC = () => {
 
     if (!validateForm()) {
       setLoading(false);
-      setError('Please fix the validation errors before submitting');
       return;
     }
 
@@ -490,7 +490,7 @@ const EditUnit: React.FC = () => {
       }
     } catch (err) {
       console.error('Error updating unit:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update unit');
+      setError(toFriendlyErrorMessage(err, 'We could not update this unit. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -514,12 +514,7 @@ const EditUnit: React.FC = () => {
 
   return (
     <div className="bg-[#DFE5E3] min-h-screen max-w-6xl mx-auto p-8 font-sans rounded-xl text-[#4B5563]">
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-          <p className="font-semibold">Error:</p>
-          <p>{error}</p>
-        </div>
-      )}
+      {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
       <form onSubmit={handleSubmit} className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

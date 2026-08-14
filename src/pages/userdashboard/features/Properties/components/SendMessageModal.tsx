@@ -5,6 +5,7 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import successAnimationUrl from '../../../../Dashboard/features/ListUnit/Success.lottie?url';
 import { useAuthStore } from '../../Profile/store/authStore';
 import { createConversation, sendMessage } from '../../../../../services/chat.service';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 interface SendMessageModalProps {
     isOpen: boolean;
@@ -138,9 +139,7 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({
                 await sendMessage(conversation.id, formData.message.trim());
                 setShowSuccess(true);
             } catch (error) {
-                setSubmitError(
-                    error instanceof Error ? error.message : 'Failed to send message. Please try again.',
-                );
+                setSubmitError(toFriendlyErrorMessage(error, 'We could not send this message. Please try again.'));
             } finally {
                 setIsSubmitting(false);
             }
@@ -197,9 +196,7 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({
                             Complete the required information and send the message.
                         </p>
                         {submitError && (
-                            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                                {submitError}
-                            </div>
+                            <p className="text-sm text-red-600">{submitError}</p>
                         )}
 
                         {propertyTitle && (

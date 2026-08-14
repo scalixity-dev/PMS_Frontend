@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, Loader2, XCircle, CheckCircle, Users, Smartphone } from 'lucide-react';
 import { useGetInvitation, useAcceptInvitation } from '../../../hooks/useTeamQueries';
 import { formatRole } from '../../../utils/roleIcon';
+import { toFriendlyErrorMessage } from '../../../utils/errorMessage.utils';
 
 const AcceptInvitation: React.FC = () => {
     const navigate = useNavigate();
@@ -18,27 +19,29 @@ const AcceptInvitation: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
-    const [validationError, setValidationError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const [success, setSuccess] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setValidationError('');
+        setPasswordError('');
+        setConfirmPasswordError('');
 
         if (password.length < 8) {
-            setValidationError('Password must be at least 8 characters');
+            setPasswordError('Password must be at least 8 characters');
             return;
         }
         if (password !== confirmPassword) {
-            setValidationError('Passwords do not match');
+            setConfirmPasswordError('Passwords do not match');
             return;
         }
 
         try {
             await acceptMutation.mutateAsync({ token: token!, password });
             setSuccess(true);
-        } catch (err: any) {
-            setValidationError(err?.message || 'Failed to set password');
+        } catch (err) {
+            setConfirmPasswordError(toFriendlyErrorMessage(err, 'We could not set your password. Please try again.'));
         }
     };
 
@@ -76,7 +79,7 @@ const AcceptInvitation: React.FC = () => {
                     <div className="text-center">
                         <XCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
                         <h2 className="text-lg font-semibold text-gray-900 mb-2">Invitation Invalid</h2>
-                        <p className="text-red-600 text-sm mb-2">{(inviteError as any)?.message || 'This invitation link is invalid or has expired.'}</p>
+                        <p className="text-red-600 text-sm mb-2">{toFriendlyErrorMessage(inviteError, 'This invitation link is invalid or has expired.')}</p>
                         <p className="text-gray-400 text-xs mb-6">Ask the team owner to send a new invitation.</p>
                         <button onClick={() => navigate('/')} className="w-full bg-[#3D7475] text-white py-3 rounded-lg font-medium hover:bg-[#2c5556] transition-colors">
                             Go to Home
@@ -146,9 +149,12 @@ const AcceptInvitation: React.FC = () => {
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (passwordError) setPasswordError('');
+                                    }}
                                     placeholder="At least 8 characters"
-                                    className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#3D7475] transition-colors"
+                                    className={`w-full px-4 py-3 pr-10 border rounded-lg text-sm focus:outline-none transition-colors ${passwordError ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#3D7475]'}`}
                                     required
                                 />
                                 <button
@@ -159,6 +165,7 @@ const AcceptInvitation: React.FC = () => {
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
+                            {passwordError && <p className="mt-1 text-xs text-red-600">{passwordError}</p>}
                         </div>
 
                         <div>
@@ -167,9 +174,12 @@ const AcceptInvitation: React.FC = () => {
                                 <input
                                     type={showConfirm ? 'text' : 'password'}
                                     value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        setConfirmPassword(e.target.value);
+                                        if (confirmPasswordError) setConfirmPasswordError('');
+                                    }}
                                     placeholder="Repeat your password"
-                                    className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#3D7475] transition-colors"
+                                    className={`w-full px-4 py-3 pr-10 border rounded-lg text-sm focus:outline-none transition-colors ${confirmPasswordError ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#3D7475]'}`}
                                     required
                                 />
                                 <button
@@ -180,13 +190,8 @@ const AcceptInvitation: React.FC = () => {
                                     {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
+                            {confirmPasswordError && <p className="mt-1 text-xs text-red-600">{confirmPasswordError}</p>}
                         </div>
-
-                        {validationError && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700">
-                                {validationError}
-                            </div>
-                        )}
 
                         <button
                             type="submit"

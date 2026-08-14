@@ -11,6 +11,7 @@ import { useApplicationStore } from '../store/applicationStore';
 
 interface PropertySelectionStepProps {
     onNext: () => void;
+    error?: string | null;
 }
 
 // Interface for selectable items (properties or units)
@@ -25,7 +26,7 @@ interface SelectableItem {
     image?: string;
 }
 
-const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext }) => {
+const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext, error: selectionError }) => {
     const { formData, updateFormData } = useApplicationStore();
     const [isOpen, setIsOpen] = useState(false);
 
@@ -250,9 +251,11 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
                             onBack={handleDelete}
                             onNext={onNext}
                         // Hide edit button for now as it's not part of the requirement
-                        // onEdit={...} 
+                        // onEdit={...}
                         />
-
+                        {selectionError && (
+                            <p className="mt-3 text-sm text-red-600 text-center max-w-md">{selectionError}</p>
+                        )}
                     </div>
                 ) : (
                     // Show Dropdown when no selection

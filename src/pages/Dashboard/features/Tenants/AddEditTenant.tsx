@@ -6,6 +6,7 @@ import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from '../../components/CustomDropdown';
 import { formatPhoneNumber } from '@/utils/phone.utils';
 import ImageCropModal from './components/ImageCropModal';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 import { useTenantFormStore } from './store/tenantFormStore';
 import {
@@ -205,7 +206,7 @@ const AddEditTenant = () => {
     // Handle tenant error
     useEffect(() => {
         if (tenantError) {
-            setSubmitError(tenantError instanceof Error ? tenantError.message : 'Failed to load tenant data');
+            setSubmitError(toFriendlyErrorMessage(tenantError, 'We could not load this tenant. Please try again.'));
         }
     }, [tenantError, setSubmitError]);
 
@@ -526,7 +527,7 @@ const AddEditTenant = () => {
             navigate('/dashboard/contacts/tenants');
         } catch (err) {
             console.error('Error submitting tenant:', err);
-            setSubmitError(err instanceof Error ? err.message : 'Failed to save tenant');
+            setSubmitError(toFriendlyErrorMessage(err, 'We could not save this tenant. Please try again.'));
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
@@ -568,11 +569,7 @@ const AddEditTenant = () => {
                 </div>
 
                 {/* Error Message */}
-                {submitError && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-600 text-sm">{submitError}</p>
-                    </div>
-                )}
+                {submitError && <p className="mb-4 text-sm text-red-600">{submitError}</p>}
 
                 {/* Profile Photo - Centered & Circular */}
                 <div className="flex flex-col items-center justify-center mb-8">

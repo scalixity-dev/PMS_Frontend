@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent, ClipboardEvent } from 'react';
+import { toFriendlyErrorMessage } from '../../../../../utils/errorMessage.utils';
 interface OtpFormProps {
     email?: string;
     onSubmit?: (otp: string) => void | Promise<void>;
@@ -124,8 +125,7 @@ const OtpForm: React.FC<OtpFormProps> = ({
                 // Default behavior: Handle OTP verification logic here
             }
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'OTP verification failed. Please try again.';
-            setError(errorMessage);
+            setError(toFriendlyErrorMessage(error, 'That code didn\'t work. Please try again.'));
             console.error('OTP submission error:', error);
             // Clear OTP on error
             setOtp(['', '', '', '', '', '']);
@@ -159,8 +159,7 @@ const OtpForm: React.FC<OtpFormProps> = ({
             setOtp(['', '', '', '', '', '']);
             inputRefs.current[0]?.focus();
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to resend OTP. Please try again.';
-            setError(errorMessage);
+            setError(toFriendlyErrorMessage(error, 'We could not resend the code. Please try again.'));
             console.error('OTP resend error:', error);
         } finally {
             setIsResending(false);
@@ -191,36 +190,34 @@ const OtpForm: React.FC<OtpFormProps> = ({
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-                        {error}
-                    </div>
-                )}
                 {resendSuccess && (
                     <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
                         OTP has been resent to your email. Please check your inbox.
                     </div>
                 )}
-                <div className="flex justify-center gap-3">
-                    {otp.map((digit, index) => (
-                        <input
-                            key={index}
-                            ref={(el) => { inputRefs.current[index] = el; }}
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={1}
-                            value={digit}
-                            placeholder="-"
-                            onChange={(e) => handleChange(index, e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(index, e)}
-                            onPaste={index === 0 ? handlePaste : undefined}
-                            disabled={isSubmitting}
-                            className={`w-12 h-12 text-center text-lg font-semibold border-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all placeholder:text-gray-400 ${
-                                digit ? 'bg-teal-500 text-white border-teal-500' : 'bg-white text-gray-800 border-gray-300 focus:border-teal-500'
-                            } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            autoFocus={index === 0}
-                        />
-                    ))}
+                <div>
+                    <div className="flex justify-center gap-3">
+                        {otp.map((digit, index) => (
+                            <input
+                                key={index}
+                                ref={(el) => { inputRefs.current[index] = el; }}
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={1}
+                                value={digit}
+                                placeholder="-"
+                                onChange={(e) => handleChange(index, e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(index, e)}
+                                onPaste={index === 0 ? handlePaste : undefined}
+                                disabled={isSubmitting}
+                                className={`w-12 h-12 text-center text-lg font-semibold border-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all placeholder:text-gray-400 ${
+                                    error ? 'bg-white text-gray-800 border-red-500' : digit ? 'bg-teal-500 text-white border-teal-500' : 'bg-white text-gray-800 border-gray-300 focus:border-teal-500'
+                                } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                autoFocus={index === 0}
+                            />
+                        ))}
+                    </div>
+                    {error && <p className="mt-2 text-xs text-red-600 text-center">{error}</p>}
                 </div>
 
                 <div className="flex flex-col gap-4">

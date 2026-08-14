@@ -7,6 +7,7 @@ import { SubscriptionSettingsLayout } from "../../../../components/common/Subscr
 import { paymentsService, type SavedCard } from "../../../../services/payments.service";
 import { useToast } from "../../../../components/common/Toast";
 import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
+import { toFriendlyErrorMessage } from "@/utils/errorMessage.utils";
 
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
 const stripePromise: Promise<Stripe | null> | null = STRIPE_PUBLISHABLE_KEY
@@ -85,7 +86,9 @@ const AddCardForm: React.FC<{
       });
 
       if (error) {
-        setErrorMsg(error.message ?? "Card setup failed");
+        // Stripe's own decline/validation messages are already written for
+        // end users, so show them as-is rather than genericizing them.
+        setErrorMsg(error.message ?? "Card setup failed. Please check your card details and try again.");
         return;
       }
 
@@ -99,8 +102,8 @@ const AddCardForm: React.FC<{
       toast.success("Card added successfully");
       cardElement.clear();
       onSaved(saved);
-    } catch (err: any) {
-      setErrorMsg(err.message ?? "Failed to add card");
+    } catch (err) {
+      setErrorMsg(toFriendlyErrorMessage(err, "We could not add this card. Please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -108,11 +111,6 @@ const AddCardForm: React.FC<{
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {errorMsg && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
-          {errorMsg}
-        </div>
-      )}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Cardholder Name</label>
         <input
@@ -125,12 +123,16 @@ const AddCardForm: React.FC<{
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Card Details</label>
-        <div className="px-4 py-3 border border-[#E8E8E8] rounded-lg bg-white">
+        <div className={`px-4 py-3 border rounded-lg bg-white ${errorMsg ? 'border-red-400' : 'border-[#E8E8E8]'}`}>
           <CardElement options={CARD_ELEMENT_OPTIONS} />
         </div>
-        <p className="mt-1.5 text-xs text-gray-400 flex items-center gap-1">
-          <span>🔒</span> Secured by Stripe — your card details never touch our servers
-        </p>
+        {errorMsg ? (
+          <p className="mt-1.5 text-xs text-red-600">{errorMsg}</p>
+        ) : (
+          <p className="mt-1.5 text-xs text-gray-400 flex items-center gap-1">
+            <span>🔒</span> Secured by Stripe — your card details never touch our servers
+          </p>
+        )}
       </div>
       {hasExistingCards && (
         <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">

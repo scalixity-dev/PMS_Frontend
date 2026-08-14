@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useSignUpStore } from '../store/signUpStore';
 import { authService } from '../../../../../services/auth.service';
+import { toFriendlyErrorMessage } from '../../../../../utils/errorMessage.utils';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = () =>
@@ -22,7 +23,13 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
     strength?: string;
     match?: string;
   }>({});
+  // Reserved for errors that aren't about any one field (the create-account
+  // API call itself failing) — rendered inline near the submit button.
   const [error, setError] = useState<string | null>(null);
+  const [firstNameError, setFirstNameError] = useState<string | null>(null);
+  const [lastNameError, setLastNameError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [termsError, setTermsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Validate password strength
@@ -106,30 +113,38 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
     // Prevent double submission
     if (isLoading) return;
 
-    // Validate all fields
-    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
-      setError('Please fill in all required fields');
+    // Validate all fields. The submit button is already disabled until these
+    // pass (see isFormValid), so this mostly guards against stale state, but
+    // each failure still lands on its own field instead of a shared banner.
+    const missingFirstName = !formData.firstName;
+    const missingLastName = !formData.lastName;
+    const missingEmail = !formData.email;
+    setFirstNameError(missingFirstName ? 'First name is required' : null);
+    setLastNameError(missingLastName ? 'Last name is required' : null);
+    setEmailError(missingEmail ? 'Email is required' : null);
+    if (missingFirstName || missingLastName || missingEmail || !formData.password) {
       return;
     }
 
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setPasswordErrors(prev => ({ ...prev, match: 'Passwords do not match' }));
       return;
     }
 
     // Validate password strength
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/;
     if (formData.password.length < 8 || !passwordRegex.test(formData.password)) {
-      setError('Password must be at least 8 characters and contain uppercase, lowercase, a number, and a symbol');
+      setPasswordErrors(prev => ({ ...prev, strength: 'Password must be at least 8 characters and contain uppercase, lowercase, a number, and a symbol' }));
       return;
     }
 
     // Validate terms agreement
     if (!formData.agreedToTerms) {
-      setError('Please agree to the terms and conditions');
+      setTermsError('Please agree to the terms and conditions');
       return;
     }
+    setTermsError(null);
 
     setError(null);
     setIsLoading(true);
@@ -148,7 +163,7 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
         replace: true,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      setError(toFriendlyErrorMessage(err, 'We could not create your account. Please try again.'));
       setIsLoading(false);
     }
   };
@@ -166,12 +181,6 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
         </div>
 
         <div className="space-y-5 sm:space-y-6">
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
-
           {/* First Name & Last Name */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -182,11 +191,13 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
                 onChange={(e) => {
                   updateFormData('firstName', e.target.value);
                   updateFormData('fullName', `${e.target.value} ${formData.lastName || ''}`.trim());
+                  if (firstNameError) setFirstNameError(null);
                 }}
                 placeholder="Enter your first name"
-                className={inputClasses()}
+                className={`${inputClasses()} ${firstNameError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                 required
               />
+              {firstNameError && <p className="text-xs text-red-600 mt-1">{firstNameError}</p>}
             </div>
             <div>
               <label className={labelClasses}>Last Name *</label>
@@ -196,11 +207,13 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
                 onChange={(e) => {
                   updateFormData('lastName', e.target.value);
                   updateFormData('fullName', `${formData.firstName || ''} ${e.target.value}`.trim());
+                  if (lastNameError) setLastNameError(null);
                 }}
                 placeholder="Enter your last name"
-                className={inputClasses()}
+                className={`${inputClasses()} ${lastNameError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                 required
               />
+              {lastNameError && <p className="text-xs text-red-600 mt-1">{lastNameError}</p>}
             </div>
           </div>
 
@@ -210,10 +223,14 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
             <input
               type="email"
               value={formData.email || ''}
-              onChange={(e) => updateFormData('email', e.target.value)}
+              onChange={(e) => {
+                updateFormData('email', e.target.value);
+                if (emailError) setEmailError(null);
+              }}
               placeholder="Enter your email address"
-              className={inputClasses()}
+              className={`${inputClasses()} ${emailError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
             />
+            {emailError && <p className="text-xs text-red-600 mt-1">{emailError}</p>}
           </div>
 
           {/* Password Fields */}
@@ -274,21 +291,28 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
           </p>
 
           {/* Terms and Conditions */}
-          <div className="flex items-start">
-            <input
-              type="checkbox"
-              id="terms"
-              checked={formData.agreedToTerms || false}
-              onChange={(e) => updateFormData('agreedToTerms', e.target.checked)}
-              className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 transition-all"
-            />
-            <label htmlFor="terms" className="ml-2 text-sm text-gray-600 cursor-pointer">
-              I agree to the terms and conditions
-            </label>
+          <div>
+            <div className="flex items-start">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={formData.agreedToTerms || false}
+                onChange={(e) => {
+                  updateFormData('agreedToTerms', e.target.checked);
+                  if (termsError) setTermsError(null);
+                }}
+                className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 transition-all"
+              />
+              <label htmlFor="terms" className="ml-2 text-sm text-gray-600 cursor-pointer">
+                I agree to the terms and conditions
+              </label>
+            </div>
+            {termsError && <p className="text-xs text-red-600 mt-1">{termsError}</p>}
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-center pt-2">
+          <div className="flex flex-col items-center gap-2 pt-2">
+            {error && <p className="text-sm text-red-600">{error}</p>}
             <button
               onClick={handleRegistration}
               disabled={!isFormValid || isLoading}
