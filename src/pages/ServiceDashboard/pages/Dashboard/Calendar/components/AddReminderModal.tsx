@@ -9,6 +9,7 @@ import { useCreateReminder, useUpdateReminder } from '../../../../../../hooks/us
 import { useGetAllProperties } from '../../../../../../hooks/usePropertyQueries';
 import { useServiceProviderAssignments } from '../../../../../../hooks/useServiceProviderAssignments';
 import { type Reminder } from '../Calendar';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 // Valid form types for ReminderFormData
 type ValidFormType = 'reminder' | 'viewing' | 'meeting' | 'other';
@@ -79,6 +80,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
 
     const [showExitConfirmation, setShowExitConfirmation] = React.useState(false);
     const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false, details: false });
+    const [submitError, setSubmitError] = React.useState<string | null>(null);
     const [initialSnapshot, setInitialSnapshot] = React.useState(formData);
     const MAX_DETAILS_LENGTH = 100;
     const prevIsOpenRef = React.useRef(isOpen);
@@ -186,6 +188,8 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
     ];
 
     const handleSubmit = async () => {
+        setSubmitError(null);
+
         // Validate required fields
         const errors = {
             title: !formData.title.trim(),
@@ -246,7 +250,12 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
             onClose();
         } catch (error) {
             console.error(isEditMode ? 'Failed to update reminder:' : 'Failed to create reminder:', error);
-            // Error handling could show a toast notification here
+            setSubmitError(
+                toFriendlyErrorMessage(
+                    error,
+                    isEditMode ? 'We could not update this reminder. Please try again.' : 'We could not create this reminder. Please try again.'
+                )
+            );
         }
     };
 
@@ -456,7 +465,10 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                 </div>
 
                 {/* Footer */}
-                <div className="p-5 pt-2 flex gap-3 flex-shrink-0">
+                <div className="px-5 pt-2 flex-shrink-0">
+                    {submitError && <p className="text-red-600 text-xs text-center mb-2">{submitError}</p>}
+                </div>
+                <div className="p-5 pt-0 flex gap-3 flex-shrink-0">
                     <button
                         onClick={handleCloseAttempt}
                         disabled={isLoading}

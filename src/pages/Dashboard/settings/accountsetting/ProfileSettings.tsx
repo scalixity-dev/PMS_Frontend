@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from "../../../../config/api.config";
 import { formatPhoneNumber } from '@/utils/phone.utils';
 import { formatRole } from '@/utils/roleIcon';
 import { useToast } from "../../../../components/common/Toast";
+import { toFriendlyErrorMessage } from "@/utils/errorMessage.utils";
 
 
 interface ProfileUser {
@@ -59,6 +60,9 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
     lastName: initialValues.lastName,
     phoneNumber: initialValues.phoneNumber,
   });
+  const [phoneError, setPhoneError] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -67,6 +71,8 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
         lastName: initialValues.lastName,
         phoneNumber: initialValues.phoneNumber,
       });
+      setPhoneError("");
+      setSubmitError("");
       // Focus the first input when modal opens
       const timer = setTimeout(() => {
         firstInputRef.current?.focus();
@@ -117,6 +123,7 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
     let finalValue = value;
     if (field === "phoneNumber") {
       finalValue = formatPhoneNumber(value);
+      if (phoneError) setPhoneError("");
     }
     setFormValues((prev) => ({
       ...prev,
@@ -126,8 +133,20 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
 
 
   const handleSaveClick = async () => {
-    const didSave = await onSave(formValues);
-    if (didSave) onClose();
+    if (!isValidPhoneNumber(formValues.phoneNumber)) {
+      setPhoneError("Phone number must be between 4 and 15 digits.");
+      return;
+    }
+    setSubmitError("");
+    setIsSaving(true);
+    try {
+      const didSave = await onSave(formValues);
+      if (didSave) onClose();
+    } catch (err) {
+      setSubmitError(toFriendlyErrorMessage(err, "We could not save your changes. Please try again."));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -194,7 +213,9 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
               className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
               placeholder="111-111-1111"
             />
+            {phoneError && <p className="text-xs text-red-500 mt-1 ml-1">{phoneError}</p>}
           </div>
+          {submitError && <p className="text-xs text-red-500 ml-1">{submitError}</p>}
         </div>
 
         <div className="p-6 pt-0 flex gap-4">
@@ -209,10 +230,11 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
           <Button
             type="button"
             onClick={handleSaveClick}
+            disabled={isSaving}
             variant="primary"
-            className="flex-1 rounded-xl shadow-lg hover:bg-[#2c5556]"
+            className="flex-1 rounded-xl shadow-lg hover:bg-[#2c5556] disabled:opacity-50"
           >
-            Save changes
+            {isSaving ? "Saving..." : "Save changes"}
           </Button>
         </div>
       </div>
@@ -228,7 +250,9 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [currentPasswordError, setCurrentPasswordError] = useState("");
+  const [newPasswordError, setNewPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const firstInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const [isSavingPwd, setIsSavingPwd] = useState(false);
@@ -238,7 +262,9 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setError("");
+      setCurrentPasswordError("");
+      setNewPasswordError("");
+      setConfirmPasswordError("");
       // Focus the first input when modal opens
       const timer = setTimeout(() => {
         firstInputRef.current?.focus();
@@ -286,28 +312,36 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
   };
 
   const validatePassword = (): boolean => {
+    setCurrentPasswordError("");
+    setNewPasswordError("");
+    setConfirmPasswordError("");
+    let isValid = true;
+
     if (!currentPassword) {
-      setError("Current password is required");
-      return false;
+      setCurrentPasswordError("Current password is required");
+      isValid = false;
     }
+
     if (!newPassword) {
-      setError("New password is required");
-      return false;
+      setNewPasswordError("New password is required");
+      isValid = false;
+    } else if (newPassword.length < 8) {
+      setNewPasswordError("New password must be at least 8 characters");
+      isValid = false;
+    } else if (newPassword === currentPassword) {
+      setNewPasswordError("New password must be different from current password");
+      isValid = false;
     }
-    if (newPassword.length < 6) {
-      setError("New password must be at least 6 characters");
-      return false;
+
+    if (!confirmPassword) {
+      setConfirmPasswordError("Please confirm your new password");
+      isValid = false;
+    } else if (newPassword !== confirmPassword) {
+      setConfirmPasswordError("New password and confirm password do not match");
+      isValid = false;
     }
-    if (newPassword === currentPassword) {
-      setError("New password must be different from current password");
-      return false;
-    }
-    if (newPassword !== confirmPassword) {
-      setError("New password and confirm password do not match");
-      return false;
-    }
-    setError("");
-    return true;
+
+    return isValid;
   };
 
   const handleSaveClick = async () => {
@@ -316,8 +350,10 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
       setIsSavingPwd(true);
       await onSave(currentPassword, newPassword, confirmPassword);
       onClose();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to update password');
+    } catch (err) {
+      // A failed password change is almost always a wrong current password,
+      // so surface it there rather than as a page-level notice.
+      setCurrentPasswordError(toFriendlyErrorMessage(err, 'We could not update your password. Please try again.'));
     } finally {
       setIsSavingPwd(false);
     }
@@ -362,7 +398,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
                 value={currentPassword}
                 onChange={(e) => {
                   setCurrentPassword(e.target.value);
-                  setError("");
+                  if (currentPasswordError) setCurrentPasswordError("");
                 }}
                 className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all pr-12"
                 placeholder="Enter current password"
@@ -376,6 +412,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
                 {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {currentPasswordError && <p className="text-xs text-red-500 mt-1 ml-1">{currentPasswordError}</p>}
           </div>
 
           <div>
@@ -387,7 +424,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
                 value={newPassword}
                 onChange={(e) => {
                   setNewPassword(e.target.value);
-                  setError("");
+                  if (newPasswordError) setNewPasswordError("");
                 }}
                 className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all pr-12"
                 placeholder="Enter new password"
@@ -401,6 +438,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
                 {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {newPasswordError && <p className="text-xs text-red-500 mt-1 ml-1">{newPasswordError}</p>}
           </div>
 
           <div>
@@ -412,7 +450,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
-                  setError("");
+                  if (confirmPasswordError) setConfirmPasswordError("");
                 }}
                 className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all pr-12"
                 placeholder="Confirm new password"
@@ -426,8 +464,8 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {confirmPasswordError && <p className="text-xs text-red-500 mt-1 ml-1">{confirmPasswordError}</p>}
           </div>
-          {error && <p className="text-xs text-red-500 mt-1 ml-1">{error}</p>}
         </div>
 
         <div className="p-6 pt-0 flex gap-4">
@@ -526,11 +564,8 @@ export default function ProfileSettings() {
     lastName: string;
     phoneNumber: string;
   }): Promise<boolean> => {
-    if (!isValidPhoneNumber(values.phoneNumber)) {
-      toast.error("Phone number must be between 4 and 15 digits.");
-      return false;
-    }
-
+    // Phone format is validated inline in EditPersonalInfoModal before this
+    // is ever called, so this is just the save.
     setProfileDetails((previous) => ({
       ...previous,
       firstName: values.firstName,
@@ -544,44 +579,32 @@ export default function ProfileSettings() {
       fullName: fullName,
     }));
 
-    try {
-      await updateProfile.mutateAsync({
-        fullName: fullName,
-        phoneNumber: values.phoneNumber,
-      });
-      return true;
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to update personal information");
-      return false;
-    }
+    // Let the modal's own catch show this inline rather than a toast.
+    await updateProfile.mutateAsync({
+      fullName: fullName,
+      phoneNumber: values.phoneNumber,
+    });
+    return true;
   };
 
   const handleSavePassword = async (currentPassword: string, newPassword: string, confirmPassword: string) => {
-    if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match');
-      return;
-    }
-    if (newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters');
-      return;
-    }
-    try {
-      await authService.changePassword(currentPassword, newPassword);
-      toast.success('Password updated successfully');
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to update password');
-      throw err;
-    }
+    // Validated inline in ChangePasswordModal before this is called.
+    void confirmPassword;
+    await authService.changePassword(currentPassword, newPassword);
+    toast.success('Password updated successfully');
   };
+
+  const [photoError, setPhotoError] = useState("");
 
   const handleProfilePhotoUpload = async (file?: File) => {
     if (!file) return;
+    setPhotoError("");
     if (!file.type.startsWith("image/")) {
-      toast.error("Only image files are allowed.");
+      setPhotoError("Only image files are allowed.");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Profile photo must be 5 MB or smaller.");
+      setPhotoError("Profile photo must be 5 MB or smaller.");
       return;
     }
 
@@ -601,8 +624,8 @@ export default function ProfileSettings() {
       }
       await updateProfile.mutateAsync({ profilePhotoUrl: url } as any);
       setUser((previous) => ({ ...previous, profilePhotoUrl: url }));
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to upload profile photo");
+    } catch (err) {
+      setPhotoError(toFriendlyErrorMessage(err, "We could not upload your photo. Please try again."));
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -646,6 +669,7 @@ export default function ProfileSettings() {
             <p className="text-sm text-gray-500">{formatRole(user.role)}</p>
             <p className="text-sm text-gray-600">{user.email}</p>
             {isUploadingPhoto && <p className="text-xs text-gray-500 mt-1">Uploading photo...</p>}
+            {photoError && <p className="text-xs text-red-500 mt-1">{photoError}</p>}
           </div>
         </div>
         <Button

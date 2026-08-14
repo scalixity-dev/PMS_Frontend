@@ -14,6 +14,7 @@ import { useToast } from "../../../../components/common/Toast";
 import { formatPhoneNumber } from '@/utils/phone.utils';
 import { formatRole } from '@/utils/roleIcon';
 import { usePlanFeatures } from "../../../../hooks/usePlanFeatures";
+import { toFriendlyErrorMessage } from "@/utils/errorMessage.utils";
 
 
 const INPUT_CLASS = "w-full px-4 py-3 border-b border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors";
@@ -154,7 +155,7 @@ const InviteModal = memo(({
 }: {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: InviteFormData) => void;
+    onSubmit: (data: InviteFormData) => Promise<void> | void;
     isSubmitting: boolean;
 }) => {
     const [data, setData] = useState<InviteFormData>({
@@ -163,14 +164,33 @@ const InviteModal = memo(({
         email: '',
         permissions: { ...DEFAULT_PERMISSIONS },
     });
-    const [error, setError] = useState<string | null>(null);
+    const [nameError, setNameError] = useState<string | null>(null);
+    const [emailError, setEmailError] = useState<string | null>(null);
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
-    const handleSubmit = () => {
-        setError(null);
-        if (!data.name.trim()) return setError('Name is required');
-        if (!data.email.trim()) return setError('Email is required');
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) return setError('Invalid email format');
-        onSubmit({ ...data, email: data.email.trim().toLowerCase(), name: data.name.trim() });
+    const handleSubmit = async () => {
+        setNameError(null);
+        setEmailError(null);
+        setSubmitError(null);
+
+        if (!data.name.trim()) {
+            setNameError('Name is required');
+            return;
+        }
+        if (!data.email.trim()) {
+            setEmailError('Email is required');
+            return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+            setEmailError('Please enter a valid email address');
+            return;
+        }
+
+        try {
+            await onSubmit({ ...data, email: data.email.trim().toLowerCase(), name: data.name.trim() });
+        } catch (err) {
+            setSubmitError(toFriendlyErrorMessage(err, 'We could not send this invitation. Please try again.'));
+        }
     };
 
     if (!isOpen) return null;
@@ -194,22 +214,34 @@ const InviteModal = memo(({
                 </div>
 
                 <div className="px-6 py-6 space-y-4 overflow-y-auto flex-1">
-                    <input
-                        type="text"
-                        placeholder="Full Name *"
-                        value={data.name}
-                        onChange={(e) => setData({ ...data, name: e.target.value })}
-                        className={INPUT_CLASS}
-                        disabled={isSubmitting}
-                    />
-                    <input
-                        type="email"
-                        placeholder="Email Address *"
-                        value={data.email}
-                        onChange={(e) => setData({ ...data, email: e.target.value })}
-                        className={INPUT_CLASS}
-                        disabled={isSubmitting}
-                    />
+                    <div>
+                        <input
+                            type="text"
+                            placeholder="Full Name *"
+                            value={data.name}
+                            onChange={(e) => {
+                                setData({ ...data, name: e.target.value });
+                                if (nameError) setNameError(null);
+                            }}
+                            className={`${INPUT_CLASS} ${nameError ? 'border-red-500' : ''}`}
+                            disabled={isSubmitting}
+                        />
+                        {nameError && <p className="mt-1 text-xs text-red-600">{nameError}</p>}
+                    </div>
+                    <div>
+                        <input
+                            type="email"
+                            placeholder="Email Address *"
+                            value={data.email}
+                            onChange={(e) => {
+                                setData({ ...data, email: e.target.value });
+                                if (emailError) setEmailError(null);
+                            }}
+                            className={`${INPUT_CLASS} ${emailError ? 'border-red-500' : ''}`}
+                            disabled={isSubmitting}
+                        />
+                        {emailError && <p className="mt-1 text-xs text-red-600">{emailError}</p>}
+                    </div>
                     <input
                         type="tel"
                         placeholder="Phone Number (optional)"
@@ -225,10 +257,8 @@ const InviteModal = memo(({
                         disabled={isSubmitting}
                     />
 
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 rounded-md p-2 text-xs text-red-700">
-                            {error}
-                        </div>
+                    {submitError && (
+                        <p className="text-xs text-red-600">{submitError}</p>
                     )}
                 </div>
 
@@ -279,18 +309,29 @@ const EditPermissionsModal = memo(({
 }: {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (permissions: string[]) => void;
+    onSubmit: (permissions: string[]) => Promise<void> | void;
     isSubmitting: boolean;
     currentPermissions: string[];
     memberName: string;
 }) => {
     const [perms, setPerms] = useState<PermissionMap>(() => stringsToPermissions(currentPermissions));
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen) {
             setPerms(stringsToPermissions(currentPermissions));
+            setSubmitError(null);
         }
     }, [isOpen, currentPermissions]);
+
+    const handleSubmit = async () => {
+        setSubmitError(null);
+        try {
+            await onSubmit(permissionsToStrings(perms));
+        } catch (err) {
+            setSubmitError(toFriendlyErrorMessage(err, 'We could not save these permissions. Please try again.'));
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -354,13 +395,14 @@ const EditPermissionsModal = memo(({
                     <p className="text-xs text-gray-400 mt-3 px-2">Enabling "Manage" automatically enables "View".</p>
                 </div>
 
-                <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2 shrink-0">
+                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-2 shrink-0">
+                    {submitError && <p className="text-xs text-red-600 mr-auto">{submitError}</p>}
                     <button type="button" onClick={onClose} disabled={isSubmitting} className="px-4 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50">
                         Cancel
                     </button>
                     <button
                         type="button"
-                        onClick={() => onSubmit(permissionsToStrings(perms))}
+                        onClick={handleSubmit}
                         disabled={isSubmitting}
                         className="px-6 py-2 rounded-lg text-white font-medium text-sm bg-[#3D7475] hover:bg-[#2c5556] transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
@@ -584,26 +626,24 @@ export default function RolesPermissions() {
     const teamLimitInfo = checkLimit('teamMembers', activeMemberCount);
 
     const handleInvite = useCallback(async (data: InviteFormData) => {
-        try {
-            await inviteMutation.mutateAsync({
-                name: data.name,
-                email: data.email,
-                phoneNumber: data.phoneNumber || undefined,
-                permissions: permissionsToStrings(data.permissions),
-            });
-            toast.success(`Invitation sent to ${data.email}`);
-            setIsInviteModalOpen(false);
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to invite team member');
-        }
+        // Errors are left to propagate so InviteModal can show them inline
+        // next to the fields the user is looking at, instead of a toast.
+        await inviteMutation.mutateAsync({
+            name: data.name,
+            email: data.email,
+            phoneNumber: data.phoneNumber || undefined,
+            permissions: permissionsToStrings(data.permissions),
+        });
+        toast.success(`Invitation sent to ${data.email}`);
+        setIsInviteModalOpen(false);
     }, [inviteMutation, toast]);
 
     const handleResend = useCallback(async (id: string, email: string) => {
         try {
             await resendMutation.mutateAsync(id);
             toast.success(`Invitation resent to ${email}`);
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to resend invitation');
+        } catch (err) {
+            toast.error(toFriendlyErrorMessage(err, 'We could not resend this invitation. Please try again.'));
         }
     }, [resendMutation, toast]);
 
@@ -617,8 +657,8 @@ export default function RolesPermissions() {
             await revokeMutation.mutateAsync(revokeTarget.id);
             toast.success('Access revoked');
             setRevokeTarget(null);
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to revoke access');
+        } catch (err) {
+            toast.error(toFriendlyErrorMessage(err, 'We could not revoke access. Please try again.'));
         }
     }, [revokeTarget, revokeMutation, toast]);
 
@@ -628,8 +668,8 @@ export default function RolesPermissions() {
             await enableMutation.mutateAsync(enableTarget.id);
             toast.success(`${enableTarget.name} re-enabled successfully`);
             setEnableTarget(null);
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to enable team member');
+        } catch (err) {
+            toast.error(toFriendlyErrorMessage(err, 'We could not re-enable this team member. Please try again.'));
         }
     }, [enableTarget, enableMutation, toast]);
 
@@ -643,20 +683,18 @@ export default function RolesPermissions() {
             await deleteMutation.mutateAsync(deleteTarget.id);
             toast.success('Team member deleted');
             setDeleteTarget(null);
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to delete team member');
+        } catch (err) {
+            toast.error(toFriendlyErrorMessage(err, 'We could not delete this team member. Please try again.'));
         }
     }, [deleteTarget, deleteMutation, toast]);
 
     const handleEditPermissions = useCallback(async (permissions: string[]) => {
         if (!editingMember) return;
-        try {
-            await updateMutation.mutateAsync({ id: editingMember.id, dto: { permissions } });
-            toast.success('Permissions updated');
-            setEditingMember(null);
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to update permissions');
-        }
+        // Errors are left to propagate so EditPermissionsModal can show them
+        // inline instead of a toast.
+        await updateMutation.mutateAsync({ id: editingMember.id, dto: { permissions } });
+        toast.success('Permissions updated');
+        setEditingMember(null);
     }, [editingMember, updateMutation, toast]);
 
     const headerActions = (

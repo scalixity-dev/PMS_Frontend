@@ -7,6 +7,7 @@ import { Elements, CardElement, useStripe, useElements } from "@stripe/react-str
 import { paymentsService, type SavedCard } from "../../../../services/payments.service";
 import { useToast } from "../../../../components/common/Toast";
 import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
+import { toFriendlyErrorMessage } from "@/utils/errorMessage.utils";
 
 /**
  * My Cards — Stripe-powered. Uses SetupIntent + Stripe Elements to tokenize
@@ -46,16 +47,18 @@ const AddCardForm: React.FC<{ onSaved: () => void; onCancel: () => void; hasExis
     const [setAsDefault, setSetAsDefault] = useState(!hasExistingCards);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
+    const [nameError, setNameError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg("");
+        setNameError("");
         if (!stripe || !elements) {
             setErrorMsg("Stripe has not loaded yet. Please try again.");
             return;
         }
         if (!cardholderName.trim()) {
-            setErrorMsg("Cardholder name is required");
+            setNameError("Cardholder name is required");
             return;
         }
 
@@ -71,7 +74,9 @@ const AddCardForm: React.FC<{ onSaved: () => void; onCancel: () => void; hasExis
                     billing_details: { name: cardholderName.trim() },
                 },
             });
-            if (error) throw new Error(error.message || "Card setup failed");
+            // Stripe's own decline/validation messages are already written for
+            // end users, so show them as-is rather than genericizing them.
+            if (error) throw new Error(error.message || "Card setup failed. Please check your card details and try again.");
             if (!setupIntent?.payment_method) throw new Error("Setup incomplete");
 
             const pmId = typeof setupIntent.payment_method === "string"
@@ -83,8 +88,8 @@ const AddCardForm: React.FC<{ onSaved: () => void; onCancel: () => void; hasExis
             cardElement.clear();
             setCardholderName("");
             onSaved();
-        } catch (err: any) {
-            setErrorMsg(err?.message || "Failed to save card");
+        } catch (err) {
+            setErrorMsg(toFriendlyErrorMessage(err, "We could not save this card. Please try again."));
         } finally {
             setIsSubmitting(false);
         }
@@ -92,11 +97,6 @@ const AddCardForm: React.FC<{ onSaved: () => void; onCancel: () => void; hasExis
 
     return (
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-            {errorMsg && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
-                    {errorMsg}
-                </div>
-            )}
             <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Cardholder Name
@@ -104,19 +104,24 @@ const AddCardForm: React.FC<{ onSaved: () => void; onCancel: () => void; hasExis
                 <input
                     type="text"
                     value={cardholderName}
-                    onChange={(e) => setCardholderName(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
+                    onChange={(e) => {
+                        setCardholderName(e.target.value);
+                        if (nameError) setNameError("");
+                    }}
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base ${nameError ? 'border-red-500' : 'border-[#E8E8E8]'}`}
                     placeholder="John Doe"
                     required
                 />
+                {nameError && <p className="mt-1.5 text-xs text-red-600">{nameError}</p>}
             </div>
             <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Card Details
                 </label>
-                <div className="w-full px-3 sm:px-4 py-3 border border-[#E8E8E8] rounded-lg bg-white focus-within:ring-2 focus-within:ring-[#7CD947]">
+                <div className={`w-full px-3 sm:px-4 py-3 border rounded-lg bg-white focus-within:ring-2 focus-within:ring-[#7CD947] ${errorMsg ? 'border-red-400' : 'border-[#E8E8E8]'}`}>
                     <CardElement options={CARD_ELEMENT_OPTIONS} />
                 </div>
+                {errorMsg && <p className="mt-1.5 text-xs text-red-600">{errorMsg}</p>}
             </div>
             {hasExistingCards && (
                 <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -173,8 +178,8 @@ const MyCards: React.FC = () => {
         try {
             const cards = await paymentsService.listCards();
             setSavedCards(cards);
-        } catch (err: any) {
-            setLoadError(err?.message || "Failed to load cards");
+        } catch (err) {
+            setLoadError(toFriendlyErrorMessage(err, "We could not load your saved cards. Please try again."));
         } finally {
             setIsLoading(false);
         }
@@ -195,8 +200,8 @@ const MyCards: React.FC = () => {
             await paymentsService.deleteCard(cardToDelete);
             setCardToDelete(null);
             await loadCards();
-        } catch (err: any) {
-            toast.error(err?.message || "Failed to remove card");
+        } catch (err) {
+            toast.error(toFriendlyErrorMessage(err, "We could not remove this card. Please try again."));
         } finally {
             setBusyCardId(null);
         }
@@ -207,8 +212,8 @@ const MyCards: React.FC = () => {
         try {
             await paymentsService.setDefaultCard(cardId);
             await loadCards();
-        } catch (err: any) {
-            toast.error(err?.message || "Failed to set default");
+        } catch (err) {
+            toast.error(toFriendlyErrorMessage(err, "We could not set this as your default card. Please try again."));
         } finally {
             setBusyCardId(null);
         }
@@ -250,9 +255,7 @@ const MyCards: React.FC = () => {
                     )}
 
                     {loadError && (
-                        <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
-                            {loadError}
-                        </div>
+                        <p className="text-sm text-red-600">{loadError}</p>
                     )}
 
                     {isLoading ? (

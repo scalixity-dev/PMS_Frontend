@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { serviceProviderService, type CreateServiceProviderDto } from '../../../services/service-provider.service';
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 const SUB_CATEGORIES: Record<string, string[]> = {
   Cleaning: ['House Cleaning', 'Commercial Cleaning', 'Window Cleaning'],
@@ -51,7 +52,7 @@ const BecomeServiceProvider: React.FC = () => {
       await serviceProviderService.selfRegister(formData);
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit registration');
+      setError(toFriendlyErrorMessage(err, 'We could not submit your registration. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -100,12 +101,6 @@ const BecomeServiceProvider: React.FC = () => {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
-              </div>
-            )}
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
@@ -250,6 +245,10 @@ const BecomeServiceProvider: React.FC = () => {
                 />
               </div>
             </div>
+
+            {error && (
+              <p className="text-sm text-red-600">{error}</p>
+            )}
 
             <button
               type="submit"

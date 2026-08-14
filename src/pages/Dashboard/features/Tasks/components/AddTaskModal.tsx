@@ -9,6 +9,7 @@ import { useTaskStore } from '../store/taskStore';
 import { useCreateTask, useUpdateTask } from '../../../../../hooks/useTaskQueries';
 import { useGetAllProperties } from '../../../../../hooks/usePropertyQueries';
 import { useGetTeamMembers } from '../../../../../hooks/useTeamQueries';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 interface AddTaskModalProps {
     isOpen: boolean;
@@ -30,6 +31,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
 
     const [showExitConfirmation, setShowExitConfirmation] = React.useState(false);
     const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false, description: false });
+    const [submitError, setSubmitError] = React.useState<string | null>(null);
     const [initialSnapshot, setInitialSnapshot] = React.useState(formData);
     const MAX_DESCRIPTION_LENGTH = 100;
     const prevIsOpenRef = React.useRef(isOpen);
@@ -132,6 +134,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
     // TODO: In a real app, you'd fetch users/contacts from API for a dropdown
 
     const handleSubmit = async () => {
+        setSubmitError(null);
+
         // Validate required fields
         const errors = {
             title: !formData.title.trim(),
@@ -187,7 +191,12 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
             onClose();
         } catch (error) {
             console.error('Failed to save task:', error);
-            // Error handling could show a toast notification here
+            setSubmitError(
+                toFriendlyErrorMessage(
+                    error,
+                    taskToEdit ? 'We could not save your changes. Please try again.' : 'We could not create this task. Please try again.'
+                )
+            );
         }
     };
 
@@ -400,7 +409,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 pt-2 flex gap-3">
+                <div className="px-4 pt-2">
+                    {submitError && <p className="text-red-600 text-xs text-center mb-2">{submitError}</p>}
+                </div>
+                <div className="p-4 pt-0 flex gap-3">
                     <button
                         onClick={handleCloseAttempt}
                         disabled={isLoading}

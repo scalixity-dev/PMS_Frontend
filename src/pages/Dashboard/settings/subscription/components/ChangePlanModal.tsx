@@ -8,6 +8,7 @@ import type { Subscription } from "../../../../../services/subscription.service"
 import { paymentsService } from "../../../../../services/payments.service";
 import { useToast } from "../../../../../components/common/Toast";
 import { useSubscription } from "../../../../../context/SubscriptionContext";
+import { toFriendlyErrorMessage } from "@/utils/errorMessage.utils";
 
 interface ChangePlanModalProps {
   isOpen: boolean;
@@ -174,9 +175,9 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
       return;
     }
 
-    // No-card guard
+    // No-card guard — the amber "no payment method" banner above the plan
+    // grid already covers this case, so no need to repeat it here.
     if (hasNoCard) {
-      setError("You need a payment method on file before subscribing.");
       return;
     }
 
@@ -194,7 +195,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
       onPlanChanged(updated);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to change plan");
+      setError(toFriendlyErrorMessage(err, "We could not change your plan. Please try again."));
     } finally {
       setIsChanging(false);
     }
@@ -261,13 +262,6 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
                 </button>{" "}
                 before subscribing.
               </span>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
             </div>
           )}
 
@@ -397,7 +391,8 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="flex flex-col-reverse sm:flex-row gap-4 justify-end pt-4 border-t">
+          <div className="flex flex-col-reverse sm:flex-row gap-4 justify-end items-center pt-4 border-t">
+            {error && <p className="text-sm text-red-600 sm:mr-auto">{error}</p>}
             <button
               onClick={onClose}
               disabled={isChanging}

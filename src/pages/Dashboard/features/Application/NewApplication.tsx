@@ -22,6 +22,7 @@ import ApplicationSuccessModal from './components/ApplicationSuccessModal';
 import ApplicationErrorModal from './components/ApplicationErrorModal';
 import AIApplicationChat from './components/AIApplicationChat';
 import BaseModal from '../../../../components/common/modals/BaseModal';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 const STORAGE_KEY = 'application_draft';
 
@@ -167,6 +168,12 @@ const NewApplication: React.FC = () => {
     const [showCancelModal, setShowCancelModal] = React.useState(false);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const isSubmittingRef = useRef(false);
+    const [propertySelectionError, setPropertySelectionError] = React.useState<string | null>(null);
+
+    // A newly picked property/unit clears any previous "no leasing set up" error.
+    useEffect(() => {
+        setPropertySelectionError(null);
+    }, [formData.propertyId, formData.unitId]);
 
     const handleCancel = () => {
         if (isFormDirty) {
@@ -228,8 +235,7 @@ const NewApplication: React.FC = () => {
             const { leasingService } = await import('../../../../services/leasing.service');
             const leasing = await leasingService.getByPropertyId(formData.propertyId);
             if (!leasing) {
-                setErrorMessages(['This property does not have an active leasing set up. Please create a leasing for this property first before creating an application.']);
-                setShowErrorModal(true);
+                setPropertySelectionError('This property does not have an active leasing set up. Please create a leasing for this property first before creating an application.');
                 return;
             }
         } catch {
@@ -311,8 +317,9 @@ const NewApplication: React.FC = () => {
                 if ('messages' in error && Array.isArray((error as any).messages)) {
                     errors = (error as any).messages;
                 } else {
-                    // Fallback to error message
-                    errors = [error.message];
+                    // Fallback to a single message — may be a raw network/technical
+                    // error rather than a backend validation message, so genericize it.
+                    errors = [toFriendlyErrorMessage(error, 'We could not submit your application. Please try again.')];
                 }
             } else {
                 errors = ['Failed to submit application. Please try again.'];
@@ -333,7 +340,7 @@ const NewApplication: React.FC = () => {
                 return isPropertySelected ? (
                     <ApplicantInfoStep onNext={() => setCurrentStep(currentStep + 1)} />
                 ) : (
-                    <PropertySelectionStep onNext={handlePropertySelected} />
+                    <PropertySelectionStep onNext={handlePropertySelected} error={propertySelectionError} />
                 );
             // ... case 2 ...
             case 2:

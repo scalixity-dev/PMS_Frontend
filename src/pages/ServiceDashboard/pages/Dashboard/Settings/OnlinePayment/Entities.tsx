@@ -4,6 +4,7 @@ import DatePicker from '../../../../../../components/ui/DatePicker';
 import DeleteConfirmationModal from '../../../../../../components/common/modals/DeleteConfirmationModal';
 import { serviceProviderService } from '../../../../../../services/service-provider.service';
 import { useToast } from '../../../../../../components/common/Toast';
+import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 type TaxIdType = 'PAN' | 'GST' | 'CIN' | 'TAN' | 'EIN';
 const TAX_ID_TYPES: TaxIdType[] = ['PAN', 'GST', 'CIN', 'TAN', 'EIN'];
@@ -61,7 +62,19 @@ const Entities = () => {
     const [taxIdType, setTaxIdType] = useState<TaxIdType>('PAN');
     const [taxId, setTaxId] = useState('');
     const [registrationDate, setRegistrationDate] = useState<Date | undefined>(undefined);
-    const [formError, setFormError] = useState<string | null>(null);
+    const [entityNameError, setEntityNameError] = useState<string | null>(null);
+    const [entityTypeError, setEntityTypeError] = useState<string | null>(null);
+    const [taxIdError, setTaxIdError] = useState<string | null>(null);
+    const [registrationDateError, setRegistrationDateError] = useState<string | null>(null);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+
+    const clearFormErrors = () => {
+        setEntityNameError(null);
+        setEntityTypeError(null);
+        setTaxIdError(null);
+        setRegistrationDateError(null);
+        setSubmitError(null);
+    };
 
     const mapDocToEntity = (doc: any): Entity => {
         let meta: any = {};
@@ -87,7 +100,7 @@ const Entities = () => {
             const docs = await serviceProviderService.getMyDocuments('ENTITY');
             setEntities(docs.map(mapDocToEntity));
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to load entities');
+            toast.error(toFriendlyErrorMessage(err, 'We could not load your entities. Please try again.'));
             setEntities([]);
         } finally {
             setIsLoading(false);
@@ -104,7 +117,7 @@ const Entities = () => {
         setTaxIdType('PAN');
         setTaxId('');
         setRegistrationDate(undefined);
-        setFormError(null);
+        clearFormErrors();
         setEditingId(null);
     };
 
@@ -123,18 +136,32 @@ const Entities = () => {
         if (parts.length === 3) {
             setRegistrationDate(new Date(Number(parts[2]), Number(parts[0]) - 1, Number(parts[1])));
         }
-        setFormError(null);
+        clearFormErrors();
         setIsModalOpen(true);
     };
 
     const handleAddEntity = async () => {
-        if (!entityName || !entityType || !taxId || !registrationDate) {
-            setFormError('Please fill in all fields');
+        clearFormErrors();
+
+        if (!entityName.trim()) {
+            setEntityNameError('Entity name is required');
+            return;
+        }
+        if (!entityType) {
+            setEntityTypeError('Please select an entity type');
+            return;
+        }
+        if (!registrationDate) {
+            setRegistrationDateError('Registration date is required');
+            return;
+        }
+        if (!taxId.trim()) {
+            setTaxIdError(`${taxIdType} number is required`);
             return;
         }
         const normalizedTaxId = taxIdType === 'EIN' ? taxId : taxId.toUpperCase();
         if (!TAX_ID_REGEX[taxIdType].test(normalizedTaxId)) {
-            setFormError(`Invalid ${taxIdType} format. Example: ${TAX_ID_PLACEHOLDER[taxIdType]}`);
+            setTaxIdError(`Invalid ${taxIdType} format. Example: ${TAX_ID_PLACEHOLDER[taxIdType]}`);
             return;
         }
 
@@ -163,7 +190,7 @@ const Entities = () => {
             resetForm();
             setIsModalOpen(false);
         } catch (err) {
-            setFormError(err instanceof Error ? err.message : 'Failed to save entity');
+            setSubmitError(toFriendlyErrorMessage(err, 'We could not save this entity. Please try again.'));
         }
     };
 
@@ -182,7 +209,7 @@ const Entities = () => {
                 await serviceProviderService.deleteMyDocument(entityToDelete);
                 await fetchEntities();
             } catch (err) {
-                toast.error(err instanceof Error ? err.message : 'Failed to delete entity');
+                toast.error(toFriendlyErrorMessage(err, 'We could not delete this entity. Please try again.'));
             } finally {
                 setDeleteModalOpen(false);
                 setEntityToDelete(null);
@@ -295,31 +322,39 @@ const Entities = () => {
                                         <input
                                             type="text"
                                             value={entityName}
-                                            onChange={(e) => setEntityName(e.target.value)}
+                                            onChange={(e) => {
+                                                setEntityName(e.target.value);
+                                                if (entityNameError) setEntityNameError(null);
+                                            }}
                                             placeholder="Enter entity name"
-                                            className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all placeholder:text-gray-400"
+                                            className={`w-full px-3 py-2.5 bg-white border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all placeholder:text-gray-400 ${entityNameError ? 'border-red-500' : 'border-gray-300'}`}
                                         />
+                                        {entityNameError && <p className="text-xs text-red-600">{entityNameError}</p>}
                                     </div>
 
                                     <div className="space-y-1.5">
                                         <label className="block text-sm font-semibold text-gray-800">Entity Type *</label>
                                         <select
                                             value={entityType}
-                                            onChange={(e) => setEntityType(e.target.value)}
-                                            className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all"
+                                            onChange={(e) => {
+                                                setEntityType(e.target.value);
+                                                if (entityTypeError) setEntityTypeError(null);
+                                            }}
+                                            className={`w-full px-3 py-2.5 bg-white border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all ${entityTypeError ? 'border-red-500' : 'border-gray-300'}`}
                                         >
                                             <option value="">Select entity type</option>
                                             {ENTITY_TYPE_OPTIONS.map((t) => (
                                                 <option key={t} value={t}>{t}</option>
                                             ))}
                                         </select>
+                                        {entityTypeError && <p className="text-xs text-red-600">{entityTypeError}</p>}
                                     </div>
 
                                     <div className="space-y-1.5">
                                         <label className="block text-sm font-semibold text-gray-800">Tax ID Type *</label>
                                         <select
                                             value={taxIdType}
-                                            onChange={(e) => { setTaxIdType(e.target.value as TaxIdType); setTaxId(''); }}
+                                            onChange={(e) => { setTaxIdType(e.target.value as TaxIdType); setTaxId(''); if (taxIdError) setTaxIdError(null); }}
                                             className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all"
                                         >
                                             {TAX_ID_TYPES.map((t) => (
@@ -333,26 +368,29 @@ const Entities = () => {
                                         <input
                                             type="text"
                                             value={taxId}
-                                            onChange={(e) => setTaxId(taxIdType === 'EIN' ? e.target.value : e.target.value.toUpperCase())}
+                                            onChange={(e) => {
+                                                setTaxId(taxIdType === 'EIN' ? e.target.value : e.target.value.toUpperCase());
+                                                if (taxIdError) setTaxIdError(null);
+                                            }}
                                             placeholder={TAX_ID_PLACEHOLDER[taxIdType]}
-                                            className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all placeholder:text-gray-400"
+                                            className={`w-full px-3 py-2.5 bg-white border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all placeholder:text-gray-400 ${taxIdError ? 'border-red-500' : 'border-gray-300'}`}
                                         />
+                                        {taxIdError && <p className="text-xs text-red-600">{taxIdError}</p>}
                                     </div>
 
                                     <div className="space-y-1.5">
                                         <label className="block text-sm font-semibold text-gray-800">Registration Date *</label>
                                         <DatePicker
-                                            className="w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all text-gray-600"
-                                            onChange={setRegistrationDate}
+                                            className={`w-full rounded-lg text-sm focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all text-gray-600 ${registrationDateError ? 'border-red-500' : 'border-gray-300'}`}
+                                            onChange={(date) => { setRegistrationDate(date); if (registrationDateError) setRegistrationDateError(null); }}
                                             value={registrationDate}
                                         />
+                                        {registrationDateError && <p className="text-xs text-red-600">{registrationDateError}</p>}
                                     </div>
                                 </div>
 
-                                {formError && (
-                                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                                        {formError}
-                                    </div>
+                                {submitError && (
+                                    <p className="mb-4 text-sm text-red-600">{submitError}</p>
                                 )}
 
                                 <div className="flex gap-4">

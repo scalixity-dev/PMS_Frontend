@@ -19,6 +19,7 @@ import { useUserApplicationStore } from "./store/userApplicationStore";
 import ApplicationErrorModal from "./components/ApplicationErrorModal";
 import UnsavedChangesModal from "../../../Dashboard/components/UnsavedChangesModal";
 import ApplicationPropertyIntro from "./components/ApplicationPropertyIntro";
+import { toFriendlyErrorMessage } from "@/utils/errorMessage.utils";
 
 const APPLICATIONS_KEY = 'user_applications';
 
@@ -452,7 +453,7 @@ const UserNewApplication: React.FC = () => {
             });
         } catch (error) {
             console.error('Failed to submit application:', error);
-            setErrorMessages([error instanceof Error ? error.message : 'Failed to submit application.']);
+            setErrorMessages([toFriendlyErrorMessage(error, 'We could not submit your application. Please try again.')]);
             setShowErrorModal(true);
         } finally {
             isSubmittingRef.current = false;
