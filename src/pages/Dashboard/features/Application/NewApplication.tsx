@@ -104,8 +104,11 @@ const NewApplication: React.FC = () => {
                     parsed.formData.documentFiles = [];
                 }
 
-                // Clear photoFile as it can't be restored from localStorage
+                // Clear photo/photoFile as File objects can't be restored from localStorage
                 if (parsed.formData.photo) {
+                    parsed.formData.photo = null;
+                }
+                if (parsed.formData.photoFile) {
                     parsed.formData.photoFile = null;
                 }
 
@@ -123,7 +126,7 @@ const NewApplication: React.FC = () => {
     useEffect(() => {
         if (isFormDirty) {
             // Exclude non-serializable File objects from localStorage
-            const { documentFiles, photoFile, ...serializableFormData } = formData;
+            const { documentFiles, photoFile, photo, ...serializableFormData } = formData;
 
             const dataToSave = {
                 formData: serializableFormData,
