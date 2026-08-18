@@ -116,7 +116,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     }, []);
 
     React.useEffect(() => {
-        if (data.photo) {
+        if (data.photo instanceof File) {
             const url = URL.createObjectURL(data.photo);
             setPreviewUrl(url);
             return () => URL.revokeObjectURL(url);
