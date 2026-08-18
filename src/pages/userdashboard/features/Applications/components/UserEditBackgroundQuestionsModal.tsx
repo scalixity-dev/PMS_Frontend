@@ -2,73 +2,66 @@ import React, { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
 import BaseModal from '@/components/common/modals/BaseModal';
 
-export interface BackgroundQuestionsData {
-    evicted: boolean;
-    refuseRent: boolean;
-    crime: boolean;
-    bankruptcy: boolean;
-    smoke: boolean;
-    military: boolean;
-    explanations: Record<string, string>;
+export interface BackgroundQuestionEditItem {
+    id: string;
+    question: string;
+    requiresExplanationOnYes?: boolean;
+}
+
+export interface BackgroundAnswerEditValue {
+    questionId: string;
+    answer: boolean;
+    explanation?: string;
 }
 
 interface UserEditBackgroundQuestionsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: BackgroundQuestionsData) => void;
-    initialData?: BackgroundQuestionsData;
+    onSave: (answers: BackgroundAnswerEditValue[]) => void;
+    questions: BackgroundQuestionEditItem[];
+    initialAnswers: BackgroundAnswerEditValue[];
 }
-
-const questions = [
-    { key: 'evicted', label: 'Have you ever been evicted from a rental residence?' },
-    { key: 'refuseRent', label: 'Have you ever refused to pay rent?' },
-    { key: 'crime', label: 'Have you ever been convicted of a crime?' },
-    { key: 'bankruptcy', label: 'Have you ever declared bankruptcy?' },
-    { key: 'smoke', label: 'Do you smoke?' },
-    { key: 'military', label: 'Are you in the military?' },
-];
 
 const UserEditBackgroundQuestionsModal: React.FC<UserEditBackgroundQuestionsModalProps> = ({
     isOpen,
     onClose,
     onSave,
-    initialData
+    questions,
+    initialAnswers,
 }) => {
-    const [formData, setFormData] = useState<BackgroundQuestionsData>({
-        evicted: false,
-        refuseRent: false,
-        crime: false,
-        bankruptcy: false,
-        smoke: false,
-        military: false,
-        explanations: {}
-    });
+    const [answers, setAnswers] = useState<BackgroundAnswerEditValue[]>(initialAnswers);
 
     useEffect(() => {
-        if (isOpen && initialData) {
-            setFormData(initialData);
+        if (isOpen) {
+            setAnswers(initialAnswers);
         }
-    }, [isOpen, initialData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
 
-    const handleChange = (key: string, value: boolean) => {
-        setFormData(prev => ({
-            ...prev,
-            [key]: value
-        }));
+    const getAnswer = (questionId: string) => answers.find((a) => a.questionId === questionId);
+
+    const handleChange = (questionId: string, value: boolean) => {
+        setAnswers((prev) => {
+            const existing = prev.find((a) => a.questionId === questionId);
+            if (existing) {
+                return prev.map((a) => (a.questionId === questionId ? { ...a, answer: value } : a));
+            }
+            return [...prev, { questionId, answer: value }];
+        });
     };
 
-    const handleExplanationChange = (key: string, value: string) => {
-        setFormData(prev => ({
-            ...prev,
-            explanations: {
-                ...prev.explanations,
-                [key]: value
+    const handleExplanationChange = (questionId: string, explanation: string) => {
+        setAnswers((prev) => {
+            const existing = prev.find((a) => a.questionId === questionId);
+            if (existing) {
+                return prev.map((a) => (a.questionId === questionId ? { ...a, explanation } : a));
             }
-        }));
+            return [...prev, { questionId, answer: false, explanation }];
+        });
     };
 
     const handleSubmit = () => {
-        onSave(formData);
+        onSave(answers);
         onClose();
     };
 
@@ -94,49 +87,53 @@ const UserEditBackgroundQuestionsModal: React.FC<UserEditBackgroundQuestionsModa
             ]}
         >
             <div className="space-y-6 py-4">
-                {questions.map((q) => (
-                    <div key={q.key} className="space-y-3 pb-4 border-b border-gray-100 last:border-0">
-                        <div className="flex items-start justify-between gap-4">
-                            <label className="text-sm font-medium text-gray-900 pt-1">{q.label}</label>
-                            <div className="flex bg-gray-100 p-1 rounded-lg shrink-0">
-                                <button
-                                    type="button"
-                                    onClick={() => handleChange(q.key, true)}
-                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${(formData as any)[q.key]
-                                        ? 'bg-red-500 text-white shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-900'
-                                        }`}
-                                >
-                                    Yes
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleChange(q.key, false)}
-                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${!(formData as any)[q.key]
-                                        ? 'bg-[#7ED957] text-white shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-900'
-                                        }`}
-                                >
-                                    No
-                                </button>
+                {questions.map((q) => {
+                    const current = getAnswer(q.id);
+                    const answer = current?.answer ?? false;
+                    return (
+                        <div key={q.id} className="space-y-3 pb-4 border-b border-gray-100 last:border-0">
+                            <div className="flex items-start justify-between gap-4">
+                                <label className="text-sm font-medium text-gray-900 pt-1">{q.question}</label>
+                                <div className="flex bg-gray-100 p-1 rounded-lg shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleChange(q.id, true)}
+                                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${answer
+                                            ? 'bg-red-500 text-white shadow-sm'
+                                            : 'text-gray-500 hover:text-gray-900'
+                                            }`}
+                                    >
+                                        Yes
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleChange(q.id, false)}
+                                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${!answer
+                                            ? 'bg-[#7ED957] text-white shadow-sm'
+                                            : 'text-gray-500 hover:text-gray-900'
+                                            }`}
+                                    >
+                                        No
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        {(formData as any)[q.key] && (
-                            <div className="animate-in fade-in slide-in-from-top-1 bg-gray-50 p-3 rounded-lg">
-                                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                    Please explain
-                                </label>
-                                <textarea
-                                    value={formData.explanations[q.key] || ''}
-                                    onChange={(e) => handleExplanationChange(q.key, e.target.value)}
-                                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947] min-h-[80px] resize-y"
-                                    placeholder="Enter details..."
-                                />
-                            </div>
-                        )}
-                    </div>
-                ))}
+                            {answer && q.requiresExplanationOnYes && (
+                                <div className="animate-in fade-in slide-in-from-top-1 bg-gray-50 p-3 rounded-lg">
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                        Please explain
+                                    </label>
+                                    <textarea
+                                        value={current?.explanation || ''}
+                                        onChange={(e) => handleExplanationChange(q.id, e.target.value)}
+                                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947] min-h-[80px] resize-y"
+                                        placeholder="Enter details..."
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         </BaseModal>
     );

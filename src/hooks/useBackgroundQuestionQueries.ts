@@ -28,7 +28,7 @@ export const useCreateBackgroundQuestion = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { question: string; order?: number }) =>
+    mutationFn: (data: { question: string; order?: number; flagOnYes?: boolean; requiresExplanationOnYes?: boolean }) =>
       backgroundQuestionService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: backgroundQuestionQueryKeys.list() });
@@ -43,7 +43,7 @@ export const useUpdateBackgroundQuestion = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { question?: string; order?: number; isActive?: boolean } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { question?: string; order?: number; isActive?: boolean; flagOnYes?: boolean; requiresExplanationOnYes?: boolean } }) =>
       backgroundQuestionService.update(id, data),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: backgroundQuestionQueryKeys.list() });
@@ -73,7 +73,8 @@ export const useReorderBackgroundQuestions = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (ids: string[]) => backgroundQuestionService.reorder(ids),
+    mutationFn: (questions: { id: string; order: number }[]) =>
+      backgroundQuestionService.reorder(questions),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: backgroundQuestionQueryKeys.list() });
     },

@@ -3,7 +3,8 @@ import { useNavigate, useOutletContext, useLocation, Outlet } from "react-router
 
 type RentalApplicationSettingsTab =
     | "online-application"
-    | "form-configuration";
+    | "form-configuration"
+    | "background-questions";
 
 interface RentalApplicationSettingsLayoutProps {
     headerActions?: ReactNode;
@@ -21,6 +22,7 @@ export function RentalApplicationSettingsLayout(
 
     const getActiveTab = (): RentalApplicationSettingsTab => {
         if (location.pathname.includes("form-configuration")) return "form-configuration";
+        if (location.pathname.includes("background-questions")) return "background-questions";
         return "online-application";
     };
 
@@ -30,15 +32,14 @@ export function RentalApplicationSettingsLayout(
         if (tab === "online-application") {
             return "Online Application";
         }
-        return "Form Configuration";
+        if (tab === "form-configuration") {
+            return "Form Configuration";
+        }
+        return "Background Questions";
     };
 
     const handleTabClick = (tab: RentalApplicationSettingsTab) => {
-        if (tab === "online-application") {
-            navigate("/dashboard/settings/rental-application/online-application");
-            return;
-        }
-        navigate("/dashboard/settings/rental-application/form-configuration");
+        navigate(`/dashboard/settings/rental-application/${tab}`);
     };
 
     return (
@@ -78,6 +79,7 @@ export function RentalApplicationSettingsLayout(
                                     [
                                         "online-application",
                                         "form-configuration",
+                                        "background-questions",
                                     ] as RentalApplicationSettingsTab[]
                                 ).map((tab) => {
                                     const isActive = activeTab === tab;

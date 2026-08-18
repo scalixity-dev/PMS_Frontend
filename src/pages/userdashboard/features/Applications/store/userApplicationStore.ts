@@ -41,9 +41,7 @@ const initialFormData: UserApplicationFormData = {
   additionalResidenceInfo: '',
   additionalIncomeInfo: '',
   emergencyContacts: [],
-  backgroundQuestions: {},
-  backgroundExplanations: {},
-  customBackgroundAnswers: [],
+  backgroundAnswers: [],
   documents: [],
   documentUrls: [],
   photoUrl: null

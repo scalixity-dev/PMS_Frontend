@@ -2,26 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 import { API_ENDPOINTS } from '@/config/api.config';
-
-interface StandardQuestion {
-    id: string;
-    text: string;
-}
-
-const standardQuestions: StandardQuestion[] = [
-    { id: 'smoke', text: 'Do you or any occupants smoke?' },
-    { id: 'military', text: 'Are any occupants members in the military?' },
-    { id: 'crime', text: 'Have you ever been charged or convicted of a crime?' },
-    { id: 'bankruptcy', text: 'Have you ever filed for bankruptcy?' },
-    { id: 'refuseRent', text: 'Have you ever willfully refused to pay rent when it was due?' },
-    { id: 'evicted', text: 'Have you ever been evicted or left a tenancy owing money?' },
-];
-
-interface CustomQuestion {
-    id: string;
-    question: string;
-    order: number;
-}
+import BackgroundQuestionsAnswers, {
+    type BackgroundQuestionItem,
+} from '@/components/backgroundQuestions/BackgroundQuestionsAnswers';
 
 interface BackgroundQuestionsStepProps {
     onNext: () => void;
@@ -29,15 +12,14 @@ interface BackgroundQuestionsStepProps {
 
 const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNext }) => {
     const { formData, updateFormData } = useUserApplicationStore();
-    const [customQuestions, setCustomQuestions] = useState<CustomQuestion[]>([]);
+    const [questions, setQuestions] = useState<BackgroundQuestionItem[]>([]);
     const [loading, setLoading] = useState(true);
-    const responses = formData.backgroundQuestions || {};
-    const explanations = formData.backgroundExplanations || {};
-    const customAnswers = formData.customBackgroundAnswers || [];
+    const answers = formData.backgroundAnswers || [];
 
-    // Fetch custom background questions from backend
+    // Fetch this property's manager's background questions (standard + custom
+    // are both just rows now, returned together — standard first).
     useEffect(() => {
-        const fetchCustomQuestions = async () => {
+        const fetchQuestions = async () => {
             if (!formData.propertyId) {
                 setLoading(false);
                 return;
@@ -57,76 +39,59 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
 
                 if (response.ok) {
                     const data = await response.json();
-                    setCustomQuestions(data || []);
+                    setQuestions(
+                        (data || []).map((q: any) => ({
+                            id: q.id,
+                            question: q.question,
+                            requiresExplanationOnYes: q.requiresExplanationOnYes,
+                            flagOnYes: q.flagOnYes,
+                        }))
+                    );
                 } else {
-                    // If no questions found or error, just continue with standard questions
-                    setCustomQuestions([]);
+                    setQuestions([]);
                 }
             } catch (error) {
-                console.error('Failed to fetch custom background questions:', error);
-                setCustomQuestions([]);
+                console.error('Failed to fetch background questions:', error);
+                setQuestions([]);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchCustomQuestions();
+        fetchQuestions();
     }, [formData.propertyId]);
 
-    const handleToggle = (questionId: string, value: boolean) => {
-        updateFormData('backgroundQuestions', {
-            ...responses,
-            [questionId]: value,
-        });
-    };
-
-    const handleCustomToggle = (questionId: string, value: boolean) => {
-        const existingIndex = customAnswers.findIndex(a => a.questionId === questionId);
-        const newAnswers = [...customAnswers];
-
+    const handleAnswerChange = (questionId: string, answer: boolean) => {
+        const existingIndex = answers.findIndex((a) => a.questionId === questionId);
+        const newAnswers = [...answers];
         if (existingIndex >= 0) {
-            newAnswers[existingIndex] = { questionId, answer: value };
+            newAnswers[existingIndex] = { ...newAnswers[existingIndex], answer };
         } else {
-            newAnswers.push({ questionId, answer: value });
+            newAnswers.push({ questionId, answer });
         }
-
-        updateFormData('customBackgroundAnswers', newAnswers);
+        updateFormData('backgroundAnswers', newAnswers);
     };
 
-    const handleExplanationChange = (questionId: string, text: string) => {
-        updateFormData('backgroundExplanations', {
-            ...explanations,
-            [questionId]: text,
-        });
-    };
-
-    const questionsNeedingExplanation = ['smoke', 'military', 'crime', 'bankruptcy', 'refuseRent', 'evicted'];
-
-    const getCustomAnswer = (questionId: string): boolean | null => {
-        const answer = customAnswers.find(a => a.questionId === questionId);
-        return answer ? answer.answer : null;
+    const handleExplanationChange = (questionId: string, explanation: string) => {
+        const existingIndex = answers.findIndex((a) => a.questionId === questionId);
+        const newAnswers = [...answers];
+        if (existingIndex >= 0) {
+            newAnswers[existingIndex] = { ...newAnswers[existingIndex], explanation };
+        } else {
+            newAnswers.push({ questionId, answer: null, explanation });
+        }
+        updateFormData('backgroundAnswers', newAnswers);
     };
 
     const isAllAnswered = () => {
-        // Check standard questions
-        const standardAnswered = standardQuestions.every(q => {
-            const answered = responses[q.id] !== undefined && responses[q.id] !== null;
-            if (!answered) return false;
-
-            if (responses[q.id] === true && questionsNeedingExplanation.includes(q.id)) {
-                return (explanations[q.id] || '').trim().length > 0;
+        return questions.every((q) => {
+            const a = answers.find((x) => x.questionId === q.id);
+            if (!a || a.answer === null || a.answer === undefined) return false;
+            if (a.answer === true && q.requiresExplanationOnYes) {
+                return (a.explanation || '').trim().length > 0;
             }
-
             return true;
         });
-
-        // Check custom questions
-        const customAnswered = customQuestions.every(q => {
-            const answer = getCustomAnswer(q.id);
-            return answer !== null;
-        });
-
-        return standardAnswered && customAnswered;
     };
 
     const [showErrors, setShowErrors] = useState(false);
@@ -136,7 +101,6 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
             onNext();
         } else {
             setShowErrors(true);
-            // Scroll to top or first unanswered? For now just show errors
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
@@ -159,103 +123,14 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
                 </div>
             ) : (
                 <div className="max-w-3xl mx-auto space-y-3 mb-10">
-                    {/* Standard Questions */}
-                    {standardQuestions.map((q) => {
-                        const showExplanation = responses[q.id] === true && questionsNeedingExplanation.includes(q.id);
-                        const isAnswered = responses[q.id] !== undefined && responses[q.id] !== null;
-                        const needsExplanation = responses[q.id] === true && questionsNeedingExplanation.includes(q.id) && !(explanations[q.id] || '').trim();
-
-                        return (
-                            <div
-                                key={q.id}
-                                className={`bg-white px-5 py-4 rounded-2xl border transition-all flex flex-col gap-4 ${showErrors && (!isAnswered || needsExplanation) ? 'border-red-300 bg-red-50/30' : 'border-[#E5E7EB] hover:shadow-md'}`}
-                            >
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    <p className="text-[#1A1A1A] font-semibold text-sm sm:max-w-[60%] md:max-w-[70%]">
-                                        {q.text}
-                                        {showErrors && !isAnswered && <span className="text-red-500 ml-1">*</span>}
-                                    </p>
-                                    <div className="flex items-center gap-6 sm:justify-end">
-                                        <label className="flex items-center gap-2 cursor-pointer group">
-                                            <div
-                                                onClick={() => handleToggle(q.id, true)}
-                                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${responses[q.id] === true ? 'border-[#7ED957] bg-white' : 'border-[#E5E7EB] bg-white'}`}
-                                            >
-                                                {responses[q.id] === true && <div className="w-2.5 h-2.5 rounded-full bg-[#7ED957]" />}
-                                            </div>
-                                            <span className={`text-sm font-medium transition-colors ${responses[q.id] === true ? 'text-[#1A1A1A]' : 'text-[#ADADAD]'}`}>Yes</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer group">
-                                            <div
-                                                onClick={() => handleToggle(q.id, false)}
-                                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${responses[q.id] === false ? 'border-[#7ED957] bg-white' : 'border-[#E5E7EB] bg-white'}`}
-                                            >
-                                                {responses[q.id] === false && <div className="w-2.5 h-2.5 rounded-full bg-[#7ED957]" />}
-                                            </div>
-                                            <span className={`text-sm font-medium transition-colors ${responses[q.id] === false ? 'text-[#1A1A1A]' : 'text-[#ADADAD]'}`}>No</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {showExplanation && (
-                                    <div className={`bg-white p-4 rounded-xl border space-y-2 animate-in fade-in slide-in-from-top-2 duration-300 ${showErrors && needsExplanation ? 'border-red-300' : 'border-[#E5E7EB]'}`}>
-                                        <label className="text-[11px] font-bold text-[#1A1A1A] uppercase tracking-wider flex items-center gap-1.5">
-                                            Please explain <span className="text-red-500">*</span>
-                                        </label>
-                                        <textarea
-                                            placeholder="Type explain here"
-                                            className={`w-full bg-white border rounded-[10px] p-3 text-sm font-medium outline-none focus:border-[#7ED957] focus:ring-1 focus:ring-[#7ED957]/20 transition-all min-h-[100px] resize-none ${showErrors && needsExplanation ? 'border-red-300 ring-1 ring-red-100' : 'border-[#E5E7EB]'}`}
-                                            value={explanations[q.id] || ''}
-                                            onChange={(e) => handleExplanationChange(q.id, e.target.value)}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-
-                    {/* Custom Questions */}
-                    {customQuestions.length > 0 && (
-                        <>
-                            {customQuestions.map((q) => {
-                                const answer = getCustomAnswer(q.id);
-                                const isAnswered = answer !== null;
-                                return (
-                                    <div
-                                        key={q.id}
-                                        className={`bg-white px-5 py-4 rounded-2xl border transition-all ${showErrors && !isAnswered ? 'border-red-300 bg-red-50/30' : 'border-[#E5E7EB] hover:shadow-md'}`}
-                                    >
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                            <p className="text-[#1A1A1A] font-semibold text-sm sm:max-w-[60%] md:max-w-[70%]">
-                                                {q.question}
-                                                {showErrors && !isAnswered && <span className="text-red-500 ml-1">*</span>}
-                                            </p>
-                                            <div className="flex items-center gap-6 sm:justify-end">
-                                                <label className="flex items-center gap-2 cursor-pointer group">
-                                                    <div
-                                                        onClick={() => handleCustomToggle(q.id, true)}
-                                                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${answer === true ? 'border-[#7ED957] bg-white' : 'border-[#E5E7EB] bg-white'}`}
-                                                    >
-                                                        {answer === true && <div className="w-2.5 h-2.5 rounded-full bg-[#7ED957]" />}
-                                                    </div>
-                                                    <span className={`text-sm font-medium transition-colors ${answer === true ? 'text-[#1A1A1A]' : 'text-[#ADADAD]'}`}>Yes</span>
-                                                </label>
-                                                <label className="flex items-center gap-2 cursor-pointer group">
-                                                    <div
-                                                        onClick={() => handleCustomToggle(q.id, false)}
-                                                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${answer === false ? 'border-[#7ED957] bg-white' : 'border-[#E5E7EB] bg-white'}`}
-                                                    >
-                                                        {answer === false && <div className="w-2.5 h-2.5 rounded-full bg-[#7ED957]" />}
-                                                    </div>
-                                                    <span className={`text-sm font-medium transition-colors ${answer === false ? 'text-[#1A1A1A]' : 'text-[#ADADAD]'}`}>No</span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </>
-                    )}
+                    <BackgroundQuestionsAnswers
+                        mode="edit"
+                        questions={questions}
+                        answers={answers}
+                        onAnswerChange={handleAnswerChange}
+                        onExplanationChange={handleExplanationChange}
+                        showErrors={showErrors}
+                    />
                 </div>
             )}
 
