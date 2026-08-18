@@ -14,6 +14,7 @@ const AIChatButton: React.FC = () => {
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
+  const [isTenant, setIsTenant] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { canAccess } = usePlanFeatures();
@@ -32,9 +33,11 @@ const AIChatButton: React.FC = () => {
         const user = await authService.getCurrentUser();
         setIsAuthenticated(true);
         setUserEmail(user.email);
+        setIsTenant(user.role?.toUpperCase() === 'TENANT');
       } catch {
         setIsAuthenticated(false);
         setUserEmail(undefined);
+        setIsTenant(false);
       } finally {
         isCheckingAuthRef.current = false;
       }
@@ -131,14 +134,21 @@ const AIChatButton: React.FC = () => {
     );
   }, [threadId, isStreaming, isAuthenticated, userEmail]);
 
-  if (!isAuthenticated) {
+  // Messages has its own full-height chat UI with a send button near the
+  // bottom-right on mobile — the floating AI button sits directly on top of it
+  // there, blocking taps. Suppress it on that page rather than fight z-index.
+  const isOnMessagesPage =
+    location.pathname.startsWith('/userdashboard/messages') ||
+    location.pathname.startsWith('/dashboard/messages');
+
+  if (!isAuthenticated || isOnMessagesPage) {
     return null;
   }
 
   return (
     <>
       <button
-        onClick={() => canAccess('ai-assistant') ? setIsOpen(true) : setUpgradeOpen(true)}
+        onClick={() => (isTenant || canAccess('ai-assistant')) ? setIsOpen(true) : setUpgradeOpen(true)}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full hover:scale-110 active:scale-95 transition-all duration-300 overflow-hidden p-0"
         style={{ boxShadow: '0 0 0 3px rgba(61,116,117,0.25), 0 4px 20px rgba(61,116,117,0.45)' }}
         onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 0 0 4px rgba(61,116,117,0.4), 0 6px 28px rgba(61,116,117,0.65)')}

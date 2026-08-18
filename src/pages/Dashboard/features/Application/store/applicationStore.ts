@@ -48,8 +48,6 @@ export interface ApplicationFormData {
   additionalResidenceInfo: string;
   additionalIncomeInfo: string;
   emergencyContacts: Array<EmergencyContactFormData & { id: string }>;
-  backgroundQuestions: Record<string, boolean | null>;
-  backgroundExplanations: Record<string, string>;
   documents: FileMetadata[];
   // Runtime-only: actual File objects (not persisted to localStorage)
   documentFiles?: File[];
@@ -95,8 +93,6 @@ const initialFormData: ApplicationFormData = {
   additionalResidenceInfo: '',
   additionalIncomeInfo: '',
   emergencyContacts: [],
-  backgroundQuestions: {},
-  backgroundExplanations: {},
   documents: []
 };
 

@@ -286,6 +286,7 @@ const App: React.FC = () => {
           {/* Sits at app level so it shows wherever the OAuth callback lands
               the user - the dashboard or the plan screen. */}
           <AccountNotice />
+          <SubscriptionProvider>
           <AIChatButton />
           <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>Loading…</div>}>
           <Routes>
@@ -612,14 +613,9 @@ const App: React.FC = () => {
                   <Route element={<PlanRouteGuard feature="custom-application-forms" />}>
                     <Route path="form-configuration" element={<FormConfiguration />} />
                   </Route>
+                  {/* Background Questions — available on all plans */}
+                  <Route path="background-questions" element={<BackgroundQuestions />} />
                 </Route>
-
-                {/* Background Questions — available on all plans */}
-                <Route path="/dashboard/settings/rental-application/background-questions" element={
-                  <ProtectedRoute>
-                    <BackgroundQuestions />
-                  </ProtectedRoute>
-                } />
 
                 {/* Team Management Settings — Pro+ */}
                 <Route element={<PlanRouteGuard feature="team-management" />}>
@@ -852,6 +848,7 @@ const App: React.FC = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
+          </SubscriptionProvider>
           </AutoLoginProvider>
           </RoutedApp>
         </BrowserRouter>

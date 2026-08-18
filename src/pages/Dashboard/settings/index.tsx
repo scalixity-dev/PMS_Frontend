@@ -78,6 +78,7 @@ const ALL_SETTING_CARDS: (SettingCardData & { pmOnly?: boolean; teamViewable?: b
     links: [
       { label: "Online Application", path: "/dashboard/settings/rental-application/online-application" },
       { label: "Form Configuration", path: "/dashboard/settings/rental-application/form-configuration" },
+      { label: "Background Questions", path: "/dashboard/settings/rental-application/background-questions" },
     ],
   },
   {

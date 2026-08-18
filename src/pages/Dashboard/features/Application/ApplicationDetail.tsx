@@ -36,6 +36,7 @@ import EditApplicantInfoModal from './components/EditApplicantInfoModal';
 import { createApplicationConversation } from '../../../../services/chat.service';
 import CustomTextBox from '../../components/CustomTextBox';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import BackgroundQuestionsAnswers from '../../../../components/backgroundQuestions/BackgroundQuestionsAnswers';
 import { useToast } from '../../../../components/common/Toast';
 import { formatPhoneNumber } from '@/utils/phone.utils';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
@@ -1199,10 +1200,15 @@ const ApplicationDetail = () => {
                     row('Start Date', fmt(inc.startDate)), row('Supervisor', inc.supervisorName ?? '—')].join('')))).join('')
             : '<p style="color:#888;font-size:13px">No income history</p>';
 
-        const bq = application.backgroundQuestions;
-        const bgHtml = bq ? tbl([row('Smokes', yesNo(bq.smoke)), row('Military member', yesNo(bq.militaryMember)),
-            row('Criminal record', yesNo(bq.criminalRecord)), row('Bankruptcy', yesNo(bq.bankruptcy)),
-            row('Refused rent', yesNo(bq.refusedRent)), row('Evicted', yesNo(bq.evicted))].join(''))
+        const bgHtml = application.customBackgroundAnswers?.length
+            ? tbl(application.customBackgroundAnswers.map((a) => {
+                const label = a.question?.question || 'Question';
+                const answerRow = row(label, yesNo(a.answer));
+                const explanationRow = a.answer && a.explanation
+                    ? row('↳ Explanation', a.explanation)
+                    : '';
+                return answerRow + explanationRow;
+            }).join(''))
             : '<p style="color:#888;font-size:13px">Not answered</p>';
 
         const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
@@ -2046,136 +2052,21 @@ ${section('Income History', incomesHtml)}
                     {/* 8. Additional Questions */}
                     < Section title="Additional questions" >
                         <div className="space-y-3 bg-[#F6F6F8] rounded-[1.5rem] p-4 justify-between items-center border border-gray-100/50">
-                            {application.backgroundQuestions && (
-                                <>
-                                    {/* Smoke */}
-                                    <div className="space-y-2">
-                                        <CustomTextBox
-                                            label="Do you or any occupants smoke?"
-                                            value={
-                                                <span className={`${application.backgroundQuestions.smoke ? 'bg-red-500' : 'bg-[#8FE165]'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
-                                                    {application.backgroundQuestions.smoke ? 'Yes' : 'No'}
-                                                </span>
-                                            }
-                                            className="w-full"
-                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
-                                            valueClassName="w-1/3 flex justify-end"
-                                        />
-                                        {application.backgroundQuestions.smoke && (application.backgroundQuestions as any).smokeExplanation && (
-                                            <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).smokeExplanation}"</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Military */}
-                                    <div className="space-y-2">
-                                        <CustomTextBox
-                                            label="Are you a military member?"
-                                            value={
-                                                <span className={`${application.backgroundQuestions.militaryMember ? 'bg-[#8FE165]' : 'bg-gray-400'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
-                                                    {application.backgroundQuestions.militaryMember ? 'Yes' : 'No'}
-                                                </span>
-                                            }
-                                            className="w-full"
-                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
-                                            valueClassName="w-1/3 flex justify-end"
-                                        />
-                                        {application.backgroundQuestions.militaryMember && (application.backgroundQuestions as any).militaryExplanation && (
-                                            <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).militaryExplanation}"</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Criminal Record */}
-                                    <div className="space-y-2">
-                                        <CustomTextBox
-                                            label="Do you have a criminal record?"
-                                            value={
-                                                <span className={`${application.backgroundQuestions.criminalRecord ? 'bg-red-500' : 'bg-[#8FE165]'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
-                                                    {application.backgroundQuestions.criminalRecord ? 'Yes' : 'No'}
-                                                </span>
-                                            }
-                                            className="w-full"
-                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
-                                            valueClassName="w-1/3 flex justify-end"
-                                        />
-                                        {application.backgroundQuestions.criminalRecord && (application.backgroundQuestions as any).crimeExplanation && (
-                                            <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).crimeExplanation}"</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Bankruptcy */}
-                                    <div className="space-y-2">
-                                        <CustomTextBox
-                                            label="Have you filed for bankruptcy?"
-                                            value={
-                                                <span className={`${application.backgroundQuestions.bankruptcy ? 'bg-red-500' : 'bg-[#8FE165]'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
-                                                    {application.backgroundQuestions.bankruptcy ? 'Yes' : 'No'}
-                                                </span>
-                                            }
-                                            className="w-full"
-                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
-                                            valueClassName="w-1/3 flex justify-end"
-                                        />
-                                        {application.backgroundQuestions.bankruptcy && (application.backgroundQuestions as any).bankruptcyExplanation && (
-                                            <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).bankruptcyExplanation}"</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Refused Rent */}
-                                    <div className="space-y-2">
-                                        <CustomTextBox
-                                            label="Have you ever been refused rent?"
-                                            value={
-                                                <span className={`${application.backgroundQuestions.refusedRent ? 'bg-red-500' : 'bg-[#8FE165]'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
-                                                    {application.backgroundQuestions.refusedRent ? 'Yes' : 'No'}
-                                                </span>
-                                            }
-                                            className="w-full"
-                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
-                                            valueClassName="w-1/3 flex justify-end"
-                                        />
-                                        {application.backgroundQuestions.refusedRent && (application.backgroundQuestions as any).refusedRentExplanation && (
-                                            <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).refusedRentExplanation}"</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Evicted */}
-                                    <div className="space-y-2">
-                                        <CustomTextBox
-                                            label="Have you ever been evicted?"
-                                            value={
-                                                <span className={`${application.backgroundQuestions.evicted ? 'bg-red-500' : 'bg-[#8FE165]'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
-                                                    {application.backgroundQuestions.evicted ? 'Yes' : 'No'}
-                                                </span>
-                                            }
-                                            className="w-full"
-                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
-                                            valueClassName="w-1/3 flex justify-end"
-                                        />
-                                        {application.backgroundQuestions.evicted && (application.backgroundQuestions as any).evictedExplanation && (
-                                            <div className="bg-white/50 p-3 rounded-xl border border-gray-100 ml-4 mb-2">
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Explanation</p>
-                                                <p className="text-sm text-gray-700 italic">"{(application.backgroundQuestions as any).evictedExplanation}"</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </>
-                            )}
-                            {!application.backgroundQuestions && (
+                            {application.customBackgroundAnswers && application.customBackgroundAnswers.length > 0 ? (
+                                <BackgroundQuestionsAnswers
+                                    mode="review"
+                                    questions={application.customBackgroundAnswers.map((a) => ({
+                                        id: a.questionId,
+                                        question: a.question?.question || 'Question',
+                                        flagOnYes: a.question?.flagOnYes,
+                                    }))}
+                                    answers={application.customBackgroundAnswers.map((a) => ({
+                                        questionId: a.questionId,
+                                        answer: a.answer,
+                                        explanation: a.explanation || undefined,
+                                    }))}
+                                />
+                            ) : (
                                 <div className="text-center text-gray-500 text-sm py-4">
                                     No background questions answered
                                 </div>

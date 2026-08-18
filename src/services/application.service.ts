@@ -60,6 +60,18 @@ export interface BackendApplication {
     refusedRent: boolean;
     evicted: boolean;
   } | null;
+  customBackgroundAnswers?: {
+    id: string;
+    questionId: string;
+    answer: boolean;
+    explanation?: string | null;
+    question?: {
+      id: string;
+      question: string;
+      flagOnYes?: boolean;
+      requiresExplanationOnYes?: boolean;
+    };
+  }[];
 }
 
 export interface BackendApplicant {
@@ -283,6 +295,14 @@ export interface CreateApplicationDto {
     questionId: string;
     answer: boolean;
   }[];
+  // Unified background-question answers (standard + custom questions are both
+  // just rows in managerBackgroundQuestions now). Preferred over the two legacy
+  // fields above, which the backend still accepts during the transition window.
+  backgroundAnswers?: {
+    questionId: string;
+    answer: boolean;
+    explanation?: string;
+  }[];
   attachments?: {
     fileUrl: string;
     fileName: string;
@@ -457,23 +477,8 @@ class ApplicationService {
         relationship: c.relationship,
         details: c.details || undefined,
       })),
-      backgroundQuestions: formData.backgroundQuestions && Object.keys(formData.backgroundQuestions).length > 0 ? {
-        smoke: formData.backgroundQuestions.smoke === true,
-        smokeExplanation: formData.backgroundQuestions.smoke === true ? (formData.backgroundExplanations?.smoke || undefined) : undefined,
-        militaryMember: formData.backgroundQuestions.military === true,
-        militaryExplanation: formData.backgroundQuestions.military === true ? (formData.backgroundExplanations?.military || undefined) : undefined,
-        criminalRecord: formData.backgroundQuestions.crime === true,
-        crimeExplanation: formData.backgroundQuestions.crime === true ? (formData.backgroundExplanations?.crime || undefined) : undefined,
-        bankruptcy: formData.backgroundQuestions.bankruptcy === true,
-        bankruptcyExplanation: formData.backgroundQuestions.bankruptcy === true ? (formData.backgroundExplanations?.bankruptcy || undefined) : undefined,
-        refusedRent: formData.backgroundQuestions.refuseRent === true,
-        refusedRentExplanation: formData.backgroundQuestions.refuseRent === true ? (formData.backgroundExplanations?.refuseRent || undefined) : undefined,
-        evicted: formData.backgroundQuestions.evicted === true,
-        evictedExplanation: formData.backgroundQuestions.evicted === true ? (formData.backgroundExplanations?.evicted || undefined) : undefined,
-      } : undefined,
-      customBackgroundAnswers: (formData as any).customBackgroundAnswers && (formData as any).customBackgroundAnswers.length > 0
-        ? (formData as any).customBackgroundAnswers
-        : undefined,
+      // No manager-side create-application UI step collects background-question
+      // answers today (that's tenant-only, via transformUserFormDataToDto below).
     };
   }
 
@@ -600,22 +605,18 @@ class ApplicationService {
         relationship: c.relationship,
         details: c.details || undefined,
       })) : undefined,
-      backgroundQuestions: formData.backgroundQuestions && Object.keys(formData.backgroundQuestions).length > 0 ? {
-        smoke: formData.backgroundQuestions.smoke === true,
-        smokeExplanation: formData.backgroundQuestions.smoke === true ? (formData.backgroundExplanations?.smoke || undefined) : undefined,
-        militaryMember: formData.backgroundQuestions.military === true,
-        militaryExplanation: formData.backgroundQuestions.military === true ? (formData.backgroundExplanations?.military || undefined) : undefined,
-        criminalRecord: formData.backgroundQuestions.crime === true,
-        crimeExplanation: formData.backgroundQuestions.crime === true ? (formData.backgroundExplanations?.crime || undefined) : undefined,
-        bankruptcy: formData.backgroundQuestions.bankruptcy === true,
-        bankruptcyExplanation: formData.backgroundQuestions.bankruptcy === true ? (formData.backgroundExplanations?.bankruptcy || undefined) : undefined,
-        refusedRent: formData.backgroundQuestions.refuseRent === true,
-        refusedRentExplanation: formData.backgroundQuestions.refuseRent === true ? (formData.backgroundExplanations?.refuseRent || undefined) : undefined,
-        evicted: formData.backgroundQuestions.evicted === true,
-        evictedExplanation: formData.backgroundQuestions.evicted === true ? (formData.backgroundExplanations?.evicted || undefined) : undefined,
-      } : undefined,
-      customBackgroundAnswers: formData.customBackgroundAnswers && formData.customBackgroundAnswers.length > 0
-        ? formData.customBackgroundAnswers
+      // Unified background-question answers — standard and custom questions are
+      // both just rows in managerBackgroundQuestions now, fetched together in
+      // BackgroundQuestionsStep, so no frontend id->backend-field mapping is
+      // needed anymore (the backend used to require smoke/militaryMember/etc.).
+      backgroundAnswers: formData.backgroundAnswers && formData.backgroundAnswers.length > 0
+        ? formData.backgroundAnswers
+            .filter((a) => a.answer !== null)
+            .map((a) => ({
+              questionId: a.questionId,
+              answer: a.answer as boolean,
+              explanation: a.explanation || undefined,
+            }))
         : undefined,
       attachments: formData.documentUrls && formData.documentUrls.length > 0
         ? formData.documentUrls

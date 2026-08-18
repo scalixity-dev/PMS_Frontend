@@ -1,4 +1,10 @@
 
+export interface BackgroundAnswerFormData {
+    questionId: string;
+    answer: boolean | null;
+    explanation?: string;
+}
+
 export interface FileMetadata {
     name: string;
     size: number;
@@ -109,9 +115,7 @@ export interface UserApplicationFormData {
     additionalResidenceInfo: string;
     additionalIncomeInfo: string;
     emergencyContacts: Array<EmergencyContactFormData & { id: string }>;
-    backgroundQuestions: Record<string, boolean | null>;
-    backgroundExplanations: Record<string, string>;
-    customBackgroundAnswers: Array<{ questionId: string; answer: boolean }>;
+    backgroundAnswers: BackgroundAnswerFormData[];
     documents: FileMetadata[];
     // Runtime-only: actual File objects (not persisted to localStorage)
     documentFiles?: File[];

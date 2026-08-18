@@ -45,7 +45,7 @@ export const backgroundQuestionService = {
   /**
    * Create a new background question
    */
-  async create(data: { question: string; order?: number }): Promise<any> {
+  async create(data: { question: string; order?: number; flagOnYes?: boolean; requiresExplanationOnYes?: boolean }): Promise<any> {
     const response = await fetch(API_ENDPOINTS.BACKGROUND_QUESTIONS.CREATE, {
       method: 'POST',
       headers: {
@@ -65,7 +65,7 @@ export const backgroundQuestionService = {
   /**
    * Update a background question
    */
-  async update(id: string, data: { question?: string; order?: number; isActive?: boolean }): Promise<any> {
+  async update(id: string, data: { question?: string; order?: number; isActive?: boolean; flagOnYes?: boolean; requiresExplanationOnYes?: boolean }): Promise<any> {
     const response = await fetch(API_ENDPOINTS.BACKGROUND_QUESTIONS.UPDATE(id), {
       method: 'PATCH',
       headers: {
@@ -104,14 +104,14 @@ export const backgroundQuestionService = {
   /**
    * Reorder background questions
    */
-  async reorder(ids: string[]): Promise<any> {
+  async reorder(questions: { id: string; order: number }[]): Promise<any> {
     const response = await fetch(API_ENDPOINTS.BACKGROUND_QUESTIONS.REORDER, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify({ ids }),
+      body: JSON.stringify({ questions }),
     });
 
     if (!response.ok) {

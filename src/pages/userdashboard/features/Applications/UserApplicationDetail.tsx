@@ -32,7 +32,7 @@ import UserAddPetModal from './components/UserAddPetModal';
 import UserAddVehicleModal from './components/UserAddVehicleModal';
 import UserAddResidenceModal from './components/UserAddResidenceModal';
 import UserAddIncomeModal from './components/UserAddIncomeModal';
-import UserEditBackgroundQuestionsModal, { type BackgroundQuestionsData } from './components/UserEditBackgroundQuestionsModal';
+import UserEditBackgroundQuestionsModal, { type BackgroundAnswerEditValue } from './components/UserEditBackgroundQuestionsModal';
 import UserAddReferenceModal, { type ReferenceFormData } from './components/UserAddReferenceModal';
 import UserAddEmergencyContactModal from './components/UserAddEmergencyContactModal';
 import UserAddFileModal from './components/UserAddFileModal';
@@ -494,31 +494,24 @@ const SummaryHeader = ({ application, navigate, getStatusColor }: any) => (
     </div>
 );
 
-const AdditionalQuestionsContent = ({ questions }: any) => (
+const AdditionalQuestionsContent = ({ questions }: { questions: Array<{ id: string; question: string; flagOnYes?: boolean; answer: boolean; explanation?: string }> }) => (
     <div className="space-y-4 pt-4">
-        {[
-            { key: 'smoke', label: 'Do you or any occupants smoke?', icon: <Info size={18} /> },
-            { key: 'military', label: 'Are any occupants members in the military?', icon: <Info size={18} /> },
-            { key: 'crime', label: 'Have you ever been charged or convicted of a crime?', icon: <Info size={18} /> },
-            { key: 'bankruptcy', label: 'Have you ever filed for bankruptcy?', icon: <Info size={18} /> },
-            { key: 'refuseRent', label: 'Have you ever willfully refused to pay rent when it was due?', icon: <Info size={18} /> },
-            { key: 'evicted', label: 'Have you ever been evicted or left a tenancy owing money?', icon: <Info size={18} /> }
-        ].map((q) => (
-            <div key={q.key} className="bg-gray-50/50 rounded-xl p-4 border border-gray-100/80">
+        {questions.map((q) => (
+            <div key={q.id} className="bg-gray-50/50 rounded-xl p-4 border border-gray-100/80">
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex gap-3">
-                        <div className="mt-0.5 text-gray-400">{q.icon}</div>
-                        <p className="text-sm font-medium text-gray-700 leading-relaxed">{q.label}</p>
+                        <div className="mt-0.5 text-gray-400"><Info size={18} /></div>
+                        <p className="text-sm font-medium text-gray-700 leading-relaxed">{q.question}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${questions[q.key] === 'Yes' ? 'bg-[#DCFCE7] text-[#16A34A]' : 'bg-red-50 text-red-600'}`}>
-                        {String(questions[q.key])}
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${q.answer && q.flagOnYes ? 'bg-red-50 text-red-600' : 'bg-[#DCFCE7] text-[#16A34A]'}`}>
+                        {q.answer ? 'Yes' : 'No'}
                     </span>
                 </div>
-                {questions[q.key] === 'Yes' && questions.explanations[q.key] && (
+                {q.answer && q.explanation && (
                     <div className="mt-3 pl-11">
                         <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
                             <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight mb-1">Explanation</p>
-                            <p className="text-sm text-gray-700 leading-relaxed italic">"{questions.explanations[q.key]}"</p>
+                            <p className="text-sm text-gray-700 leading-relaxed italic">"{q.explanation}"</p>
                         </div>
                     </div>
                 )}
@@ -726,22 +719,16 @@ const mapBackendToUI = (backendApplication: any) => {
         incomeHistoryData,
         contacts: contactsData.length,
         contactsData,
-        additionalQuestions: {
-            smoke: backendApplication.backgroundQuestions?.smoke ? 'Yes' : 'No',
-            military: backendApplication.backgroundQuestions?.militaryMember ? 'Yes' : 'No',
-            crime: backendApplication.backgroundQuestions?.criminalRecord ? 'Yes' : 'No',
-            bankruptcy: backendApplication.backgroundQuestions?.bankruptcy ? 'Yes' : 'No',
-            refuseRent: backendApplication.backgroundQuestions?.refusedRent ? 'Yes' : 'No',
-            evicted: backendApplication.backgroundQuestions?.evicted ? 'Yes' : 'No',
-            explanations: {
-                smoke: backendApplication.backgroundQuestions?.smokeExplanation || '',
-                military: backendApplication.backgroundQuestions?.militaryExplanation || '',
-                crime: backendApplication.backgroundQuestions?.crimeExplanation || '',
-                bankruptcy: backendApplication.backgroundQuestions?.bankruptcyExplanation || '',
-                refuseRent: backendApplication.backgroundQuestions?.refusedRentExplanation || '',
-                evicted: backendApplication.backgroundQuestions?.evictedExplanation || '',
-            },
-        },
+        // Unified background-question answers (standard + custom questions are
+        // both just rows now) — replaces the old fixed-field additionalQuestions.
+        backgroundQuestions: (backendApplication.customBackgroundAnswers || []).map((a: any) => ({
+            id: a.questionId,
+            question: a.question?.question || 'Question',
+            flagOnYes: a.question?.flagOnYes,
+            requiresExplanationOnYes: a.question?.requiresExplanationOnYes,
+            answer: a.answer,
+            explanation: a.explanation || undefined,
+        })),
         attachments: (backendApplication as any).attachments?.length || 0,
         documentsData: ((backendApplication as any).attachments || []).map((a: any) => ({
             id: a.id,
@@ -1255,27 +1242,18 @@ const ApplicationDetail: React.FC = () => {
         );
     };
 
-    const handleSaveBackgroundInfo = (data: BackgroundQuestionsData) => {
+    const handleSaveBackgroundInfo = (answers: BackgroundAnswerEditValue[]) => {
         if (!id) return;
 
         updateApplicationMutation.mutate(
             {
                 id,
                 updateData: {
-                    backgroundQuestions: {
-                        smoke: data.smoke,
-                        smokeExplanation: data.smoke ? (data.explanations?.smoke || undefined) : undefined,
-                        militaryMember: data.military,
-                        militaryExplanation: data.military ? (data.explanations?.military || undefined) : undefined,
-                        criminalRecord: data.crime,
-                        crimeExplanation: data.crime ? (data.explanations?.crime || undefined) : undefined,
-                        bankruptcy: data.bankruptcy,
-                        bankruptcyExplanation: data.bankruptcy ? (data.explanations?.bankruptcy || undefined) : undefined,
-                        refusedRent: data.refuseRent,
-                        refusedRentExplanation: data.refuseRent ? (data.explanations?.refuseRent || undefined) : undefined,
-                        evicted: data.evicted,
-                        evictedExplanation: data.evicted ? (data.explanations?.evicted || undefined) : undefined,
-                    }
+                    backgroundAnswers: answers.map((a) => ({
+                        questionId: a.questionId,
+                        answer: a.answer,
+                        explanation: a.explanation || undefined,
+                    })),
                 }
             },
             {
@@ -1580,20 +1558,21 @@ const ApplicationDetail: React.FC = () => {
             />
 
 
-            {application.additionalQuestions && (
+            {application.backgroundQuestions && application.backgroundQuestions.length > 0 && (
                 <UserEditBackgroundQuestionsModal
                     isOpen={isEditBackgroundInfoModalOpen}
                     onClose={() => setIsEditBackgroundInfoModalOpen(false)}
                     onSave={handleSaveBackgroundInfo}
-                    initialData={{
-                        smoke: application.additionalQuestions.smoke === 'Yes',
-                        military: application.additionalQuestions.military === 'Yes',
-                        crime: application.additionalQuestions.crime === 'Yes',
-                        bankruptcy: application.additionalQuestions.bankruptcy === 'Yes',
-                        refuseRent: application.additionalQuestions.refuseRent === 'Yes',
-                        evicted: application.additionalQuestions.evicted === 'Yes',
-                        explanations: application.additionalQuestions.explanations || {}
-                    }}
+                    questions={application.backgroundQuestions.map((q: any) => ({
+                        id: q.id,
+                        question: q.question,
+                        requiresExplanationOnYes: q.requiresExplanationOnYes,
+                    }))}
+                    initialAnswers={application.backgroundQuestions.map((q: any) => ({
+                        questionId: q.id,
+                        answer: q.answer,
+                        explanation: q.explanation,
+                    }))}
                 />
             )}
 
@@ -1821,7 +1800,7 @@ const ApplicationDetail: React.FC = () => {
                         </div>
                         {expandedSections.additionalQuestions && (
                             <div className="px-6 pb-6 bg-white/90 border-t border-[#E5E7EB]">
-                                <AdditionalQuestionsContent questions={application.additionalQuestions} />
+                                <AdditionalQuestionsContent questions={application.backgroundQuestions} />
                             </div>
                         )}
                     </div>
