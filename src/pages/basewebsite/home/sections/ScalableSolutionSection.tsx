@@ -17,8 +17,8 @@ export default function ScalableSolutionSection() {
         <ScalableCard
           image="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905088/LandLords_bucwby.png"
           title="Landlords"
-          description="Protect your property and find SmartTenantAI you trust."
-          buttonHref="/usecases/landlords"
+          description="Protect your property and find tenants you trust."
+          buttonHref="/usecases/landlord"
         />
         <ScalableCard
           image="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905089/propertymanager_pqausl.png"
@@ -39,7 +39,7 @@ export default function ScalableSolutionSection() {
         <ScalableCard
           image="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905089/owner_ipyjef.png"
           title="Owners"
-          description="Protect your property and find SmartTenantAI you trust."
+          description="Protect your property and find tenants you trust."
           buttonHref="/signup"
         />
       </div>

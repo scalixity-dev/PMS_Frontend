@@ -46,7 +46,7 @@ const UniversalLandlordForms: React.FC = () => {
           <InfoCard
             title="Smoke Free Addendum"
             icon={<GetPaid />}
-            subtitle="Ensure that SmartTenantAI are not allowed to smoke indoors on your property."
+            subtitle="Ensure that tenants are not allowed to smoke indoors on your property."
             iconColorClass="text-emerald-500"
             variant='primary2'
           />

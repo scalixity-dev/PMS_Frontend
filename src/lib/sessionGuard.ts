@@ -9,6 +9,30 @@ import { authService } from '../services/auth.service';
  */
 const EXCLUDED_PATH_PATTERNS = [/\/auth\//, /\/public\//, /\/public-listing\//];
 
+/**
+ * Route prefixes that only make sense with a live session.
+ *
+ * A 401 is only evidence of an *expired* session if the user was somewhere
+ * that required one. On a public page - the marketing site, /signup, /otp - a
+ * 401 usually just means "not logged in", which is the normal state there.
+ * Bouncing those visitors to /login?sessionExpired=1 is how a Google sign-up
+ * got ejected from the role picker before it could be used.
+ *
+ * This is an allow-list rather than a list of public paths on purpose: a new
+ * public page then behaves correctly without anyone remembering to add it.
+ */
+const SESSION_REQUIRED_PREFIXES = [
+  '/dashboard',
+  '/service-dashboard',
+  '/userdashboard',
+];
+
+function requiresSession(pathname: string): boolean {
+  return SESSION_REQUIRED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 let handlingUnauthorized = false;
 let installed = false;
 
@@ -52,7 +76,8 @@ async function handleUnauthorized(): Promise<void> {
   if (handlingUnauthorized) return;
   handlingUnauthorized = true;
 
-  if (window.location.pathname.startsWith('/login')) {
+  // Nothing to eject them from: they are not on a page that needed a session.
+  if (!requiresSession(window.location.pathname)) {
     handlingUnauthorized = false;
     return;
   }

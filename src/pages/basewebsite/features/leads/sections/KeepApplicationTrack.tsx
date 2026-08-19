@@ -42,7 +42,7 @@ export default function KeepApplicationTrack() {
               Keep track of every application with powerful tools
             </h2>
             <p className="text-gray-700 text-base max-w-sm mb-4">
-              After a potential SmartTenantAI  is added to the CRM, you can easily follow their journey:
+              After a potential tenant is added to the CRM, you can easily follow their journey:
             </p>
             <div className="mt-4">
               <ViewMoreButton to="/features/screening" />
