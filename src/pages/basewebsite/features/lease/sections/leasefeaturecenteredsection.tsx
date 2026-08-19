@@ -22,7 +22,7 @@ const EveryFeatureCenteredSection: React.FC = () => {
     },
     {
       icon: <MessageCircle />,
-      title: "Message SmartTenantAI and vendors right from a request",
+      title: "Message tenants and vendors right from a request",
       description: "",
     },
   ];
