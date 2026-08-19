@@ -46,6 +46,7 @@ const Navbar: React.FC = () => {
   const [isMobileUseCasesDropdownOpen, setIsMobileUseCasesDropdownOpen] = useState(false);
   const featuresDropdownRef = useRef<HTMLDivElement>(null);
   const useCasesDropdownRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const pathname = location.pathname;
   const navigate = useNavigate();
@@ -68,6 +69,45 @@ const Navbar: React.FC = () => {
   const isResourceActive = pathname.startsWith('/resources')
 
   // Close dropdown when clicking outside
+  /**
+   * Desktop dropdowns open on hover as well as on click.
+   *
+   * The panel sits `mt-2` below its button, and that 8px gap belongs to no
+   * element, so closing the instant the pointer leaves would shut the menu
+   * while the user is still travelling towards it. A short delay, cancelled
+   * the moment anything in the group is re-entered, covers the gap and the
+   * diagonal path along the panel's edge.
+   */
+  const cancelClose = () => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+
+  const openFeatures = () => {
+    cancelClose();
+    setIsFeaturesDropdownOpen(true);
+    setIsUseCasesDropdownOpen(false);
+  };
+
+  const openUseCases = () => {
+    cancelClose();
+    setIsUseCasesDropdownOpen(true);
+    setIsFeaturesDropdownOpen(false);
+  };
+
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimer.current = setTimeout(() => {
+      setIsFeaturesDropdownOpen(false);
+      setIsUseCasesDropdownOpen(false);
+    }, 150);
+  };
+
+  // Never leave a timer running against an unmounted component.
+  useEffect(() => cancelClose, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (featuresDropdownRef.current && !featuresDropdownRef.current.contains(event.target as Node)) {
@@ -130,9 +170,21 @@ const Navbar: React.FC = () => {
             </NavLink>
 
             {/* Features Dropdown */}
-            <div className="relative" ref={featuresDropdownRef}>
+            <div
+              className="relative"
+              ref={featuresDropdownRef}
+              onMouseEnter={openFeatures}
+              onMouseLeave={scheduleClose}
+            >
               <button
+                type="button"
+                aria-haspopup="true"
+                aria-expanded={isFeaturesDropdownOpen}
+                // Focus opens it too, so the menu is reachable by keyboard and
+                // not only by a pointer.
+                onFocus={openFeatures}
                 onClick={() => {
+                  cancelClose();
                   setIsFeaturesDropdownOpen((prev) => !prev);
                   setIsUseCasesDropdownOpen(false);
                 }}
@@ -202,9 +254,19 @@ const Navbar: React.FC = () => {
               )}
             </div>
 
-            <div className="relative" ref={useCasesDropdownRef}>
+            <div
+              className="relative"
+              ref={useCasesDropdownRef}
+              onMouseEnter={openUseCases}
+              onMouseLeave={scheduleClose}
+            >
               <button
+                type="button"
+                aria-haspopup="true"
+                aria-expanded={isUseCasesDropdownOpen}
+                onFocus={openUseCases}
                 onClick={() => {
+                  cancelClose();
                   setIsUseCasesDropdownOpen((prev) => !prev);
                   setIsFeaturesDropdownOpen(false);
                 }}

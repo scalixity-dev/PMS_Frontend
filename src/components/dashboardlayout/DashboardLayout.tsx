@@ -1,5 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect, type ReactNode } from "react";
+import { X } from "lucide-react";
 import DashboardNavbar from "./DashboardNavbar";
 import DashboardSidebar from "./DashboardSidebar";
 import { useTeamPermissions } from "../../context/TeamPermissionContext";
@@ -43,7 +44,15 @@ function MainContentSkeleton() {
   );
 }
 
-function TrialBanner({ daysLeft, trialEndsAt }: { daysLeft: number; trialEndsAt: string }) {
+function TrialBanner({
+  daysLeft,
+  trialEndsAt,
+  onDismiss,
+}: {
+  daysLeft: number;
+  trialEndsAt: string;
+  onDismiss: () => void;
+}) {
   const navigate = useNavigate();
   const endDate = new Date(trialEndsAt).toLocaleString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric',
@@ -58,12 +67,26 @@ function TrialBanner({ daysLeft, trialEndsAt }: { daysLeft: number; trialEndsAt:
         </span>
         {' '}· Trial ends {endDate}
       </p>
-      <button
-        onClick={() => navigate('/dashboard/settings/subscription/my-plan')}
-        className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-      >
-        Upgrade now
-      </button>
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={() => navigate('/dashboard/settings/subscription/my-plan')}
+          className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+        >
+          Upgrade now
+        </button>
+        {/* Dismissal is component state only, so the reminder returns on the
+            next page load or login. Persisting it would let someone hide the
+            trial countdown permanently and be surprised when it expires. */}
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Dismiss trial notice"
+          title="Dismiss"
+          className="p-1 rounded-md text-amber-700 hover:text-amber-900 hover:bg-amber-100 transition-colors"
+        >
+          <X size={16} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -105,6 +128,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const isMessagesPage = location.pathname === '/dashboard/messages';
   const mainRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  // Reset on every mount, so the trial notice comes back on a refresh or a
+  // fresh login rather than staying hidden for good.
+  const [trialBannerDismissed, setTrialBannerDismissed] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
 
   const { isLoading: sidebarLoading } = useTeamPermissions();
   const { isTrialing, isExpired, daysLeftInTrial, trialEndsAt, isLoading: subLoading } = useSubscription();
@@ -120,13 +148,38 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  /**
+   * Pad the page by however tall the fixed header actually is.
+   *
+   * It used to be a hardcoded pt-28, which held only while the trial banner
+   * stayed on one line. On a narrower window the banner text wraps, the header
+   * grows past 112px, and the top of the page - the first row of buttons -
+   * disappears underneath it. Measuring removes the guess, and covers the
+   * banner appearing, wrapping or being dismissed.
+   */
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const measure = () => setHeaderHeight(header.offsetHeight);
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className={`flex min-h-screen ${isMessagesPage ? 'bg-white' : 'bg-gray-100'} flex-col`}>
-      <div className="fixed top-0 left-0 right-0 z-50 print:hidden">
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 print:hidden">
         <DashboardNavbar setSidebarOpen={setSidebarOpen} />
         {/* Trial banner sits just below the navbar */}
-        {isTrialing && trialEndsAt && (
-          <TrialBanner daysLeft={daysLeftInTrial} trialEndsAt={trialEndsAt} />
+        {isTrialing && trialEndsAt && !trialBannerDismissed && (
+          <TrialBanner
+            daysLeft={daysLeftInTrial}
+            trialEndsAt={trialEndsAt}
+            onDismiss={() => setTrialBannerDismissed(true)}
+          />
         )}
       </div>
 
@@ -138,8 +191,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         />
       )}
 
-      {/* Account for navbar + optional trial banner height */}
-      <div className={`flex flex-1 ${isMessagesPage ? 'pt-16' : isTrialing ? 'pt-28' : 'pt-20'}`}>
+      {/* Padded by the header's measured height. The utility classes stay as
+          the first-paint fallback, before the ResizeObserver has reported. */}
+      <div
+        className={`flex flex-1 ${isMessagesPage ? 'pt-16' : isTrialing ? 'pt-28' : 'pt-20'}`}
+        style={headerHeight ? { paddingTop: headerHeight } : undefined}
+      >
         {/* Sidebar slot */}
         <div className={`fixed left-0 top-16 bottom-0 z-40 h-[calc(100vh-64px)] transition-transform duration-300 print:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
           {sidebarLoading ? (
@@ -158,6 +215,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <main
           ref={mainRef}
           className={`${isMessagesPage ? 'p-0' : 'p-4 md:p-6'} flex-1 ml-0 transition-all duration-300 print:m-0 print:p-0 print:ml-0 print:overflow-visible ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'} ${isMessagesPage ? 'h-[calc(100vh-64px)] overflow-hidden' : 'overflow-y-auto'}`}
+          style={
+            isMessagesPage && headerHeight
+              ? { height: `calc(100vh - ${headerHeight}px)` }
+              : undefined
+          }
         >
           {sidebarLoading ? (
             <MainContentSkeleton />
