@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { ServiceRequest } from '../../../utils/types';
 import type { ChatMessage, ChatConversation } from '../../../../../services/chat.service';
 import ChatInput from './ChatInput';
@@ -191,9 +191,6 @@ const MaintenanceRequestView = ({ request, onBack, pmContact }: MaintenanceReque
                 {pendingCount} pending
               </span>
             )}
-            <button className="p-1.5 md:p-2.5 hover:bg-gray-100 rounded-lg transition-colors group" title="Print Request">
-              <Printer className="w-4 h-4 md:w-5 md:h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
-            </button>
           </div>
         </div>
       </div>

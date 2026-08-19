@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { ServiceRequest } from '@/pages/userdashboard/utils/types';
 import type { Message } from '../types';
 import ChatInput from './ChatInput';
@@ -70,11 +70,6 @@ const MaintenanceRequestView = ({ request, onBack }: { request: ServiceRequest; 
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group" title="Print Request">
-                            <Printer className="w-5 h-5 text-gray-600 group-hover:text-[#3A6D6C]" />
-                        </button>
-                    </div>
                 </div>
             </div>
 
