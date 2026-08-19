@@ -304,7 +304,28 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
                 className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 transition-all"
               />
               <label htmlFor="terms" className="ml-2 text-sm text-gray-600 cursor-pointer">
-                I agree to the terms and conditions
+                I agree to the{' '}
+                {/* Opens in a new tab on purpose: the signup store is not
+                    persisted, so navigating away would clear the form. Links
+                    inside a label do not toggle the checkbox - the HTML spec
+                    exempts interactive descendants from label activation. */}
+                <Link
+                  to="/terms-of-service"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-600 hover:text-teal-700 hover:underline font-medium"
+                >
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link
+                  to="/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-600 hover:text-teal-700 hover:underline font-medium"
+                >
+                  Privacy Policy
+                </Link>
               </label>
             </div>
             {termsError && <p className="text-xs text-red-600 mt-1">{termsError}</p>}
