@@ -66,7 +66,7 @@ const LeaseCardsSection: React.FC = () => {
     {
       number: "02",
       title: "Send, Sign, and Store Leases Digitally",
-      description: "Speed up the signing process with secure eSignatures. Simply create and send your lease form, then SmartTenantAICloud will walk SmartTenantAI through the final steps. Don't need an e-signature? No worries— just upload the lease, and you're good to go.",
+      description: "Speed up the signing process with secure eSignatures. Simply create and send your lease form, then SmartTenantAI will walk you through the final steps. Don't need an e-signature? No worries— just upload the lease, and you're good to go.",
       learnMoreTo: "#"
     },
     {

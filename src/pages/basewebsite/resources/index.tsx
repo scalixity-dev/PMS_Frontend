@@ -3,7 +3,7 @@ import ResourceHeroSection from "./sections/ResourceHeroSection";
 import VideoTutorialsCard from "./sections/VideoTutorial";
 import TopArticles from "./sections/TopArticles";
 import SupportSection from "./sections/SupportSection";
-import WhySmartTenantAICloud from "./sections/WhySmartTenantAICloud";
+import WhySmartTenantAI from "./sections/WhySmartTenantAI";
 import SmartTenantAIStandOut from "./sections/SmartTenantAIStandOut";
 import CtaSection from "./sections/CtaSection";
 import { ProfessionalRentalsSection } from "./sections/ProfessionalRentalsSection";
@@ -25,7 +25,7 @@ const ResourcePage: React.FC = () => {
       <VideoTutorialsCard />
       <TopArticles />
       <SupportSection />
-      <WhySmartTenantAICloud />
+      <WhySmartTenantAI />
       <Diamond />
       <SmartTenantAIStandOut />
       <MidCircle />
@@ -43,7 +43,7 @@ const ResourcePage: React.FC = () => {
       <CtaSection
         title="All the landlord forms you need, in one place"
         titleSize="3xl"
-        description="Sign in to access over a dozen state-specific, lawyer-approved rental forms or start a free SmartTenantAICloud trial."
+        description="Sign in to access over a dozen state-specific, lawyer-approved rental forms or start a free SmartTenantAI trial."
         buttonText="Get Started"
       />
 

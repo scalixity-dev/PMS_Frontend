@@ -4,7 +4,7 @@ import { Country } from 'country-state-city';
 import CustomDropdown from '../../../../Dashboard/components/CustomDropdown';
 import DatePicker from '@/components/ui/DatePicker';
 import BaseModal from '@/components/common/modals/BaseModal';
-import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumber } from '../../../../../utils/phone.utils';
 
 
 export interface IncomeFormData {
@@ -256,11 +256,8 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                     return 'Please select a country code first';
                 }
                 if (!value || String(value).trim() === '') return 'Company Phone is required';
-                {
-                    const digitsOnly = value.replace(/\D/g, '');
-                    if (digitsOnly.length < 4 || digitsOnly.length > 15) {
-                        return 'Phone number must be between 4 and 15 digits';
-                    }
+                if (!isValidPhoneNumber(formData.companyPhoneCountryCode, String(value))) {
+                    return 'Please enter a valid phone number for the selected country';
                 }
                 break;
             case 'supervisorName':
@@ -274,11 +271,8 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                     return 'Please select a country code first';
                 }
                 if (!value || String(value).trim() === '') return 'Supervisor Phone is required';
-                {
-                    const digitsOnly = value.replace(/\D/g, '');
-                    if (digitsOnly.length < 4 || digitsOnly.length > 15) {
-                        return 'Phone number must be between 4 and 15 digits';
-                    }
+                if (!isValidPhoneNumber(formData.supervisorPhoneCountryCode, String(value))) {
+                    return 'Please enter a valid phone number for the selected country';
                 }
                 break;
         }

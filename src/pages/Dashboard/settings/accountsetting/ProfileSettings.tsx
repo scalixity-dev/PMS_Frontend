@@ -5,7 +5,7 @@ import { authService } from "../../../../services/auth.service";
 import { useUpdateProfile } from "../../../../hooks/useAuthQueries";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
 import { API_ENDPOINTS } from "../../../../config/api.config";
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
 import { formatRole } from '@/utils/roleIcon';
 import { useToast } from "../../../../components/common/Toast";
 import { toFriendlyErrorMessage } from "@/utils/errorMessage.utils";
@@ -24,10 +24,7 @@ interface ProfileDetails {
   phoneNumber: string;
 }
 
-const isValidPhoneNumber = (raw: string): boolean => {
-  const digits = (raw || "").replace(/\D/g, "");
-  return !digits || (digits.length >= 4 && digits.length <= 15);
-};
+const isValidPhoneNumber = (raw: string): boolean => !raw || isValidPhoneNumberLoose(raw);
 
 interface EditPersonalInfoModalProps {
   isOpen: boolean;

@@ -205,7 +205,7 @@ const AIChatButton: React.FC = () => {
                       />
                       <h3 className="text-xl font-bold text-gray-800 mb-2">Welcome to AI Assistant</h3>
                       <p className="text-sm text-gray-600 mb-6">
-                        I am a helpful assistant. If you have any questions related to SmartTenantAi feel free to ask.
+                        I am a helpful assistant. If you have any questions related to SmartTenantAI feel free to ask.
                       </p>
                       <div className="space-y-2 text-left">
                         <div className="text-xs text-gray-500 bg-gray-50 rounded-lg px-4 py-2">

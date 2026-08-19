@@ -349,21 +349,39 @@ const ApplicationDetail = () => {
         }
     };
 
+    // Backend's CreateApplicantDto only whitelists these fields — sending the full
+    // BackendApplicant row (id, applicationId, userId, ...) trips the global
+    // ValidationPipe's forbidNonWhitelisted check and the whole request is rejected.
+    const toApplicantDto = (app: typeof primaryApplicant) => ({
+        firstName: app.firstName,
+        middleName: app.middleName ?? null,
+        lastName: app.lastName,
+        email: app.email,
+        phoneNumber: app.phoneNumber,
+        dateOfBirth: app.dateOfBirth,
+        isPrimary: app.isPrimary,
+    });
+
     const handleUpdateName = async (data: { firstName: string; middleName?: string; lastName: string }) => {
         if (!application || !primaryApplicant) return;
 
         const updatedApplicants = application.applicants.map(app =>
             app.id === primaryApplicant.id
-                ? { ...app, firstName: data.firstName, middleName: data.middleName || null, lastName: data.lastName }
-                : app
+                ? { ...toApplicantDto(app), firstName: data.firstName, middleName: data.middleName || null, lastName: data.lastName }
+                : toApplicantDto(app)
         );
 
-        await updateApplication.mutateAsync({
-            id: application.id,
-            updateData: {
-                applicants: updatedApplicants
-            }
-        });
+        try {
+            await updateApplication.mutateAsync({
+                id: application.id,
+                updateData: {
+                    applicants: updatedApplicants
+                }
+            });
+        } catch (error: any) {
+            toast.error(error?.message ?? 'Failed to update name');
+            throw error;
+        }
     };
 
     const handleUpdateApplicantInfo = async (data: any) => {
@@ -372,8 +390,8 @@ const ApplicationDetail = () => {
         // 1. Update Primary Applicant (DOB)
         const updatedApplicants = application.applicants.map(app =>
             app.id === primaryApplicant.id
-                ? { ...app, dateOfBirth: data.dateOfBirth }
-                : app
+                ? { ...toApplicantDto(app), dateOfBirth: data.dateOfBirth }
+                : toApplicantDto(app)
         );
 
         // 2. Prepare Update Data

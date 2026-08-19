@@ -64,7 +64,7 @@ const FeaturesSection: React.FC = () => {
       title: "Accounting",
       subtitle: "Collect payments, effortlessly",
       description:
-        "No more chasing down payments. With SmartTenantAICloud, tenants have a flexible, convenient way to pay rent online, and you get peace of mind.",
+        "No more chasing down payments. With SmartTenantAI, tenants have a flexible, convenient way to pay rent online, and you get peace of mind.",
       points: [
         "Accept credit, debit, ACH, cash, or checks",
         "Reduce late payments by 90% with auto pay",

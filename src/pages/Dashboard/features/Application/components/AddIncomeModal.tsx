@@ -3,7 +3,7 @@ import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '@/components/ui/DatePicker';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/utils/phone.utils';
 
 
 export interface IncomeFormData {
@@ -275,11 +275,8 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
             case 'companyPhone':
                 if (!formData.companyPhoneCountryCode) return 'Please select a country code first';
                 if (!value || value.trim() === '') return 'Company Phone is required';
-                {
-                    const digitsOnly = value.replace(/\D/g, '');
-                    if (digitsOnly.length < 4 || digitsOnly.length > 15) {
-                        return 'Phone number must be between 4 and 15 digits';
-                    }
+                if (!isValidPhoneNumber(formData.companyPhoneCountryCode, value)) {
+                    return 'Please enter a valid phone number for the selected country';
                 }
                 break;
             case 'supervisorName':
@@ -291,11 +288,8 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
             case 'supervisorPhone':
                 if (!formData.supervisorPhoneCountryCode) return 'Please select a country code first';
                 if (!value || value.trim() === '') return 'Supervisor Phone is required';
-                {
-                    const digitsOnly = value.replace(/\D/g, '');
-                    if (digitsOnly.length < 4 || digitsOnly.length > 15) {
-                        return 'Phone number must be between 4 and 15 digits';
-                    }
+                if (!isValidPhoneNumber(formData.supervisorPhoneCountryCode, value)) {
+                    return 'Please enter a valid phone number for the selected country';
                 }
                 break;
         }

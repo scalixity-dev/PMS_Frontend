@@ -2,7 +2,7 @@ import React from 'react';
 import { Listbox } from '@headlessui/react';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { useListUnitStore } from '../store/listUnitStore';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/utils/phone.utils';
 
 interface ListingContactProps {
     onSubmit: () => void;
@@ -88,6 +88,9 @@ const ListingContact: React.FC<ListingContactProps> = ({ onSubmit, isSubmitting 
                             className="w-full bg-transparent text-white placeholder-white/80 text-lg font-medium py-3 px-2 focus:outline-none"
                         />
                     </div>
+                    {formData.phoneNumber && !isValidPhoneNumber(formData.countryCode || '+1', formData.phoneNumber) && (
+                        <p className="text-red-500 text-xs mt-1 ml-1">Please enter a valid phone number for the selected country</p>
+                    )}
                 </div>
 
                 {/* Email */}
@@ -125,7 +128,7 @@ const ListingContact: React.FC<ListingContactProps> = ({ onSubmit, isSubmitting 
             <div className="w-full max-w-xs flex justify-center">
                 <button
                     onClick={onSubmit}
-                    disabled={isSubmitting || !(formData.contactName && formData.phoneNumber && formData.email)}
+                    disabled={isSubmitting || !(formData.contactName && formData.phoneNumber && formData.email) || !isValidPhoneNumber(formData.countryCode || '+1', formData.phoneNumber)}
                     className="bg-[#3D7475] text-white text-lg md:text-xl font-bold py-3 px-8 md:px-12 rounded-xl shadow-lg hover:bg-[#2c5556] transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}

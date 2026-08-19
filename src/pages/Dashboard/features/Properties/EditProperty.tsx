@@ -14,6 +14,7 @@ import { getCurrencySymbol } from '../../../../utils/currency.utils';
 import { isSummaryUnits } from '../../../../services/property.service';
 import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES } from '../../../../config/googleMaps.config';
+import { isValidPincode } from '@/utils/pincode.utils';
 
 interface Unit {
   unitNumber: string;
@@ -554,6 +555,8 @@ const EditProperty: React.FC = () => {
 
     if (!formData.zip.trim()) {
       errors.zip = 'Zip code is required';
+    } else if (!isValidPincode(formData.zip)) {
+      errors.zip = 'Please enter a valid zip code';
     }
 
     if (!formData.country) {
@@ -705,6 +708,7 @@ const EditProperty: React.FC = () => {
       formData.city &&
       formData.stateRegion &&
       formData.zip.trim() &&
+      isValidPincode(formData.zip) &&
       formData.country
     );
 
@@ -1329,10 +1333,13 @@ const EditProperty: React.FC = () => {
                     onChange={(e) => {
                       updateFormData('zip', e.target.value);
                     }}
-                    className={`bg-white border-gray-200 ${submitted && !formData.zip.trim() ? 'border-red-500' : ''}`}
+                    className={`bg-white border-gray-200 ${submitted && (!formData.zip.trim() || !isValidPincode(formData.zip)) ? 'border-red-500' : ''}`}
                   />
                   {submitted && !formData.zip.trim() && (
                     <p className="text-red-500 text-xs mt-1 ml-1">Zip code is required</p>
+                  )}
+                  {submitted && formData.zip.trim() && !isValidPincode(formData.zip) && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">Please enter a valid zip code</p>
                   )}
                 </div>
               </div>

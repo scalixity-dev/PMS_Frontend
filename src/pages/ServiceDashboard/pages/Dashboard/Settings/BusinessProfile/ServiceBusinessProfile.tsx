@@ -17,7 +17,8 @@ import type { ICountry, IState, ICity } from 'country-state-city';
 import { useGetCurrentUser } from '../../../../../../hooks/useAuthQueries';
 import { serviceProviderService, type BackendServiceProvider, type CreateServiceProviderDto } from '../../../../../../services/service-provider.service';
 import { authService } from '../../../../../../services/auth.service';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
+import { isValidPincode } from '@/utils/pincode.utils';
 import { useToast } from '../../../../../../components/common/Toast';
 
 // Define service categories and their options
@@ -299,6 +300,10 @@ const ServiceBusinessProfile = () => {
                 setSaveError("Please fill in First Name, Last Name and Email.");
                 return;
             }
+            if (formData.phone.trim() && !isValidPhoneNumberLoose(formData.phone)) {
+                setSaveError("Please enter a valid phone number.");
+                return;
+            }
             if (!formData.companyName.trim()) {
                 setSaveError("Company Name is required.");
                 return;
@@ -351,6 +356,10 @@ const ServiceBusinessProfile = () => {
             // Validation
             if (!formData.address.trim() || !formData.state.trim() || !formData.country.trim() || !formData.pincode.trim()) {
                 setSaveError("Please fill in all required address fields.");
+                return;
+            }
+            if (!isValidPincode(formData.pincode)) {
+                setSaveError("Please enter a valid pincode.");
                 return;
             }
 

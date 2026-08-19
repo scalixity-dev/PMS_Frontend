@@ -8,6 +8,7 @@ import ContactCard from './components/ContactCard';
 import { serviceProviderService } from '../../../../../services/service-provider.service';
 import { useToast } from '../../../../../components/common/Toast';
 import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
+import { isValidPhoneNumberLoose } from '../../../../../utils/phone.utils';
 
 interface Contact {
     id: string;
@@ -58,6 +59,10 @@ const ServiceContacts: React.FC = () => {
     const handleSave = async () => {
         if (!form.name.trim() || !form.phone.trim()) {
             toast.error('Name and phone required');
+            return;
+        }
+        if (!isValidPhoneNumberLoose(form.phone)) {
+            toast.error('Please enter a valid phone number');
             return;
         }
         try {
@@ -123,6 +128,7 @@ const ServiceContacts: React.FC = () => {
                 const name = parts[0];
                 const phone = parts[1];
                 if (!name || !phone) continue;
+                if (!isValidPhoneNumberLoose(phone)) continue;
                 const normalised = phone.replace(/\D/g, '');
                 if (!normalised || existingPhones.has(normalised)) continue;
                 existingPhones.add(normalised);

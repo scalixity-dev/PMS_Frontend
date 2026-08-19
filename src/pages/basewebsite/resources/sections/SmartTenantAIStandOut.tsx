@@ -18,7 +18,7 @@ export const SmartTenantAIStandOut: React.FC = () => {
           <LearnMoreCard
             title="Rent Collection and Accounting"
             description="Get paid on time every time with online rent collection and automatic invoices, all in one place."
-            imageUrl="/SmartTenantAIStandOut1.png"
+            imageUrl="/pmsStandOut1.png"
             imageAlt="Rent collection dashboard screenshot"
             backgroundColorClass="bg-[#48FF06]/20"
           />
@@ -27,7 +27,7 @@ export const SmartTenantAIStandOut: React.FC = () => {
           <LearnMoreCard
             title="Listings & Lead Management"
             description="Showcase your rentals on a custom website or share your listings on several popular sites in one click."
-            imageUrl="/SmartTenantAIStandOut2.png"
+            imageUrl="/pmsStandOut2.png"
             imageAlt="Listings and lead management dashboard screenshot"
             backgroundColorClass="bg-[#819A78]/20"
           />
@@ -36,7 +36,7 @@ export const SmartTenantAIStandOut: React.FC = () => {
           <LearnMoreCard
             title="Tenant Screenings & Applications"
             description="Find reliable tenants even faster with our comprehensive criminal, identification, and finance screenings."
-            imageUrl="/SmartTenantAIStandOut1.png"
+            imageUrl="/pmsStandOut1.png"
             imageAlt="SmartTenantAI screenings dashboard screenshot"
             backgroundColorClass="bg-[#48FF06]/20"
           />

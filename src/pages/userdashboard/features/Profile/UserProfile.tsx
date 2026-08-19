@@ -3,7 +3,8 @@ import { Check, Eye, EyeOff, Loader2 } from "lucide-react";
 import BaseModal from "../../../../components/common/modals/BaseModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import UserAccountSettingsLayout from "../../components/layout/UserAccountSettingsLayout";
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
+import { isValidPincode } from '@/utils/pincode.utils';
 import { formatRole } from '@/utils/roleIcon';
 import { useToast } from "../../../../components/common/Toast";
 
@@ -140,6 +141,15 @@ const Profile: React.FC = () => {
     }
 
     if (!tempInfo) return;
+
+    if (editMode === 'personal' && tempInfo.phone && !isValidPhoneNumberLoose(tempInfo.phone)) {
+      setSaveError('Please enter a valid phone number');
+      return;
+    }
+    if (editMode === 'address' && tempInfo.pincode && !isValidPincode(tempInfo.pincode)) {
+      setSaveError('Please enter a valid pincode');
+      return;
+    }
 
     try {
       if (editMode === 'personal') {

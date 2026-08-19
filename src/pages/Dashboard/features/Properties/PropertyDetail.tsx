@@ -21,6 +21,7 @@ import AssignTeamModal from './components/AssignTeamModal';
 import DetailTabs from '../../components/DetailTabs';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useGetProperty, propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
+import { dashboardQueryKeys } from '../../../../hooks/useDashboardQueries';
 import { useGetUnit } from '../../../../hooks/useUnitQueries';
 import { propertyService, isSummaryUnits } from '../../../../services/property.service';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -102,6 +103,8 @@ const PropertyDetail: React.FC = () => {
             await propertyService.delete(id);
             // Refresh the properties list cache so the deleted property disappears immediately.
             await queryClient.invalidateQueries({ queryKey: propertyQueryKeys.all });
+            // Refresh dashboard stats so the Properties & Units count reflects the deletion immediately.
+            await queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.all });
             // Navigate to properties list after successful deletion
             navigate('/dashboard/properties');
         } catch (err) {

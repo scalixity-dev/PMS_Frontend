@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
 
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
@@ -28,22 +28,10 @@ const AddLead = () => {
         const newErrors: Record<string, string> = {};
         if (!formData.fullName.trim()) newErrors.fullName = 'Full Name is required';
 
-        // Enhanced phone validation
         if (!formData.phone.trim()) {
             newErrors.phone = 'Phone Number is required';
-        } else {
-            // Remove all non-digit characters to count actual digits
-            const digitsOnly = formData.phone.replace(/\D/g, '');
-            // Check if phone contains only valid characters (digits, spaces, dashes, parentheses, plus)
-            const phoneRegex = /^[\d\s\-()+]+$/;
-
-            if (!phoneRegex.test(formData.phone)) {
-                newErrors.phone = 'Phone number can only contain digits, spaces, dashes, parentheses, and plus sign';
-            } else if (digitsOnly.length < 10) {
-                newErrors.phone = 'Phone number must contain at least 10 digits';
-            } else if (digitsOnly.length > 15) {
-                newErrors.phone = 'Phone number cannot exceed 15 digits';
-            }
+        } else if (!isValidPhoneNumberLoose(formData.phone)) {
+            newErrors.phone = 'Please enter a valid phone number';
         }
 
         if (!formData.email.trim()) {

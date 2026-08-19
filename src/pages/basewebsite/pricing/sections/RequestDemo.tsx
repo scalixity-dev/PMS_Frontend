@@ -12,7 +12,7 @@ const RequestDemoCard: React.FC = () => {
           Request a demo
         </h2>
         <p className="text-lg text-gray-600 mb-6">
-          We're happy to answer any questions you have <br className="hidden md:inline" /> about SmartTenantAICloud.
+          We're happy to answer any questions you have <br className="hidden md:inline" /> about SmartTenantAI.
         </p>
 
         <button

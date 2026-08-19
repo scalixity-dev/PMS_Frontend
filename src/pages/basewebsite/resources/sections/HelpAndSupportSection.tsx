@@ -20,7 +20,7 @@ const HelpAndSupportSection: React.FC = () => {
         <SupportCard
           icon={<ChatIcon />}
           title="Priority Support"
-          description="SmartTenantAICloud business clients have access to immediate telephone support from 9 AM to 5 PM CST and are first in line for ticket responses."
+          description="SmartTenantAI business clients have access to immediate telephone support from 9 AM to 5 PM CST and are first in line for ticket responses."
           ctaText="Upgrade"
           ctaHref="#contact-section"
         />

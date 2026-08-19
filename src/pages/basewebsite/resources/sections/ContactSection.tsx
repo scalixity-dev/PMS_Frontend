@@ -31,7 +31,7 @@ const ContactSection: React.FC = () => {
           </h2>
           <p className="text-lg text-slate-600 mb-12 font-semibold">
             Please contact our sales consultants if you have questions or would
-            like a demo of any of SmartTenantAICloud features.
+            like a demo of any of SmartTenantAI features.
           </p>
 
           <div className="flex flex-col gap-8">

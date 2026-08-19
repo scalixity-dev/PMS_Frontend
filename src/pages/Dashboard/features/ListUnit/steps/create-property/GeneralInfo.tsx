@@ -6,6 +6,7 @@ import { authService } from '../../../../../../services/auth.service';
 import NextStepButton from '../../components/NextStepButton';
 import { getCurrencySymbol } from '../../../../../../utils/currency.utils';
 import { useCreatePropertyStore } from '../../store/createPropertyStore';
+import { isValidPincode } from '../../../../../../utils/pincode.utils';
 
 interface GeneralInfoProps {
     data?: any;
@@ -159,6 +160,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onContinue }) => {
             data.stateRegion &&
             data.country &&
             data.zip &&
+            isValidPincode(data.zip) &&
             managerId
         );
     };
@@ -285,6 +287,9 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onContinue }) => {
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
                             required
                         />
+                        {data.zip && !isValidPincode(data.zip) && (
+                            <p className="text-red-500 text-xs mt-1">Please enter a valid zip code</p>
+                        )}
                     </div>
                 </div>
                 {/* Market Rent & Beds */}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
+import { isValidPincode } from '@/utils/pincode.utils';
 
 interface CreatePropertyFormProps {
     onCancel: () => void;
@@ -25,7 +26,14 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onCancel, onCre
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const [zipError, setZipError] = useState<string | null>(null);
+
     const handleSubmit = () => {
+        if (formData.zip && !isValidPincode(formData.zip)) {
+            setZipError('Please enter a valid zip code');
+            return;
+        }
+        setZipError(null);
         onCreate({
             ...formData,
             propertyType,
@@ -206,6 +214,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onCancel, onCre
                             placeholder="Zip"
                             className="w-full px-6 py-3 bg-white rounded-md border-none outline-none placeholder-gray-400"
                         />
+                        {zipError && <p className="text-red-500 text-xs mt-1 ml-1">{zipError}</p>}
                     </div>
                 </div>
             </div>

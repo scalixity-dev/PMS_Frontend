@@ -4,7 +4,7 @@ import { ChevronLeft, Plus, Trash2, Upload, FileText, X } from 'lucide-react';
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from '../../components/CustomDropdown';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
 import ImageCropModal from './components/ImageCropModal';
 import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
@@ -385,10 +385,24 @@ const AddEditTenant = () => {
                 newErrors.dateOfBirth = 'Must be a valid date, 18+ years old';
             }
         }
-        if (!formData.personalInfo.phone) newErrors.phone = 'Phone is required';
+        if (!formData.personalInfo.phone) {
+            newErrors.phone = 'Phone is required';
+        } else if (!isValidPhoneNumberLoose(formData.personalInfo.phone)) {
+            newErrors.phone = 'Please enter a valid phone number';
+        }
 
-        if (Object.keys(newErrors).length > 0) {
+        // Emergency contact inputs have no per-field error UI of their own, so
+        // a bad phone here has to be caught before submit rather than surfacing
+        // as a raw backend rejection.
+        const invalidContact = formData.emergencyContacts.find(
+            contact => contact.name && !isValidPhoneNumberLoose(contact.phone)
+        );
+
+        if (Object.keys(newErrors).length > 0 || invalidContact) {
             setErrors(newErrors);
+            if (invalidContact) {
+                setSubmitError(`Please enter a valid phone number for emergency contact "${invalidContact.name}"`);
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
 
 interface AddTenantModalProps {
     isOpen: boolean;
@@ -37,7 +37,11 @@ const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, onSave
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.email = 'Please enter a valid email address';
         }
-        if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+        if (!formData.phone.trim()) {
+            newErrors.phone = 'Phone number is required';
+        } else if (!isValidPhoneNumberLoose(formData.phone)) {
+            newErrors.phone = 'Please enter a valid phone number';
+        }
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
