@@ -15,6 +15,7 @@ const FinancePage = lazy(() => import('./pages/basewebsite/features/finance/inde
 const LeadsPage = lazy(() => import('./pages/basewebsite/features/leads/index'));
 import { RentalApplicationSettingsLayout } from './components/common/RentalApplicationSettingsLayout';
 const PricingPage = lazy(() => import('./pages/basewebsite/pricing'));
+const FaqPage = lazy(() => import('./pages/basewebsite/faq'));
 const SelectPlanPage = lazy(() => import('./pages/onboarding/SelectPlanPage'));
 const TermsOfService = lazy(() => import('./pages/basewebsite/legal/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('./pages/basewebsite/legal/PrivacyPolicy'));
@@ -350,6 +351,10 @@ const App: React.FC = () => {
               <Route path="/features/team" element={<GuestRoute><TeamPage /></GuestRoute>} />
               <Route path="/resources" element={<GuestRoute><ResourcePage /></GuestRoute>} />
               <Route path="/pricing" element={<GuestRoute><PricingPage /></GuestRoute>} />
+              {/* FAQ is reference material, so it stays reachable signed in or
+                  out rather than bouncing a logged-in user to the dashboard
+                  the way the other marketing pages do. */}
+              <Route path="/faq" element={<FaqPage />} />
               {/* Legal pages remain accessible regardless of auth state */}
               <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
