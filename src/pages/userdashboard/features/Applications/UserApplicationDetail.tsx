@@ -1643,10 +1643,10 @@ const ApplicationDetail: React.FC = () => {
 
                 <div className="border-b border-[#F1F1F1]">
                     <div className="flex flex-wrap gap-4">
-                        <button className="px-4 py-2 font-semibold text-[15px] transition-all relative text-white bg-[#7ED957] rounded-t-lg -mb-[1px]">
+                        <span className="inline-block px-4 py-2 font-semibold text-[15px] transition-all relative text-white bg-[#7ED957] rounded-t-lg -mb-[1px]">
                             Application
                             <div className="absolute -bottom-4 left-0 right-0 h-4 bg-[#7ED957] blur-lg opacity-20 -z-10"></div>
-                        </button>
+                        </span>
                     </div>
                 </div>
 

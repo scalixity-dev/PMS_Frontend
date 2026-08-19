@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ResourceCards } from "./RenderCards";
-import { Search } from "./resourceIcons";
 
 type FilterType = "Landlord" | "Tenant" | "Service Pro" | "Property Manager";
 
@@ -56,9 +55,11 @@ export default function App() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-14 pl-5 pr-12 py-3 rounded-lg shadow-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-md"
             />
+            {/* Search runs live from the input's onChange, so this icon was a button that did nothing. Kept as markup in case it comes back as a non-clickable affordance.
             <button className="absolute right-2 rounded-full" aria-label="Search resources">
               <Search />
             </button>
+            */}
           </div>
         </div>
 

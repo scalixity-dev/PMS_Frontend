@@ -300,7 +300,14 @@ export default function SelectPlanPage() {
 
         <p className="text-center text-xs text-gray-400 mt-10">
           You can upgrade, downgrade, or cancel anytime. By selecting a plan you agree to our{" "}
-          <a href="/terms" className="underline hover:text-gray-600">Terms of Service</a>.
+          <a
+            href="/terms-of-service"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-600"
+          >
+            Terms of Service
+          </a>.
         </p>
       </main>
 

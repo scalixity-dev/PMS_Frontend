@@ -592,9 +592,9 @@ const TransactionDetail: React.FC = () => {
 
                 {/* Payers Section */}
                 <div className="bg-[#F0F0F6] rounded-[2rem] p-6 mb-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                    <button className="px-6 py-2 bg-[#7BD747] text-white rounded-full text-sm font-bold shadow-sm text-center">
+                    <span className="inline-block px-6 py-2 bg-[#7BD747] text-white rounded-full text-sm font-bold shadow-sm text-center">
                         {transaction.payerId ? 'Payers' : transaction.payeeId ? 'Payees' : 'Contacts'}
-                    </button>
+                    </span>
                     <div className="px-8 py-2 bg-[#dcdcdc] text-gray-700 rounded-full text-sm font-medium text-center">
                         {getContactName()}
                     </div>
