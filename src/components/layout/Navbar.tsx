@@ -67,6 +67,7 @@ const Navbar: React.FC = () => {
   const isPricingActive = pathname.startsWith('/pricing')
   // Check if we're on any resource page
   const isResourceActive = pathname.startsWith('/resources')
+  const isFaqActive = pathname.startsWith('/faq')
 
   // Close dropdown when clicking outside
   /**
@@ -327,6 +328,12 @@ const Navbar: React.FC = () => {
             >
               Pricing
             </button>
+            <button
+              onClick={() => navigate("/faq")}
+              className={`${baseLink} ${isFaqActive ? pillActive : mutedLink}`}
+            >
+              FAQ
+            </button>
           </div>
 
           {/* Right actions (desktop) */}
@@ -524,6 +531,9 @@ const Navbar: React.FC = () => {
               </button>
               <button className={`${baseLink} ${isPricingActive ? pillActive : mutedLink} flex`} onClick={() => navigate("/pricing")}>
                 Pricing
+              </button>
+              <button className={`${baseLink} ${isFaqActive ? pillActive : mutedLink} flex`} onClick={() => navigate("/faq")}>
+                FAQ
               </button>
             </div>
 
