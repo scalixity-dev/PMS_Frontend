@@ -348,6 +348,8 @@ const ServiceMessages = () => {
                                 onBack={handleBackToSidebar}
                                 showBackButton={showMobileChat}
                                 pendingCount={pendingCount}
+                                onPrint={() => window.print()}
+                                onDelete={() => setActiveChatId(null)}
                             />
                             <MessageList chat={activeChat} currentUserId={CURRENT_USER_ID} />
                             <ChatInput onSendMessage={handleSendMessage} onTyping={handleTyping} />

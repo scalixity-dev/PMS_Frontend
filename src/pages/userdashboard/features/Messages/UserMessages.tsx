@@ -472,6 +472,8 @@ const Messages = () => {
                   onBack={handleBackToSidebar}
                   showBackButton={showMobileChat}
                   pendingCount={pendingCount}
+                  onPrint={() => window.print()}
+                  onDelete={() => setActiveChatId(null)}
                 />
                 {activeChat.applicationId && <ApplicationBanner applicationId={activeChat.applicationId} isUserDashboard />}
                 <MessageList chat={activeChat} currentUserId="user" />
