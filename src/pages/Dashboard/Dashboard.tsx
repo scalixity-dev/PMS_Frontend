@@ -520,9 +520,9 @@ export default function Dashboard() {
                       </div>
                       {idx < properties.length - 1 && <div className="border-b border-gray-100 mt-3" />}
                     </div>
-                    <button className={`px-4 py-1.5 text-xs font-medium rounded-full ${property.status === "Vacant" ? "bg-blue-50 text-blue-600 border border-blue-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
+                    <span className={`inline-block px-4 py-1.5 text-xs font-medium rounded-full ${property.status === "Vacant" ? "bg-blue-50 text-blue-600 border border-blue-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
                       {property.status}
-                    </button>
+                    </span>
                   </div>
                 ))}
               </div>

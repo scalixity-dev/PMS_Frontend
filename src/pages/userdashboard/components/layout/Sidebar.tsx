@@ -16,9 +16,9 @@ const FinancialCard = ({ title, amount, currency, action }: { title: string; amo
         <div className="flex justify-between items-start mb-1">
             <span className="text-[#4B5563] text-sm font-semibold tracking-wide">{title}</span>
             {action && (
-                <button className="text-[11px] text-gray-400 font-bold hover:text-[var(--dashboard-accent)] uppercase tracking-tighter">
+                <span className="text-[11px] text-gray-400 font-bold uppercase tracking-tighter">
                     {action}
-                </button>
+                </span>
             )}
         </div>
         <div className="flex items-baseline gap-1">
