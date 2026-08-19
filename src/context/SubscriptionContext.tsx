@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { subscriptionService } from '../services/subscription.service';
+import { authService } from '../services/auth.service';
 
 interface SubscriptionContextValue {
   planId: string;
@@ -38,15 +39,43 @@ const SubscriptionContext = createContext<SubscriptionContextValue>({
 });
 
 export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { data, isLoading, refetch } = useQuery({
+  /**
+   * Is anybody signed in?
+   *
+   * This provider wraps the whole route tree, marketing and auth pages
+   * included, so without a gate the subscription request below fired for
+   * anonymous visitors on every public page. It answered 401, the global
+   * unauthorized interceptor read that as a dead session, and the visitor was
+   * thrown to /login?sessionExpired=1 - which is what happened to anyone
+   * choosing their role after signing up with Google.
+   *
+   * /auth/me is the app's own session probe and is excluded from that
+   * interceptor, so it is safe to ask here. It resolves to null rather than
+   * throwing, because "not logged in" is an ordinary answer on these pages.
+   */
+  const { data: sessionUser, isLoading: sessionLoading } = useQuery({
+    queryKey: ['auth', 'session-probe'],
+    queryFn: () => authService.getCurrentUser().catch(() => null),
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  const { data, isLoading: subscriptionLoading, refetch } = useQuery({
     queryKey: ['subscription', 'current'],
     queryFn: () => subscriptionService.getCurrent(),
+    enabled: !!sessionUser,
     staleTime: 0,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     retry: false,
   });
+
+  // Still "loading" while the session probe is in flight, so a consumer never
+  // briefly sees the no-plan state of a user who does in fact have one.
+  const isLoading = sessionLoading || (!!sessionUser && subscriptionLoading);
 
   const value = useMemo<SubscriptionContextValue>(() => {
     const status = data?.status ?? '';
