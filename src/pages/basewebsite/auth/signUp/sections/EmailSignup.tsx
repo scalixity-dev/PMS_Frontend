@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleIcon, AppleIcon, FacebookIcon } from '../../../../../components/AuthIcons'
+// FacebookIcon is imported again when the Facebook button below is restored.
+import { GoogleIcon, AppleIcon } from '../../../../../components/AuthIcons'
 import type { EmailSignupProps } from './signUpProps';
 import { Link } from 'react-router-dom';
 import { authService } from '../../../../../services/auth.service';
@@ -167,14 +168,17 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext }) => {
           <AppleIcon />
           Create with Apple
         </button>
-        <button 
-          type="button" 
+        {/* Facebook sign-up hidden for now. Re-enable by uncommenting this
+            block and the FacebookIcon import.
+        <button
+          type="button"
           onClick={() => authService.initiateOAuth('facebook')}
           className="w-full inline-flex justify-center items-center py-3 sm:py-3.5 px-4 border-2 border-gray-200 rounded-lg bg-white text-sm sm:text-base font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
         >
           <FacebookIcon />
           Create with Facebook
         </button>
+        */}
       </div>
       
       <div className="text-center text-sm sm:text-base text-gray-600 pt-2">
