@@ -5,7 +5,6 @@ import {
     ChevronLeft,
     ChevronDown,
     ChevronUp,
-    Printer,
     X,
     Tag,
     Home,
@@ -282,10 +281,6 @@ const ServiceRequestDetail: React.FC = () => {
                                         </button>
                                     )}
 
-                                    <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                                        <Printer size={16} />
-                                        Print
-                                    </button>
                                     <button className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 flex items-center gap-2">
                                         <X size={16} />
                                         Cancel

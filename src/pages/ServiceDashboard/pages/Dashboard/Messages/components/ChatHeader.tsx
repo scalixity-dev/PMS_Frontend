@@ -6,9 +6,13 @@ interface ChatHeaderProps {
     onBack?: () => void;
     showBackButton?: boolean;
     pendingCount?: number;
+    /** Print the open conversation. Same handler shape as the landlord header. */
+    onPrint: () => void;
+    /** Close the open conversation. See the note on the button below. */
+    onDelete: () => void;
 }
 
-const ChatHeader = ({ chat, onBack, showBackButton = false, pendingCount = 0 }: ChatHeaderProps) => {
+const ChatHeader = ({ chat, onBack, showBackButton = false, pendingCount = 0, onPrint, onDelete }: ChatHeaderProps) => {
     const statusText = chat.typingText
         ? chat.typingText
         : chat.isOnline
@@ -55,16 +59,29 @@ const ChatHeader = ({ chat, onBack, showBackButton = false, pendingCount = 0 }: 
                 </div>
 
                 {/* Right Section - Actions */}
-                <div className="flex items-center gap-1 md:gap-2">
+                {/* print:hidden so the toolbar does not land in the printout. */}
+                <div className="flex items-center gap-1 md:gap-2 print:hidden">
                     {pendingCount > 0 && (
                         <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full font-medium">
                             {pendingCount} pending
                         </span>
                     )}
-                    <button className="p-1.5 md:p-2.5 hover:bg-gray-100 rounded-lg transition-colors group" title="Print Conversation">
+                    <button
+                        type="button"
+                        onClick={onPrint}
+                        className="p-1.5 md:p-2.5 hover:bg-gray-100 rounded-lg transition-colors group"
+                        title="Print Conversation"
+                    >
                         <Printer className="w-4 h-4 md:w-5 md:h-5 text-gray-600 group-hover:text-[#3A6D6C]" />
                     </button>
-                    <button className="p-1.5 md:p-2.5 hover:bg-gray-100 rounded-lg transition-colors group" title="Delete Conversation">
+                    {/* Closes the thread rather than deleting it: the chat backend has no
+                        delete-conversation endpoint. Matches the landlord header. */}
+                    <button
+                        type="button"
+                        onClick={onDelete}
+                        className="p-1.5 md:p-2.5 hover:bg-gray-100 rounded-lg transition-colors group"
+                        title="Close Conversation"
+                    >
                         <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-gray-600 group-hover:text-red-500" />
                     </button>
                 </div>

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { tenantIcon as logo } from '../../../../../utils/roleIcon';
-import { AppleIcon, FacebookIcon, GoogleIcon } from '../../../../../components/AuthIcons';
+// FacebookIcon is imported again when the Facebook button below is restored.
+import { AppleIcon, GoogleIcon } from '../../../../../components/AuthIcons';
 import { authService } from '../../../../../services/auth.service';
 import { API_ENDPOINTS } from '../../../../../config/api.config';
 import { toFriendlyErrorMessage } from '../../../../../utils/errorMessage.utils';
@@ -425,6 +426,8 @@ const LoginForm: React.FC = () => {
                     >
                         <AppleIcon /> Sign in with Apple
                     </button>
+                    {/* Facebook sign-in hidden for now. Re-enable by
+                        uncommenting this block and the FacebookIcon import.
                     <button
                         type="button"
                         onClick={() => authService.initiateOAuth('facebook')}
@@ -432,6 +435,7 @@ const LoginForm: React.FC = () => {
                     >
                         <FacebookIcon /> Sign in with Facebook
                     </button>
+                    */}
                 </div>
             </div>
 
