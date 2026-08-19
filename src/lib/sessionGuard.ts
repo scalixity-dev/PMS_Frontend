@@ -6,8 +6,13 @@ import { authService } from '../services/auth.service';
  * (login attempt, guest auth check, public browsing) rather than a sign
  * that a previously-valid session has expired. These must never trigger
  * a forced logout/redirect.
+ *
+ * `/subscription/current` is included because SubscriptionProvider is
+ * mounted at the app root and queries it on every page, including guest
+ * pages (home, login, signup) — a guest 401 there is normal, not a dead
+ * session.
  */
-const EXCLUDED_PATH_PATTERNS = [/\/auth\//, /\/public\//, /\/public-listing\//];
+const EXCLUDED_PATH_PATTERNS = [/\/auth\//, /\/public\//, /\/public-listing\//, /\/subscription\/current/];
 
 /**
  * Route prefixes that only make sense with a live session.

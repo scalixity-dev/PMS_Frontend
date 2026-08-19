@@ -39,6 +39,7 @@ import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import BackgroundQuestionsAnswers from '../../../../components/backgroundQuestions/BackgroundQuestionsAnswers';
 import { useToast } from '../../../../components/common/Toast';
 import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatMoney } from '@/utils/currency.utils';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 
@@ -1160,7 +1161,7 @@ const ApplicationDetail = () => {
         const fmt = (d?: string | Date | null) =>
             d ? new Date(d as string).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
         const money = (v?: string | number | null) =>
-            v ? `£${parseFloat(String(v)).toLocaleString('en-GB', { minimumFractionDigits: 2 })}` : '—';
+            v ? formatMoney(parseFloat(String(v)), (application.leasing as any)?.currency || 'USD') : '—';
         const row = (label: string, value: string) =>
             `<tr><td style="padding:6px 12px;font-weight:600;color:#555;width:35%;border-bottom:1px solid #f0f0f0">${label}</td><td style="padding:6px 12px;color:#222;border-bottom:1px solid #f0f0f0">${value}</td></tr>`;
         const section = (title: string, content: string) =>
@@ -1188,7 +1189,7 @@ const ApplicationDetail = () => {
             ? application.residenceHistory.map((r, i) => section(`Residence ${i + 1}`,
                 tbl([row('Address', `${r.address}, ${r.city}, ${r.state} ${r.zipCode}, ${r.country}`),
                     row('Type', r.residenceType), row('Status', r.isCurrent ? 'Current' : 'Previous'),
-                    row('Move-in', fmt(r.moveInDate)), row('Monthly Rent', r.monthlyRent ? `£${r.monthlyRent}` : '—'),
+                    row('Move-in', fmt(r.moveInDate)), row('Monthly Rent', r.monthlyRent ? money(r.monthlyRent) : '—'),
                     row('Landlord', r.landlordName ?? '—'), row('Landlord Phone', r.landlordPhone ?? '—')].join('')))).join('')
             : '<p style="color:#888;font-size:13px">No residential history</p>';
 
@@ -1524,10 +1525,10 @@ ${section('Income History', incomesHtml)}
                                     <h3 className="font-bold text-xl mb-4">Rent-Income Percentage</h3>
                                     <div className="space-y-2">
                                         <div className="text-sm opacity-90 font-medium">
-                                            {monthlyRent && monthlyRent > 0 ? `£${monthlyRent.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Rent/mo` : 'N/A'}
+                                            {monthlyRent && monthlyRent > 0 ? `${formatMoney(monthlyRent, (application.leasing as any)?.currency || 'USD')} Rent/mo` : 'N/A'}
                                         </div>
                                         <div className="text-sm opacity-90 font-medium bg-white/10 px-2 py-1 -mx-2 rounded">
-                                            {totalHouseholdIncome > 0 ? `£${totalHouseholdIncome.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A'}
+                                            {totalHouseholdIncome > 0 ? formatMoney(totalHouseholdIncome, (application.leasing as any)?.currency || 'USD') : 'N/A'}
                                             <span className="block text-[10px] opacity-75">Household income</span>
                                         </div>
                                         {rentIncomePercentage > 0 && (
@@ -1946,7 +1947,7 @@ ${section('Income History', incomesHtml)}
                                         />
                                         <CustomTextBox
                                             label="Monthly income"
-                                            value={inc.monthlyIncome ? `£${parseFloat(inc.monthlyIncome).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
+                                            value={inc.monthlyIncome ? formatMoney(parseFloat(inc.monthlyIncome), (application.leasing as any)?.currency || 'USD') : '--'}
                                             className="w-full"
                                         />
                                         <CustomTextBox

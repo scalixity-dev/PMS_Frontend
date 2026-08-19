@@ -48,8 +48,13 @@ const LoginForm: React.FC = () => {
             }
             if (params.get('sessionExpired') === '1') {
                 setFormNotice('Your session has expired. Please sign in again.');
+                // Strip the flag so a plain refresh of this URL doesn't keep
+                // repeating a stale "session expired" claim.
+                params.delete('sessionExpired');
+                navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
             }
         } catch { /* ignore */ }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.state, location.search]);
 
     const validateEmail = (email: string): boolean => {
