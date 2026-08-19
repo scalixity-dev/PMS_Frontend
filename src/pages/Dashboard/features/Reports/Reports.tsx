@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, Settings, X } from 'lucide-react';
+import { ChevronDown, Settings, X } from 'lucide-react';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 const SETTINGS_KEY = 'reports_hidden';
@@ -147,9 +147,11 @@ const Reports: React.FC = () => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
+                        {/* Search runs live from the input's onChange, so this icon was a button that did nothing. Kept as markup in case it comes back as a non-clickable affordance.
                         <button className="bg-[#3A6D6C] rounded-full p-1.5 text-white hover:bg-[#2c5251] transition-colors">
                             <Search size={14} />
                         </button>
+                        */}
                     </div>
                 </div>
 
