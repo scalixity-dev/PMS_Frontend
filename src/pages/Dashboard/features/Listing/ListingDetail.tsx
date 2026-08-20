@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
 
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -251,9 +251,13 @@ const ListingDetail: React.FC = () => {
     };
 
     const handleSaveContact = () => {
-        setIsContactEditing(false);
         const propertyId = backendListing?.property?.id;
         if (!propertyId || !contactDetails) return;
+        if (contactDetails.phone && !isValidPhoneNumberLoose(contactDetails.phone)) {
+            toast.error('Please enter a valid phone number');
+            return;
+        }
+        setIsContactEditing(false);
         // contactDetails.phone may include country code prefix — split on first space
         const phoneParts = (contactDetails.phone || '').trim().split(' ');
         const phoneCountryCode = phoneParts.length > 1 ? phoneParts[0] : '';

@@ -33,13 +33,13 @@ const SupportSection: React.FC = () => {
           description={
             <>
               Have a question or want to send feedback? Email us at{' '}
-              <a href="mailto:support@SmartTenantAIcloud.com" className="text-emerald-600 font-medium hover:underline">
-                support@SmartTenantAIcloud.com
+              <a href="mailto:support@smarttenantai.com" className="text-emerald-600 font-medium hover:underline">
+                support@smarttenantai.com
               </a>
             </>
           }
           ctaText="Send Email"
-          ctaHref="mailto:support@SmartTenantAIcloud.com"
+          ctaHref="mailto:support@smarttenantai.com"
         />
 
         {/* Card 4: Sales Inquiries */}
@@ -49,13 +49,13 @@ const SupportSection: React.FC = () => {
           description={
             <>
               Have a question to our sales team? Email us at{' '}
-              <a href="mailto:sales@SmartTenantAIcloud.com" className="text-emerald-600 font-medium hover:underline">
-                sales@SmartTenantAIcloud.com
+              <a href="mailto:sales@smarttenantai.com" className="text-emerald-600 font-medium hover:underline">
+                sales@smarttenantai.com
               </a>
             </>
           }
           ctaText="Send Email"
-          ctaHref="mailto:sales@SmartTenantAIcloud.com"
+          ctaHref="mailto:sales@smarttenantai.com"
         />
 
       </div>

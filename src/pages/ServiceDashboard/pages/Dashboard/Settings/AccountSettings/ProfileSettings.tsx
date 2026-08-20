@@ -13,6 +13,8 @@ import { authService } from '../../../../../../services/auth.service';
 import { API_ENDPOINTS } from '../../../../../../config/api.config';
 import { useToast } from '../../../../../../components/common/Toast';
 import { formatRole } from '../../../../../../utils/roleIcon';
+import { isValidPhoneNumber as isValidPhoneNumberForCountry } from '../../../../../../utils/phone.utils';
+import { isValidPincode as isValidPincodeShared } from '../../../../../../utils/pincode.utils';
 
 const ProfileSettings = () => {
     const toast = useToast();
@@ -137,16 +139,16 @@ const ProfileSettings = () => {
         // Allow optional leading '+', rest must be digits.
         return trimmed.startsWith('+') ? `+${trimmed.slice(1).replace(/\D/g, '')}` : trimmed.replace(/\D/g, '');
     };
-    const isValidPincode = (value: string) => !value || /^\d{4,10}$/.test(value.trim());
-    const isValidPhone = (value: string) => !value || /^\d{4,15}$/.test(normalizePhone(value));
+    const isValidPincode = (value: string) => !value || isValidPincodeShared(value);
+    const isValidPhone = (value: string) => !value || isValidPhoneNumberForCountry(formData.phoneCountryCode, value);
     const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 
     const handleSavePersonal = () => {
         // Strip formatting chars before send — backend regex requires pure digits.
         const phoneNumber = normalizePhone(formData.phoneNumber);
         const phoneCountryCode = normalizeCountryCode(formData.phoneCountryCode);
-        if (!isValidPhone(phoneNumber)) {
-            setProfileErrors((prev) => ({ ...prev, personal: 'Phone number must be between 4 and 15 digits.' }));
+        if (!isValidPhone(formData.phoneNumber)) {
+            setProfileErrors((prev) => ({ ...prev, personal: 'Please enter a valid phone number for the selected country code.' }));
             return;
         }
         setProfileErrors((prev) => ({ ...prev, personal: undefined }));
@@ -165,7 +167,7 @@ const ProfileSettings = () => {
 
     const handleSaveAddress = () => {
         if (!isValidPincode(formData.pincode)) {
-            setProfileErrors((prev) => ({ ...prev, address: 'Pincode must contain 4 to 10 digits.' }));
+            setProfileErrors((prev) => ({ ...prev, address: 'Please enter a valid pincode.' }));
             return;
         }
         setProfileErrors((prev) => ({ ...prev, address: undefined }));

@@ -3,7 +3,7 @@ import { Search, ChevronDown, Check } from 'lucide-react';
 import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
-import { formatPhoneNumber } from '../../../../../../utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumber } from '../../../../../../utils/phone.utils';
 
 
 export interface FormData {
@@ -108,12 +108,8 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
             if (!data.phoneCountryCode) {
                 return 'Please select a country code first';
             }
-            if (value && typeof value === 'string') {
-                const phoneRegex = /^[\d\s+()-]+$/;
-                if (!phoneRegex.test(value)) return 'Phone number can only contain digits and +, -, (, )';
-                const digitsOnly = value.replace(/[\s+()-]/g, '');
-                if (digitsOnly.length < 4) return 'Phone number must contain at least 4 digits';
-                if (digitsOnly.length > 15) return 'Phone number cannot exceed 15 digits';
+            if (value && typeof value === 'string' && !isValidPhoneNumber(data.phoneCountryCode, value)) {
+                return 'Please enter a valid phone number for the selected country';
             }
         }
         if (key === 'dob') {

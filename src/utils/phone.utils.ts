@@ -1,3 +1,5 @@
+import { isValidPhoneNumber as libIsValidPhoneNumber } from 'libphonenumber-js';
+
 /**
  * Formats a phone number string to US format: XXX-XXX-XXXX
  * Works well for as-you-type formatting.
@@ -59,4 +61,63 @@ export const toPhoneDigits = (
 ): string | undefined => {
   const digits = (value ?? '').replace(/\D/g, '');
   return digits || undefined;
+};
+
+/**
+ * Validates a phone number against the numbering-plan rules of its own
+ * dialling code, rather than a fixed digit count. "10 digits" is only true
+ * for +1 (US/Canada) - other countries range from 7 to 15 digits, so a
+ * single length check either rejects real numbers or accepts garbage.
+ *
+ * @param dialCode Selector value ("IN|91") or a bare dialling code ("+91")
+ * @param nationalNumber The subscriber number, formatted or raw
+ */
+export const isValidPhoneNumber = (
+  dialCode: string | null | undefined,
+  nationalNumber: string | null | undefined,
+): boolean => {
+  const code = extractDialCode(dialCode);
+  const digits = toPhoneDigits(nationalNumber);
+  if (!code || !digits) return false;
+  try {
+    return libIsValidPhoneNumber(`${code}${digits}`);
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Validates a single free-text phone field that has no paired country-code
+ * selector (e.g. a plain "Phone Number" input). Mirrors the backend's
+ * IsValidPhoneNumber fallback: a leading "+" is validated as full E.164,
+ * otherwise there's no country to check numbering-plan rules against, so
+ * this only enforces the generic E.164 digit-count range (7-15).
+ */
+export const isValidPhoneNumberLoose = (
+  value: string | null | undefined,
+): boolean => {
+  const trimmed = (value ?? '').trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith('+')) {
+    try {
+      return libIsValidPhoneNumber(trimmed);
+    } catch {
+      return false;
+    }
+  }
+  const digits = trimmed.replace(/\D/g, '');
+  return digits.length >= 7 && digits.length <= 15;
+};
+
+/**
+ * Builds the canonical E.164 string ("+919876543210") for storage/display,
+ * or undefined when either half is missing.
+ */
+export const toE164 = (
+  dialCode: string | null | undefined,
+  nationalNumber: string | null | undefined,
+): string | undefined => {
+  const code = extractDialCode(dialCode);
+  const digits = toPhoneDigits(nationalNumber);
+  return code && digits ? `${code}${digits}` : undefined;
 };

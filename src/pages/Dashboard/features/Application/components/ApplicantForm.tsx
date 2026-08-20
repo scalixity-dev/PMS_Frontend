@@ -3,7 +3,7 @@ import { Upload, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import ImageCropModal from '../../Tenants/components/ImageCropModal';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/utils/phone.utils';
 import { useToast } from '../../../../../components/common/Toast';
 
 
@@ -174,25 +174,11 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
             }
         }
 
-        // Phone format validation (basic - allows various international formats)
+        // Phone format validation - checked against the selected country's
+        // actual numbering-plan rules rather than a generic digit count.
         if (key === 'phoneNumber' && value) {
-            // Remove spaces, dashes, parentheses, and plus signs to count actual digits
-            const digitsOnly = value.replace(/[\s\-\+\(\)]/g, '');
-            const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-
-            // Check if it contains only valid characters
-            if (!phoneRegex.test(value)) {
-                return 'Please enter a valid phone number';
-            }
-
-            // Check if it has at least 4 digits (minimum for most countries)
-            // and at most 15 digits (ITU-T E.164 standard maximum)
-            if (digitsOnly.length < 4) {
-                return 'Phone number must contain at least 4 digits';
-            }
-
-            if (digitsOnly.length > 15) {
-                return 'Phone number cannot exceed 15 digits';
+            if (!isValidPhoneNumber(data.phoneCountryCode, value)) {
+                return 'Please enter a valid phone number for the selected country';
             }
         }
 

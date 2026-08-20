@@ -3,7 +3,7 @@ import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/utils/phone.utils';
 
 
 export interface OccupantFormData {
@@ -166,23 +166,8 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                 if (!value || value.trim() === '') {
                     return 'Phone number is required';
                 }
-                // Phone format validation (allows various international formats)
-                const digitsOnly = value.replace(/[\s\-\+\(\)]/g, '');
-                const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-
-                // Check if it contains only valid characters
-                if (!phoneRegex.test(value)) {
-                    return 'Please enter a valid phone number';
-                }
-
-                // Check if it has at least 4 digits (minimum for most countries)
-                // and at most 15 digits (ITU-T E.164 standard maximum)
-                if (digitsOnly.length < 4) {
-                    return 'Phone number must contain at least 4 digits';
-                }
-
-                if (digitsOnly.length > 15) {
-                    return 'Phone number cannot exceed 15 digits';
+                if (!isValidPhoneNumber(formData.phoneCountryCode, value)) {
+                    return 'Please enter a valid phone number for the selected country';
                 }
                 break;
             case 'dob': {

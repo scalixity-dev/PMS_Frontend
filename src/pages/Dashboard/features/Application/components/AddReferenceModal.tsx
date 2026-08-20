@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/utils/phone.utils';
 
 export interface ReferenceFormData {
     contactName: string;
@@ -122,11 +122,8 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                 break;
             case 'contactNumber':
                 if (!value || value.trim() === '') return 'Contact Number is required';
-                {
-                    const digitsOnly = value.replace(/\D/g, '');
-                    if (digitsOnly.length < 4 || digitsOnly.length > 15) {
-                        return 'Phone number must be between 4 and 15 digits';
-                    }
+                if (!isValidPhoneNumber(formData.phoneCountryCode, value)) {
+                    return 'Please enter a valid phone number for the selected country';
                 }
                 break;
             case 'relationship':

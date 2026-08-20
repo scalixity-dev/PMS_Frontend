@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
 
 interface FormData {
     firstName: string;
@@ -26,6 +26,7 @@ const AddServiceProModal: React.FC<AddServiceProModalProps> = ({ isOpen, onClose
     });
 
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+    const [phoneError, setPhoneError] = useState<string | null>(null);
 
     // Reset stale state when modal opens
     useEffect(() => {
@@ -50,6 +51,11 @@ const AddServiceProModal: React.FC<AddServiceProModalProps> = ({ isOpen, onClose
     };
 
     const handleSubmit = () => {
+        if (formData.phone && !isValidPhoneNumberLoose(formData.phone)) {
+            setPhoneError('Please enter a valid phone number');
+            return;
+        }
+        setPhoneError(null);
         onSave(formData);
         onClose();
     };
@@ -132,6 +138,7 @@ const AddServiceProModal: React.FC<AddServiceProModalProps> = ({ isOpen, onClose
                             placeholder="111-111-1111"
                             className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
                         />
+                        {phoneError && <p className="text-red-500 text-xs mt-1 ml-1">{phoneError}</p>}
                     </div>
 
                     {/* Company Name */}

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { serviceProviderService, type CreateServiceProviderDto } from '../../../services/service-provider.service';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
+import { isValidPincode } from '@/utils/pincode.utils';
 import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 
 const SUB_CATEGORIES: Record<string, string[]> = {
@@ -47,6 +48,16 @@ const BecomeServiceProvider: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!isValidPhoneNumberLoose(formData.phoneNumber)) {
+      setError('Please enter a valid phone number');
+      return;
+    }
+    if (!isValidPincode(formData.zipCode)) {
+      setError('Please enter a valid zip code');
+      return;
+    }
+
     setLoading(true);
     try {
       await serviceProviderService.selfRegister(formData);

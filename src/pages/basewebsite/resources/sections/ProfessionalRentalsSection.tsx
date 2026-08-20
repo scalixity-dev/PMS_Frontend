@@ -5,7 +5,7 @@ export const ProfessionalRentalsSection = () => {
         <HeroCard
             title="Professional rental forms at your fingertips"
             betweenTitleAndDescription="Each form has been thoroughly vetted by real estate attorneys to ensure compliance, accuracy, and protection for landlords. Plus, with built-in customization options, you can personalize documents while maintaining legal integrity."
-            description="Free with your SmartTenantAICloud Pro/Business plans or available for purchase on Starter/Growth plans."
+            description="Free with your SmartTenantAI Pro/Business plans or available for purchase on Starter/Growth plans."
             features={[]}
             learnMoreLabel=""
             showStamp={false}

@@ -311,7 +311,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef, LeaseInsuranceProps>
                     <div className="flex flex-col gap-1.5">
                         <h3 className="text-[22px] font-medium text-[#1A1A1A]">Insurance</h3>
                         <p className="text-[#4B5563] text-[15px] font-medium leading-none">
-                            Smart Tenant AI
+                            SmartTenantAI
                         </p>
                     </div>
 

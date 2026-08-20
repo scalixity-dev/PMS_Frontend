@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumber } from '../../../../../utils/phone.utils';
 
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
@@ -190,9 +190,8 @@ const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, 
             newErrors.agentEmail = 'Invalid email format';
         }
 
-        // Basic phone validation
-        if (agentPhone.trim() && agentPhone.length < 5) {
-            newErrors.agentPhone = 'Phone number too short';
+        if (agentPhone.trim() && !isValidPhoneNumber(phoneCountryCode, agentPhone)) {
+            newErrors.agentPhone = 'Please enter a valid phone number for the selected country';
         }
 
         if (Object.keys(newErrors).length > 0) {

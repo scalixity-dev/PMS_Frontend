@@ -8,7 +8,7 @@ const RentalApplicationSection: React.FC = () => {
     <HeroCard
       badge="Rental Applications"
       title="List, apply, sign—all in one place"
-      description="Landlords report reduced vacancy time and improved occupancy by 15% with SmartTenantAICloud's leasing tools."
+      description="Landlords report reduced vacancy time and improved occupancy by 15% with SmartTenantAI's leasing tools."
       features={features}
       showStamp={false}
       learnMoreLabel=""

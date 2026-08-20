@@ -7,7 +7,8 @@ import { Eye, EyeOff, Search, ChevronDown } from 'lucide-react';
 import { useSignUpStore } from '../store/signUpStore';
 import { useRegister, useUpdateProfile, useGetCurrentUser } from '../../../../../hooks/useAuthQueries';
 import { authService } from '../../../../../services/auth.service';
-import { formatPhoneNumber, extractDialCode, toPhoneDigits } from '@/utils/phone.utils';
+import { formatPhoneNumber, extractDialCode, toPhoneDigits, isValidPhoneNumber } from '@/utils/phone.utils';
+import { isValidPincode } from '@/utils/pincode.utils';
 import { API_ENDPOINTS } from '../../../../../config/api.config';
 import { toFriendlyErrorMessage } from '../../../../../utils/errorMessage.utils';
 
@@ -229,11 +230,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
   const getPhoneError = (rawPhone: string | null | undefined): string | null => {
     const digits = toPhoneDigits(rawPhone);
     if (!digits) return null;
-    if (digits.length < 6 || digits.length > 15) {
-      return 'Please enter a valid phone number (6-15 digits)';
-    }
     if (!formData.phoneCountryCode) {
       return 'Please select a country code for your phone number';
+    }
+    if (!isValidPhoneNumber(formData.phoneCountryCode, rawPhone)) {
+      return 'Please enter a valid phone number for the selected country';
     }
     return null;
   };
@@ -263,8 +264,8 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
     if (!pincode) {
       setPincodeError('Please enter your pincode');
       isValid = false;
-    } else if (!/^[A-Za-z0-9\s-]{3,12}$/.test(pincode)) {
-      setPincodeError('Pincode must be 3-12 characters (letters, digits, spaces and hyphens only)');
+    } else if (!isValidPincode(pincode)) {
+      setPincodeError('Please enter a valid pincode');
       isValid = false;
     } else {
       setPincodeError(null);

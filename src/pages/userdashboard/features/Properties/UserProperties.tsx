@@ -120,6 +120,14 @@ const Properties: React.FC = () => {
     return stored !== null ? stored === 'true' : true; // Default to true only if no stored value
   });
 
+  // Clears manual filter overrides AND turns off "My Preferences" so preference-based
+  // location/beds/pets criteria stop being reapplied on the next fetch.
+  const handleClearAllFilters = () => {
+    setUsePreferences(false);
+    localStorage.setItem('propertyPreferencesEnabled', 'false');
+    resetPropertyFilters();
+  };
+
   const [prefsLoaded, setPrefsLoaded] = useState(false); // Track if preferences have been loaded
   const [currentPage, setCurrentPage] = useState(1); // Pagination state
   const [userPreferences, setUserPreferences] = useState<{
@@ -501,7 +509,7 @@ const Properties: React.FC = () => {
         isOpen={isPropertyFiltersOpen}
         onClose={() => setIsPropertyFiltersOpen(false)}
         onApply={handleApplyFilters}
-        onReset={resetPropertyFilters}
+        onReset={handleClearAllFilters}
         userPreferences={usePreferences ? userPreferences : null}
         initialFilters={filters}
         availableAmenities={availableAmenities}
@@ -640,7 +648,7 @@ const Properties: React.FC = () => {
                 <div className="col-span-full py-20 text-center">
                   <p className="text-gray-500 text-lg">No properties found matching your criteria.</p>
                   <button
-                    onClick={resetPropertyFilters}
+                    onClick={handleClearAllFilters}
                     className="mt-4 text-[var(--dashboard-accent)] font-medium hover:underline"
                   >
                     Clear all filters

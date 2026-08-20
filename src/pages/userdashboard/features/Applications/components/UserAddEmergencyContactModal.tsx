@@ -3,7 +3,7 @@ import { Check, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
 import BaseModal from '@/components/common/modals/BaseModal';
 import type { EmergencyContactFormData } from '../store/userApplicationStore';
-import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumber } from '../../../../../utils/phone.utils';
 
 
 interface UserAddEmergencyContactModalProps {
@@ -126,11 +126,8 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
                     return 'Please select a country code first';
                 }
                 if (!value || value.trim() === '') return 'Phone Number is required';
-                {
-                    const digitsOnly = value.replace(/\D/g, '');
-                    if (digitsOnly.length < 4 || digitsOnly.length > 15) {
-                        return 'Phone number must be between 4 and 15 digits';
-                    }
+                if (!isValidPhoneNumber(formData.phoneCountryCode, value)) {
+                    return 'Please enter a valid phone number for the selected country';
                 }
                 break;
             case 'details':

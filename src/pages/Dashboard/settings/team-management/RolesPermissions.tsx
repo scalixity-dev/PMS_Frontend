@@ -11,7 +11,7 @@ import {
     useEnableTeamMember,
 } from "../../../../hooks/useTeamQueries";
 import { useToast } from "../../../../components/common/Toast";
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
 import { formatRole } from '@/utils/roleIcon';
 import { usePlanFeatures } from "../../../../hooks/usePlanFeatures";
 import { toFriendlyErrorMessage } from "@/utils/errorMessage.utils";
@@ -183,6 +183,10 @@ const InviteModal = memo(({
         }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
             setEmailError('Please enter a valid email address');
+            return;
+        }
+        if (data.phoneNumber && !isValidPhoneNumberLoose(data.phoneNumber)) {
+            setSubmitError('Please enter a valid phone number');
             return;
         }
 

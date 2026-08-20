@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { formatPhoneNumber } from '../../../../../utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose } from '../../../../../utils/phone.utils';
 
 import { createPortal } from 'react-dom';
 import { X, Lightbulb } from 'lucide-react';
@@ -120,6 +120,10 @@ const AddLoanModal: React.FC<AddLoanModalProps> = ({ isOpen, onClose, onAdd, ini
 
         if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             newErrors.email = 'Invalid email format';
+        }
+
+        if (phone.trim() && !isValidPhoneNumberLoose(phone)) {
+            newErrors.phone = 'Please enter a valid phone number';
         }
 
         if (Object.keys(newErrors).length > 0) {
@@ -374,9 +378,10 @@ const AddLoanModal: React.FC<AddLoanModalProps> = ({ isOpen, onClose, onAdd, ini
                                     value={phone}
                                     onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
 
-                                    className={inputClasses}
+                                    className={cn(inputClasses, errors.phone && 'border-red-500 focus:ring-red-500/20')}
                                     placeholder="111-111-1111"
                                 />
+                                {errors.phone && <p className="text-red-600 text-xs mt-1 ml-1">{errors.phone}</p>}
                             </div>
                         </div>
 

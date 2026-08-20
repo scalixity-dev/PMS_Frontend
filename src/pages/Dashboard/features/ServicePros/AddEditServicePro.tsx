@@ -4,7 +4,8 @@ import { ChevronLeft, Plus, Trash2, Upload, FileText, X, Search, ChevronDown } f
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from '../../components/CustomDropdown';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/utils/phone.utils';
+import { isValidPincode } from '@/utils/pincode.utils';
 import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 import ImageCropModal from '../Tenants/components/ImageCropModal';
 
@@ -537,12 +538,20 @@ const AddEditServicePro = () => {
         if (!formData.general.lastName) newErrors.lastName = 'Last Name is required';
         if (!formData.category.category) newErrors.category = 'Category is required';
         if (!formData.general.email) newErrors.email = 'Email is required';
-        if (!formData.general.phone) newErrors.phone = 'Phone is required';
+        if (!formData.general.phone) {
+            newErrors.phone = 'Phone is required';
+        } else if (!isValidPhoneNumber(formData.general.phoneCountryCode, formData.general.phone)) {
+            newErrors.phone = 'Please enter a valid phone number for the selected country';
+        }
         if (!formData.address.address) newErrors.address = 'Address is required';
         if (!formData.address.country) newErrors.country = 'Country is required';
         if (!formData.address.state) newErrors.state = 'State is required';
         if (!formData.address.city) newErrors.city = 'City is required';
-        if (!formData.address.zip) newErrors.zip = 'Zip Code is required';
+        if (!formData.address.zip) {
+            newErrors.zip = 'Zip Code is required';
+        } else if (!isValidPincode(formData.address.zip)) {
+            newErrors.zip = 'Please enter a valid zip code';
+        }
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);

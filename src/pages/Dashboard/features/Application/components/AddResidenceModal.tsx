@@ -5,7 +5,8 @@ import type { ICountry, IState, ICity } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
 import { cn } from '@/lib/utils';
-import { formatPhoneNumber } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/utils/phone.utils';
+import { isValidPincode } from '@/utils/pincode.utils';
 
 
 export interface ResidenceFormData {
@@ -256,6 +257,10 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             }
         }
 
+        if (key === 'zip' && value && !isValidPincode(value)) {
+            return 'Please enter a valid zip code';
+        }
+
         if (key === 'moveInDate') {
             if (!value) return 'Move in date is required';
             const dateVal = value instanceof Date ? value : new Date(value);
@@ -278,8 +283,11 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             if (key === 'landlordName' && (!value || value.trim() === '')) {
                 return 'Landlord name is required';
             }
-            if (key === 'landlordPhone' && (!value || value.trim() === '')) {
-                return 'Landlord phone is required';
+            if (key === 'landlordPhone') {
+                if (!value || value.trim() === '') return 'Landlord phone is required';
+                if (!isValidPhoneNumber(formData.landlordPhoneCountryCode, value)) {
+                    return 'Please enter a valid phone number for the selected country';
+                }
             }
             if (key === 'landlordEmail') {
                 if (!value || value.trim() === '') {

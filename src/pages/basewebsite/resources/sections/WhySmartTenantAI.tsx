@@ -1,7 +1,7 @@
 import React from 'react';
 import HeroCard from '../../../../components/common/cards/HeroCard';
 
-const WhySmartTenantAICloud: React.FC = () => {
+const WhySmartTenantAI: React.FC = () => {
   const features = [
     'Free 14 day trial',
     'Credit card required',
@@ -18,7 +18,8 @@ const WhySmartTenantAICloud: React.FC = () => {
         learnMoreLabel=""
         showStamp={false}
         showBackgroundCard={false}
-        imageSrc="/whySmartTenantAICloudDashboard.png"
+        imageSrc="/whyPmsCloudDashboard.png"
+        imageAlt="SmartTenantAI dashboard overview"
         imageWidth={450}
         imageHeight={500}
         backgroundImageSrc="/bg_vector.png"
@@ -34,6 +35,6 @@ const WhySmartTenantAICloud: React.FC = () => {
   );
 };
 
-export default WhySmartTenantAICloud;
+export default WhySmartTenantAI;
 
 

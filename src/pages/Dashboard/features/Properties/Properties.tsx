@@ -17,6 +17,7 @@ import {
     propertyQueryKeys,
 } from '../../../../hooks/usePropertyQueries';
 import { usePropertyStore } from '../../../../stores/propertyStore';
+import { dashboardQueryKeys } from '../../../../hooks/useDashboardQueries';
 import { useToast } from '../../../../components/common/Toast';
 
 // Property interface for the component
@@ -292,6 +293,8 @@ const Properties: React.FC = () => {
             // Invalidate React Query cache so the active and deleted lists refetch automatically
             await queryClient.invalidateQueries({ queryKey: propertyQueryKeys.lists() });
             await queryClient.invalidateQueries({ queryKey: propertyQueryKeys.deleted() });
+            // Refresh dashboard stats so the Properties & Units count reflects the deletion immediately.
+            await queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.all });
 
             // Clear selection
             setSelectedProperties(new Set());
