@@ -48,6 +48,63 @@ describe('AUTO_FILL_FIELDS', () => {
     assert.equal(byLabel.get('Tenant Full Name'), 'tenantName');
   });
 
+  test('covers the US lease fields the client asked for', () => {
+    const byLabel = new Map(AUTO_FILL_FIELDS.map((f) => [f.label, f.token]));
+
+    // Parties, jurisdiction and money terms a US residential lease needs.
+    assert.equal(byLabel.get('Landlord Full Name'), 'landlordName');
+    assert.equal(byLabel.get('Property State'), 'propertyState');
+    assert.equal(byLabel.get('Property City'), 'propertyCity');
+    assert.equal(byLabel.get('Property ZIP'), 'propertyZip');
+    assert.equal(byLabel.get('Unit Number'), 'unitNumber');
+    assert.equal(byLabel.get('Move-in Date'), 'moveInDate');
+    assert.equal(byLabel.get('Lease Term (Months)'), 'leaseTermMonths');
+    assert.equal(byLabel.get('Late Fee Grace Period'), 'lateFeeGracePeriod');
+    assert.equal(byLabel.get('Tenant Utilities'), 'tenantUtilities');
+  });
+
+  test('the auto-filled set matches what the renderer produces', () => {
+    // Cross-repo contract. The mirror of this list lives in the backend's
+    // lease-auto-values.spec.ts, which asserts buildLeaseAutoValues emits
+    // exactly these tokens for a fully populated lease. If either side moves,
+    // one of the two tests goes red instead of a chip quietly claiming to
+    // auto-fill something the server never sends.
+    const auto = AUTO_FILL_FIELDS.filter((f) => f.resolvedFromLease)
+      .map((f) => f.token)
+      .sort();
+
+    assert.deepEqual(auto, [
+      'dailyRentLateFees',
+      'depositAmount',
+      'endDate',
+      'landlordEmail',
+      'landlordName',
+      'landlordUtilities',
+      'lateFeeAmount',
+      'lateFeeGracePeriod',
+      'leaseNumber',
+      'leaseTermMonths',
+      'monthlyRent',
+      'moveInDate',
+      'numberOfBaths',
+      'numberOfBeds',
+      'propertyAddress',
+      'propertyCity',
+      'propertyName',
+      'propertyState',
+      'propertyStreet',
+      'propertyZip',
+      'proratedRent',
+      'squareFeet',
+      'startDate',
+      'tenantEmail',
+      'tenantName',
+      'tenantUtilities',
+      'todayDate',
+      'unitNumber',
+    ]);
+  });
+
   test('marks which fields the server fills on its own', () => {
     // The rest still work, but the user has to type them in the wizard, so the
     // UI has to be able to say which is which.
