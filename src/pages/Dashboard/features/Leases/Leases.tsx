@@ -261,6 +261,7 @@ const Leases: React.FC = () => {
 
     const handleEditClick = (e: React.MouseEvent, item: LeaseItem) => {
         e.stopPropagation();
+        setSelectedLeaseId(item.id);
         setSelectedLeaseData(item);
         setIsEditModalOpen(true);
     };
