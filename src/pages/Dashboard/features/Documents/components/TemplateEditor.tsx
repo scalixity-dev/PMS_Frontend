@@ -6,6 +6,13 @@ import TiptapEditor from '../../../../../components/common/Editor/TiptapEditor';
 import DocumentPreviewModal from './DocumentPreviewModal';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
 import { AUTO_FILL_FIELDS, tokenForLabel, type AutoFillField } from '../autoFillFields';
+import {
+    SIGNATURE_FIELDS,
+    signatureAnchor,
+    signatureLabel,
+    type SignatureKind,
+    type SignatureParty,
+} from '../signatureFields';
 
 interface TemplateEditorProps {
     initialEditorContent?: string;
@@ -39,6 +46,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     signatureActionsSlot,
 }) => {
     const [activeTab, setActiveTab] = useState<'fields' | 'autoFill'>('fields');
+    // Which signature field is waiting for the author to say whose it is.
+    const [pendingSignature, setPendingSignature] = useState<SignatureKind | null>(null);
     const [editorContent, setEditorContent] = useState(initialEditorContent);
     const [localDefaultSignature, setLocalDefaultSignature] = useState(true);
     const isDefaultSignature = isDefaultSignatureProp !== undefined ? isDefaultSignatureProp : localDefaultSignature;
@@ -164,6 +173,17 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
      * click drops the element at the cursor instead. This is the path that
      * always works, whatever the window height.
      */
+    const insertSignature = (kind: SignatureKind, party: SignatureParty) => {
+        const ed = editorRef.current;
+        setPendingSignature(null);
+        if (!ed) return;
+
+        ed.chain()
+            .focus()
+            .insertSignatureField(signatureLabel(kind, party), signatureAnchor(kind, party))
+            .run();
+    };
+
     const insertAtCursor = (label: string, isAutoFill: boolean) => {
         const ed = editorRef.current;
         if (!ed) return;
@@ -303,50 +323,57 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 {/* Tab Content */}
                 <div className="p-4 md:p-10">
                     {activeTab === 'fields' ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                            {/* Signature */}
-                            <div
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, 'Signature')}
-                                onDragEnd={stopEdgeAutoScroll}
-                                onClick={() => insertAtCursor('Signature', false)}
-                                className="bg-[#88D94C] p-4 rounded-2xl text-white shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all"
-                            >
-                                <h3 className="font-extrabold text-lg mb-1 ">Signature</h3>
-                                <p className="text-[11px] opacity-90 leading-tight font-medium">Add a signature field for tenant/landlord signing.</p>
-                            </div>
-                            {/* Initials */}
-                            <div
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, 'Initials')}
-                                onDragEnd={stopEdgeAutoScroll}
-                                onClick={() => insertAtCursor('Initials', false)}
-                                className="bg-[#88D94C] p-4 rounded-2xl text-white shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all"
-                            >
-                                <h3 className="font-extrabold text-lg mb-1">Initials</h3>
-                                <p className="text-[11px] opacity-90 leading-tight font-medium">Require initials on clauses you want</p>
-                            </div>
-                            {/* Date Signed */}
-                            <div
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, 'Date Signed')}
-                                onDragEnd={stopEdgeAutoScroll}
-                                onClick={() => insertAtCursor('Date Signed', false)}
-                                className="bg-[#88D94C] p-4 rounded-2xl text-white shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all"
-                            >
-                                <h3 className="font-extrabold text-lg mb-1">Date Signed</h3>
-                                <p className="text-[11px] opacity-90 leading-tight font-medium">Date of the document signed</p>
-                            </div>
-                            {/* Textbox */}
-                            <div
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, 'Textbox')}
-                                onDragEnd={stopEdgeAutoScroll}
-                                onClick={() => insertAtCursor('Textbox', false)}
-                                className="bg-[#88D94C] p-4 rounded-2xl text-white shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all"
-                            >
-                                <h3 className="font-extrabold text-lg mb-1">Textbox</h3>
-                                <p className="text-[11px] opacity-90 leading-tight font-medium">Add and require additional information</p>
+                        <div className="mb-8">
+                            <p className="text-xs text-gray-500 mb-5">
+                                Signature fields belong to one party. Pick a field and choose whose it is,
+                                and DocuSign places their box exactly there.
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {SIGNATURE_FIELDS.map((field) => (
+                                    <div key={field.kind} className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPendingSignature(pendingSignature === field.kind ? null : field.kind)}
+                                            className="w-full text-left bg-[#88D94C] p-4 rounded-2xl text-white shadow-[0px_4px_4px_0px_#00000040] hover:opacity-95 transition-all"
+                                        >
+                                            <h3 className="font-extrabold text-lg mb-1">{field.label}</h3>
+                                            <p className="text-[11px] opacity-90 leading-tight font-medium">{field.description}</p>
+                                        </button>
+
+                                        {pendingSignature === field.kind && (
+                                            <div className="absolute z-20 left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 p-3">
+                                                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Whose {field.label.toLowerCase()}?</p>
+                                                <div className="flex flex-col gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => insertSignature(field.kind, 'landlord')}
+                                                        className="px-3 py-2 rounded-lg bg-[#3D7475] text-white text-sm font-bold hover:bg-[#2c5251] transition-colors"
+                                                    >
+                                                        Landlord (you)
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => insertSignature(field.kind, 'tenant')}
+                                                        className="px-3 py-2 rounded-lg bg-[#88D94C] text-white text-sm font-bold hover:opacity-90 transition-colors"
+                                                    >
+                                                        Tenant
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+
+                                <div
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, 'Textbox')}
+                                    onDragEnd={stopEdgeAutoScroll}
+                                    onClick={() => insertAtCursor('Textbox', false)}
+                                    className="bg-[#88D94C] p-4 rounded-2xl text-white shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all"
+                                >
+                                    <h3 className="font-extrabold text-lg mb-1">Textbox</h3>
+                                    <p className="text-[11px] opacity-90 leading-tight font-medium">Add and require additional information</p>
+                                </div>
                             </div>
                         </div>
                     ) : (

@@ -106,6 +106,7 @@ export const AUTO_FILL_FIELDS: AutoFillField[] = [
     token: 'emergencyContactEmail',
     description: 'Emergency contact for the tenant.',
     group: 'Parties',
+    resolvedFromLease: true,
   },
 
   // Property
@@ -184,6 +185,7 @@ export const AUTO_FILL_FIELDS: AutoFillField[] = [
     token: 'listOfEquipment',
     description: 'Appliances and equipment included.',
     group: 'Property',
+    resolvedFromLease: true,
   },
 
   // Money
@@ -213,6 +215,7 @@ export const AUTO_FILL_FIELDS: AutoFillField[] = [
     token: 'holdingDeposit',
     description: 'Deposit taken to hold the property.',
     group: 'Money',
+    resolvedFromLease: true,
   },
   {
     label: 'Daily Rent Late Fees',
@@ -240,6 +243,7 @@ export const AUTO_FILL_FIELDS: AutoFillField[] = [
     token: 'rentDueDay',
     description: 'Day of the month rent is due, e.g. 1st.',
     group: 'Money',
+    resolvedFromLease: true,
   },
   {
     label: 'NSF / Returned Check Fee',
@@ -252,6 +256,7 @@ export const AUTO_FILL_FIELDS: AutoFillField[] = [
     token: 'petCharge',
     description: 'Pet rent or one-off pet fee.',
     group: 'Money',
+    resolvedFromLease: true,
   },
 
   // Utilities
@@ -260,18 +265,21 @@ export const AUTO_FILL_FIELDS: AutoFillField[] = [
     token: 'electricityProvider',
     description: 'Supplier for electricity.',
     group: 'Utilities',
+    resolvedFromLease: true,
   },
   {
     label: 'Gas Provider',
     token: 'gasProvider',
     description: 'Supplier for gas.',
     group: 'Utilities',
+    resolvedFromLease: true,
   },
   {
     label: 'Internet Provider',
     token: 'internetProvider',
     description: 'Supplier for internet.',
     group: 'Utilities',
+    resolvedFromLease: true,
   },
   {
     label: 'Landlord Utilities',
@@ -298,18 +306,21 @@ export const AUTO_FILL_FIELDS: AutoFillField[] = [
     token: 'numberOfOccupants',
     description: 'People permitted to occupy the unit.',
     group: 'General',
+    resolvedFromLease: true,
   },
   {
     label: 'Parking Space',
     token: 'parkingSpace',
     description: 'Assigned parking space or stall.',
     group: 'General',
+    resolvedFromLease: true,
   },
   {
     label: 'Governing Law State',
     token: 'governingLawState',
     description: 'State whose law governs the agreement.',
     group: 'General',
+    resolvedFromLease: true,
   },
 ];
 

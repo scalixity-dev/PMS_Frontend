@@ -45,21 +45,23 @@ describe('extractTemplateVariables', () => {
   });
 
   test('marks the ones the lease fills in', () => {
-    const vars = extractTemplateVariables('{{startDate}} {{petCharge}}');
+    // nsfFee is one of the two fields with no stored source, so it stays
+    // manual and makes a stable counter-example here.
+    const vars = extractTemplateVariables('{{startDate}} {{nsfFee}}');
     const byKey = new Map(vars.map((v) => [v.key, v]));
 
     assert.equal(byKey.get('startDate')?.autoFilled, true);
-    assert.equal(byKey.get('petCharge')?.autoFilled, false);
+    assert.equal(byKey.get('nsfFee')?.autoFilled, false);
   });
 
   test('does not demand a value for something the lease supplies', () => {
     // Marking an auto-filled field required would make the author retype the
     // lease start date into a form to satisfy a red asterisk.
-    const vars = extractTemplateVariables('{{startDate}} {{petCharge}}');
+    const vars = extractTemplateVariables('{{startDate}} {{nsfFee}}');
     const byKey = new Map(vars.map((v) => [v.key, v]));
 
     assert.equal(byKey.get('startDate')?.required, false);
-    assert.equal(byKey.get('petCharge')?.required, true);
+    assert.equal(byKey.get('nsfFee')?.required, true);
   });
 
   test('types a date field as a date and a money field as a number', () => {

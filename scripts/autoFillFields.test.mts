@@ -76,7 +76,13 @@ describe('AUTO_FILL_FIELDS', () => {
     assert.deepEqual(auto, [
       'dailyRentLateFees',
       'depositAmount',
+      'electricityProvider',
+      'emergencyContactEmail',
       'endDate',
+      'gasProvider',
+      'governingLawState',
+      'holdingDeposit',
+      'internetProvider',
       'landlordEmail',
       'landlordName',
       'landlordUtilities',
@@ -84,10 +90,14 @@ describe('AUTO_FILL_FIELDS', () => {
       'lateFeeGracePeriod',
       'leaseNumber',
       'leaseTermMonths',
+      'listOfEquipment',
       'monthlyRent',
       'moveInDate',
       'numberOfBaths',
       'numberOfBeds',
+      'numberOfOccupants',
+      'parkingSpace',
+      'petCharge',
       'propertyAddress',
       'propertyCity',
       'propertyName',
@@ -95,6 +105,7 @@ describe('AUTO_FILL_FIELDS', () => {
       'propertyStreet',
       'propertyZip',
       'proratedRent',
+      'rentDueDay',
       'squareFeet',
       'startDate',
       'tenantEmail',
@@ -103,6 +114,16 @@ describe('AUTO_FILL_FIELDS', () => {
       'todayDate',
       'unitNumber',
     ]);
+  });
+
+  test('only the two fields with no data source are left manual', () => {
+    // Everything else now resolves from the lease. These two are landlord
+    // policy, not stored data, so the wizard asks for them.
+    const manual = AUTO_FILL_FIELDS.filter((f) => !f.resolvedFromLease)
+      .map((f) => f.token)
+      .sort();
+
+    assert.deepEqual(manual, ['noticePeriodDays', 'nsfFee']);
   });
 
   test('marks which fields the server fills on its own', () => {

@@ -8,6 +8,7 @@ declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     autoFillNode: {
       insertAutoFillNode: (label: string, token?: string) => ReturnType;
+      insertSignatureField: (label: string, anchor: string) => ReturnType;
     };
   }
 }
@@ -45,6 +46,11 @@ export const AutoFillNode = Node.create({
           element.textContent ??
           '',
       },
+      /** DocuSign anchor for a signature/initials/date field, if this is one. */
+      anchor: {
+        default: '',
+        parseHTML: (element) => element.getAttribute('data-anchor') ?? '',
+      },
       token: {
         default: '',
         parseHTML: (element) => {
@@ -71,17 +77,34 @@ export const AutoFillNode = Node.create({
   renderHTML({ HTMLAttributes, node }) {
     const token = typeof node.attrs.token === 'string' ? node.attrs.token : '';
     const label = typeof node.attrs.label === 'string' ? node.attrs.label : '';
+    const anchor =
+      typeof node.attrs.anchor === 'string' ? node.attrs.anchor : '';
 
     const attributes = mergeAttributes(HTMLAttributes, {
       'data-auto-fill-pill': 'true',
       'data-token': token,
       'data-label': label,
-      class: 'auto-fill-pill',
+      'data-anchor': anchor,
+      class: anchor ? 'auto-fill-pill signature-pill' : 'auto-fill-pill',
     });
     // `label`/`token` are node attributes, not HTML ones. Drop the raw copies
     // mergeAttributes carries over so the markup stays valid.
     delete (attributes as Record<string, unknown>).label;
     delete (attributes as Record<string, unknown>).token;
+    delete (attributes as Record<string, unknown>).anchor;
+
+    // A signature field carries the DocuSign anchor as text, because that is
+    // what DocuSign searches the document for. It has to be invisible: printed
+    // as-is the finished lease would read "**signature_0**" where the signing
+    // box belongs. Same 1px white span the appended signature block uses.
+    if (anchor) {
+      return [
+        'span',
+        attributes,
+        ['span', { style: 'color: #ffffff; font-size: 1px;' }, anchor],
+        label,
+      ];
+    }
 
     // A pill with no known token would silently render as nothing, so fall
     // back to its label: visible and obviously unfilled beats invisible.
@@ -95,6 +118,10 @@ export const AutoFillNode = Node.create({
       dom.setAttribute('data-auto-fill-pill', 'true');
       dom.setAttribute('data-token', String(node.attrs.token ?? ''));
       dom.setAttribute('data-label', String(node.attrs.label ?? ''));
+      if (node.attrs.anchor) {
+        dom.setAttribute('data-anchor', String(node.attrs.anchor));
+        dom.classList.add('signature-pill');
+      }
       dom.contentEditable = 'false';
       dom.textContent =
         String(node.attrs.label || '') ||
@@ -114,6 +141,13 @@ export const AutoFillNode = Node.create({
               type: this.name,
               attrs: { label, token: token ?? tokenForLabel(label) ?? '' },
             })
+            .run(),
+
+      insertSignatureField:
+        (label: string, anchor: string) =>
+        ({ chain }) =>
+          chain()
+            .insertContent({ type: this.name, attrs: { label, anchor } })
             .run(),
     };
   },
