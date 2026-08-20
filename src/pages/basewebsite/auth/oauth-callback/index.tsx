@@ -28,8 +28,10 @@ const OAuthCallbackPage: React.FC = () => {
         // Get current user to check their status
         const user = await authService.getCurrentUser();
         
-        // Check if user needs additional info (new OAuth signup)
-        const needsAdditionalInfo = !user.country || !user.address || !user.phoneNumber;
+        // Check if user needs additional info (new OAuth signup).
+        // Property managers don't collect an address at signup.
+        const needsAdditionalInfo = !user.country || !user.phoneNumber ||
+          (user.role !== 'PROPERTY_MANAGER' && !user.address);
         
         if (needsAdditionalInfo) {
           // New OAuth signup - redirect to simplified registration form

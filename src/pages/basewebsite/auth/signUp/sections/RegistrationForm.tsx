@@ -275,7 +275,8 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
     setPhoneError(phoneErr);
     if (phoneErr) isValid = false;
 
-    if ((formData.address ?? '').length > 500) {
+    // Property managers don't collect an address at signup.
+    if (formData.accountType !== 'manage' && (formData.address ?? '').length > 500) {
       setAddressError('Address is too long (maximum 500 characters)');
       isValid = false;
     } else {
@@ -312,7 +313,8 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
           country: formData.country,
           state: formData.state,
           pincode: formData.pincode,
-          address: formData.address,
+          // Property managers don't collect an address at signup.
+          ...(formData.accountType !== 'manage' ? { address: formData.address } : {}),
         });
 
         // Profile update successful - get current user and redirect
@@ -454,7 +456,6 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
         country: formData.country,
         state: formData.state,
         pincode: formData.pincode,
-        address: formData.address,
       });
 
       if (accountType === 'manage') {
@@ -742,20 +743,22 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
             </div>
           </div>
 
-          <div>
-            <label className={labelClasses}>Address</label>
-            <input
-              type="text"
-              value={formData.address || ''}
-              onChange={(e) => {
-                updateFormData('address', e.target.value);
-                if (addressError) setAddressError(null);
-              }}
-              placeholder="Ex: ABC Building, 1890 NY"
-              className={`${inputClasses()} ${addressError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-            />
-            {addressError && <p className="text-xs text-red-600 mt-1">{addressError}</p>}
-          </div>
+          {formData.accountType !== 'manage' && (
+            <div>
+              <label className={labelClasses}>Address</label>
+              <input
+                type="text"
+                value={formData.address || ''}
+                onChange={(e) => {
+                  updateFormData('address', e.target.value);
+                  if (addressError) setAddressError(null);
+                }}
+                placeholder="Ex: ABC Building, 1890 NY"
+                className={`${inputClasses()} ${addressError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+              />
+              {addressError && <p className="text-xs text-red-600 mt-1">{addressError}</p>}
+            </div>
+          )}
 
           {!isOAuthSignup && (
             <>
