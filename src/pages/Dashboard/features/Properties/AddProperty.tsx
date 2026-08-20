@@ -19,7 +19,7 @@ import UpgradeModal from '../../../../components/common/UpgradeModal';
 import { useToast } from '../../../../components/common/Toast';
 import { toFriendlyErrorMessage } from '@/utils/errorMessage.utils';
 import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES } from '../../../../config/googleMaps.config';
-import { isValidPincode } from '@/utils/pincode.utils';
+import { isValidPincode, countryName } from '@/utils/pincode.utils';
 
 interface Unit {
   unitNumber: string;
@@ -501,8 +501,8 @@ const AddProperty: React.FC = () => {
 
     if (!formData.zip.trim()) {
       errors.zip = 'Zip code is required';
-    } else if (!isValidPincode(formData.zip)) {
-      errors.zip = 'Please enter a valid zip code';
+    } else if (!isValidPincode(formData.zip, formData.country)) {
+      errors.zip = `Please enter a valid zip code for ${countryName(formData.country) ?? 'the selected country'}`;
     }
 
     if (!formData.country) {
@@ -1312,13 +1312,15 @@ const AddProperty: React.FC = () => {
                     onChange={(e) => {
                       updateFormData('zip', e.target.value);
                     }}
-                    className={`bg-white border-gray-200 ${submitted && (!formData.zip.trim() || !isValidPincode(formData.zip)) ? 'border-red-500' : ''}`}
+                    className={`bg-white border-gray-200 ${submitted && (!formData.zip.trim() || !isValidPincode(formData.zip, formData.country)) ? 'border-red-500' : ''}`}
                   />
                   {submitted && !formData.zip.trim() && (
                     <p className="text-red-500 text-xs mt-1 ml-1">Zip code is required</p>
                   )}
-                  {submitted && formData.zip.trim() && !isValidPincode(formData.zip) && (
-                    <p className="text-red-500 text-xs mt-1 ml-1">Please enter a valid zip code</p>
+                  {submitted && formData.zip.trim() && !isValidPincode(formData.zip, formData.country) && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">
+                      Please enter a valid zip code for {countryName(formData.country) ?? 'the selected country'}
+                    </p>
                   )}
                 </div>
               </div>
