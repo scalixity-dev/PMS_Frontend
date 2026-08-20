@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useState, useRef, useEffect, Suspense, type ReactNode } from "react";
 import { X } from "lucide-react";
 import DashboardNavbar from "./DashboardNavbar";
 import DashboardSidebar from "./DashboardSidebar";
@@ -226,7 +226,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           ) : showExpiredGate ? (
             <TrialExpiredGate />
           ) : (
-            children || <Outlet context={{ sidebarCollapsed }} />
+            // Scoped to the content area so a lazy-loaded page chunk only
+            // blanks the main panel, not the navbar/sidebar chrome above.
+            <Suspense fallback={<MainContentSkeleton />}>
+              {children || <Outlet context={{ sidebarCollapsed }} />}
+            </Suspense>
           )}
         </main>
       </div>
