@@ -48,6 +48,14 @@ const Notification = () => {
             markAsRead.mutate(notification.id);
         }
 
+        // Task assignments reuse the TEAM notification type (no dedicated type in
+        // the DB enum), so entityType is what actually distinguishes them —
+        // check it first or they'd route to the Team Management page instead.
+        if (notification.entityType === 'task') {
+            navigate('/dashboard/tasks');
+            return;
+        }
+
         const type = getTypeFromNotificationType(notification.type);
         switch (type) {
             case 'maintenance':

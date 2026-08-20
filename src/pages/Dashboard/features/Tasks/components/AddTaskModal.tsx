@@ -18,6 +18,17 @@ interface AddTaskModalProps {
     taskToEdit?: Task | null;
 }
 
+/**
+ * Encodes the calendar day the user picked (read via local getters, since
+ * that's how the day is actually displayed) as UTC midnight, rather than
+ * `date.toISOString()`, which converts through the browser's local offset
+ * and lands on the previous day for any positive UTC offset (e.g. IST):
+ * picking Aug 20 at local midnight is Aug 19 18:30 UTC. Backend storage
+ * mirrors this by re-deriving the day from the UTC components.
+ */
+const toCalendarDateIso = (date: Date): string =>
+    new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).toISOString();
+
 const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, taskToEdit }) => {
     const { formData, setFormData, updateFormData, resetForm } = useTaskStore();
     const createTaskMutation = useCreateTask();
@@ -27,7 +38,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
     const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
 
     // Fetch team members for assignee dropdown
-    const { data: teamMembers = [] } = useGetTeamMembers();
+    const { data: teamMembers = [], isError: isTeamMembersError, error: teamMembersError } = useGetTeamMembers();
 
     const [showExitConfirmation, setShowExitConfirmation] = React.useState(false);
     const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false, description: false });
@@ -46,12 +57,16 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
             // Populate form from taskToEdit
             const editDate = taskToEdit.date ? new Date(taskToEdit.date) : undefined;
             const editTime = taskToEdit.time || '';
-            const editAssignee = taskToEdit.name || '';
+            // `assignee` is the team member's users.id (matches teamMemberOptions'
+            // values); `name` is just the resolved display label, not selectable.
+            const editAssignee = taskToEdit.assignee || '';
             // Find property ID from property name
             const propertyObj = properties.find(p => p.propertyName === taskToEdit.property);
             const editProperty = propertyObj?.id || '';
             const editIsRecurring = taskToEdit.isRecurring || false;
-            const editFrequency = taskToEdit.frequency || '';
+            // Backend lowercases frequency for display (task.service.ts); frequencyOptions
+            // below use uppercase values ('DAILY', ...), so this needs to match on edit.
+            const editFrequency = taskToEdit.frequency ? taskToEdit.frequency.toUpperCase() : '';
             const editEndDate = taskToEdit.endDate && taskToEdit.endDate !== 'Indefinite' ? new Date(taskToEdit.endDate) : undefined;
             const editIsAllDay = taskToEdit.isAllDay || false;
 
@@ -105,6 +120,11 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
         };
     }, [isOpen]);
 
+    // Computed on every render (not memoized) so the modal doesn't keep
+    // rejecting "today" as a past date after being left open across midnight.
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
     // Property options from API
     const propertyOptions = useMemo(() => {
         return properties.map(p => ({
@@ -113,12 +133,18 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
         }));
     }, [properties]);
 
-    // Team member options for assignee dropdown
+    // Team member options for assignee dropdown. Invited-but-not-yet-accepted
+    // members aren't real users of the account yet, so they shouldn't be
+    // assignable — only members who accepted the invite (status ACTIVE).
+    // The option value is the member's own users.id (not their name/email) so
+    // the backend can resolve who to notify when a task is assigned to them.
     const teamMemberOptions = useMemo(() => {
-        return teamMembers.map(m => ({
-            value: m.name || m.email,
-            label: m.name || m.email,
-        }));
+        return teamMembers
+            .filter(m => m.status === 'ACTIVE' && !!m.userId)
+            .map(m => ({
+                value: m.userId as string,
+                label: m.name || m.email,
+            }));
     }, [teamMembers]);
 
     const frequencyOptions = [
@@ -153,18 +179,19 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
 
         try {
             // Transform form data to API format
-            // isAllDay not in backend DTO — omit. time must be non-empty for create (backend IsNotEmpty).
+            // time must be non-empty for create (backend IsNotEmpty).
             const timeValue = formData.isAllDay ? '00:00' : (formData.time || '00:00');
             const taskDto: any = {
                 title: formData.title,
                 description: formData.description || undefined,
-                date: formData.date ? formData.date.toISOString() : undefined,
+                date: formData.date ? toCalendarDateIso(formData.date) : undefined,
                 time: timeValue,
+                isAllDay: formData.isAllDay,
                 assignee: formData.assignee || undefined,
                 propertyId: formData.property || undefined,
                 isRecurring: formData.isRecurring,
                 frequency: formData.frequency ? (formData.frequency.toUpperCase() as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONCE') : undefined,
-                endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
+                endDate: formData.endDate ? toCalendarDateIso(formData.endDate) : undefined,
             };
 
             // Strip undefined keys to avoid sending them (belt-and-suspenders for validators)
@@ -313,6 +340,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                                     onChange={(date) => updateFormData('date', date)}
                                     placeholder="Select Date"
                                     disabled={isLoading}
+                                    minDate={todayStart}
                                     className={formErrors.date ? 'ring-2 ring-red-500' : ''}
                                 />
                             </div>
@@ -345,6 +373,16 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                             disabled={isLoading}
                             buttonClassName={`w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
+                        {isTeamMembersError && (
+                            <p className="text-amber-600 text-xs mt-1">
+                                {toFriendlyErrorMessage(teamMembersError, "Couldn't load team members")}
+                            </p>
+                        )}
+                        {!isTeamMembersError && teamMemberOptions.length === 0 && (
+                            <p className="text-gray-500 text-xs mt-1">
+                                No team members yet — invite one from Team settings to assign tasks.
+                            </p>
+                        )}
                     </div>
 
                     {/* Property */}
@@ -402,6 +440,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                                 onChange={(date) => updateFormData('endDate', date)}
                                 placeholder="Select End Date"
                                 disabled={isLoading}
+                                minDate={formData.date && formData.date > todayStart ? formData.date : todayStart}
                             />
                         </div>
                     )}

@@ -5,9 +5,14 @@ export interface Task {
   title: string;
   description: string;
   name: string;
+  /** The assignee's users.id, as stored — `name` is the resolved display name. */
+  assignee?: string | null;
+  /** Display name of whoever created/assigned this task. */
+  assignedBy?: string | null;
   avatar: string;
   date: string;
   time?: string;
+  isAllDay?: boolean;
   status: string;
   property: string;
   frequency: string;
@@ -20,6 +25,7 @@ export interface CreateTaskDto {
   description?: string;
   date: string;
   time: string;
+  isAllDay?: boolean;
   assignee?: string;
   propertyId?: string;
   isRecurring?: boolean;

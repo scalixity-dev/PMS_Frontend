@@ -9,6 +9,7 @@ import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useGetAllTasks, useDeleteTask, useUpdateTask } from '../../../../hooks/useTaskQueries';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
 import type { TaskFilters } from '../../../../services/task.service';
+import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 
 // Task Interface
 export interface Task {
@@ -16,6 +17,10 @@ export interface Task {
     title: string;
     description: string;
     name: string;
+    /** The assignee's users.id, as stored — `name` is the resolved display name. */
+    assignee?: string | null;
+    /** Display name of whoever created/assigned this task. */
+    assignedBy?: string | null;
     avatar: string;
     date: string;
     time?: string;
@@ -30,6 +35,20 @@ export interface Task {
 const Tasks: React.FC = () => {
     const location = useLocation();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+
+    // Team members can change a task's status but not edit its details or
+    // delete it — mirrors the backend restriction in task.controller.ts.
+    const { isTeamMember, canManage } = useTeamPermissions();
+    const canEditTasks = !isTeamMember || canManage('tasks');
+    // Actions is manager-only (edit/delete are blocked for team members);
+    // Assigned By is the reverse — a manager's own tasks were all assigned by
+    // themselves, so it's only useful in a team member's view. Property shows
+    // for everyone; its per-row cell is just blank when a task has none. Both
+    // class strings must stay as full literals (not interpolated) for
+    // Tailwind to see them.
+    const taskGridColsClass = isTeamMember
+        ? 'grid-cols-[40px_1.5fr_1.5fr_1.2fr_1fr_1.5fr_1fr_120px]'
+        : 'grid-cols-[40px_1.5fr_1.5fr_1fr_1.5fr_1fr_120px_80px]';
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
@@ -460,10 +479,18 @@ const Tasks: React.FC = () => {
 
                                     {/* Details */}
                                     <div className="space-y-1.5 text-sm">
-                                        <div className="flex">
-                                            <span className="text-gray-500 w-24">Property:</span>
-                                            <span className="font-medium text-gray-800">{task.property}</span>
-                                        </div>
+                                        {isTeamMember && task.assignedBy && (
+                                            <div className="flex">
+                                                <span className="text-gray-500 w-24">Assigned by:</span>
+                                                <span className="font-medium text-gray-800">{task.assignedBy}</span>
+                                            </div>
+                                        )}
+                                        {task.property && (
+                                            <div className="flex">
+                                                <span className="text-gray-500 w-24">Property:</span>
+                                                <span className="font-medium text-gray-800">{task.property}</span>
+                                            </div>
+                                        )}
                                         <div className="flex">
                                             <span className="text-gray-500 w-24">Date:</span>
                                             <span className="font-medium text-gray-800">{task.date}</span>
@@ -480,6 +507,7 @@ const Tasks: React.FC = () => {
                                             Assigned to <span className="font-medium text-gray-800">{task.name}</span>
                                         </div>
                                         <div className="relative" ref={mobileMenuOpen === task.id ? mobileMenuRef : null}>
+                                            {canEditTasks && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -489,7 +517,8 @@ const Tasks: React.FC = () => {
                                             >
                                                 <MoreHorizontal className="w-5 h-5 text-gray-500" />
                                             </button>
-                                            {mobileMenuOpen === task.id && (
+                                            )}
+                                            {canEditTasks && mobileMenuOpen === task.id && (
                                                 <div className="absolute right-0 bottom-full mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px] z-10">
                                                     <button
                                                         onClick={(e) => {
@@ -539,7 +568,7 @@ const Tasks: React.FC = () => {
                 <div className="hidden lg:block">
                     <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8">
                         {/* Table Header */}
-                        <div className="text-white px-6 py-4 grid grid-cols-[40px_1.5fr_1.5fr_1fr_1.5fr_1fr_120px_80px] gap-4 items-center text-sm font-medium">
+                        <div className={`text-white px-6 py-4 grid ${taskGridColsClass} gap-4 items-center text-sm font-medium`}>
                             <div className="flex items-center justify-center ml-2">
                                 <button onClick={handleSelectAll} className="flex items-center justify-center">
                                     <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${isAllSelected ? 'bg-[#7BD747]' : 'bg-white/20 border border-white/50'}`}>
@@ -549,11 +578,12 @@ const Tasks: React.FC = () => {
                             </div>
                             <div>Task Title</div>
                             <div>Assigned To</div>
+                            {isTeamMember && <div>Assigned By</div>}
                             <div>Property</div>
                             <div>Date</div>
                             <div>Frequency</div>
                             <div>Status</div>
-                            <div>Actions</div>
+                            {!isTeamMember && <div>Actions</div>}
                         </div>
                     </div>
 
@@ -571,7 +601,7 @@ const Tasks: React.FC = () => {
                                     <div
                                         key={task.id}
                                         onClick={() => setSelectedTask(task)}
-                                        className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_1.5fr_1.5fr_1fr_1.5fr_1fr_120px_80px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                        className={`bg-white rounded-2xl px-6 py-4 grid ${taskGridColsClass} gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
                                     >
                                         <div className="flex items-center justify-center">
                                             <button
@@ -594,13 +624,17 @@ const Tasks: React.FC = () => {
                                             <span className="font-semibold text-gray-800 text-sm">{task.name}</span>
                                         </div>
 
+                                        {isTeamMember && (
+                                            <div className="text-gray-600 text-sm font-medium truncate">{task.assignedBy || '—'}</div>
+                                        )}
+
                                         <div className="text-[#2E6819] text-sm font-semibold">{task.property}</div>
 
                                         <div className="text-gray-600 text-sm font-medium">{task.date}</div>
 
                                         <div className="text-gray-600 text-sm font-medium capitalize">{task.frequency}</div>
 
-                                        <div className="relative">
+                                        <div className="relative inline-block justify-self-start">
                                             <select
                                                 value={task.status}
                                                 onChange={(e) => {
@@ -623,26 +657,32 @@ const Tasks: React.FC = () => {
                                             />
                                         </div>
 
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleEditTask(task);
-                                                }}
-                                                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-700"
-                                            >
-                                                <Pencil className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteClick(task);
-                                                }}
-                                                className="p-2 hover:bg-red-50 rounded-full transition-colors text-red-500 hover:text-red-700"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                        {!isTeamMember && (
+                                            <div className="flex items-center justify-end gap-2">
+                                                {canEditTasks && (
+                                                    <>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleEditTask(task);
+                                                            }}
+                                                            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-700"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeleteClick(task);
+                                                            }}
+                                                            className="p-2 hover:bg-red-50 rounded-full transition-colors text-red-500 hover:text-red-700"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })
@@ -675,8 +715,8 @@ const Tasks: React.FC = () => {
                 isOpen={!!selectedTask}
                 onClose={() => setSelectedTask(null)}
                 task={selectedTask}
-                onEdit={() => selectedTask && handleEditTask(selectedTask)}
-                onDelete={() => selectedTask && handleDeleteClick(selectedTask)}
+                onEdit={canEditTasks ? () => selectedTask && handleEditTask(selectedTask) : undefined}
+                onDelete={canEditTasks ? () => selectedTask && handleDeleteClick(selectedTask) : undefined}
                 onStatusChange={(task, newStatus) => {
                     setSelectedTask({ ...task, status: newStatus });
                 }}

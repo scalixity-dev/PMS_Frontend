@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Calendar, User, Home, RotateCw, Pencil, Trash2, ChevronDown } from 'lucide-react';
+import { X, Calendar, User, UserCheck, Home, RotateCw, Pencil, Trash2, ChevronDown } from 'lucide-react';
 import type { Task } from '../Tasks';
 import { useUpdateTask } from '../../../../../hooks/useTaskQueries';
+import { useTeamPermissions } from '../../../../../context/TeamPermissionContext';
 
 interface TaskDetailSideModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ interface TaskDetailSideModalProps {
 
 const TaskDetailSideModal: React.FC<TaskDetailSideModalProps> = ({ isOpen, onClose, task, onEdit, onDelete, onStatusChange }) => {
     const updateTaskMutation = useUpdateTask();
+    const { isTeamMember } = useTeamPermissions();
 
     // Map frontend status to backend status
     // Accepts optional currentBackendStatus to preserve granular status when toggling between Active/Resolved
@@ -177,6 +179,20 @@ const TaskDetailSideModal: React.FC<TaskDetailSideModalProps> = ({ isOpen, onClo
                             </div>
                         </div>
 
+                        {/* Assigned by — only meaningful in a team member's view; a
+                            manager's own tasks were all assigned by themselves. */}
+                        {isTeamMember && task.assignedBy && (
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-gray-100 rounded-lg text-gray-500">
+                                    <UserCheck size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-500 uppercase">Assigned By</p>
+                                    <p className="font-semibold text-gray-800 mt-1">{task.assignedBy}</p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Date & Time */}
                         <div className="flex items-start gap-3">
                             <div className="p-2 bg-gray-100 rounded-lg text-gray-500">
@@ -210,34 +226,42 @@ const TaskDetailSideModal: React.FC<TaskDetailSideModalProps> = ({ isOpen, onClo
                         )}
 
                         {/* Property */}
-                        <div className="flex items-start gap-3">
-                            <div className="p-2 bg-gray-100 rounded-lg text-gray-500">
-                                <Home size={20} />
+                        {task.property && (
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-gray-100 rounded-lg text-gray-500">
+                                    <Home size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-500 uppercase">Property</p>
+                                    <p className="font-semibold text-[#2E6819] mt-1">{task.property}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-xs font-bold text-gray-500 uppercase">Property</p>
-                                <p className="font-semibold text-[#2E6819] mt-1">{task.property}</p>
-                            </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* Actions / Footer */}
-                    <div className="border-t pt-6 mt-8 flex gap-3">
-                        <button
-                            onClick={onEdit}
-                            className="flex-1 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-                        >
-                            <Pencil size={18} />
-                            Edit Task
-                        </button>
-                        <button
-                            onClick={onDelete}
-                            className="flex-1 bg-red-50 text-red-600 py-3 rounded-xl font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
-                        >
-                            <Trash2 size={18} />
-                            Delete Task
-                        </button>
-                    </div>
+                    {(onEdit || onDelete) && (
+                        <div className="border-t pt-6 mt-8 flex gap-3">
+                            {onEdit && (
+                                <button
+                                    onClick={onEdit}
+                                    className="flex-1 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Pencil size={18} />
+                                    Edit Task
+                                </button>
+                            )}
+                            {onDelete && (
+                                <button
+                                    onClick={onDelete}
+                                    className="flex-1 bg-red-50 text-red-600 py-3 rounded-xl font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 size={18} />
+                                    Delete Task
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>,
