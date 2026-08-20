@@ -3,6 +3,8 @@ import { User, X, Eye, EyeOff, Camera } from "lucide-react";
 import Button from "../../../../components/common/Button";
 import { authService } from "../../../../services/auth.service";
 import { useUpdateProfile } from "../../../../hooks/useAuthQueries";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
@@ -119,7 +121,6 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
   const handleChange = (field: "firstName" | "lastName" | "phoneNumber", value: string) => {
     let finalValue = value;
     if (field === "phoneNumber") {
-      finalValue = formatPhoneNumber(value);
       if (phoneError) setPhoneError("");
     }
     setFormValues((prev) => ({
@@ -131,7 +132,7 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
 
   const handleSaveClick = async () => {
     if (!isValidPhoneNumber(formValues.phoneNumber)) {
-      setPhoneError("Phone number must be between 4 and 15 digits.");
+      setPhoneError("Please enter a valid phone number for the selected country.");
       return;
     }
     setSubmitError("");
@@ -202,13 +203,13 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
 
           <div>
             <label htmlFor="phoneNumber" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Phone number</label>
-            <input
-              id="phoneNumber"
-              type="tel"
-              value={formValues.phoneNumber}
-              onChange={(event) => handleChange("phoneNumber", event.target.value)}
-              className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
-              placeholder="111-111-1111"
+            <PhoneInput
+              country={"us"}
+              value={formValues.phoneNumber && !formValues.phoneNumber.startsWith('+') ? `+1${formValues.phoneNumber}` : formValues.phoneNumber}
+              onChange={(phone) => handleChange("phoneNumber", phone ? `+${phone}` : "")}
+              inputClass="!w-full !bg-[#84CC16] !text-white placeholder-white/70 !px-6 !py-3 !rounded-full !outline-none focus:!ring-2 focus:!ring-[#3D7475]/20 transition-all !pl-14 !h-[48px]"
+              buttonClass="!bg-transparent !border-none !left-2 !top-1 hover:!bg-transparent"
+              dropdownClass="!text-gray-800"
             />
             {phoneError && <p className="text-xs text-red-500 mt-1 ml-1">{phoneError}</p>}
           </div>
@@ -710,10 +711,13 @@ export default function ProfileSettings() {
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Phone Number</label>
-            <input
-              disabled
-              value={formatPhoneNumber(profileDetails.phoneNumber)}
-              className="w-full h-10 rounded-md border border-[#E4E4E4] bg-[#F7F7F7] px-3 text-sm text-gray-800"
+            <PhoneInput
+              disabled={true}
+              country={"us"}
+              value={profileDetails.phoneNumber && !profileDetails.phoneNumber.startsWith('+') ? `+1${profileDetails.phoneNumber}` : profileDetails.phoneNumber}
+              inputClass="!w-full !h-10 !rounded-md !border !border-[#E4E4E4] !bg-[#F7F7F7] !px-3 !text-sm !text-gray-800 !pl-11 opacity-80"
+              buttonClass="!bg-transparent !border-none !left-1 opacity-80"
+              dropdownClass="!hidden"
             />
           </div>
 
