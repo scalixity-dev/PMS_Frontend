@@ -349,8 +349,9 @@ const MyPlanSettings: React.FC = () => {
                     Add payment method
                   </Button>
                   <Button
+                    variant="outline"
                     onClick={handleChangePlan}
-                    className="border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50"
+                    className="border border-gray-300 bg-white text-gray-700 px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50"
                   >
                     Choose a plan
                   </Button>
@@ -364,8 +365,9 @@ const MyPlanSettings: React.FC = () => {
                     Add payment method
                   </Button>
                   <Button
+                    variant="outline"
                     onClick={handleChangePlan}
-                    className="border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50"
+                    className="border border-gray-300 bg-white text-gray-700 px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50"
                   >
                     Change plan
                   </Button>
