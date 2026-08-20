@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import { validateLeaseTerms } from '../leaseTerms';
@@ -46,13 +46,26 @@ const EditLeaseTermsModal: React.FC<EditLeaseTermsModalProps> = ({ isOpen, onClo
     const [startDate, setStartDate] = useState<Date | undefined>(undefined);
     const [endDate, setEndDate] = useState<Date | undefined>(undefined);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const wasOpenRef = useRef(false);
 
+    /**
+     * Seeds the form only on the closed->open transition, not on every
+     * `initialData` reference change. `initialData` is a memoized object
+     * derived from a react-query result, so it gets a new reference whenever
+     * that query refetches (window refocus, another mutation writing the
+     * same lease into cache, etc). Re-running this on every such change while
+     * the modal stayed open silently overwrote whatever date the user had
+     * just picked with the original lease values.
+     */
     useEffect(() => {
-        if (isOpen && initialData) {
+        const wasOpen = wasOpenRef.current;
+        wasOpenRef.current = isOpen;
+
+        if (isOpen && !wasOpen && initialData) {
             setStartDate(parseDate(initialData.startDate));
             setEndDate(parseDate(initialData.endDate));
             setErrors({});
-        } else {
+        } else if (!isOpen) {
             setStartDate(undefined);
             setEndDate(undefined);
             setErrors({});
