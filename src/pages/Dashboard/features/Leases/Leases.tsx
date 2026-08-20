@@ -11,6 +11,7 @@ import type { BackendLease } from '../../../../services/lease.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import PlanLimitBanner from '../../../../components/common/PlanLimitBanner';
+import { buildLeaseTermsPayload } from './leaseTerms';
 
 // Define LeaseItem matching usage in this file
 export interface LeaseItem extends Lease {
@@ -270,19 +271,7 @@ const Leases: React.FC = () => {
         try {
             await updateLeaseMutation.mutateAsync({
                 id: selectedLeaseId,
-                data: {
-                    startDate: updatedData.startDate instanceof Date
-                        ? updatedData.startDate.toISOString()
-                        : typeof updatedData.startDate === 'string'
-                            ? updatedData.startDate
-                            : undefined,
-                    endDate: updatedData.endDate instanceof Date
-                        ? updatedData.endDate.toISOString()
-                        : typeof updatedData.endDate === 'string'
-                            ? updatedData.endDate
-                            : undefined,
-                    notes: updatedData.termNotes,
-                },
+                data: buildLeaseTermsPayload(updatedData, updatedData.termNotes),
             });
             setIsEditModalOpen(false);
             setSelectedLeaseData(null);

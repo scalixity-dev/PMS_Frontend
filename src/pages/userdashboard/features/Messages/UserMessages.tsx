@@ -27,6 +27,7 @@ import { useGetCurrentUser } from '../../../../hooks/useAuthQueries';
 import type { Chat } from './types';
 import { uploadChatMedia, type ChatMessage, type ChatConversation } from '../../../../services/chat.service';
 import type { ServiceRequest, Publication } from '../../utils/types';
+import { printConversation } from '@/utils/conversationPrint';
 
 function safeFormatTime(iso: string | undefined | null): string {
   if (!iso) return '';
@@ -472,7 +473,12 @@ const Messages = () => {
                   onBack={handleBackToSidebar}
                   showBackButton={showMobileChat}
                   pendingCount={pendingCount}
-                  onPrint={() => window.print()}
+                  onPrint={() => printConversation({
+                    title: `Conversation with ${activeChat.contactName}`,
+                    subtitle: [activeChat.contactRole, activeChat.propertyAddress].filter(Boolean).join(' - '),
+                    messages: activeChat.messages,
+                    printedAt: new Date(),
+                  })}
                   onDelete={() => setActiveChatId(null)}
                 />
                 {activeChat.applicationId && <ApplicationBanner applicationId={activeChat.applicationId} isUserDashboard />}

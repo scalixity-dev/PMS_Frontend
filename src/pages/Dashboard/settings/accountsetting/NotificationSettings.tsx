@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
 import { useGetNotificationSettings, useUpdateNotificationSettings } from "../../../../hooks/useNotificationQueries";
 import { usePushNotifications } from "../../../../hooks/usePushNotifications";
+import { isSettingLocked, lockedReason, type NotificationSettingKey, type NotificationSettingsState } from "../../../../utils/notificationGating";
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -29,10 +30,13 @@ interface CheckboxRowProps {
   description: string;
   checked: boolean;
   onToggle: () => void;
+  /** Set when a master switch is off, which makes this row read-only. */
+  lockedBecause?: string;
 }
 
-function CheckboxRow({ label, description, checked, onToggle }: CheckboxRowProps) {
+function CheckboxRow({ label, description, checked, onToggle, lockedBecause }: CheckboxRowProps) {
   // Styles based on logic: Green/Filled = Checked, Black/Border/BlackCheck = Unchecked
+  const locked = Boolean(lockedBecause);
 
   const boxClasses = checked
     ? "bg-[#7CD947] border-[#7CD947]"
@@ -45,7 +49,10 @@ function CheckboxRow({ label, description, checked, onToggle }: CheckboxRowProps
       <button
         type="button"
         onClick={onToggle}
-        className={`flex h-10 w-10 min-w-[40px] items-center justify-center rounded-md transition-colors ${boxClasses}`}
+        disabled={locked}
+        aria-disabled={locked}
+        title={lockedBecause}
+        className={`flex h-10 w-10 min-w-[40px] items-center justify-center rounded-md transition-all ${boxClasses} ${locked ? 'cursor-not-allowed opacity-40' : ''}`}
       >
         <svg
           width="24"
@@ -65,8 +72,12 @@ function CheckboxRow({ label, description, checked, onToggle }: CheckboxRowProps
         </svg>
       </button>
       <div className="pt-1">
-        <p className="text-[16px] font-semibold text-[#1F2933] leading-tight">{label}</p>
-        <p className="text-[14px] text-gray-500 mt-1 leading-normal">{description}</p>
+        <p className={`text-[16px] font-semibold text-[#1F2933] leading-tight ${locked ? 'opacity-40' : ''}`}>{label}</p>
+        <p className={`text-[14px] text-gray-500 mt-1 leading-normal ${locked ? 'opacity-40' : ''}`}>{description}</p>
+        {/* Kept at full strength: it is the one line that tells the user what to do. */}
+        {lockedBecause && (
+          <p className="text-[12px] text-gray-600 mt-1.5 font-medium">{lockedBecause}</p>
+        )}
       </div>
     </div>
   );
@@ -95,6 +106,17 @@ export default function NotificationSettings() {
     setIntegrationAlert(settings.integrationAlert);
     setLeadsFrequency(settings.leadsFrequency);
   }, [settings]);
+
+  const gateState: NotificationSettingsState = {
+    emailNotification,
+    moreActivity,
+    newsAndUpdates: newsSettings,
+    notificationChannel,
+    feedbackNotification,
+    integrationAlert,
+  };
+  const lockFor = (key: NotificationSettingKey) =>
+    isSettingLocked(key, gateState) ? lockedReason(key) : undefined;
 
   const patchSetting = (payload: {
     emailNotification?: boolean;
@@ -159,6 +181,7 @@ export default function NotificationSettings() {
               label="News and update settings"
               description="Product updates, release notes, and feature announcements."
               checked={newsSettings}
+              lockedBecause={lockFor('newsAndUpdates')}
               onToggle={() => {
                 const next = !newsSettings;
                 setNewsSettings(next);
@@ -168,7 +191,7 @@ export default function NotificationSettings() {
 
             <CheckboxRow
               label="Notification Channel"
-              description="In-app alerts in dashboard feeds and notification center."
+              description="In-app and push alerts in dashboard feeds and the notification center. Independent of the email switch above."
               checked={notificationChannel}
               onToggle={() => {
                 const next = !notificationChannel;
@@ -181,6 +204,7 @@ export default function NotificationSettings() {
               label="Feedback notifications"
               description="Updates when feedback is received, reviewed, or actioned."
               checked={feedbackNotification}
+              lockedBecause={lockFor('feedbackNotification')}
               onToggle={() => {
                 const next = !feedbackNotification;
                 setFeedbackNotification(next);
@@ -307,6 +331,7 @@ export default function NotificationSettings() {
               label="Integration Alert"
               description="Connection status changes, token expiry, and integration errors."
               checked={integrationAlert}
+              lockedBecause={lockFor('integrationAlert')}
               onToggle={() => {
                 const next = !integrationAlert;
                 setIntegrationAlert(next);

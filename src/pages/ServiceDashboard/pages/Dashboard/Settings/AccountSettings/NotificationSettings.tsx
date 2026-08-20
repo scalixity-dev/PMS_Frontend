@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
 import ServiceBreadCrumb from "../../../../components/ServiceBreadCrumb";
 import ServiceTabs from "../../../../components/ServiceTabs";
 import SearchableDropdown from "@/components/ui/SearchableDropdown";
+import { useGetNotificationSettings, useUpdateNotificationSettings } from "@/hooks/useNotificationQueries";
+import { isSettingLocked, lockedReason, type NotificationSettingKey, type NotificationSettingsState } from "@/utils/notificationGating";
 
 interface ToggleSwitchProps {
     checked: boolean;
@@ -27,34 +29,57 @@ function ToggleSwitch({ checked, onChange }: ToggleSwitchProps) {
 }
 
 interface CheckboxRowProps {
+    /** Set when a master switch is off, which makes this row read-only. */
+    lockedBecause?: string;
     label: string;
     description: string;
     checked: boolean;
     onToggle: () => void;
 }
 
-function CheckboxRow({ label, description, checked, onToggle }: CheckboxRowProps) {
+function CheckboxRow({ label, description, checked, onToggle, lockedBecause }: CheckboxRowProps) {
+    const locked = Boolean(lockedBecause);
     return (
         <div className="flex items-start gap-4">
             <button
                 type="button"
                 onClick={onToggle}
-                className={`flex h-10 w-10 min-w-[40px] items-center justify-center rounded-md transition-all active:scale-95 border-2 ${checked ? "bg-[#7BD747] border-[#7BD747] text-white" : "bg-white border-gray-200 text-transparent"
+                disabled={locked}
+                aria-disabled={locked}
+                title={lockedBecause}
+                className={`flex h-10 w-10 min-w-[40px] items-center justify-center rounded-md transition-all border-2 ${locked ? "cursor-not-allowed opacity-40" : "active:scale-95"} ${checked ? "bg-[#7BD747] border-[#7BD747] text-white" : "bg-white border-gray-200 text-transparent"
                     }`}
             >
                 <Check size={20} strokeWidth={3} />
             </button>
             <div className="flex-1">
-                <p className="text-base font-bold text-gray-900 leading-snug">{label}</p>
-                <p className="text-xs text-gray-400 mt-1 leading-relaxed max-w-[500px]">{description}</p>
+                <p className={`text-base font-bold text-gray-900 leading-snug ${locked ? "opacity-40" : ""}`}>{label}</p>
+                <p className={`text-xs text-gray-400 mt-1 leading-relaxed max-w-[500px] ${locked ? "opacity-40" : ""}`}>{description}</p>
+                {/* Kept at full strength: it is the one line that tells the user what to do. */}
+                {lockedBecause && <p className="text-xs text-gray-600 font-medium mt-1.5">{lockedBecause}</p>}
             </div>
         </div>
     );
 }
 
+type ApiFrequency = "frequency" | "instant" | "hourly" | "daily";
+
+/** The dropdown shows sentences; the API takes the short enum. */
+const FREQUENCY_OPTIONS: Array<{ label: string; value: ApiFrequency }> = [
+    { label: "Instant Notification", value: "instant" },
+    { label: "Hourly Summary", value: "hourly" },
+    { label: "Daily Summary", value: "daily" },
+];
+
 const NotificationSettings = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('notifications');
+
+    // These used to be local-only: nothing on this page called the API, so every
+    // toggle here was forgotten on reload while the same settings saved fine on
+    // the landlord and tenant pages.
+    const { data: settings, isLoading, isError } = useGetNotificationSettings();
+    const updateSettingsMutation = useUpdateNotificationSettings();
 
     // State for Toggles
     const [emailNotification, setEmailNotification] = useState(true);
@@ -67,13 +92,35 @@ const NotificationSettings = () => {
     const [integrationAlert, setIntegrationAlert] = useState(true);
 
     // State for Dropdown
-    const [leadsFrequency, setLeadsFrequency] = useState("");
+    const [leadsFrequency, setLeadsFrequency] = useState<ApiFrequency>("frequency");
 
-    const frequencyOptions = [
-        "Instant Notification",
-        "Hourly Summary",
-        "Daily Summary"
-    ];
+    useEffect(() => {
+        if (!settings) return;
+        setEmailNotification(settings.emailNotification);
+        setMoreActivity(settings.moreActivity);
+        setNewsSettings(settings.newsAndUpdates);
+        setNotificationChannel(settings.notificationChannel);
+        setFeedbackNotification(settings.feedbackNotification);
+        setIntegrationAlert(settings.integrationAlert);
+        setLeadsFrequency(settings.leadsFrequency);
+    }, [settings]);
+
+    const patchSetting = (payload: Parameters<typeof updateSettingsMutation.mutate>[0]) => {
+        updateSettingsMutation.mutate(payload);
+    };
+
+    const gateState: NotificationSettingsState = {
+        emailNotification,
+        moreActivity,
+        newsAndUpdates: newsSettings,
+        notificationChannel,
+        feedbackNotification,
+        integrationAlert,
+    };
+    const lockFor = (key: NotificationSettingKey) =>
+        isSettingLocked(key, gateState) ? lockedReason(key) : undefined;
+
+    const frequencyOptions = FREQUENCY_OPTIONS.map((o) => o.label);
 
     const handleTabChange = (val: string) => {
         setActiveTab(val);
@@ -128,6 +175,10 @@ const NotificationSettings = () => {
                             </section>
 
                             <div className="space-y-10">
+                                {isLoading && <p className="text-sm text-gray-500">Loading notification settings...</p>}
+                                {isError && <p className="text-sm text-red-500">Failed to load notification settings.</p>}
+                                {updateSettingsMutation.isPending && <p className="text-sm text-gray-500">Saving changes...</p>}
+
                                 {/* Email Notification */}
                                 <section>
                                     <div className="mb-3">
@@ -139,7 +190,11 @@ const NotificationSettings = () => {
                                     <div className="flex items-center gap-3 mt-4">
                                         <ToggleSwitch
                                             checked={emailNotification}
-                                            onChange={() => setEmailNotification(!emailNotification)}
+                                            onChange={() => {
+                                                const next = !emailNotification;
+                                                setEmailNotification(next);
+                                                patchSetting({ emailNotification: next });
+                                            }}
                                         />
                                         <span className={`text-sm font-semibold text-[#1F2933]`}>
                                             {emailNotification ? 'On' : 'Off'}
@@ -153,21 +208,35 @@ const NotificationSettings = () => {
                                         label="News and update settings"
                                         description="Platform updates, feature releases, and policy notices."
                                         checked={newsSettings}
-                                        onToggle={() => setNewsSettings(!newsSettings)}
+                                        lockedBecause={lockFor('newsAndUpdates')}
+                                        onToggle={() => {
+                                            const next = !newsSettings;
+                                            setNewsSettings(next);
+                                            patchSetting({ newsAndUpdates: next });
+                                        }}
                                     />
 
                                     <CheckboxRow
                                         label="Notification Channel"
                                         description="In-app notifications in dashboard activity feed."
                                         checked={notificationChannel}
-                                        onToggle={() => setNotificationChannel(!notificationChannel)}
+                                        onToggle={() => {
+                                            const next = !notificationChannel;
+                                            setNotificationChannel(next);
+                                            patchSetting({ notificationChannel: next });
+                                        }}
                                     />
 
                                     <CheckboxRow
                                         label="Feedback notifications"
                                         description="Updates when submitted feedback is reviewed or resolved."
                                         checked={feedbackNotification}
-                                        onToggle={() => setFeedbackNotification(!feedbackNotification)}
+                                        lockedBecause={lockFor('feedbackNotification')}
+                                        onToggle={() => {
+                                            const next = !feedbackNotification;
+                                            setFeedbackNotification(next);
+                                            patchSetting({ feedbackNotification: next });
+                                        }}
                                     />
                                 </section>
 
@@ -181,9 +250,14 @@ const NotificationSettings = () => {
                                     </div>
                                     <div className="mt-4">
                                         <SearchableDropdown
-                                            value={leadsFrequency}
+                                            value={FREQUENCY_OPTIONS.find((o) => o.value === leadsFrequency)?.label ?? ""}
                                             options={frequencyOptions}
-                                            onChange={(val: string) => setLeadsFrequency(val)}
+                                            onChange={(val: string) => {
+                                                const next = FREQUENCY_OPTIONS.find((o) => o.label === val)?.value;
+                                                if (!next) return;
+                                                setLeadsFrequency(next);
+                                                patchSetting({ leadsFrequency: next });
+                                            }}
                                             placeholder="Select Frequency"
                                             className="w-full sm:w-[280px]"
                                             buttonClassName="h-11 w-full rounded-xl border border-gray-200 bg-white pl-4 pr-4 text-sm font-semibold text-gray-700 shadow-sm flex items-center justify-between outline-none focus:border-[#7BD747] focus:ring-4 focus:ring-[#7BD747]/10 transition-all"
@@ -202,7 +276,11 @@ const NotificationSettings = () => {
                                     <div className="flex items-center gap-3 mt-4">
                                         <ToggleSwitch
                                             checked={moreActivity}
-                                            onChange={() => setMoreActivity(!moreActivity)}
+                                            onChange={() => {
+                                                const next = !moreActivity;
+                                                setMoreActivity(next);
+                                                patchSetting({ moreActivity: next });
+                                            }}
                                         />
                                         <span className={`text-sm font-semibold text-[#1F2933]`}>
                                             {moreActivity ? 'On' : 'Off'}
@@ -216,7 +294,12 @@ const NotificationSettings = () => {
                                         label="Integration Alert"
                                         description="Connection failures, token expiry, and sync issues."
                                         checked={integrationAlert}
-                                        onToggle={() => setIntegrationAlert(!integrationAlert)}
+                                        lockedBecause={lockFor('integrationAlert')}
+                                        onToggle={() => {
+                                            const next = !integrationAlert;
+                                            setIntegrationAlert(next);
+                                            patchSetting({ integrationAlert: next });
+                                        }}
                                     />
                                 </section>
                             </div>

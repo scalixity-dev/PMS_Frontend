@@ -23,6 +23,7 @@ import ChatHeader from './components/ChatHeader';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import { ApplicationBanner } from './components/ApplicationBanner';
+import { printConversation } from '@/utils/conversationPrint';
 
 function formatTime(iso: string | undefined | null): string {
   if (!iso) return '';
@@ -434,7 +435,16 @@ const ChatPage: React.FC = () => {
           <>
             <ChatHeader
               activeChat={activeChat}
-              onPrint={() => window.print()}
+              onPrint={() => printConversation({
+                title: `Conversation with ${activeChat.name}`,
+                subtitle: [activeChat.role, activeChat.category].filter(Boolean).join(' - '),
+                messages: activeChat.messages.map((m) => ({
+                  senderName: m.senderName,
+                  text: m.text,
+                  timestamp: m.createdAt || m.time,
+                })),
+                printedAt: new Date(),
+              })}
               onDelete={() => setActiveChatId(null)}
               onBack={handleBackToSidebar}
               pendingCount={pendingCount}

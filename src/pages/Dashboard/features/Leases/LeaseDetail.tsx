@@ -24,6 +24,7 @@ import { API_ENDPOINTS } from '../../../../config/api.config';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import { useToast } from '../../../../components/common/Toast';
+import { buildLeaseTermsPayload } from './leaseTerms';
 
 
 const INVOICE_SCHEDULE_TO_DISPLAY: Record<string, string> = {
@@ -498,19 +499,7 @@ const LeaseDetail: React.FC = () => {
         try {
             await updateLeaseMutation.mutateAsync({
                 id,
-                data: {
-                    startDate: data.startDate instanceof Date
-                        ? data.startDate.toISOString()
-                        : typeof data.startDate === 'string'
-                            ? data.startDate
-                            : undefined,
-                    endDate: data.endDate instanceof Date
-                        ? data.endDate.toISOString()
-                        : typeof data.endDate === 'string'
-                            ? data.endDate
-                            : undefined,
-                    notes: data.termNotes,
-                },
+                data: buildLeaseTermsPayload(data, data.termNotes),
             });
             setIsEditModalOpen(false);
         } catch (error) {
