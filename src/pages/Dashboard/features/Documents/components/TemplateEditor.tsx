@@ -330,7 +330,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {SIGNATURE_FIELDS.map((field) => (
-                                    <div key={field.kind} className="relative">
+                                    <div key={field.kind}>
                                         <button
                                             type="button"
                                             onClick={() => setPendingSignature(pendingSignature === field.kind ? null : field.kind)}
@@ -340,8 +340,12 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                                             <p className="text-[11px] opacity-90 leading-tight font-medium">{field.description}</p>
                                         </button>
 
+                                        {/* Inline rather than an absolute popover: the card is
+                                            overflow-hidden, which clipped it at the bottom edge and
+                                            left the second party unreachable. Letting the card grow
+                                            avoids the clipping entirely. */}
                                         {pendingSignature === field.kind && (
-                                            <div className="absolute z-20 left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 p-3">
+                                            <div className="mt-2 bg-white rounded-xl shadow-lg border border-gray-200 p-3">
                                                 <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Whose {field.label.toLowerCase()}?</p>
                                                 <div className="flex flex-col gap-2">
                                                     <button
