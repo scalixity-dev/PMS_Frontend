@@ -248,12 +248,33 @@ export function useChatWebSocket(
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
-      if (wsRef.current) {
-        wsRef.current.close();
+
+      const ws = wsRef.current;
+      if (ws) {
+        // Detach the handlers before closing.
+        //
+        // close() fires onclose on a later task, and that handler cannot tell
+        // a deliberate teardown from a connection that dropped. This cleanup
+        // used to push the attempt counter to its maximum to stop it
+        // reconnecting - but the counter was read by the same handler, which
+        // then took its "retries exhausted" branch and showed "Unable to
+        // reconnect. Please refresh the page." So simply navigating away from
+        // the chat produced an error telling the user something had broken.
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.onclose = null;
+        ws.close();
         wsRef.current = null;
       }
+
       setIsConnected(false);
-      reconnectAttemptRef.current = RECONNECT_ATTEMPTS_MAX;
+      // Reset rather than exhaust. Suppression is handled by detaching the
+      // handler above, and the next connection - a token refresh re-runs this
+      // effect every few minutes - deserves a full retry budget. Leaving it at
+      // the maximum meant the first drop after any re-connect reported failure
+      // immediately instead of retrying.
+      reconnectAttemptRef.current = 0;
     };
   }, [token, connect]);
 
