@@ -30,16 +30,18 @@ const CreateTemplateWizard: React.FC = () => {
     const handleFinish = async () => {
         const variables = extractTemplateVariables(editorContent);
         try {
+            // No category here: DocumentsService.createTemplate always stores
+            // 'CUSTOM', and the DTO does not declare the field, so sending it
+            // was rejected outright as an undeclared property.
             await createTemplate.mutateAsync({
                 title,
-                category: 'CUSTOM',
                 content: editorContent,
                 variables,
-            } as any);
+            });
             toast.success('Template created successfully');
             navigate('/dashboard/documents/my-templates');
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to create template');
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to create template');
         }
     };
 
