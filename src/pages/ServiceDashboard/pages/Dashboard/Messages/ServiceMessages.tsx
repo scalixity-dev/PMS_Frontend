@@ -23,6 +23,7 @@ import { useGetCurrentUser } from '../../../../../hooks/useAuthQueries';
 import type { Chat } from './types';
 import type { ChatMessage, ChatConversation } from '../../../../../services/chat.service';
 import { useEffect } from 'react';
+import { printConversation } from '@/utils/conversationPrint';
 
 function safeFormatTime(iso: string | undefined | null): string {
     if (!iso) return '';
@@ -348,7 +349,12 @@ const ServiceMessages = () => {
                                 onBack={handleBackToSidebar}
                                 showBackButton={showMobileChat}
                                 pendingCount={pendingCount}
-                                onPrint={() => window.print()}
+                                onPrint={() => printConversation({
+                                    title: `Conversation with ${activeChat.contactName}`,
+                                    subtitle: [activeChat.contactRole, activeChat.propertyAddress].filter(Boolean).join(' - '),
+                                    messages: activeChat.messages,
+                                    printedAt: new Date(),
+                                })}
                                 onDelete={() => setActiveChatId(null)}
                             />
                             <MessageList chat={activeChat} currentUserId={CURRENT_USER_ID} />
