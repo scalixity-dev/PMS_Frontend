@@ -4,6 +4,7 @@ import Toggle from "../../../../components/Toggle";
 import { Check, Loader2 } from "lucide-react";
 import CustomDropdown from "../../../Dashboard/components/CustomDropdown";
 import { useGetNotificationSettings, useUpdateNotificationSettings } from "../../../../hooks/useNotificationQueries";
+import { isSettingLocked, lockedReason, type NotificationSettingKey, type NotificationSettingsState } from "../../../../utils/notificationGating";
 
 const Notifications: React.FC = () => {
     const { data: settings, isLoading } = useGetNotificationSettings();
@@ -34,6 +35,17 @@ const Notifications: React.FC = () => {
 
     const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
+    const gateState: NotificationSettingsState = {
+        emailNotification,
+        moreActivity,
+        newsAndUpdates: newsUpdate,
+        notificationChannel: allNotification,
+        feedbackNotification: feedback,
+        integrationAlert,
+    };
+    const lockFor = (key: NotificationSettingKey) =>
+        isSettingLocked(key, gateState) ? lockedReason(key) : undefined;
+
     const persist = async (patch: Partial<{
         notificationChannel: boolean;
         emailNotification: boolean;
@@ -47,8 +59,11 @@ const Notifications: React.FC = () => {
             await updateSettingsMutation.mutateAsync(patch);
             setSaveStatus({ type: 'success', msg: 'Saved' });
             setTimeout(() => setSaveStatus(null), 1500);
-        } catch (err: any) {
-            setSaveStatus({ type: 'error', msg: err?.message || 'Save failed' });
+        } catch (err) {
+            setSaveStatus({
+                type: 'error',
+                msg: err instanceof Error ? err.message : 'Save failed',
+            });
         }
     };
 
@@ -63,21 +78,28 @@ const Notifications: React.FC = () => {
     const sectionDescStyle = "text-xs sm:text-sm text-gray-500 font-normal mt-0.5";
     const checkboxLabelStyle = "text-sm sm:text-base font-medium text-[#1A1A1A]";
 
-    const CustomCheckbox = ({ checked, onChange, label, description }: { checked: boolean, onChange: () => void, label: string, description: string }) => (
-        <div className="flex items-start gap-3 sm:gap-4 py-3 sm:py-4">
-            <button
-                onClick={onChange}
-                className={`flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded flex items-center justify-center border transition-colors ${checked ? 'bg-[#7BD747] border-[#7BD747]' : 'bg-white border-black border-[1.5px]'
-                    }`}
-            >
-                {checked && <Check size={14} className="sm:w-4 sm:h-4 text-white" strokeWidth={3} />}
-            </button>
-            <div className="flex flex-col gap-0.5">
-                <span className={checkboxLabelStyle}>{label}</span>
-                <span className={sectionDescStyle}>{description}</span>
+    const CustomCheckbox = ({ checked, onChange, label, description, lockedBecause }: { checked: boolean, onChange: () => void, label: string, description: string, lockedBecause?: string }) => {
+        const locked = Boolean(lockedBecause);
+        return (
+            <div className="flex items-start gap-3 sm:gap-4 py-3 sm:py-4">
+                <button
+                    onClick={onChange}
+                    disabled={locked}
+                    aria-disabled={locked}
+                    title={lockedBecause}
+                    className={`flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded flex items-center justify-center border transition-all ${checked ? 'bg-[#7BD747] border-[#7BD747]' : 'bg-white border-black border-[1.5px]'} ${locked ? 'cursor-not-allowed opacity-40' : ''}`}
+                >
+                    {checked && <Check size={14} className="sm:w-4 sm:h-4 text-white" strokeWidth={3} />}
+                </button>
+                <div className="flex flex-col gap-0.5">
+                    <span className={`${checkboxLabelStyle} ${locked ? 'opacity-40' : ''}`}>{label}</span>
+                    <span className={`${sectionDescStyle} ${locked ? 'opacity-40' : ''}`}>{description}</span>
+                    {/* Kept at full strength: it is the one line that tells the user what to do. */}
+                    {lockedBecause && <span className="text-xs text-gray-600 font-medium mt-1">{lockedBecause}</span>}
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     if (isLoading) {
         return (
@@ -101,8 +123,8 @@ const Notifications: React.FC = () => {
                 {/* All Notification Section (master toggle) */}
                 <div className="py-4 sm:py-5 md:py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                     <div className="flex-1">
-                        <h2 className={sectionTitleStyle}>All Notifications (master)</h2>
-                        <p className={sectionDescStyle}>Master switch. When off, all other notification settings below are disabled regardless of their individual values.</p>
+                        <h2 className={sectionTitleStyle}>In-app and push notifications</h2>
+                        <p className={sectionDescStyle}>Alerts in the notification centre and push alerts on your devices. Email is controlled separately below.</p>
                     </div>
                     <Toggle checked={allNotification} onChange={(v) => { setAllNotification(v); persist({ notificationChannel: v }); }} />
                 </div>
@@ -112,7 +134,7 @@ const Notifications: React.FC = () => {
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                         <div className="flex-1">
                             <h2 className={sectionTitleStyle}>Email Notifications</h2>
-                            <p className={sectionDescStyle}>Receive notifications via email. Requires the master switch above to be ON.</p>
+                            <p className={sectionDescStyle}>Master switch for email. When off, the email preferences below have no effect.</p>
                         </div>
                         <Toggle checked={emailNotification} onChange={(v) => { setEmailNotification(v); persist({ emailNotification: v }); }} />
                     </div>
@@ -120,12 +142,14 @@ const Notifications: React.FC = () => {
                     <div className="space-y-1 sm:space-y-2 mt-4 sm:mt-6">
                         <CustomCheckbox
                             checked={newsUpdate}
+                            lockedBecause={lockFor('newsAndUpdates')}
                             onChange={() => { const v = !newsUpdate; setNewsUpdate(v); persist({ newsAndUpdates: v }); }}
                             label="News and update settings"
                             description="Product announcements, new features, and platform updates."
                         />
                         <CustomCheckbox
                             checked={feedback}
+                            lockedBecause={lockFor('feedbackNotification')}
                             onChange={() => { const v = !feedback; setFeedback(v); persist({ feedbackNotification: v }); }}
                             label="Feedback notifications"
                             description="Alerts when your property manager replies to your feedback or surveys."
@@ -162,6 +186,7 @@ const Notifications: React.FC = () => {
 
                     <CustomCheckbox
                         checked={integrationAlert}
+                        lockedBecause={lockFor('integrationAlert')}
                         onChange={() => { const v = !integrationAlert; setIntegrationAlert(v); persist({ integrationAlert: v }); }}
                         label="Integration Alert"
                         description="Alerts when a connected integration (e.g. Google Calendar, payment provider) requires attention."
