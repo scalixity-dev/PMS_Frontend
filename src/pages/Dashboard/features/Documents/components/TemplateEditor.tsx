@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
 import type { EditorView } from '@tiptap/pm/view';
+import type { Editor } from '@tiptap/react';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TiptapEditor from '../../../../../components/common/Editor/TiptapEditor';
 import DocumentPreviewModal from './DocumentPreviewModal';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
+import { AUTO_FILL_FIELDS, tokenForLabel, type AutoFillField } from '../autoFillFields';
 
 interface TemplateEditorProps {
     initialEditorContent?: string;
@@ -17,20 +19,14 @@ interface TemplateEditorProps {
     signatureActionsSlot?: React.ReactNode;
 }
 
-const AUTO_FILL_MAPPINGS: Record<string, string> = {
-    'Emergency Contact Email': 'Emergency Contact Email',
-    'Daily Rent Late Fees': 'Daily Rent Late Fees',
-    'Electricity Provider': 'Electricity Provider',
-    'Gas Provider': 'Gas Provider',
-    'Holding Deposit': 'Holding Deposit',
-    'Internet Provider': 'Internet Provider',
-    'Landlord Utilities': 'Landlord Utilities',
-    'Lease Number': 'Lease No',
-    'Lease Start Date': 'Lease Start Date',
-    'List of Equipment': 'List of Equipment',
-    'Number of Baths': 'Number of Baths',
-    'Pet Charge': 'Pet Charge',
-};
+/** Chips grouped for the panel, in catalogue order. */
+const AUTO_FILL_GROUPS = AUTO_FILL_FIELDS.reduce<Record<string, AutoFillField[]>>(
+    (acc, field) => {
+        (acc[field.group] ??= []).push(field);
+        return acc;
+    },
+    {},
+);
 
 const TemplateEditor: React.FC<TemplateEditorProps> = ({
     initialEditorContent = '',
@@ -54,7 +50,11 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     };
 
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-    const [, setEditor] = useState(null);
+    // The editor instance was previously captured into state and discarded, so
+    // nothing outside the drop handler could insert into the document.
+    const editorRef = useRef<Editor | null>(null);
+    const autoScrollRef = useRef<number | null>(null);
+    const pointerYRef = useRef<number | null>(null);
     const previewContentRef = useRef<HTMLDivElement | null>(null);
 
     React.useEffect(() => {
@@ -105,7 +105,74 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
         const dragData = JSON.stringify({ label, isAutoFill });
         e.dataTransfer.setData('application/x-SmartTenantAI-autofill', dragData);
         e.dataTransfer.setData('text/plain', label);
-        e.dataTransfer.dropEffect = 'copy';
+        // effectAllowed is the one that belongs on dragstart; dropEffect here is
+        // ignored, which is why the drag used to show a "no drop" cursor.
+        e.dataTransfer.effectAllowed = 'copy';
+        startEdgeAutoScroll();
+    };
+
+    /**
+     * Scroll the page while a chip is held near the top or bottom edge.
+     *
+     * The chip panel sits below the editor, far enough that on a 720px-tall
+     * window the editor is off screen once the chips are in view. HTML5 drag
+     * does not scroll the page, so there was no way to drag a chip up into the
+     * editor at all.
+     */
+    const startEdgeAutoScroll = () => {
+        if (autoScrollRef.current !== null) return;
+
+        const EDGE = 120;   // px from the edge that triggers a scroll
+        const SPEED = 18;   // px per frame
+
+        const step = () => {
+            const y = pointerYRef.current;
+            if (y !== null) {
+                if (y < EDGE) window.scrollBy(0, -SPEED);
+                else if (y > window.innerHeight - EDGE) window.scrollBy(0, SPEED);
+            }
+            autoScrollRef.current = requestAnimationFrame(step);
+        };
+        autoScrollRef.current = requestAnimationFrame(step);
+    };
+
+    const stopEdgeAutoScroll = () => {
+        if (autoScrollRef.current !== null) {
+            cancelAnimationFrame(autoScrollRef.current);
+            autoScrollRef.current = null;
+        }
+        pointerYRef.current = null;
+    };
+
+    React.useEffect(() => {
+        const onDragOver = (e: DragEvent) => { pointerYRef.current = e.clientY; };
+        document.addEventListener('dragover', onDragOver);
+        document.addEventListener('drop', stopEdgeAutoScroll);
+        document.addEventListener('dragend', stopEdgeAutoScroll);
+        return () => {
+            document.removeEventListener('dragover', onDragOver);
+            document.removeEventListener('drop', stopEdgeAutoScroll);
+            document.removeEventListener('dragend', stopEdgeAutoScroll);
+            stopEdgeAutoScroll();
+        };
+    }, []);
+
+    /**
+     * Insert without dragging.
+     *
+     * Dragging across a scrolling page is fiddly at the best of times, so a
+     * click drops the element at the cursor instead. This is the path that
+     * always works, whatever the window height.
+     */
+    const insertAtCursor = (label: string, isAutoFill: boolean) => {
+        const ed = editorRef.current;
+        if (!ed) return;
+
+        if (isAutoFill) {
+            ed.chain().focus().insertAutoFillNode(label, tokenForLabel(label)).run();
+        } else {
+            ed.chain().focus().insertContent(` [${label}] `).run();
+        }
     };
 
     const handleEditorDrop = (view: EditorView, event: DragEvent) => {
@@ -136,7 +203,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             const { label, isAutoFill } = dragData;
             const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
             const pos = coordinates ? coordinates.pos : view.state.selection.$from.pos;
-            const displayContent = AUTO_FILL_MAPPINGS[label] || label;
+            const token = tokenForLabel(label) ?? '';
 
             const { schema, tr } = view.state;
 
@@ -150,7 +217,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 }
 
                 // Create the autoFill node
-                const node = nodeType.create({ label: displayContent });
+                const node = nodeType.create({ label, token });
 
                 // If document is empty, wrap in a paragraph
                 const isEmptyDoc = view.state.doc.content.size <= 2; // ProseMirror empty doc size is usually 2 (empty paragraph)
@@ -192,7 +259,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     onChange={handleEditorChange}
                     placeholder="Type template content here..."
                     onDropHandler={handleEditorDrop}
-                    onEditorReady={setEditor}
+                    onEditorReady={(ed: Editor) => { editorRef.current = ed; }}
                 />
             </div>
 
@@ -241,6 +308,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                             <div
                                 draggable
                                 onDragStart={(e) => handleDragStart(e, 'Signature')}
+                                onDragEnd={stopEdgeAutoScroll}
+                                onClick={() => insertAtCursor('Signature', false)}
                                 className="bg-[#88D94C] p-4 rounded-2xl text-white shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all"
                             >
                                 <h3 className="font-extrabold text-lg mb-1 ">Signature</h3>
@@ -250,6 +319,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                             <div
                                 draggable
                                 onDragStart={(e) => handleDragStart(e, 'Initials')}
+                                onDragEnd={stopEdgeAutoScroll}
+                                onClick={() => insertAtCursor('Initials', false)}
                                 className="bg-[#88D94C] p-4 rounded-2xl text-white shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all"
                             >
                                 <h3 className="font-extrabold text-lg mb-1">Initials</h3>
@@ -259,6 +330,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                             <div
                                 draggable
                                 onDragStart={(e) => handleDragStart(e, 'Date Signed')}
+                                onDragEnd={stopEdgeAutoScroll}
+                                onClick={() => insertAtCursor('Date Signed', false)}
                                 className="bg-[#88D94C] p-4 rounded-2xl text-white shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all"
                             >
                                 <h3 className="font-extrabold text-lg mb-1">Date Signed</h3>
@@ -268,6 +341,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                             <div
                                 draggable
                                 onDragStart={(e) => handleDragStart(e, 'Textbox')}
+                                onDragEnd={stopEdgeAutoScroll}
+                                onClick={() => insertAtCursor('Textbox', false)}
                                 className="bg-[#88D94C] p-4 rounded-2xl text-white shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all"
                             >
                                 <h3 className="font-extrabold text-lg mb-1">Textbox</h3>
@@ -275,20 +350,33 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                             </div>
                         </div>
                     ) : (
-                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-6 mb-8 mt-2">
-                            {[
-                                'Emergency Contact Email', 'Daily Rent Late Fees', 'Electricity Provider',
-                                'Gas Provider', 'Holding Deposit', 'Internet Provider',
-                                'Landlord Utilities', 'Lease Number', 'Lease Start Date',
-                                'List of Equipment', 'Number of Baths', 'Pet Charge'
-                            ].map((label) => (
-                                <div
-                                    key={label}
-                                    draggable
-                                    onDragStart={(e) => handleDragStart(e, label, true)}
-                                    className="bg-[#88D94C] text-white px-6 py-3 rounded-2xl text-[11px] font-bold text-center shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all whitespace-nowrap min-w-[140px]"
-                                >
-                                    {label}
+                        <div className="mb-8 mt-2">
+                            <p className="text-xs text-gray-500 mb-5">
+                                Click an element to drop it where your cursor is, or drag it into the document.
+                                A dot means the value is filled in from the lease automatically.
+                            </p>
+                            {Object.entries(AUTO_FILL_GROUPS).map(([group, fields]) => (
+                                <div key={group} className="mb-6 last:mb-0">
+                                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-3">{group}</h4>
+                                    <div className="flex flex-wrap gap-x-3 gap-y-3">
+                                        {fields.map((field) => (
+                                            <button
+                                                key={field.label}
+                                                type="button"
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, field.label, true)}
+                                                onDragEnd={stopEdgeAutoScroll}
+                                                onClick={() => insertAtCursor(field.label, true)}
+                                                title={`${field.description}${field.resolvedFromLease ? ' Filled from the lease.' : ' You will be asked for this value.'}`}
+                                                className="bg-[#88D94C] text-white px-5 py-2.5 rounded-2xl text-[11px] font-bold text-center shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all whitespace-nowrap inline-flex items-center gap-2"
+                                            >
+                                                {field.resolvedFromLease && (
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-white/90" aria-hidden="true" />
+                                                )}
+                                                {field.label}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             ))}
                         </div>
