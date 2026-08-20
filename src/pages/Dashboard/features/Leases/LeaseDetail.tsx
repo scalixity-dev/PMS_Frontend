@@ -523,6 +523,26 @@ const LeaseDetail: React.FC = () => {
                     propertyId: backendLease?.propertyId as string,
                     payerId: backendLease?.tenantId as string,
                 } as any);
+            } else if (recurringRentModalMode === 'edit' && recurringRentToEdit?.isLeaseRecurringRent) {
+                // Edits the lease's own `recurring_rents` row via PATCH /leases/:id -
+                // this id space is separate from the generic recurring_transactions table.
+                // The modal's onSave payload doesn't carry endOn/isMonthToMonth/markPastPaid
+                // (it doesn't manage those fields), so preserve them from the record we loaded.
+                const rrData = backendLease?.recurringRent;
+                await updateLeaseMutation.mutateAsync({
+                    id: id as string,
+                    data: {
+                        recurringRent: {
+                            enabled: data.isEnabled,
+                            amount: parseFloat(data.totalAmount || 0),
+                            invoiceSchedule: data.frequency,
+                            startOn: data.firstInvoiceDate ? data.firstInvoiceDate.toISOString() : rrData?.startOn,
+                            endOn: recurringRentToEdit.endOn ?? rrData?.endOn,
+                            isMonthToMonth: recurringRentToEdit.isMonthToMonth ?? rrData?.isMonthToMonth ?? true,
+                            markPastPaid: recurringRentToEdit.markPastPaid ?? rrData?.markPastPaid ?? false,
+                        }
+                    } as any
+                });
             } else if (recurringRentModalMode === 'edit') {
                 await updateRecurringTransactionMutation.mutateAsync({
                     id: recurringRentToEdit.id,
@@ -1088,10 +1108,20 @@ const LeaseDetail: React.FC = () => {
                                             onClick={() => {
                                                 const rrData = backendLease?.recurringRent;
                                                 const existingData = {
+                                                    id: rrData?.id,
+                                                    // This edits the lease's own `recurring_rents` row (via PATCH
+                                                    // /leases/:id), not a row in the generic recurring_transactions
+                                                    // table that the "Other recurring transactions" section below
+                                                    // manages - the two are different tables with different id
+                                                    // spaces, so this flag picks the right mutation on save.
+                                                    isLeaseRecurringRent: true,
                                                     tenants: [{ name: lease.tenant.name, amount: rrData ? parseFloat(rrData.amount || '0') : (lease.rentAmount || 0) }],
                                                     frequency: INVOICE_SCHEDULE_TO_DISPLAY[rrData?.invoiceSchedule || ''] || 'Monthly',
                                                     isEnabled: rrData?.enabled ?? true,
                                                     firstInvoiceDate: rrData?.startOn ? new Date(rrData.startOn) : undefined,
+                                                    endOn: rrData?.endOn,
+                                                    isMonthToMonth: rrData?.isMonthToMonth ?? true,
+                                                    markPastPaid: rrData?.markPastPaid ?? false,
                                                 };
                                                 setRecurringRentToEdit(existingData);
                                                 setRecurringRentModalMode('edit');
