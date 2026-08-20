@@ -13,6 +13,7 @@ import { useGetTemplates, useRenderTemplate, useSendForSignature, useSendToTenan
 import type { DocumentTemplate } from '../../../../../services/documents.service';
 import { LandlordSigningModal } from '../components/LandlordSigningModal';
 import { useToast } from '../../../../../components/common/Toast';
+import { buildRenderValues } from '../renderValues';
 
 // --- Constants & Types ---
 
@@ -470,7 +471,7 @@ const UseTemplateWizard: React.FC = () => {
                 const rendered = await renderMutation.mutateAsync({
                     id: activeTemplateId,
                     dto: {
-                        values: templateValues,
+                        values: buildRenderValues(templateValues),
                         leaseId: selectedLeaseId,
                         appendSignature: true,
                     },
@@ -512,7 +513,7 @@ const UseTemplateWizard: React.FC = () => {
                 try {
                     await renderMutation.mutateAsync({
                         id: activeTemplateId,
-                        dto: { values: templateValues, leaseId: selectedLeaseId, appendSignature: false },
+                        dto: { values: buildRenderValues(templateValues), leaseId: selectedLeaseId, appendSignature: false },
                     });
                 } catch (err) {
                     toast.error(err instanceof Error ? err.message : 'Failed to send document.');
@@ -699,20 +700,27 @@ const UseTemplateWizard: React.FC = () => {
                                     {activeTemplateId && Object.keys(templateValues).length > 0 && (
                                         <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
                                             <h3 className="text-sm font-semibold text-gray-700 mb-1">Fill in Document Variables</h3>
-                                            <p className="text-xs text-gray-400 mb-4">Some fields are auto-filled from your lease. Fill in any remaining required fields.</p>
+                                            <p className="text-xs text-gray-400 mb-4">
+                                                Fields marked "from lease" are filled in for you when the document is generated.
+                                                Leave one blank to keep the lease value; type in it to override just this document.
+                                            </p>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                                 {(apiTemplates.find((t: DocumentTemplate) => t.id === activeTemplateId)?.variables ?? []).map((v) => (
                                                     <div key={v.key} className="flex flex-col gap-1">
                                                         <label className="text-xs font-medium text-gray-600 flex items-center gap-1">
                                                             {v.label}
-                                                            {v.required && <span className="text-red-500">*</span>}
+                                                            {(v as { autoFilled?: boolean }).autoFilled ? (
+                                                                <span className="text-[10px] font-semibold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">from lease</span>
+                                                            ) : (
+                                                                v.required && <span className="text-red-500">*</span>
+                                                            )}
                                                         </label>
                                                         <input
                                                             type={v.type === 'date' ? 'date' : v.type === 'number' ? 'number' : 'text'}
                                                             value={templateValues[v.key] ?? ''}
                                                             onChange={(e) => setTemplateValues(prev => ({ ...prev, [v.key]: e.target.value }))}
                                                             className="px-3 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:border-[#3A6D6C] focus:ring-1 focus:ring-[#3A6D6C]"
-                                                            placeholder={v.label}
+                                                            placeholder={(v as { autoFilled?: boolean }).autoFilled ? 'From the lease' : v.label}
                                                         />
                                                     </div>
                                                 ))}

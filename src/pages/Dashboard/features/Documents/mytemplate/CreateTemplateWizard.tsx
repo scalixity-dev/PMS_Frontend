@@ -5,27 +5,7 @@ import PrimaryActionButton from '../../../../../components/common/buttons/Primar
 import TemplateEditor from '../components/TemplateEditor';
 import { useCreateTemplate } from '../../../../../hooks/useDocumentsQueries';
 import { useToast } from '../../../../../components/common/Toast';
-
-/** Extract unique {{placeholder}} tokens from template content. */
-function extractVariables(content: string) {
-    const regex = /\{\{(\w+)\}\}/g;
-    const seen = new Set<string>();
-    const vars: { key: string; label: string; required: boolean; type: string }[] = [];
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(content)) !== null) {
-        const key = match[1];
-        if (!seen.has(key)) {
-            seen.add(key);
-            const label = key
-                .replace(/_/g, ' ')
-                .replace(/([A-Z])/g, ' $1')
-                .replace(/^./, (c) => c.toUpperCase())
-                .trim();
-            vars.push({ key, label, required: true, type: 'text' });
-        }
-    }
-    return vars;
-}
+import { extractTemplateVariables } from '../templateVariables';
 
 const CreateTemplateWizard: React.FC = () => {
     const navigate = useNavigate();
@@ -37,7 +17,7 @@ const CreateTemplateWizard: React.FC = () => {
     const [templateType, setTemplateType] = useState('');
     const [editorContent, setEditorContent] = useState('');
 
-    const detectedVars = extractVariables(editorContent);
+    const detectedVars = extractTemplateVariables(editorContent);
 
     const handleBack = () => {
         if (currentStep > 1) {
@@ -48,7 +28,7 @@ const CreateTemplateWizard: React.FC = () => {
     };
 
     const handleFinish = async () => {
-        const variables = extractVariables(editorContent);
+        const variables = extractTemplateVariables(editorContent);
         try {
             await createTemplate.mutateAsync({
                 title,
@@ -256,9 +236,19 @@ const CreateTemplateWizard: React.FC = () => {
                                         <p className="text-xs font-semibold text-blue-700 mb-2">Detected placeholders ({detectedVars.length}):</p>
                                         <div className="flex flex-wrap gap-2">
                                             {detectedVars.map((v) => (
-                                                <span key={v.key} className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-mono">{`{{${v.key}}}`}</span>
+                                                <span
+                                                    key={v.key}
+                                                    title={v.autoFilled ? 'Filled from the lease when the document is generated.' : 'You will be asked for this value.'}
+                                                    className={`px-2 py-1 rounded-md text-xs inline-flex items-center gap-1.5 ${v.autoFilled ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}
+                                                >
+                                                    {v.autoFilled && <span className="w-1.5 h-1.5 rounded-full bg-green-600" aria-hidden="true" />}
+                                                    {v.label}
+                                                </span>
                                             ))}
                                         </div>
+                                        <p className="text-[11px] text-blue-600 mt-2">
+                                            Green means the value comes from the lease automatically. The rest are asked for when the document is generated.
+                                        </p>
                                     </div>
                                 )}
 

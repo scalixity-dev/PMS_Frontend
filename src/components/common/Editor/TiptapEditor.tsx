@@ -172,6 +172,12 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
                 .ProseMirror {
                     outline: none !important;
                 }
+                /* A signature field reads differently from a data field: it is
+                   a place someone signs, not a value that gets substituted. */
+                .signature-pill {
+                    background-color: #3D7475 !important;
+                    border-color: #2c5251 !important;
+                }
                 .auto-fill-pill {
                     background-color: #88D94C;
                     border: 1px solid #77C342;

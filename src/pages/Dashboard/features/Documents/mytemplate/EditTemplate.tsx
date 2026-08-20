@@ -5,6 +5,7 @@ import TemplateEditor from '../components/TemplateEditor';
 import Breadcrumb from '../../../../../components/ui/Breadcrumb';
 import { useGetTemplate, useUpdateTemplate } from '../../../../../hooks/useDocumentsQueries';
 import { useToast } from '../../../../../components/common/Toast';
+import { extractTemplateVariables } from '../templateVariables';
 
 const EditTemplate: React.FC = () => {
     const navigate = useNavigate();
@@ -37,12 +38,16 @@ const EditTemplate: React.FC = () => {
                 dto: {
                     title: documentTitle || undefined,
                     content: editorContent,
+                    // Editing never refreshed this, so a placeholder added while
+                    // editing was never registered and the Use-template wizard
+                    // had no field to collect it with.
+                    variables: extractTemplateVariables(editorContent),
                 },
             });
             toast.success('Template updated');
             navigate(`/dashboard/documents/my-templates/${id}`);
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to update template');
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to update template');
         }
     };
 
