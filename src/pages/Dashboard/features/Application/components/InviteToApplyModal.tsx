@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronDown, Check, Plus, Trash2 } from 'lucide-react';
 import { useGetAllProperties } from '@/hooks/usePropertyQueries';
@@ -10,6 +10,9 @@ interface InviteToApplyModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSend?: (emails: string[], propertyId: string) => Promise<void>; // Optional for backward compatibility
+    /** When set (e.g. opened from a specific listing's detail page), the property is
+     * pre-selected and locked so the user can't pick a different one. */
+    lockedProperty?: { id: string; name: string };
 }
 
 interface EmailInput {
@@ -20,8 +23,8 @@ interface EmailInput {
     exists: boolean | null;
 }
 
-const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose, onSend }) => {
-    const [selectedPropertyId, setSelectedPropertyId] = useState('');
+const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose, onSend, lockedProperty }) => {
+    const [selectedPropertyId, setSelectedPropertyId] = useState(lockedProperty?.id || '');
     const [emails, setEmails] = useState<EmailInput[]>([
         { id: '1', value: '', error: '', checking: false, exists: null }
     ]);
@@ -29,10 +32,17 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
     const [isPropertyDropdownOpen, setIsPropertyDropdownOpen] = useState(false);
     const [isSending, setIsSending] = useState(false);
 
-    // Fetch properties only while the modal is open. This modal is always
-    // mounted (in the sidebar, rendered for both desktop + mobile), so an
-    // ungated query would fetch the full property list on every page.
-    const { data: properties = [], isLoading } = useGetAllProperties(isOpen, false);
+    // Fetch properties only while the modal is open and no property is locked in.
+    // This modal is always mounted (in the sidebar, rendered for both desktop + mobile),
+    // so an ungated query would fetch the full property list on every page.
+    const { data: properties = [], isLoading } = useGetAllProperties(isOpen && !lockedProperty, false);
+
+    // Re-sync the pre-selected property whenever the modal is (re)opened for a given listing.
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedPropertyId(lockedProperty?.id || '');
+        }
+    }, [isOpen, lockedProperty?.id]);
 
     // Filter out properties that can be selected (e.g., must have units or be single family)
     // For now, listing all active properties
@@ -161,7 +171,7 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
             
             // Success - reset form and close modal
             setEmails([{ id: '1', value: '', error: '', checking: false, exists: null }]);
-            setSelectedPropertyId('');
+            setSelectedPropertyId(lockedProperty?.id || '');
             setGeneralError('');
             onClose();
             
@@ -203,17 +213,20 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
                         <label className="block text-sm font-medium text-gray-700">Select property*</label>
                         <div className="relative">
                             <button
-                                onClick={() => setIsPropertyDropdownOpen(!isPropertyDropdownOpen)}
-                                className="w-full flex items-center justify-between px-4 py-3 bg-[#7BD747] text-white rounded-lg hover:bg-[#6bc13d] transition-colors focus:outline-none"
+                                onClick={() => !lockedProperty && setIsPropertyDropdownOpen(!isPropertyDropdownOpen)}
+                                disabled={!!lockedProperty}
+                                className={`w-full flex items-center justify-between px-4 py-3 bg-[#7BD747] text-white rounded-lg transition-colors focus:outline-none ${lockedProperty ? 'cursor-not-allowed opacity-90' : 'hover:bg-[#6bc13d]'}`}
                             >
                                 <span className="font-medium truncate">
-                                    {selectedProperty ? selectedProperty.propertyName : 'Listed Property'}
+                                    {lockedProperty ? lockedProperty.name : (selectedProperty ? selectedProperty.propertyName : 'Listed Property')}
                                 </span>
-                                <ChevronDown size={20} className={`transition-transform ${isPropertyDropdownOpen ? 'rotate-180' : ''}`} />
+                                {!lockedProperty && (
+                                    <ChevronDown size={20} className={`transition-transform ${isPropertyDropdownOpen ? 'rotate-180' : ''}`} />
+                                )}
                             </button>
 
                             {/* Dropdown Menu */}
-                            {isPropertyDropdownOpen && (
+                            {!lockedProperty && isPropertyDropdownOpen && (
                                 <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 rounded-lg shadow-xl max-h-60 overflow-y-auto">
                                     {isLoading ? (
                                         <div className="p-4 text-center text-gray-500 text-sm">Loading properties...</div>

@@ -22,7 +22,7 @@ import SelectionModal from './components/SelectionModal';
 import CustomDropdown from '../../components/CustomDropdown';
 import DatePicker from '../../../../components/ui/DatePicker';
 import OnlineApplicationModal from './components/OnlineApplicationModal';
-import InviteToApplyModal from './components/InviteToApplyModal';
+import InviteToApplyModal from '../Application/components/InviteToApplyModal';
 import DetailTabs from '../../components/DetailTabs';
 import { useGetListing, useUpdateListing, useGetListingStatistics, listingQueryKeys } from '../../../../hooks/useListingQueries';
 import { useQueryClient } from '@tanstack/react-query';
@@ -1847,8 +1847,12 @@ const ListingDetail: React.FC = () => {
                 <InviteToApplyModal
                     isOpen={isInviteToApplyModalOpen}
                     onClose={() => setIsInviteToApplyModalOpen(false)}
-                    onSend={() => {
-                        setIsInviteToApplyModalOpen(false);
+                    lockedProperty={backendListing?.property?.id ? {
+                        id: backendListing.property.id,
+                        name: backendListing.property.propertyName || backendListing.title || 'Listed Property',
+                    } : undefined}
+                    onSend={async (emails) => {
+                        toast.success(`Invitation sent to ${emails.length} applicant${emails.length > 1 ? 's' : ''}`);
                     }}
                 />
                 <DeleteConfirmationModal
