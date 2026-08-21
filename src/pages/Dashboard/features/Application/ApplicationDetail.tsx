@@ -639,7 +639,12 @@ const ApplicationDetail = () => {
     };
 
     const statusDisplay = getStatusDisplay(application.status);
-    const isApproved = application.status === 'APPROVED';
+    // Mirrors the backend's terminal-status lock (application.service.ts#update):
+    // once an application is decided, every field except status becomes read-only.
+    const isTerminalStatus =
+        application.status === 'APPROVED' ||
+        application.status === 'REJECTED' ||
+        application.status === 'CANCELLED';
 
     // Handler functions for adding items
     const handleSaveOccupant = async (data: any) => {
@@ -1343,13 +1348,15 @@ ${section('Income History', incomesHtml)}
                                 <div className="bg-[#3A6D6C] text-white p-4 py-3 rounded-xl text-center min-w-[200px] w-full sm:w-auto relative group">
                                     <div className="relative inline-flex items-center justify-center mb-1 w-full">
                                         <h2 className="font-bold text-lg truncate px-4">{applicantName}</h2>
-                                        <button
-                                            onClick={() => setNameEditModalOpen(true)}
-                                            className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/20 rounded-full"
-                                            title="Edit name"
-                                        >
-                                            <Edit2 size={12} className="text-white" />
-                                        </button>
+                                        {canEdit && !isTerminalStatus && (
+                                            <button
+                                                onClick={() => setNameEditModalOpen(true)}
+                                                className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/20 rounded-full"
+                                                title="Edit name"
+                                            >
+                                                <Edit2 size={12} className="text-white" />
+                                            </button>
+                                        )}
                                     </div>
                                     <p className="text-[10px] uppercase tracking-wider opacity-80 mb-0.5">VIA INVITATION EMAIL</p>
                                     <p className="text-xs opacity-90 truncate max-w-[180px] mx-auto">{primaryApplicant?.email}</p>
@@ -1365,13 +1372,15 @@ ${section('Income History', incomesHtml)}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full lg:max-w-2xl mx-auto">
                                 {/* Property Pill */}
                                 <div className="bg-[#7BD747] rounded-3xl px-6 py-3 flex flex-col justify-center h-auto min-h-[6rem] shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] relative group">
-                                    <button
-                                        onClick={() => setIsPropertyEditModalOpen(true)}
-                                        className="absolute top-4 right-6 opacity-0 bg-white/90 group-hover:opacity-100 transition-opacity p-1 hover:bg-white rounded-full"
-                                        title="Edit Property"
-                                    >
-                                        <Edit2 size={12} className="text-[#3A6D6C]" />
-                                    </button>
+                                    {canEdit && !isTerminalStatus && (
+                                        <button
+                                            onClick={() => setIsPropertyEditModalOpen(true)}
+                                            className="absolute top-4 right-6 opacity-0 bg-white/90 group-hover:opacity-100 transition-opacity p-1 hover:bg-white rounded-full"
+                                            title="Edit Property"
+                                        >
+                                            <Edit2 size={12} className="text-[#3A6D6C]" />
+                                        </button>
+                                    )}
                                     <div className="flex items-center gap-2 mb-2 ml-1">
                                         <span className="text-xs font-semibold text-white">Property</span>
                                     </div>
@@ -1437,36 +1446,48 @@ ${section('Income History', incomesHtml)}
                                             Request application fee
                                         </button>
                                         <div className="border-b border-gray-100 my-1" />
-                                        <button
-                                            onClick={() => {
-                                                setStatusModal({ isOpen: true, type: 'approve' });
-                                                setIsActionDropdownOpen(false);
-                                            }}
-                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors"
-                                        >
-                                            Approve application
-                                        </button>
-                                        <div className="border-b border-gray-100 my-1" />
-                                        <button
-                                            onClick={() => {
-                                                setStatusModal({ isOpen: true, type: 'review' });
-                                                setIsActionDropdownOpen(false);
-                                            }}
-                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors"
-                                        >
-                                            In review
-                                        </button>
-                                        <div className="border-b border-gray-100 my-1" />
-                                        <button
-                                            onClick={() => {
-                                                setStatusModal({ isOpen: true, type: 'decline' });
-                                                setIsActionDropdownOpen(false);
-                                            }}
-                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors"
-                                        >
-                                            Decline application
-                                        </button>
-                                        <div className="border-b border-gray-100 my-1" />
+                                        {application.status !== 'APPROVED' && (
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        setStatusModal({ isOpen: true, type: 'approve' });
+                                                        setIsActionDropdownOpen(false);
+                                                    }}
+                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors"
+                                                >
+                                                    Approve application
+                                                </button>
+                                                <div className="border-b border-gray-100 my-1" />
+                                            </>
+                                        )}
+                                        {application.status !== 'REVIEWING' && (
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        setStatusModal({ isOpen: true, type: 'review' });
+                                                        setIsActionDropdownOpen(false);
+                                                    }}
+                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors"
+                                                >
+                                                    In review
+                                                </button>
+                                                <div className="border-b border-gray-100 my-1" />
+                                            </>
+                                        )}
+                                        {application.status !== 'REJECTED' && (
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        setStatusModal({ isOpen: true, type: 'decline' });
+                                                        setIsActionDropdownOpen(false);
+                                                    }}
+                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors"
+                                                >
+                                                    Decline application
+                                                </button>
+                                                <div className="border-b border-gray-100 my-1" />
+                                            </>
+                                        )}
                                         <button
                                             onClick={() => {
                                                 setIsActionDropdownOpen(false);
@@ -1498,7 +1519,7 @@ ${section('Income History', incomesHtml)}
                     <Section
                         title="Applicant information"
                         secondaryButton={
-                            !isApproved && canEdit ? (
+                            !isTerminalStatus && canEdit ? (
                                 <button
                                     onClick={() => setIsApplicantInfoEditModalOpen(true)}
                                     className="bg-white border border-gray-200 text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
@@ -1563,7 +1584,7 @@ ${section('Income History', incomesHtml)}
                     {/* 2. Additional Occupants */}
                     <Section
                         title="Additional occupants"
-                        onAdd={isApproved || !canEdit ? undefined : () => setIsOccupantModalOpen(true)}
+                        onAdd={isTerminalStatus || !canEdit ? undefined : () => setIsOccupantModalOpen(true)}
                         addButtonLabel="Add co-occupant"
                         isEmpty={application.occupants.length === 0}
                         emptyText="No additional occupants added"
@@ -1571,7 +1592,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-3">
                             {application.occupants.map(occ => (
                                 <div key={occ.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
-                                    {!isApproved && canEdit && (
+                                    {!isTerminalStatus && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1634,7 +1655,7 @@ ${section('Income History', incomesHtml)}
                     {/* 3. Pets */}
                     <Section
                         title="Pets"
-                        onAdd={isApproved || !canEdit ? undefined : () => setIsPetModalOpen(true)}
+                        onAdd={isTerminalStatus || !canEdit ? undefined : () => setIsPetModalOpen(true)}
                         addButtonLabel="Add Pets"
                         isEmpty={application.pets.length === 0}
                         emptyText="No pets added"
@@ -1642,7 +1663,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-3">
                             {application.pets.map(pet => (
                                 <div key={pet.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
-                                    {!isApproved && canEdit && (
+                                    {!isTerminalStatus && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1721,7 +1742,7 @@ ${section('Income History', incomesHtml)}
                     {/* 4. Vehicles */}
                     < Section
                         title="Vehicles"
-                        onAdd={isApproved || !canEdit ? undefined : () => setIsVehicleModalOpen(true)}
+                        onAdd={isTerminalStatus || !canEdit ? undefined : () => setIsVehicleModalOpen(true)}
                         addButtonLabel="Add Vehicles"
                         isEmpty={application.vehicles.length === 0}
                         emptyText="No vehicles added"
@@ -1729,7 +1750,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-3">
                             {application.vehicles.map(v => (
                                 <div key={v.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
-                                    {!isApproved && canEdit && (
+                                    {!isTerminalStatus && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1801,12 +1822,12 @@ ${section('Income History', incomesHtml)}
                     {/* 5. Residential History */}
                     < Section
                         title="Residential history"
-                        onAdd={isApproved || !canEdit ? undefined : () => setIsResidenceModalOpen(true)}
+                        onAdd={isTerminalStatus || !canEdit ? undefined : () => setIsResidenceModalOpen(true)}
                         addButtonLabel="Add residence"
                         isEmpty={application.residenceHistory.length === 0}
                         emptyText="No residential history added"
                         secondaryButton={
-                            !isApproved && canEdit ? (
+                            !isTerminalStatus && canEdit ? (
                             < button
                                 onClick={() => setIsResidenceInfoModalOpen(true)}
                                 className="flex items-center gap-1 bg-white border border-gray-200 text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm"
@@ -1820,7 +1841,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-4">
                             {application.residenceHistory.map(res => (
                                 <div key={res.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
-                                    {!isApproved && canEdit && (
+                                    {!isTerminalStatus && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1928,7 +1949,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-4">
                             {application.incomeDetails.map(inc => (
                                 <div key={inc.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group">
-                                    {!isApproved && canEdit && (
+                                    {!isTerminalStatus && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {
@@ -1998,12 +2019,12 @@ ${section('Income History', incomesHtml)}
                     {/* 7. Contacts */}
                     < Section
                         title="Contacts"
-                        onAdd={isApproved || !canEdit ? undefined : () => setIsReferenceModalOpen(true)}
+                        onAdd={isTerminalStatus || !canEdit ? undefined : () => setIsReferenceModalOpen(true)}
                         addButtonLabel="Add reference"
                         isEmpty={application.emergencyContacts.length === 0}
                         emptyText="No contacts added"
                         secondaryButton={
-                            !isApproved && canEdit ? (
+                            !isTerminalStatus && canEdit ? (
                             < button
                                 onClick={() => setIsContactModalOpen(true)}
                                 className="flex items-center gap-1 bg-white border border-gray-200 text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm"
@@ -2017,7 +2038,7 @@ ${section('Income History', incomesHtml)}
                         <div className="space-y-3">
                             {application.emergencyContacts.map(contact => (
                                 <div key={contact.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50 relative group flex items-center justify-between">
-                                    {!isApproved && canEdit && (
+                                    {!isTerminalStatus && canEdit && (
                                     <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                         <button
                                             onClick={() => {

@@ -55,14 +55,16 @@ const EditApplicantNameModal: React.FC<EditApplicantNameModalProps> = ({
     };
 
     const handleChange = (field: 'firstName' | 'lastName', value: string) => {
-        // Block numbers and special chars
-        if (!/^[a-zA-Z\s\-']*$/.test(value)) return;
+        // Strip numbers and special chars as the user types/deletes, rather than
+        // rejecting the whole edit (which would freeze the field whenever the
+        // current value already contains an invalid character, e.g. legacy data).
+        const sanitized = value.replace(/[^a-zA-Z\s\-']/g, '');
 
-        if (field === 'firstName') setFirstName(value);
-        else setLastName(value);
+        if (field === 'firstName') setFirstName(sanitized);
+        else setLastName(sanitized);
 
         if (touched[field]) {
-            const error = validate(field, value);
+            const error = validate(field, sanitized);
             setErrors(prev => ({ ...prev, [field]: error }));
         }
     };
@@ -133,10 +135,7 @@ const EditApplicantNameModal: React.FC<EditApplicantNameModalProps> = ({
                             className="w-full bg-white p-2.5 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm text-sm border-none"
                             value={middleName}
                             onChange={(e) => {
-                                const val = e.target.value;
-                                if (/^[a-zA-Z\s\-']*$/.test(val)) {
-                                    setMiddleName(val);
-                                }
+                                setMiddleName(e.target.value.replace(/[^a-zA-Z\s\-']/g, ''));
                             }}
                         />
                     </div>
