@@ -4,6 +4,7 @@ import type { Editor } from '@tiptap/react';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TiptapEditor from '../../../../../components/common/Editor/TiptapEditor';
 import DocumentPreviewModal from './DocumentPreviewModal';
+import FloatingFieldInserter from './FloatingFieldInserter';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
 import { AUTO_FILL_FIELDS, tokenForLabel, type AutoFillField } from '../autoFillFields';
 import {
@@ -176,7 +177,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     const insertSignature = (kind: SignatureKind, party: SignatureParty) => {
         const ed = editorRef.current;
         setPendingSignature(null);
-        if (!ed) return;
+        // isDestroyed is `editorView?.isDestroyed ?? true`, so it also covers an
+        // editor whose view was never mounted. Commands on one of those throw.
+        if (!ed || ed.isDestroyed) return;
 
         ed.chain()
             .focus()
@@ -186,7 +189,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
     const insertAtCursor = (label: string, isAutoFill: boolean) => {
         const ed = editorRef.current;
-        if (!ed) return;
+        if (!ed || ed.isDestroyed) return;
 
         if (isAutoFill) {
             ed.chain().focus().insertAutoFillNode(label, tokenForLabel(label)).run();
@@ -282,6 +285,17 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     onEditorReady={(ed: Editor) => { editorRef.current = ed; }}
                 />
             </div>
+
+            {/* Floats over the page rather than sitting in the layout, so the
+                editor keeps its full width and a field can be placed from
+                wherever you are in a long document. */}
+            <FloatingFieldInserter
+                onInsertAutoFill={(label) => insertAtCursor(label, true)}
+                onInsertTextbox={() => insertAtCursor('Textbox', false)}
+                onInsertSignature={insertSignature}
+                onChipDragStart={handleDragStart}
+                onChipDragEnd={stopEdgeAutoScroll}
+            />
 
             {/* Signature Block Preview — shown in editor when toggle is ON */}
             {isDefaultSignature && (

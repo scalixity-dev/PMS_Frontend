@@ -7,6 +7,7 @@ import {
     Undo, Redo, Quote
 } from 'lucide-react';
 import { AutoFillNode } from './extensions/AutoFillNode';
+import { documentContentCss } from './documentContentCss';
 
 interface TiptapEditorProps {
     content: string;
@@ -116,6 +117,9 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
     const dropHandlerRef = React.useRef(onDropHandler);
     dropHandlerRef.current = onDropHandler;
 
+    const onEditorReadyRef = React.useRef(onEditorReady);
+    onEditorReadyRef.current = onEditorReady;
+
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -125,11 +129,6 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
             AutoFillNode,
         ],
         content: content,
-        onCreate: ({ editor }) => {
-            if (onEditorReady) {
-                onEditorReady(editor);
-            }
-        },
         onUpdate: ({ editor }) => {
             onChange(editor.getHTML());
         },
@@ -153,6 +152,11 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
         },
     });
 
+
+    React.useEffect(() => {
+        if (editor) onEditorReadyRef.current?.(editor);
+    }, [editor]);
+
     React.useEffect(() => {
         if (editor && content && content !== editor.getHTML()) {
             editor.commands.setContent(content);
@@ -172,6 +176,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
                 .ProseMirror {
                     outline: none !important;
                 }
+                ${documentContentCss('.ProseMirror')}
                 /* A signature field reads differently from a data field: it is
                    a place someone signs, not a value that gets substituted. */
                 .signature-pill {

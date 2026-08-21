@@ -1,3 +1,4 @@
+import { documentContentCss } from '../../../../../components/common/Editor/documentContentCss';
 /**
  * Common utility functions for printing and previewing documents
  * Centralized logic to avoid duplication across different document components
@@ -54,6 +55,7 @@ export const handleDocumentPrint = (
         }
         h1, h2, h3 { color: #111827; }
         p { margin-bottom: 1em; }
+        ${documentContentCss('.print-content')}
         ${options?.includeImages !== false ? '.prose img { max-width: 100%; height: auto; }' : ''}
         .auto-fill-pill {
             background-color: #88D94C;

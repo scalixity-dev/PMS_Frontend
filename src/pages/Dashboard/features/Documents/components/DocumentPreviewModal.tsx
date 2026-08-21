@@ -2,6 +2,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
+import { documentContentCss } from '../../../../../components/common/Editor/documentContentCss';
 
 interface DocumentPreviewModalProps {
     isOpen: boolean;
@@ -89,9 +90,10 @@ const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
                 {/* Preview Content - Scrollable */}
                 <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
-                    <div className="max-w-none mx-auto bg-white p-10 rounded-lg shadow-sm font-outfit">
+                    <div className="template-document max-w-none mx-auto bg-white p-10 rounded-lg shadow-sm font-outfit">
                         {/* Inject same auto-fill-pill style as editor for consistency */}
                         <style>{`
+                            ${documentContentCss('.template-document')}
                             .auto-fill-pill {
                                 background-color: #88D94C;
                                 border: 1px solid #77C342;
