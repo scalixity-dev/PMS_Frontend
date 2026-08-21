@@ -62,10 +62,16 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     retry: false,
   });
 
+  // Subscriptions only exist for property-manager accounts - tenants and
+  // service pros never have a row, so asking for one just 404s. Gating on
+  // role (not only "is anybody logged in") stops that pointless request on
+  // every tenant/service-pro page.
+  const isPropertyManager = sessionUser?.role === 'PROPERTY_MANAGER';
+
   const { data, isLoading: subscriptionLoading, refetch } = useQuery({
     queryKey: ['subscription', 'current'],
     queryFn: () => subscriptionService.getCurrent(),
-    enabled: !!sessionUser,
+    enabled: isPropertyManager,
     staleTime: 0,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
@@ -75,7 +81,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Still "loading" while the session probe is in flight, so a consumer never
   // briefly sees the no-plan state of a user who does in fact have one.
-  const isLoading = sessionLoading || (!!sessionUser && subscriptionLoading);
+  const isLoading = sessionLoading || (isPropertyManager && subscriptionLoading);
 
   const value = useMemo<SubscriptionContextValue>(() => {
     const status = data?.status ?? '';
