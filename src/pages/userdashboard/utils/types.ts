@@ -113,6 +113,7 @@ export interface FilterState {
     availability: string;
     selectedAmenities: string[];
     petsAllowed: string;
+    favoritesOnly?: boolean; // Show only properties the tenant has favorited
 }
 export interface UserInfo {
     firstName: string;

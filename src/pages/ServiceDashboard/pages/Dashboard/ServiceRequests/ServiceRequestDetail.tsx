@@ -129,7 +129,9 @@ const ServiceRequestDetail: React.FC = () => {
         if (!requestDetail) return [];
 
         const fromPhotos =
-            requestDetail.photos?.map((p) => p.fileUrl) ?? [];
+            requestDetail.photos
+                ?.map((p) => p.photoUrl)
+                .filter((url): url is string => !!url) ?? [];
 
         const fromImageAttachments =
             requestDetail.attachments

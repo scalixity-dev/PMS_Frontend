@@ -8,6 +8,7 @@ import { authService } from "../../../../services/auth.service";
 import { formatMoney } from "../../../../utils/currency.utils";
 import { formatAmenityLabel } from "../../../../utils/string.utils";
 import { useToggleFavorite, useIsFavorited } from "../../../../hooks/useListingQueries";
+import { listingService } from "../../../../services/listing.service";
 
 
 // --- Internal Components ---
@@ -99,6 +100,83 @@ const PropertySkeleton: React.FC = () => (
 );
 
 const ITEMS_PER_PAGE = 12;
+
+// Shared between the public listings fetch and the favorites-only fetch -
+// the backend shapes a favorited item identically to a public listing item
+// (PropertyService.findListedProperties / ListingService.getUserFavorites),
+// so both can be mapped to the frontend Property type through this one function.
+const mapListingItemToProperty = (item: any, index: number): Property => {
+  const address = item.address;
+  const addressString = address
+    ? `${address.streetAddress || ''}, ${address.city || ''}, ${address.stateRegion || ''}, ${address.zipCode || ''}, ${address.country || ''}`
+    : '';
+
+  const price = item.listing?.monthlyRent
+    ? parseFloat(item.listing.monthlyRent)
+    : item.listing?.listingPrice
+      ? parseFloat(item.listing.listingPrice)
+      : item.marketRent
+        ? parseFloat(item.marketRent)
+        : 0;
+
+  const beds = item.singleUnitDetail?.beds ?? null;
+  const title = item.listing?.title ||
+    (beds !== null ? `${beds} Bedroom ${item.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : item.propertyName);
+
+  // Use listing.id if available, otherwise use property.id with index to ensure uniqueness
+  const uniqueId = item.listing?.id ? `${item.id}-${item.listing.id}` : `${item.id}-${index}`;
+
+  // Get currency from backend response, fallback to property country or default
+  const currencyInfo = item.currency || { code: 'USD', symbol: '$', name: 'US Dollar' };
+
+  // Format price with currency
+  const formattedPrice = formatMoney(price, currencyInfo.code);
+
+  return {
+    id: item.id, // Use actual property ID for navigation
+    listingId: item.listing?.id || null, // Listing ID for favorites
+    uniqueId: uniqueId, // Use composite ID for React keys
+    title: title,
+    address: addressString,
+    type: item.propertyType === 'SINGLE' ? 'Single Unit' : 'Multi Unit',
+    price: formattedPrice, // Use formatted price with currency
+    rent: price,
+    currency: currencyInfo.symbol, // Currency symbol
+    currencyCode: currencyInfo.code, // Currency code for reference
+    tag: item.listing?.petsAllowed ? 'Pets Allowed' : undefined,
+    image: item.coverPhotoUrl || (item.photos?.[0]?.photoUrl ?? null),
+    images: item.photos?.map((p: any) => p.photoUrl) || [],
+    amenities: [
+      ...(item.amenities?.parking && item.amenities.parking !== 'NONE' ? [formatAmenityLabel(item.amenities.parking)] : []),
+      ...(item.amenities?.laundry && item.amenities.laundry !== 'NONE' ? [formatAmenityLabel(item.amenities.laundry)] : []),
+      ...(item.amenities?.airConditioning && item.amenities.airConditioning !== 'NONE' ? [formatAmenityLabel(item.amenities.airConditioning)] : []),
+      ...(item.amenities?.propertyAmenities || []).map((a: string) => formatAmenityLabel(a)),
+      ...(item.amenities?.propertyFeatures || []).map((f: string) => formatAmenityLabel(f)),
+    ],
+  };
+};
+
+const extractAmenities = (data: any[]): string[] => {
+  const amenitiesSet = new Set<string>();
+  data.forEach((item: any) => {
+    if (item.amenities?.parking && item.amenities.parking !== 'NONE') {
+      amenitiesSet.add(formatAmenityLabel(item.amenities.parking));
+    }
+    if (item.amenities?.laundry && item.amenities.laundry !== 'NONE') {
+      amenitiesSet.add(formatAmenityLabel(item.amenities.laundry));
+    }
+    if (item.amenities?.airConditioning && item.amenities.airConditioning !== 'NONE') {
+      amenitiesSet.add(formatAmenityLabel(item.amenities.airConditioning));
+    }
+    if (item.amenities?.propertyAmenities && Array.isArray(item.amenities.propertyAmenities)) {
+      item.amenities.propertyAmenities.forEach((amenity: string) => amenitiesSet.add(formatAmenityLabel(amenity)));
+    }
+    if (item.amenities?.propertyFeatures && Array.isArray(item.amenities.propertyFeatures)) {
+      item.amenities.propertyFeatures.forEach((feature: string) => amenitiesSet.add(formatAmenityLabel(feature)));
+    }
+  });
+  return Array.from(amenitiesSet).sort();
+};
 
 const Properties: React.FC = () => {
   const {
@@ -200,6 +278,25 @@ const Properties: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
+        // Favorites-only view: skip location/price/preference filtering
+        // entirely and fetch the tenant's saved favorites directly. The
+        // backend shapes each favorite identically to a public listing item,
+        // so the mapping below is reused unchanged.
+        if (filters.favoritesOnly) {
+          const data = await listingService.getMyFavorites();
+          const mappedFavorites: Property[] = data.map((item: any, index: number) => mapListingItemToProperty(item, index));
+          const seenFav = new Set<string>();
+          const dedupedFavorites = mappedFavorites.filter((property) => {
+            const baseId = String(property.id);
+            if (seenFav.has(baseId)) return false;
+            seenFav.add(baseId);
+            return true;
+          });
+          setProperties(dedupedFavorites);
+          setAvailableAmenities(extractAmenities(data));
+          return;
+        }
+
         // Build query params from filters and user preferences
         const params = new URLSearchParams();
 
@@ -284,7 +381,7 @@ const Properties: React.FC = () => {
         }
 
         // Baths filter: Use preferences if enabled
-        if (shouldUsePreferences && userPreferences?.criteria?.baths) {
+        if (shouldUsePreferences && userPreferences?.criteria?.baths && userPreferences.criteria.baths !== 'Any') {
           params.append('baths', userPreferences.criteria.baths);
         }
 
@@ -327,57 +424,7 @@ const Properties: React.FC = () => {
           : (responseData?.data || []);
 
         // Map backend response to Property type
-        const mappedProperties: Property[] = data.map((item: any, index: number) => {
-          const address = item.address;
-          const addressString = address
-            ? `${address.streetAddress || ''}, ${address.city || ''}, ${address.stateRegion || ''}, ${address.zipCode || ''}, ${address.country || ''}`
-            : '';
-
-          const price = item.listing?.monthlyRent
-            ? parseFloat(item.listing.monthlyRent)
-            : item.listing?.listingPrice
-              ? parseFloat(item.listing.listingPrice)
-              : item.marketRent
-                ? parseFloat(item.marketRent)
-                : 0;
-
-          const beds = item.singleUnitDetail?.beds ?? null;
-          const title = item.listing?.title ||
-            (beds !== null ? `${beds} Bedroom ${item.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : item.propertyName);
-
-          // Use listing.id if available, otherwise use property.id with index to ensure uniqueness
-          const uniqueId = item.listing?.id ? `${item.id}-${item.listing.id}` : `${item.id}-${index}`;
-
-          // Get currency from backend response, fallback to property country or default
-          const currencyInfo = item.currency || { code: 'USD', symbol: '$', name: 'US Dollar' };
-
-          // Format price with currency
-          const formattedPrice = formatMoney(price, currencyInfo.code);
-
-          return {
-            id: item.id, // Use actual property ID for navigation
-            listingId: item.listing?.id || null, // Listing ID for favorites
-            uniqueId: uniqueId, // Use composite ID for React keys
-            title: title,
-            address: addressString,
-            type: item.propertyType === 'SINGLE' ? 'Single Unit' : 'Multi Unit',
-            price: formattedPrice, // Use formatted price with currency
-            rent: price,
-            currency: currencyInfo.symbol, // Currency symbol
-            currencyCode: currencyInfo.code, // Currency code for reference
-            tag: item.listing?.petsAllowed ? 'Pets Allowed' : null,
-            image: item.coverPhotoUrl || (item.photos?.[0]?.photoUrl ?? null),
-            images: item.photos?.map((p: any) => p.photoUrl) || [],
-            amenities: [
-              ...(item.amenities?.parking && item.amenities.parking !== 'NONE' ? [formatAmenityLabel(item.amenities.parking)] : []),
-              ...(item.amenities?.laundry && item.amenities.laundry !== 'NONE' ? [formatAmenityLabel(item.amenities.laundry)] : []),
-              ...(item.amenities?.airConditioning && item.amenities.airConditioning !== 'NONE' ? [formatAmenityLabel(item.amenities.airConditioning)] : []),
-              ...(item.amenities?.propertyAmenities || []).map((a: string) => formatAmenityLabel(a)),
-              ...(item.amenities?.propertyFeatures || []).map((f: string) => formatAmenityLabel(f)),
-            ],
-          };
-
-        });
+        const mappedProperties: Property[] = data.map((item: any, index: number) => mapListingItemToProperty(item, index));
 
         // Deduplicate properties by property ID (keep first occurrence)
         const seen = new Set<string>();
@@ -392,31 +439,7 @@ const Properties: React.FC = () => {
         });
 
         setProperties(deduplicatedProperties);
-
-        // Extract unique amenities from all properties
-        const amenitiesSet = new Set<string>();
-        data.forEach((item: any) => {
-          // Add basic amenities if they exist and are not 'NONE'
-          if (item.amenities?.parking && item.amenities.parking !== 'NONE') {
-            amenitiesSet.add(formatAmenityLabel(item.amenities.parking));
-          }
-          if (item.amenities?.laundry && item.amenities.laundry !== 'NONE') {
-            amenitiesSet.add(formatAmenityLabel(item.amenities.laundry));
-          }
-          if (item.amenities?.airConditioning && item.amenities.airConditioning !== 'NONE') {
-            amenitiesSet.add(formatAmenityLabel(item.amenities.airConditioning));
-          }
-          // Add property amenities
-          if (item.amenities?.propertyAmenities && Array.isArray(item.amenities.propertyAmenities)) {
-            item.amenities.propertyAmenities.forEach((amenity: string) => amenitiesSet.add(formatAmenityLabel(amenity)));
-          }
-          // Add property features
-          if (item.amenities?.propertyFeatures && Array.isArray(item.amenities.propertyFeatures)) {
-            item.amenities.propertyFeatures.forEach((feature: string) => amenitiesSet.add(formatAmenityLabel(feature)));
-          }
-        });
-
-        setAvailableAmenities(Array.from(amenitiesSet).sort());
+        setAvailableAmenities(extractAmenities(data));
 
       } catch (err) {
         console.error('Error fetching properties:', err);
@@ -440,6 +463,7 @@ const Properties: React.FC = () => {
     filters.selectedAmenities,
     userPreferences,
     usePreferences,
+    filters.favoritesOnly,
     prefsLoaded,
   ]);
 
@@ -483,7 +507,7 @@ const Properties: React.FC = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters.search, filters.propertyType, filters.minPrice, filters.maxPrice, filters.bedrooms, filters.petsAllowed, filters.locationFilter, usePreferences]);
+  }, [filters.search, filters.propertyType, filters.minPrice, filters.maxPrice, filters.bedrooms, filters.petsAllowed, filters.locationFilter, filters.favoritesOnly, usePreferences]);
 
   // Reset to page 1 if current page is out of bounds
   useEffect(() => {
@@ -530,7 +554,7 @@ const Properties: React.FC = () => {
           </nav>
           <div className="flex flex-col gap-3">
             {/* My Preferences Section */}
-            {userPreferences && (
+            {userPreferences && !filters.favoritesOnly && (
               <div className="bg-white rounded-lg border border-gray-200 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.08)] overflow-hidden">
                 <div className="p-3 sm:p-4">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -646,12 +670,16 @@ const Properties: React.FC = () => {
                 ))
               ) : (
                 <div className="col-span-full py-20 text-center">
-                  <p className="text-gray-500 text-lg">No properties found matching your criteria.</p>
+                  <p className="text-gray-500 text-lg">
+                    {filters.favoritesOnly
+                      ? "You haven't added any properties to favourites yet."
+                      : 'No properties found matching your criteria.'}
+                  </p>
                   <button
-                    onClick={handleClearAllFilters}
+                    onClick={filters.favoritesOnly ? () => setFilters({ ...filters, favoritesOnly: false }) : handleClearAllFilters}
                     className="mt-4 text-[var(--dashboard-accent)] font-medium hover:underline"
                   >
-                    Clear all filters
+                    {filters.favoritesOnly ? 'Show all properties' : 'Clear all filters'}
                   </button>
                 </div>
               )}

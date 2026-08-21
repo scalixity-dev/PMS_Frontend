@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Search, Check } from "lucide-react";
+import { Search, Check, Heart } from "lucide-react";
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from "../../../../../pages/Dashboard/components/CustomDropdown";
@@ -82,6 +82,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
     const [availability, setAvailability] = useState(initialFilters.availability || "All");
     const [selectedAmenities, setSelectedAmenities] = useState(initialFilters.selectedAmenities || []);
     const [petsAllowed, setPetsAllowed] = useState(initialFilters.petsAllowed || "All");
+    const [favoritesOnly, setFavoritesOnly] = useState(initialFilters.favoritesOnly || false);
     const [showAllAmenities, setShowAllAmenities] = useState(false);
 
     // Ref to track if we're syncing from props (to prevent infinite loop)
@@ -134,6 +135,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             setAvailability(initialFilters.availability || "All");
             setSelectedAmenities(initialFilters.selectedAmenities || []);
             setPetsAllowed(initialFilters.petsAllowed || "All");
+            setFavoritesOnly(initialFilters.favoritesOnly || false);
         }
 
         // Reset the flag after a microtask to allow state updates to complete
@@ -230,10 +232,11 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             bedrooms,
             availability,
             selectedAmenities,
-            petsAllowed
+            petsAllowed,
+            favoritesOnly
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search, propertyType, region, locationModified, country, stateRegion, city, minPrice, maxPrice, priceModified, bedrooms, availability, selectedAmenities, petsAllowed]);
+    }, [search, propertyType, region, locationModified, country, stateRegion, city, minPrice, maxPrice, priceModified, bedrooms, availability, selectedAmenities, petsAllowed, favoritesOnly]);
 
 
     const propertyTypes = ["All", "Single Unit", "Multi Unit"];
@@ -308,8 +311,28 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} strokeWidth={1.5} />
                         </div>
 
-                        {/* Property Type */}
+                        {/* Favourites Only */}
                         <section className="space-y-2">
+                            <div className="bg-white rounded-md p-4 shadow-sm flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Heart size={16} className={favoritesOnly ? 'text-red-500' : 'text-gray-400'} fill={favoritesOnly ? 'currentColor' : 'none'} />
+                                    <span className="text-[14px] font-medium text-gray-700">Favourites Only</span>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={favoritesOnly}
+                                        onChange={(e) => setFavoritesOnly(e.target.checked)}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-[#8CD74B] transition-colors duration-300"></div>
+                                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 peer-checked:translate-x-5"></div>
+                                </label>
+                            </div>
+                        </section>
+
+                        {/* Property Type */}
+                        <section className={`space-y-2 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Property type</h3>
                             <div className="bg-white rounded-md p-4 shadow-sm space-y-1.5">
                                 {propertyTypes.map((type) => (
@@ -338,7 +361,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Location Filters */}
-                        <section className="space-y-4 pt-2 border-t border-gray-200">
+                        <section className={`space-y-4 pt-2 border-t border-gray-200 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Location</h3>
 
                             <div className="space-y-4">
@@ -395,7 +418,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Price Range */}
-                        <section className="space-y-2 pt-2 border-t border-gray-200">
+                        <section className={`space-y-2 pt-2 border-t border-gray-200 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Price Range</h3>
                             <div className="flex items-center gap-4">
                                 <div className="flex-1 flex items-center gap-2">
@@ -477,7 +500,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Bed Rooms */}
-                        <section className="space-y-2 pt-2 border-t border-gray-200">
+                        <section className={`space-y-2 pt-2 border-t border-gray-200 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Bed Rooms</h3>
                             <div className="flex gap-2">
                                 {bedroomOptions.map((opt) => (
@@ -496,7 +519,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Availability */}
-                        <section className="space-y-2 pt-2 border-t border-gray-200">
+                        <section className={`space-y-2 pt-2 border-t border-gray-200 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Availability</h3>
                             <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
                                 {availabilityOptions.map((opt) => (
@@ -525,7 +548,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Pets Allowed */}
-                        <section className="space-y-2 pt-2 border-t border-gray-200">
+                        <section className={`space-y-2 pt-2 border-t border-gray-200 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Pets Allowed</h3>
                             <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
                                 {["All", "Yes", "No"].map((opt) => (
@@ -554,7 +577,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Amenities */}
-                        <section className="space-y-2 pt-2 border-t border-gray-200 text-center">
+                        <section className={`space-y-2 pt-2 border-t border-gray-200 text-center transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1 text-left">Amenities</h3>
                             <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
                                 <div className="space-y-1.5 text-left">
@@ -671,8 +694,28 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} strokeWidth={1.5} />
                         </div>
 
-                        {/* Property Type */}
+                        {/* Favourites Only */}
                         <section className="space-y-2">
+                            <div className="bg-white rounded-md p-4 shadow-sm flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Heart size={16} className={favoritesOnly ? 'text-red-500' : 'text-gray-400'} fill={favoritesOnly ? 'currentColor' : 'none'} />
+                                    <span className="text-[14px] font-medium text-gray-700">Favourites Only</span>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={favoritesOnly}
+                                        onChange={(e) => setFavoritesOnly(e.target.checked)}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-[#8CD74B] transition-colors duration-300"></div>
+                                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 peer-checked:translate-x-5"></div>
+                                </label>
+                            </div>
+                        </section>
+
+                        {/* Property Type */}
+                        <section className={`space-y-2 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Property type</h3>
                             <div className="bg-white rounded-md p-4 shadow-sm space-y-1.5">
                                 {propertyTypes.map((type) => (
@@ -701,7 +744,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Location Filters */}
-                        <section className="space-y-4 pt-2 border-t border-gray-200">
+                        <section className={`space-y-4 pt-2 border-t border-gray-200 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Location</h3>
 
                             <div className="space-y-4">
@@ -758,7 +801,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Price Range */}
-                        <section className="space-y-2 pt-2 border-t border-gray-200">
+                        <section className={`space-y-2 pt-2 border-t border-gray-200 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Price Range</h3>
                             <div className="flex items-center gap-4">
                                 <div className="flex-1 flex items-center gap-2">
@@ -844,7 +887,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Bed Rooms */}
-                        <section className="space-y-2 pt-2 border-t border-gray-200">
+                        <section className={`space-y-2 pt-2 border-t border-gray-200 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Bed Rooms</h3>
                             <div className="flex gap-2">
                                 {bedroomOptions.map((opt) => (
@@ -863,7 +906,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Availability */}
-                        <section className="space-y-2 pt-2 border-t border-gray-200">
+                        <section className={`space-y-2 pt-2 border-t border-gray-200 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Availability</h3>
                             <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
                                 {availabilityOptions.map((opt) => (
@@ -892,7 +935,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Pets Allowed */}
-                        <section className="space-y-2 pt-2 border-t border-gray-200">
+                        <section className={`space-y-2 pt-2 border-t border-gray-200 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1">Pets Allowed</h3>
                             <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
                                 {["All", "Yes", "No"].map((opt) => (
@@ -921,7 +964,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </section>
 
                         {/* Amenities */}
-                        <section className="space-y-2 pt-2 border-t border-gray-200 text-center pb-4">
+                        <section className={`space-y-2 pt-2 border-t border-gray-200 text-center pb-4 transition-opacity ${favoritesOnly ? 'opacity-40 pointer-events-none' : ''}`}>
                             <h3 className="text-base font-semibold text-[#202020] px-1 text-left">Amenities</h3>
                             <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
                                 <div className="space-y-1.5 text-left">
