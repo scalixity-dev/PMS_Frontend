@@ -18,6 +18,7 @@ interface ServiceProCardData {
     category: string;
     bgColor?: string;
     image?: string;
+    isActive: boolean;
 }
 
 const ServicePros = () => {
@@ -32,6 +33,7 @@ const ServicePros = () => {
     const [pendingProviders, setPendingProviders] = useState<BackendServiceProvider[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showArchived, setShowArchived] = useState(false);
 
     // Helper function to generate initials from name
     const getInitials = (firstName: string, lastName: string): string => {
@@ -70,7 +72,7 @@ const ServicePros = () => {
         setError(null);
         try {
             const [data, pending] = await Promise.all([
-                serviceProviderService.getAll(true),
+                serviceProviderService.getAll(!showArchived),
                 serviceProviderService.getPending(),
             ]);
             setPendingProviders(pending);
@@ -84,6 +86,7 @@ const ServicePros = () => {
                 category: formatCategory(provider.category, provider.subcategory),
                 bgColor: 'bg-[#4ad1a6]',
                 image: provider.photoUrl || undefined,
+                isActive: provider.isActive,
             }));
 
             setServicePros(transformedData);
@@ -97,7 +100,7 @@ const ServicePros = () => {
 
     useEffect(() => {
         fetchServiceProviders();
-    }, []);
+    }, [showArchived]);
 
     const handleApprove = async (id: string) => {
         try {
@@ -115,6 +118,15 @@ const ServicePros = () => {
             await fetchPending();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to reject');
+        }
+    };
+
+    const handleUnarchive = async (id: string) => {
+        try {
+            await serviceProviderService.update(id, { isActive: true });
+            await fetchServiceProviders();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to unarchive service provider');
         }
     };
 
@@ -305,6 +317,16 @@ const ServicePros = () => {
                     <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
                         {isLoading ? 'Loading...' : `${filteredServicePros.length} service pros`}
                     </div>
+                    <button
+                        onClick={() => { setShowArchived(prev => !prev); setCurrentPage(1); }}
+                        className={`px-4 py-1 rounded-full text-sm font-medium border transition-colors ${
+                            showArchived
+                                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                        }`}
+                    >
+                        {showArchived ? 'Showing archived' : 'Show archived'}
+                    </button>
                 </div>
 
                 {/* Loading State */}
@@ -344,21 +366,28 @@ const ServicePros = () => {
                                         key={pro.id}
                                         {...pro}
                                         onDeleteSuccess={fetchServiceProviders}
+                                        onUnarchive={() => handleUnarchive(pro.id)}
                                     />
                                 ))}
                             </div>
                         ) : (
                             <div className="flex items-center justify-center py-20">
                                 <div className="text-center">
-                                    <p className="text-gray-600 text-lg mb-2">No service providers found</p>
-                                    <p className="text-gray-500 text-sm">Get started by adding your first service provider</p>
-                                    <button
-                                        onClick={() => navigate('/dashboard/contacts/service-pros/add')}
-                                        className="mt-4 px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 mx-auto"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        Add service pro
-                                    </button>
+                                    <p className="text-gray-600 text-lg mb-2">
+                                        {showArchived ? 'No archived service providers' : 'No service providers found'}
+                                    </p>
+                                    {!showArchived && (
+                                        <>
+                                            <p className="text-gray-500 text-sm">Get started by adding your first service provider</p>
+                                            <button
+                                                onClick={() => navigate('/dashboard/contacts/service-pros/add')}
+                                                className="mt-4 px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 mx-auto"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                                Add service pro
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         )}

@@ -14,7 +14,9 @@ interface ServiceProCardProps {
     category: string;
     bgColor?: string;
     image?: string;
+    isActive?: boolean;
     onDeleteSuccess?: () => void;
+    onUnarchive?: () => void;
 }
 
 const ServiceProCard: React.FC<ServiceProCardProps> = ({
@@ -25,7 +27,9 @@ const ServiceProCard: React.FC<ServiceProCardProps> = ({
     category,
     bgColor = 'bg-[#4ad1a6]',
     image,
-    onDeleteSuccess
+    isActive = true,
+    onDeleteSuccess,
+    onUnarchive
 }) => {
     const toast = useToast();
     const navigate = useNavigate();
@@ -66,7 +70,9 @@ const ServiceProCard: React.FC<ServiceProCardProps> = ({
 
     const menuItems = [
         { label: 'Edit', action: () => navigate(`/dashboard/contacts/service-pros/edit/${id}`) },
-        { label: 'Send connection', action: () => { } },
+        ...(!isActive && onUnarchive
+            ? [{ label: 'Unarchive', action: onUnarchive }]
+            : []),
         {
             label: 'Delete',
             action: () => setIsDeleteModalOpen(true),
@@ -81,6 +87,11 @@ const ServiceProCard: React.FC<ServiceProCardProps> = ({
     return (
         <>
             <div className="bg-[#F6F6F8] rounded-[2rem] p-4 flex gap-4 relative hover:shadow-lg transition-all duration-200 group">
+                {!isActive && (
+                    <span className="absolute top-4 left-4 z-10 bg-amber-100 text-amber-800 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-amber-300">
+                        Archived
+                    </span>
+                )}
                 {/* Action Buttons - Top Right */}
                 {canEdit && (
                 <div className="absolute top-4 right-4 z-10">
