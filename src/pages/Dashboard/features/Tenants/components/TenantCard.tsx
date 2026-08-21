@@ -14,7 +14,10 @@ interface TenantCardProps {
     phone: string;
     email: string;
     propertyName?: string;
+    isActive?: boolean;
     onDeleteSuccess?: () => void;
+    onArchiveSuccess?: () => void;
+    onUnarchive?: () => void;
     readOnly?: boolean;
 }
 
@@ -25,13 +28,18 @@ const TenantCard: React.FC<TenantCardProps> = ({
     phone,
     email,
     propertyName,
+    isActive = true,
     onDeleteSuccess,
+    onArchiveSuccess,
+    onUnarchive,
     readOnly = false,
 }) => {
     const toast = useToast();
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+    const [isArchiving, setIsArchiving] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
 
@@ -80,13 +88,30 @@ const TenantCard: React.FC<TenantCardProps> = ({
         }
     };
 
+    const handleArchiveToggle = async () => {
+        setIsArchiving(true);
+        try {
+            await tenantService.update(String(id), { isActive: !isActive });
+            queryClient.invalidateQueries({ queryKey: tenantQueryKeys.all });
+            setIsArchiveModalOpen(false);
+            if (isActive) {
+                onArchiveSuccess?.();
+            } else {
+                onUnarchive?.();
+            }
+        } catch (error) {
+            console.error(`Error ${isActive ? 'archiving' : 'unarchiving'} tenant:`, error);
+            toast.error(`Failed to ${isActive ? 'archive' : 'unarchive'} tenant`);
+        } finally {
+            setIsArchiving(false);
+        }
+    };
+
     const menuItems = readOnly ? [] : [
         { label: 'Edit', action: () => navigate(`/dashboard/contacts/tenants/edit/${id}`) },
-        { label: 'Send connection', action: () => { } },
         { label: 'Move in', action: () => navigate(`/dashboard/movein?tenantId=${id}`) },
         { label: 'Add invoice', action: () => navigate(`/dashboard/accounting/transactions/income/add?tenantId=${id}`) },
-        { label: 'Add insurance', action: () => { } },
-        { label: 'Archive', action: () => { } },
+        { label: isActive ? 'Archive' : 'Unarchive', action: () => setIsArchiveModalOpen(true) },
         {
             label: 'Delete',
             action: () => setIsDeleteModalOpen(true),
@@ -101,6 +126,11 @@ const TenantCard: React.FC<TenantCardProps> = ({
     return (
         <>
             <div className="bg-[#F6F6F8] rounded-[2rem] p-4 flex gap-4 relative hover:shadow-lg transition-all duration-200 group">
+                {!isActive && (
+                    <span className="absolute top-4 left-4 z-10 bg-amber-100 text-amber-800 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-amber-300">
+                        Archived
+                    </span>
+                )}
                 {/* Action Buttons - Top Right */}
                 <div className="absolute top-4 right-4 z-10">
                     {/* More Options Menu */}
@@ -205,6 +235,23 @@ const TenantCard: React.FC<TenantCardProps> = ({
                 title="Delete Tenant"
                 itemName={name}
                 message={`Are you sure you want to delete tenant "${name}"? This action cannot be undone.`}
+            />
+
+            <DeleteConfirmationModal
+                isOpen={isArchiveModalOpen}
+                onClose={() => setIsArchiveModalOpen(false)}
+                onConfirm={handleArchiveToggle}
+                isLoading={isArchiving}
+                title={isActive ? 'Archive Tenant' : 'Unarchive Tenant'}
+                message={
+                    isActive
+                        ? `Are you sure you want to archive "${name}"?`
+                        : `Are you sure you want to unarchive "${name}"? They will become active again and show up in your Tenants list.`
+                }
+                confirmText={isActive ? 'Archive' : 'Unarchive'}
+                loadingText={isActive ? 'Archiving...' : 'Unarchiving...'}
+                confirmButtonClass="bg-[#3A6D6C] text-white px-4 py-2.5 rounded-lg font-bold hover:bg-[#2c5251] transition-colors shadow-sm"
+                headerClassName="bg-[#3A6D6C]"
             />
         </>
     );

@@ -4,7 +4,7 @@ import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import TenantCard from './components/TenantCard';
-import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
+import { Plus, ChevronLeft, Loader2, ArrowDownAZ, ArrowUpAZ } from 'lucide-react';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
 import { tenantService, type Tenant } from '../../../../services/tenant.service';
@@ -16,6 +16,7 @@ const Tenants = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [currentPage, setCurrentPage] = useState(1);
+    const [showArchived, setShowArchived] = useState(false);
     const location = useLocation();
 
     // Handle pre-selected property from navigation state
@@ -37,6 +38,7 @@ const Tenants = () => {
     // map 1:1 to ContactStatus enum values the backend expects.
     const { data: backendTenants = [], isLoading, error, refetch } = useGetAllTenants({
         search: searchQuery || undefined,
+        isActive: !showArchived,
     });
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
 
@@ -194,14 +196,26 @@ const Tenants = () => {
                 <div className="flex items-center gap-4 mb-6">
                     <button
                         onClick={handleSortToggle}
-                        className="flex items-center gap-1 hover:bg-black/5 px-2 py-1 rounded-lg transition-colors"
+                        className="flex items-center gap-1 hover:bg-black/5 px-2 py-1 rounded-lg transition-colors text-sm text-gray-700"
                     >
-
+                        {sortOrder === 'asc' ? <ArrowDownAZ className="w-4 h-4" /> : <ArrowUpAZ className="w-4 h-4" />}
+                        Name
                     </button>
 
                     <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
                         {sortedTenants.length} Tenant{sortedTenants.length !== 1 ? 's' : ''}
                     </div>
+
+                    <button
+                        onClick={() => { setShowArchived(prev => !prev); setCurrentPage(1); }}
+                        className={`px-4 py-1 rounded-full text-sm font-medium border transition-colors ${
+                            showArchived
+                                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                        }`}
+                    >
+                        {showArchived ? 'Showing archived' : 'Show archived'}
+                    </button>
                 </div>
 
                 {/* Loading State */}
@@ -233,15 +247,20 @@ const Tenants = () => {
                                     phone={tenant.phone}
                                     email={tenant.email}
                                     image={tenant.image || ''}
-                                    propertyName="Sunset Apartments, Unit 4B"
+                                    propertyName={tenant.propertyNames?.length ? tenant.propertyNames.join(', ') : undefined}
                                     readOnly={!canEdit}
+                                    isActive={tenant.isActive}
                                     onDeleteSuccess={() => refetch()}
+                                    onArchiveSuccess={() => refetch()}
+                                    onUnarchive={() => refetch()}
                                 />
                             ))
                         ) : (
                             <div className="col-span-full text-center py-12">
                                 <p className="text-gray-600">
-                                    {searchQuery || Object.keys(filters).some(key => filters[key]?.length > 0)
+                                    {showArchived
+                                        ? 'No archived tenants'
+                                        : searchQuery || Object.keys(filters).some(key => filters[key]?.length > 0)
                                         ? 'No tenants match your filters'
                                         : 'No tenants found'}
                                 </p>

@@ -5,21 +5,24 @@ import type { BackendApplication } from '../../../../../services/application.ser
 
 interface TenantApplicationsSectionProps {
     tenantId: string;
-    tenantUserId: string | null;
+    tenantEmail: string | null;
 }
 
-const TenantApplicationsSection = ({ tenantId: _tenantId, tenantUserId }: TenantApplicationsSectionProps) => {
+const TenantApplicationsSection = ({ tenantId: _tenantId, tenantEmail }: TenantApplicationsSectionProps) => {
     const { data: allApplications = [], isLoading } = useGetAllApplications();
 
-    // Filter applications by tenant's userId
+    // Applicants aren't linked to a user record, so email is the only field
+    // that connects an application to this tenant.
     const tenantApplications = useMemo(() => {
-        if (!tenantUserId) return [];
+        if (!tenantEmail) return [];
+        const normalizedEmail = tenantEmail.toLowerCase().trim();
 
         return allApplications.filter((app: BackendApplication) => {
-            // Check if any applicant matches the tenant's userId
-            return app.applicants.some(applicant => applicant.email === tenantUserId);
+            return app.applicants.some(
+                applicant => applicant.email?.toLowerCase().trim() === normalizedEmail,
+            );
         });
-    }, [allApplications, tenantUserId]);
+    }, [allApplications, tenantEmail]);
 
     if (isLoading) {
         return (

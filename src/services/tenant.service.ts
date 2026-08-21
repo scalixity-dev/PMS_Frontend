@@ -14,6 +14,7 @@ export interface BackendTenantProfile {
   dateOfBirth?: string | null;
   forwardingAddress?: string | null;
   profilePhotoUrl?: string | null;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
   user?: {
@@ -90,6 +91,7 @@ export interface Tenant {
   tenantType?: string;
   propertyNames?: string[];
   leaseStatuses?: string[];
+  isActive: boolean;
 }
 
 // DTOs for creating/updating
@@ -132,7 +134,9 @@ export interface CreateTenantProfileDto {
   }[];
 }
 
-export interface UpdateTenantProfileDto extends Partial<CreateTenantProfileDto> {}
+export interface UpdateTenantProfileDto extends Partial<CreateTenantProfileDto> {
+  isActive?: boolean;
+}
 
 class TenantService {
   /**
@@ -141,6 +145,7 @@ class TenantService {
   async getAll(filters?: {
     search?: string;
     status?: string;
+    isActive?: boolean;
     page?: number;
     limit?: number;
   }): Promise<BackendTenantProfile[]> {
@@ -149,6 +154,7 @@ class TenantService {
 
     if (filters?.search) params.append('search', filters.search);
     if (filters?.status) params.append('status', filters.status);
+    if (filters?.isActive !== undefined) params.append('isActive', String(filters.isActive));
     if (filters?.page) params.append('_page', String(filters.page));
     if (filters?.limit) params.append('_limit', String(filters.limit));
 
@@ -547,6 +553,7 @@ class TenantService {
       tenantType,
       propertyNames,
       leaseStatuses,
+      isActive: backendTenant.isActive,
     };
   }
   /**

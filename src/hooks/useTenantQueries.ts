@@ -23,6 +23,7 @@ export const useGetAllTenants = (
   filters?: {
     search?: string;
     status?: string;
+    isActive?: boolean;
     page?: number;
     limit?: number;
   },

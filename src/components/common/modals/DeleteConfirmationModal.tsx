@@ -10,6 +10,7 @@ interface DeleteConfirmationModalProps {
     message?: React.ReactNode;
     itemName?: string;
     confirmText?: string;
+    loadingText?: string;
     confirmButtonClass?: string;
     headerClassName?: string;
     isLoading?: boolean;
@@ -23,6 +24,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
     message,
     itemName,
     confirmText = 'Delete',
+    loadingText = 'Deleting...',
     confirmButtonClass = 'bg-red-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-sm',
     headerClassName = 'bg-red-600',
     isLoading = false
@@ -71,7 +73,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                             {isLoading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    Deleting...
+                                    {loadingText}
                                 </>
                             ) : (
                                 confirmText

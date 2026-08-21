@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
-import { ChevronLeft, Plus, Loader2 } from 'lucide-react';
+import { ChevronLeft, Plus, Loader2, X } from 'lucide-react';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DetailTabs from '../../components/DetailTabs';
 import TenantProfileSection from './components/TenantProfileSection';
@@ -9,7 +9,7 @@ import TenantLeasesSection from './components/TenantLeasesSection';
 import TenantTransactionsSection from './components/TenantTransactionsSection';
 import TenantApplicationsSection from './components/TenantApplicationsSection';
 import TenantRequestsSection from './components/TenantRequestsSection';
-import { useGetTenant, useDeleteTenant } from '../../../../hooks/useTenantQueries';
+import { useGetTenant, useDeleteTenant, useUpdateTenant } from '../../../../hooks/useTenantQueries';
 import { useGetTenantAggregates } from '../../../../hooks/useTransactionQueries';
 import { formatPhoneNumber } from '@/utils/phone.utils';
 import type { BackendTenantProfile } from '../../../../services/tenant.service';
@@ -55,6 +55,7 @@ const transformTenantForDetail = (backendTenant: BackendTenantProfile) => {
         outstanding: 0,
         deposits: 0,
         credits: 0,
+        isActive: backendTenant.isActive,
         personalInfo: {
             firstName: backendTenant.firstName,
             middleName: backendTenant.middleName || '',
@@ -98,10 +99,12 @@ const TenantDetail = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
     const { isTeamMember, canManage } = useTeamPermissions();
     const canEdit = !isTeamMember || canManage('contacts');
     const actionMenuRef = useRef<HTMLDivElement>(null);
     const deleteTenantMutation = useDeleteTenant();
+    const updateTenantMutation = useUpdateTenant();
 
     // Fetch tenant data using API
     const { data: backendTenant, isLoading, error } = useGetTenant(id || null);
@@ -140,12 +143,27 @@ const TenantDetail = () => {
         }
     };
 
+    const handleArchiveTenant = async () => {
+        if (!id || !backendTenant) return;
+        try {
+            await updateTenantMutation.mutateAsync({
+                tenantId: id,
+                updateData: { isActive: !backendTenant.isActive },
+            });
+            setIsArchiveModalOpen(false);
+        } catch (err) {
+            console.error('Failed to archive/unarchive tenant:', err);
+        }
+    };
+
     const menuItems = [
         { label: 'Edit', action: () => navigate(`/dashboard/contacts/tenants/edit/${id}`) },
-        { label: 'Send connection', action: () => { } },
         { label: 'Move in', action: () => navigate(`/dashboard/movein?tenantId=${id}`) },
         { label: 'Add invoice', action: () => navigate(`/dashboard/accounting/transactions/income/add?tenantId=${id}`) },
-        { label: 'Archive', action: () => { } },
+        {
+            label: backendTenant?.isActive === false ? 'Unarchive' : 'Archive',
+            action: () => setIsArchiveModalOpen(true),
+        },
         {
             label: 'Delete',
             action: handleDeleteTenant,
@@ -214,6 +232,49 @@ const TenantDetail = () => {
                 message="Are you sure you want to delete this tenant? This cannot be undone."
                 confirmText="Delete"
             />
+
+            {/* Archive Modal */}
+            {isArchiveModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
+                        <div className="bg-[#3A6D6C] px-6 py-4 flex justify-between items-center">
+                            <h3 className="text-white text-lg font-medium">
+                                {tenant.isActive === false
+                                    ? "You're about to unarchive this tenant"
+                                    : "You're about to archive this tenant"}
+                            </h3>
+                            <button onClick={() => setIsArchiveModalOpen(false)} className="text-white hover:bg-white/10 p-1 rounded-full transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-gray-700 font-medium mb-8">
+                                {tenant.isActive === false
+                                    ? 'Are you sure you want to unarchive this tenant? They will become active again and show up in your Tenants list.'
+                                    : 'Are you sure you want to archive this tenant?'}
+                            </p>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setIsArchiveModalOpen(false)}
+                                    className="flex-1 px-6 py-3 bg-[#545E6B] text-white rounded-lg font-medium hover:bg-[#464f5b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={updateTenantMutation.isPending}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleArchiveTenant}
+                                    className="flex-1 px-6 py-3 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    disabled={updateTenantMutation.isPending}
+                                >
+                                    {updateTenantMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    Yes I'm Sure
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Breadcrumb */}
             <Breadcrumb
                 items={[
@@ -241,8 +302,7 @@ const TenantDetail = () => {
                                         id: tenant.id,
                                         label: tenant.name,
                                         type: 'tenant'
-                                    },
-                                    prefilledLease: 'Lease #101' // Mock lease for now
+                                    }
                                 }
                             })}
                             className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 whitespace-nowrap"
@@ -290,25 +350,15 @@ const TenantDetail = () => {
                                 <img src={tenant.image} alt={tenant.name} className="w-32 h-32 rounded-2xl object-cover" />
                                 <div className="flex flex-col gap-3 w-full sm:w-auto">
                                     <div className="bg-[#3A6D6C] text-white p-4 rounded-xl text-center min-w-[200px] w-full sm:w-auto">
+                                        {tenant.isActive === false && (
+                                            <div className="mb-2 text-xs bg-amber-100 text-amber-800 inline-block px-3 py-1 rounded-full font-semibold">
+                                                Archived
+                                            </div>
+                                        )}
                                         <h2 className="font-bold text-lg">{tenant.name}</h2>
                                         <p className="text-xs opacity-90">{tenant.phone}</p>
                                         <p className="text-xs opacity-90">{tenant.email}</p>
                                     </div>
-                                    <button
-                                        onClick={() => {
-                                            setActiveTab('profile');
-                                            // Scroll to profile section after a brief delay to ensure tab is rendered
-                                            setTimeout(() => {
-                                                const profileSection = document.getElementById('profile-section');
-                                                if (profileSection) {
-                                                    profileSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                }
-                                            }, 100);
-                                        }}
-                                        className="w-full bg-[#C8C8C8] text-gray-700 py-2 rounded-full text-sm font-medium hover:bg-[#b8b8b8] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]"
-                                    >
-                                        View Profile
-                                    </button>
                                 </div>
                             </div>
 
@@ -317,48 +367,15 @@ const TenantDetail = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Outstanding</span>
-                                        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
-                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">${tenant.outstanding.toLocaleString()}.00</div>
-                                            <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Received</button>
-                                        </div>
+                                        <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] w-fit">${tenant.outstanding.toLocaleString()}.00</div>
                                     </div>
                                     <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Deposits</span>
-                                        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
-                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">${tenant.deposits.toLocaleString()}.00</div>
-                                            <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
-                                        </div>
+                                        <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] w-fit">${tenant.deposits.toLocaleString()}.00</div>
                                     </div>
                                     <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Credits</span>
-                                        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
-                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">${tenant.credits.toLocaleString()}.00</div>
-                                            <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-[#E4E4E4] rounded-[2rem] sm:rounded-[3.5rem] p-4 shadow-lg">
-                                    <h3 className="text-gray-700 font-bold mb-2 ml-1">Reports</h3>
-                                    <div className="flex flex-col md:flex-row gap-4">
-                                        <div className="flex-1 bg-[#7BD747] rounded-3xl sm:rounded-full px-4 py-4 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-white">Financial</span>
-                                            </div>
-                                            <div className="flex justify-between items-center gap-2">
-                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] whitespace-nowrap">Tenant Statement</div>
-                                                <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium uppercase shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">View</button>
-                                            </div>
-                                        </div>
-                                        <div className="flex-1 bg-[#7BD747] rounded-3xl sm:rounded-full px-4 py-4 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] gap-2">
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-white">Notice</span>
-                                            </div>
-                                            <div className="flex justify-between items-center gap-2">
-                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">Tenant Notice</div>
-                                                <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium uppercase shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">Send</button>
-                                            </div>
-                                        </div>
+                                        <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] w-fit">${tenant.credits.toLocaleString()}.00</div>
                                     </div>
                                 </div>
                             </div>
@@ -387,7 +404,7 @@ const TenantDetail = () => {
                     <TenantTransactionsSection tenantId={id || ''} tenant={tenant} />
                 )}
                 {activeTab === 'applications' && (
-                    <TenantApplicationsSection tenantId={id || ''} tenantUserId={backendTenant?.userId || null} />
+                    <TenantApplicationsSection tenantId={id || ''} tenantEmail={tenant.email !== 'N/A' ? tenant.email : null} />
                 )}
                 {activeTab === 'requests' && (
                     <TenantRequestsSection tenantId={id || ''} tenantUserId={backendTenant?.userId ?? null} />
