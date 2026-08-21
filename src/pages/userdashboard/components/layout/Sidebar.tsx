@@ -74,7 +74,8 @@ export const Sidebar = () => {
             {/* Info Cards Container */}
             {dashboardStage !== 'no_lease' && (
                 <div className="bg-[var(--dashboard-bg-light)] rounded-[1rem] p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:flex lg:flex-col gap-4 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-50">
-                    <FinancialCard title="Outstanding" amount={outstanding} currency="$" action="Pay online" />
+                    {/* action="Pay online" hidden along with the Pay Online buttons */}
+                    <FinancialCard title="Outstanding" amount={outstanding} currency="$" />
                     <FinancialCard title="Deposits" amount={deposits} currency="$" />
                     <FinancialCard title="Credits" amount={credits} currency="$" />
 

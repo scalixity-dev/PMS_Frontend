@@ -56,9 +56,13 @@ export interface RenewSubscriptionDto {
 
 class SubscriptionService {
   /**
-   * Get current subscription
+   * Get current subscription, or null when the account has none.
+   *
+   * The backend answers 404 for an account that never chose a plan. That is an
+   * ordinary answer, not a failure, so it resolves to null instead of throwing -
+   * otherwise every plan-less account renders an error where "no plan" belongs.
    */
-  async getCurrent(): Promise<Subscription> {
+  async getCurrent(): Promise<Subscription | null> {
     const response = await fetch(API_ENDPOINTS.SUBSCRIPTION.GET_CURRENT, {
       method: 'GET',
       headers: {
@@ -66,6 +70,10 @@ class SubscriptionService {
       },
       credentials: 'include',
     });
+
+    if (response.status === 404) {
+      return null;
+    }
 
     if (!response.ok) {
       let errorMessage = 'Failed to fetch subscription';

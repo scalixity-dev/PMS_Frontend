@@ -91,7 +91,7 @@ const Security: React.FC = () => {
                         <p className="text-xs sm:text-[14px] text-[#4B5563] leading-relaxed mb-2">
                             Identity verification is required to prevent fraud and increase security.
                             <br className="hidden sm:block" />
-                            <span className="sm:inline block mt-1 sm:mt-0">TenantCloud works with Stripe to conduct identity verification online.</span>
+                            <span className="sm:inline block mt-1 sm:mt-0">SmartTenantAI works with Stripe to conduct identity verification online.</span>
                         </p>
                         <a href="/privacy-policy" className="text-[#3D7475] text-xs sm:text-sm font-medium hover:underline">Learn more</a>
                     </div>

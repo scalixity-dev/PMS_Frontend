@@ -131,7 +131,10 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
     };
 
     return (
-        <div className="flex flex-col lg:bg-white lg:rounded-[1rem] lg:shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] lg:border lg:border-gray-200 lg:overflow-hidden">
+        // No overflow-hidden here: it clipped the time-filter dropdown, which is
+        // absolutely positioned and opens past the card's bottom edge. The header
+        // and last row round their own corners instead.
+        <div className="flex flex-col lg:bg-white lg:rounded-[1rem] lg:shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] lg:border lg:border-gray-200">
             {/* Desktop Table Header */}
             <div className="hidden lg:flex bg-[var(--dashboard-accent)] justify-between px-6 lg:px-10 py-3 rounded-t-[1rem]">
                 <span className="text-white font-normal text-base lg:text-lg flex-[1.2]">Status</span>

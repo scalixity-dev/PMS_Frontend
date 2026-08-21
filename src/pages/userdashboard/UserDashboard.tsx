@@ -434,10 +434,12 @@ const UserDashboard = () => {
                         {/* Action Buttons */}
                         {dashboardStage === 'move_in' && (
                             <div className="flex items-center gap-3 sm:gap-4 pb-1 w-full sm:w-auto">
+                                {/* Pay Online temporarily hidden - uncomment to restore
                                 <PrimaryActionButton
                                     text="Pay Online"
                                     className="flex-1 sm:flex-none bg-[var(--dashboard-secondary)] hover:opacity-90 rounded-lg font-bold py-2 sm:py-2.5 px-4 sm:px-6"
                                 />
+                                */}
                                 <PrimaryActionButton
                                     text="Request repair"
                                     onClick={() => navigate("/userdashboard/new-request")}

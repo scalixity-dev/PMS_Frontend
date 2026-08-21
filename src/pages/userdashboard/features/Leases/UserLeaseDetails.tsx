@@ -242,16 +242,17 @@ const LeaseDetails = () => {
 
                 {/* Actions */}
                 <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                    {/* Pay Online temporarily hidden - uncomment to restore
                     <PrimaryActionButton
                         text="Pay Online"
                         className="bg-[var(--dashboard-secondary)] hover:opacity-90 rounded-lg font-bold"
                     />
-                    <button
+                    */}
+                    <PrimaryActionButton
+                        text="Request Repair"
                         onClick={() => navigate(`${DASHBOARD_PATH}/new-request`)}
-                        className="bg-[#7ED957] hover:opacity-90 text-white rounded-lg font-bold px-5 py-2.5 text-sm transition-opacity"
-                    >
-                        Request Repair
-                    </button>
+                        className="flex-1 sm:flex-none bg-[var(--dashboard-accent)] hover:bg-[var(--dashboard-accent)] hover:opacity-90 rounded-lg font-bold py-2 sm:py-2.5 px-4 sm:px-6"
+                    />
                 </div>
             </div>
 

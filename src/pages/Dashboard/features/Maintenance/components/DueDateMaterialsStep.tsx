@@ -70,7 +70,7 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
             {/* Date Initiated, Date Due, Priority & Charge To */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Date Initiated*</label>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Date Initiated</label>
                     <DatePicker
                         value={dateInitiated}
                         onChange={setDateInitiated}
@@ -78,7 +78,7 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Date Due*</label>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Date Due</label>
                     <DatePicker
                         value={dateDue}
                         onChange={setDateDue}
@@ -87,7 +87,7 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                 </div>
                 <div>
                     <CustomDropdown
-                        label="Priority *"
+                        label="Priority"
                         value={priority}
                         onChange={(v) => { setPriority(v); setErrors(e => ({ ...e, priority: '' })); }}
                         options={[

@@ -334,7 +334,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
             {/* Property Selection */}
             <div className="mb-12">
                 <CustomDropdown
-                    label="Property*"
+                    label="Property"
                     value={selectedProperty}
                     onChange={(v) => { setSelectedProperty(v); if (validationError && v) setValidationError(''); }}
                     options={propertyOptions}
@@ -375,7 +375,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                             onClick={() => setShowEquipmentDropdown(!showEquipmentDropdown)}
                             className="cursor-pointer"
                         >
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Equipment *</label>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Equipment</label>
                             {selectedEquipment ? (
                                 <div className="w-full bg-[#7BD747] text-white font-bold rounded-full px-4 py-3 flex items-center justify-between">
                                     <span>{availableEquipment.find(e => e.id === selectedEquipment)?.name}</span>
@@ -548,7 +548,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
 
                             {/* Date Input */}
                             <div className="mb-3 w-56">
-                                <label className="block text-xs text-gray-600 mb-1">Date *</label>
+                                <label className="block text-xs text-gray-600 mb-1">Date</label>
                                 <DatePicker
                                     value={option.date}
                                     onChange={(date) => handleDateChange(option.id, date)}
@@ -596,7 +596,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                 {/* Code & Pets Dropdowns */}
                 <div className="flex flex-col md:flex-row gap-6 mb-6">
                     <div className="w-full md:w-1/2">
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Code*</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Code</label>
                         <input
                             type="text"
                             value={accessCode}
@@ -607,7 +607,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                     </div>
                     <div className="w-full md:w-1/2">
                         <CustomDropdown
-                            label="Pets in residence*"
+                            label="Pets in residence"
                             value={petsInResidence}
                             onChange={setPetsInResidence}
                             options={[
@@ -615,7 +615,6 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                                 { value: 'no', label: 'No' }
                             ]}
                             placeholder="Yes/No"
-                            required
                             buttonClassName="!bg-white !border-none !rounded-md !py-3"
                         />
 
@@ -704,7 +703,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
 
                             {/* Category Dropdown */}
                             <CustomDropdown
-                                label="Category*"
+                                label="Category"
                                 value={newEquipment.categoryId}
                                 onChange={(value) => setNewEquipment({ ...newEquipment, categoryId: value })}
                                 options={(categories as Array<{ id: string; name: string }>).map(c => ({ value: c.id, label: c.name }))}

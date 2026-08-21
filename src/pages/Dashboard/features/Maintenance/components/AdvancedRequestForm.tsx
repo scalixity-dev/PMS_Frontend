@@ -30,6 +30,17 @@ interface MediaFile {
     previewUrl: string;
 }
 
+/**
+ * Ids only have to be unique within this one list. crypto.randomUUID() is
+ * undefined outside a secure context - testing the dev server over plain http
+ * on a LAN address threw here, and the picked file never reached state, so no
+ * preview ever appeared.
+ */
+const createMediaId = () => `media-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+/** Only images and videos open in the viewer; documents have nothing to show. */
+const isPreviewable = (file: File) => file.type.startsWith('image/') || file.type.startsWith('video/');
+
 const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData, aiPrefillData }) => {
     const [errors, setErrors] = useState<Partial<Record<keyof AdvancedRequestFormFields, string>>>({});
 
@@ -54,6 +65,8 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         }
         return [];
     });
+    // Tile clicked open in the full-screen viewer below
+    const [selectedMedia, setSelectedMedia] = useState<MediaFile | null>(null);
     // const [showAIChat, setShowAIChat] = useState(false); // Removed local state
 
     const setAdvanced = useMaintenanceRequestFormStore((state) => state.setAdvanced);
@@ -76,24 +89,22 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         }
     }, [initialData]);
 
-    // Keep track of media files in a ref for unmount cleanup
-    const mediaFilesRef = useRef(mediaFiles);
-    useEffect(() => {
-        mediaFilesRef.current = mediaFiles;
-    }, [mediaFiles]);
-
-    // Cleanup object URLs ONLY on unmount
-    useEffect(() => {
-        return () => {
-            mediaFilesRef.current.forEach(media => URL.revokeObjectURL(media.previewUrl));
-        };
-    }, []);
+    /**
+     * Object URLs are revoked when their file is removed (see handleRemoveFile),
+     * never on unmount.
+     *
+     * An unmount cleanup used to revoke them, which broke every preview: the
+     * files outlive this component in the form store, and StrictMode simulates
+     * an unmount right after mount in dev. Stepping to "Property & Tenants" and
+     * back re-created the previews from the store, then the simulated unmount
+     * revoked those brand-new URLs, leaving blank tiles.
+     */
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const newMediaFile: MediaFile = {
-                id: crypto.randomUUID(),
+                id: createMediaId(),
                 file,
                 previewUrl: URL.createObjectURL(file)
             };
@@ -103,6 +114,9 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
     };
 
     const handleRemoveFile = (id: string) => {
+        // Close the viewer first if it is showing the file being deleted - its
+        // object URL is about to be revoked.
+        setSelectedMedia(prev => (prev?.id === id ? null : prev));
         setMediaFiles(prev => {
             const fileToRemove = prev.find(f => f.id === id);
             if (fileToRemove) {
@@ -518,12 +532,20 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             {mediaFiles.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
                     {mediaFiles.map((media) => (
-                        <div key={media.id} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 group">
+                        <div
+                            key={media.id}
+                            onClick={() => isPreviewable(media.file) && setSelectedMedia(media)}
+                            className={`relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 group ${isPreviewable(media.file) ? 'cursor-pointer' : ''}`}
+                        >
                             {media.file.type.startsWith('video/') ? (
                                 <video
                                     src={media.previewUrl}
-                                    className="w-full h-full object-cover"
-                                    controls
+                                    className="w-full h-full object-cover pointer-events-none"
+                                    muted
+                                    playsInline
+                                    // Without this the tile is a black box until played - browsers
+                                    // fetch no frame to show as a poster.
+                                    preload="metadata"
                                 />
                             ) : media.file.type.startsWith('image/') ? (
                                 <img
@@ -542,13 +564,47 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                                 </div>
                             )}
                             <button
-                                onClick={() => handleRemoveFile(media.id)}
+                                onClick={(e) => { e.stopPropagation(); handleRemoveFile(media.id); }}
                                 className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                             >
                                 <X size={16} />
                             </button>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Media Preview Modal - same full-screen viewer as the request detail page */}
+            {selectedMedia && (
+                <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-2 sm:p-4 md:p-10 lg:p-20"
+                    onClick={() => setSelectedMedia(null)}
+                >
+                    <div className="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
+                        <button
+                            onClick={() => setSelectedMedia(null)}
+                            className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 md:-top-8 md:-right-12 bg-white rounded-full p-2 md:p-3 hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl z-[110]"
+                            aria-label="Close"
+                        >
+                            <X size={24} className="text-gray-700" strokeWidth={2.5} />
+                        </button>
+                        {selectedMedia.file.type.startsWith('video/') ? (
+                            <video
+                                src={selectedMedia.previewUrl}
+                                controls
+                                autoPlay
+                                className="max-w-full max-h-full rounded-lg shadow-2xl"
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        ) : (
+                            <img
+                                src={selectedMedia.previewUrl}
+                                alt={selectedMedia.file.name}
+                                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        )}
+                    </div>
                 </div>
             )}
 

@@ -31,7 +31,7 @@ export const TransactionRow = ({ transaction, isLast, onClick }: TransactionRowP
     return (
         <div
             onClick={onClick}
-            className={`flex items-center px-8 py-3 ${!isLast ? 'border-b border-gray-100' : ''} hover:bg-gray-50/30 transition-all cursor-pointer`}
+            className={`flex items-center px-8 py-3 ${!isLast ? 'border-b border-gray-100' : 'lg:rounded-b-[1rem]'} hover:bg-gray-50/30 transition-all cursor-pointer`}
         >
             <div className="flex-[1.2]">
                 <StatusPill status={status} />
