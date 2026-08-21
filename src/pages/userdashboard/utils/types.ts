@@ -120,11 +120,14 @@ export interface UserInfo {
     dob: string;
     email: string;
     phone: string;
+    phoneCountryCode?: string;
     role: string;
     country: string;
+    state?: string;
     city: string;
     pincode: string;
     profileImage?: string;
+    profilePhotoUrl?: string;
 }
 
 export interface UserFinances {

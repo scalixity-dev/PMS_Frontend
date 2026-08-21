@@ -201,7 +201,6 @@ const UserPropertyDetail = lazy(() => import('./pages/userdashboard/features/Pro
 const UserSettings = lazy(() => import('./pages/userdashboard/features/Settings/UserSettings'));
 const UserProfile = lazy(() => import('./pages/userdashboard/features/Profile/UserProfile'));
 const UserSecurity = lazy(() => import('./pages/userdashboard/features/Profile/UserSecurity'));
-const UserMyCards = lazy(() => import('./pages/userdashboard/features/Profile/UserMyCards'));
 const UserNotifications = lazy(() => import('./pages/userdashboard/features/Profile/UserNotifications'));
 const UserPublicRenterProfile = lazy(() => import('./pages/userdashboard/features/Profile/UserPublicRenterProfile'));
 const UserLeaseDetails = lazy(() => import('./pages/userdashboard/features/Leases/UserLeaseDetails'));
@@ -840,7 +839,6 @@ const App: React.FC = () => {
               <Route path="/userdashboard/settings" element={<UserSettings />} />
               <Route path="/userdashboard/settings/account/profile" element={<UserProfile />} />
               <Route path="/userdashboard/settings/account/security" element={<UserSecurity />} />
-              <Route path="/userdashboard/settings/account/cards" element={<UserMyCards />} />
               <Route path="/userdashboard/settings/account/notifications" element={<UserNotifications />} />
               <Route path="/userdashboard/settings/public-renter-profile" element={<UserPublicRenterProfile />} />
               <Route path="/userdashboard/leases/:id" element={<UserLeaseDetails />} />

@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Check, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Country, State, City } from 'country-state-city';
+import { format } from 'date-fns';
 import BaseModal from "../../../../components/common/modals/BaseModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
+import CustomDropdown from "../../../Dashboard/components/CustomDropdown";
+import DatePicker from "../../../../components/ui/DatePicker";
 import UserAccountSettingsLayout from "../../components/layout/UserAccountSettingsLayout";
-import { formatPhoneNumber, isValidPhoneNumberLoose } from '@/utils/phone.utils';
+import { formatPhoneNumber, isValidPhoneNumberLoose, isValidPhoneNumber, extractDialCode } from '@/utils/phone.utils';
 import { isValidPincode } from '@/utils/pincode.utils';
 import { formatRole } from '@/utils/roleIcon';
 import { useToast } from "../../../../components/common/Toast";
@@ -14,6 +18,28 @@ import DeleteConfirmationModal from '../../../../components/common/modals/Delete
 import type { UserInfo } from "../../utils/types";
 import { useUpdateProfile, useChangePassword, useGetCurrentUser, useDeleteAccount } from "../../../../hooks/useAuthQueries";
 import { useNavigate } from "react-router-dom";
+
+// Resolves a bare dialling code ("+1") stored on the backend back to a
+// "ISO|digits" selector value. The backend only stores the dial code, not
+// which country picked it, so codes shared by multiple countries (e.g. +1 for
+// both US and Canada) default to the US entry rather than losing the value.
+const resolvePhoneCountryCode = (code?: string | null): string => {
+  if (!code) return '';
+  const digits = code.replace(/\D/g, '');
+  if (!digits) return '';
+  const countries = Country.getAllCountries();
+  if (countries.some(c => c.isoCode === 'US' && c.phonecode === digits)) {
+    return `US|${digits}`;
+  }
+  const match = countries.find(c => c.phonecode === digits);
+  return match ? `${match.isoCode}|${digits}` : '';
+};
+
+const parseDob = (value?: string | null): Date | undefined => {
+  if (!value) return undefined;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+};
 
 
 
@@ -26,7 +52,7 @@ const Profile: React.FC = () => {
   const { data: apiUser } = useGetCurrentUser();
 
   // Modal State
-  const [editMode, setEditMode] = useState<'personal' | 'address' | 'email' | 'password' | null>(null);
+  const [editMode, setEditMode] = useState<'personal' | 'address' | 'password' | null>(null);
   const [tempInfo, setTempInfo] = useState<UserInfo | null>(userInfo);
 
   // Sync zustand store with API data on mount/refresh
@@ -38,12 +64,15 @@ const Profile: React.FC = () => {
         lastName: nameParts.slice(1).join(' ') || '',
         email: apiUser.email || '',
         phone: (apiUser as any).phoneNumber || '',
+        phoneCountryCode: resolvePhoneCountryCode((apiUser as any).phoneCountryCode),
         country: (apiUser as any).country || '',
+        state: (apiUser as any).state || '',
         city: (apiUser as any).city || '',
         pincode: (apiUser as any).pincode || '',
         dob: (apiUser as any).dateOfBirth || '',
         role: apiUser.role || '',
         address: (apiUser as any).address || '',
+        profilePhotoUrl: (apiUser as any).profilePhotoUrl || '',
       } as any;
       setUserInfo(hydrated);
       setTempInfo(hydrated);
@@ -75,6 +104,64 @@ const Profile: React.FC = () => {
 
 
 
+  // Country/State/City dropdown options for the Address edit modal
+  const countryOptions = useMemo(() => (
+    Country.getAllCountries()
+      .map(c => ({ value: c.isoCode, label: c.name }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  ), []);
+
+  const stateOptions = useMemo(() => {
+    if (!tempInfo?.country) return [];
+    return State.getStatesOfCountry(tempInfo.country)
+      .map(s => ({ value: s.isoCode, label: s.name }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [tempInfo?.country]);
+
+  const cityOptions = useMemo(() => {
+    if (!tempInfo?.country || !tempInfo?.state) return [];
+    return City.getCitiesOfState(tempInfo.country, tempInfo.state)
+      .map(c => ({ value: c.name, label: c.name }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [tempInfo?.country, tempInfo?.state]);
+
+  // Phone country-code dropdown options for the Personal Information edit modal.
+  // Label is just flag + dial code (not the country name) so the compact
+  // trigger button never wraps to two lines.
+  const phoneCountryCodeOptions = useMemo(() => (
+    Country.getAllCountries()
+      .map(c => ({ value: `${c.isoCode}|${c.phonecode}`, label: `${c.flag} +${c.phonecode}`, name: c.name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(({ value, label }) => ({ value, label }))
+  ), []);
+
+  // Resolve a stored country value (ISO code, or a legacy free-text name) to a display name
+  const getCountryDisplayName = (value?: string) => {
+    if (!value) return '';
+    return Country.getCountryByCode(value)?.name || value;
+  };
+
+  const getStateDisplayName = (countryValue?: string, stateValue?: string) => {
+    if (!stateValue) return '';
+    if (countryValue) {
+      const match = State.getStateByCodeAndCountry(stateValue, countryValue);
+      if (match) return match.name;
+    }
+    return stateValue;
+  };
+
+  const handleCountrySelect = (value: string) => {
+    setTempInfo(prev => prev ? { ...prev, country: value, state: '', city: '' } : null);
+  };
+
+  const handleStateSelect = (value: string) => {
+    setTempInfo(prev => prev ? { ...prev, state: value, city: '' } : null);
+  };
+
+  const handleCitySelect = (value: string) => {
+    setTempInfo(prev => prev ? { ...prev, city: value } : null);
+  };
+
   const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
     setPasswordVisibility(prev => ({
       ...prev,
@@ -82,8 +169,19 @@ const Profile: React.FC = () => {
     }));
   };
 
-  const handleEditClick = (mode: 'personal' | 'address' | 'email' | 'password') => {
-    setTempInfo(userInfo);
+  const handleEditClick = (mode: 'personal' | 'address' | 'password') => {
+    // Default to United States (+1) when nothing has been set yet, matching
+    // the default used across the rest of the app (e.g. signup onboarding).
+    let base = userInfo;
+    if (base) {
+      if (mode === 'address' && !base.country) {
+        base = { ...base, country: 'US' };
+      }
+      if (mode === 'personal' && !base.phoneCountryCode) {
+        base = { ...base, phoneCountryCode: 'US|1' };
+      }
+    }
+    setTempInfo(base);
     // Reset password data when opening password modal
     if (mode === 'password') {
       setPasswordData({
@@ -142,12 +240,17 @@ const Profile: React.FC = () => {
 
     if (!tempInfo) return;
 
-    if (editMode === 'personal' && tempInfo.phone && !isValidPhoneNumberLoose(tempInfo.phone)) {
-      setSaveError('Please enter a valid phone number');
-      return;
+    if (editMode === 'personal' && tempInfo.phone) {
+      const phoneIsValid = tempInfo.phoneCountryCode
+        ? isValidPhoneNumber(tempInfo.phoneCountryCode, tempInfo.phone)
+        : isValidPhoneNumberLoose(tempInfo.phone);
+      if (!phoneIsValid) {
+        setSaveError('Please enter a valid phone number');
+        return;
+      }
     }
-    if (editMode === 'address' && tempInfo.pincode && !isValidPincode(tempInfo.pincode)) {
-      setSaveError('Please enter a valid pincode');
+    if (editMode === 'address' && tempInfo.pincode && !isValidPincode(tempInfo.pincode, tempInfo.country)) {
+      setSaveError('Please enter a valid pincode for the selected country');
       return;
     }
 
@@ -155,12 +258,14 @@ const Profile: React.FC = () => {
       if (editMode === 'personal') {
         await updateProfileMutation.mutateAsync({
           fullName: `${tempInfo.firstName || ''} ${tempInfo.lastName || ''}`.trim(),
+          phoneCountryCode: extractDialCode(tempInfo.phoneCountryCode),
           phoneNumber: tempInfo.phone,
           dateOfBirth: tempInfo.dob || undefined,
         });
       } else if (editMode === 'address') {
         await updateProfileMutation.mutateAsync({
           country: tempInfo.country,
+          state: tempInfo.state,
           city: tempInfo.city,
           pincode: tempInfo.pincode,
         });
@@ -328,7 +433,7 @@ const Profile: React.FC = () => {
               </label>
               <input
                 type="text"
-                value={userInfo.dob}
+                value={(() => { const d = parseDob(userInfo.dob); return d ? format(d, 'MMM dd, yyyy') : ''; })()}
                 disabled
                 className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-sm text-[#ADADAD] font-medium"
               />
@@ -355,7 +460,7 @@ const Profile: React.FC = () => {
               </label>
               <input
                 type="tel"
-                value={userInfo.phone}
+                value={userInfo.phone ? `${extractDialCode(userInfo.phoneCountryCode) || ''} ${userInfo.phone}`.trim() : ''}
                 disabled
                 className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-sm text-[#ADADAD] font-medium"
               />
@@ -391,12 +496,6 @@ const Profile: React.FC = () => {
                 Your Email id is {userInfo.email}
               </p>
             </div>
-            <button
-              onClick={() => handleEditClick('email')}
-              className="text-sm font-bold text-[#617C6C] hover:text-[#4A6354] transition-colors w-full sm:w-auto text-left sm:text-right"
-            >
-              Change
-            </button>
           </div>
 
           <div className="border-t border-[#E5E7EB] my-6 md:my-8"></div>
@@ -436,7 +535,16 @@ const Profile: React.FC = () => {
             <label className="block text-[13px] font-bold text-[#1A1A1A]">Country</label>
             <input
               type="text"
-              value={userInfo.country}
+              value={getCountryDisplayName(userInfo.country)}
+              disabled
+              className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-sm text-[#ADADAD] font-medium"
+            />
+          </div>
+          <div className="space-y-2.5">
+            <label className="block text-[13px] font-bold text-[#1A1A1A]">State</label>
+            <input
+              type="text"
+              value={getStateDisplayName(userInfo.country, userInfo.state)}
               disabled
               className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-sm text-[#ADADAD] font-medium"
             />
@@ -484,8 +592,7 @@ const Profile: React.FC = () => {
         title={
           editMode === 'personal' ? 'Edit Personal Information' :
             editMode === 'address' ? 'Edit Address' :
-              editMode === 'email' ? 'Change Email Address' :
-                'Change Password'
+              'Change Password'
         }
         footerButtons={[
           {
@@ -539,12 +646,12 @@ const Profile: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">Date of Birth</label>
-              <input
-                type="text"
-                name="dob"
-                value={tempInfo.dob}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]"
+              <DatePicker
+                value={parseDob(tempInfo.dob)}
+                onChange={(date) => setTempInfo(prev => prev ? { ...prev, dob: date ? format(date, 'yyyy-MM-dd') : '' } : null)}
+                placeholder="Select date of birth"
+                maxDate={new Date()}
+                className="px-3 py-2 border border-gray-300"
               />
             </div>
             <div>
@@ -555,18 +662,32 @@ const Profile: React.FC = () => {
                 value={tempInfo.email}
                 disabled
                 className="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-md text-sm text-gray-500 cursor-not-allowed"
-                title="Email cannot be changed here, please use Change Email button"
+                title="Email cannot be changed"
               />
             </div>
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-xs font-semibold text-gray-700 mb-1">Phone Number</label>
-              <input
-                type="tel"
-                name="phone"
-                value={tempInfo.phone}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]"
-              />
+              <div className="flex gap-2">
+                <div className="w-24 flex-shrink-0">
+                  <CustomDropdown
+                    value={tempInfo.phoneCountryCode || ''}
+                    onChange={(value) => setTempInfo(prev => prev ? { ...prev, phoneCountryCode: value } : null)}
+                    options={phoneCountryCodeOptions}
+                    searchable
+                    placeholder="Code"
+                    buttonClassName="px-2 py-2"
+                    dropdownClassName="w-48"
+                  />
+                </div>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={tempInfo.phone}
+                  onChange={handleChange}
+                  placeholder="Phone number"
+                  className="flex-1 min-w-0 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -575,22 +696,37 @@ const Profile: React.FC = () => {
           <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">Country</label>
-              <input
-                type="text"
-                name="country"
+              <CustomDropdown
                 value={tempInfo.country}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]"
+                onChange={handleCountrySelect}
+                options={countryOptions}
+                searchable
+                placeholder="Select country"
+                buttonClassName="px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">State</label>
+              <CustomDropdown
+                value={tempInfo.state || ''}
+                onChange={handleStateSelect}
+                options={stateOptions}
+                searchable
+                disabled={!tempInfo.country || stateOptions.length === 0}
+                placeholder="Select state"
+                buttonClassName="px-3 py-2"
               />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">City</label>
-              <input
-                type="text"
-                name="city"
+              <CustomDropdown
                 value={tempInfo.city}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]"
+                onChange={handleCitySelect}
+                options={cityOptions}
+                searchable
+                disabled={!tempInfo.state || cityOptions.length === 0}
+                placeholder="Select city"
+                buttonClassName="px-3 py-2"
               />
             </div>
             <div>
@@ -601,22 +737,6 @@ const Profile: React.FC = () => {
                 value={tempInfo.pincode}
                 onChange={handleChange}
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]"
-              />
-            </div>
-          </div>
-        )}
-
-        {editMode === 'email' && tempInfo && (
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">New Email Address</label>
-              <input
-                type="email"
-                name="email"
-                value={tempInfo.email}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]"
-                placeholder="Enter new email address"
               />
             </div>
           </div>

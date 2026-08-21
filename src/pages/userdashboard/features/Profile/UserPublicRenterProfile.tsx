@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Copy, Check, ExternalLink } from "lucide-react";
+import { Country, State, City } from 'country-state-city';
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import Toggle from "../../../../components/Toggle";
 import CustomDropdown from "../../../Dashboard/components/CustomDropdown";
@@ -12,7 +13,11 @@ const PublicRenterProfile: React.FC = () => {
 
     const [lookingForPlace, setLookingForPlace] = useState(true);
     const [petsAllowed, setPetsAllowed] = useState(false);
-    const [location, setLocation] = useState("");
+    const [country, setCountry] = useState("");
+    const [stateRegion, setStateRegion] = useState("");
+    const [city, setCity] = useState("");
+    const [states, setStates] = useState<ReturnType<typeof State.getStatesOfCountry>>([]);
+    const [cities, setCities] = useState<ReturnType<typeof City.getCitiesOfState>>([]);
     const [profileSlug, setProfileSlug] = useState<string | null>(null);
     const [beds, setBeds] = useState("Any");
     const [baths, setBaths] = useState("Any");
@@ -34,7 +39,18 @@ const PublicRenterProfile: React.FC = () => {
             if (typeof prefs.lookingForPlace === 'boolean') setLookingForPlace(prefs.lookingForPlace);
             const loc = prefs.location;
             if (loc) {
-                setLocation([loc.city, loc.state, loc.country].filter(Boolean).join(', '));
+                const countryMatch = Country.getAllCountries().find(
+                    c => c.name === loc.country || c.isoCode === loc.country
+                );
+                const countryIso = countryMatch?.isoCode || '';
+                setCountry(countryIso);
+                if (countryIso && loc.state) {
+                    const stateMatch = State.getStatesOfCountry(countryIso).find(
+                        s => s.name === loc.state || s.isoCode === loc.state
+                    );
+                    setStateRegion(stateMatch?.isoCode || '');
+                }
+                if (loc.city) setCity(loc.city);
             }
             if (Array.isArray(prefs.rentalTypes) && prefs.rentalTypes.length > 0) {
                 setRenterType(prefs.rentalTypes[0]);
@@ -49,6 +65,45 @@ const PublicRenterProfile: React.FC = () => {
             }
         }
     }, [prefs]);
+
+    // Populate states when country changes
+    useEffect(() => {
+        setStates(country ? State.getStatesOfCountry(country) : []);
+    }, [country]);
+
+    // Populate cities when state changes
+    useEffect(() => {
+        setCities(country && stateRegion ? City.getCitiesOfState(country, stateRegion) : []);
+    }, [country, stateRegion]);
+
+    const countryOptions = useMemo(() => (
+        Country.getAllCountries()
+            .map(c => ({ value: c.isoCode, label: c.name }))
+            .sort((a, b) => a.label.localeCompare(b.label))
+    ), []);
+
+    const stateOptions = useMemo(() => (
+        states
+            .map(s => ({ value: s.isoCode, label: s.name }))
+            .sort((a, b) => a.label.localeCompare(b.label))
+    ), [states]);
+
+    const cityOptions = useMemo(() => (
+        cities
+            .map(c => ({ value: c.name, label: c.name }))
+            .sort((a, b) => a.label.localeCompare(b.label))
+    ), [cities]);
+
+    const handleCountryChange = (value: string) => {
+        setCountry(value);
+        setStateRegion('');
+        setCity('');
+    };
+
+    const handleStateChange = (value: string) => {
+        setStateRegion(value);
+        setCity('');
+    };
 
     const handleCopy = () => {
         if (!publicProfileUrl) return;
@@ -95,17 +150,16 @@ const PublicRenterProfile: React.FC = () => {
     const handleUpdate = async () => {
         setSaveStatus(null);
 
-        const parts = location.split(',').map(s => s.trim()).filter(Boolean);
-        const locationObj = {
-            city: parts[0] || '',
-            state: parts[1] || '',
-            country: parts[2] || '',
-        };
-
-        if (!locationObj.city || !locationObj.state || !locationObj.country) {
-            setSaveStatus({ type: 'error', msg: 'Location must be in format: City, State, Country' });
+        if (!country || !stateRegion || !city) {
+            setSaveStatus({ type: 'error', msg: 'Please select a country, state, and city' });
             return;
         }
+
+        const locationObj = {
+            city,
+            state: stateOptions.find(o => o.value === stateRegion)?.label || stateRegion,
+            country: countryOptions.find(o => o.value === country)?.label || country,
+        };
 
         if (!renterType) {
             setSaveStatus({ type: 'error', msg: 'Please select a renter type' });
@@ -213,20 +267,49 @@ const PublicRenterProfile: React.FC = () => {
                             <div className="w-full lg:w-3/4">
                                 <p className="text-xs sm:text-sm font-medium text-[#6B7280] mb-4">Specify the following details</p>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                    {/* Location */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    {/* Location: Country / State / City */}
                                     <div>
-                                        <input
-                                            type="text"
-                                            placeholder="Location (City, State, Country)"
-                                            value={location}
-                                            onChange={(e) => setLocation(e.target.value)}
-                                            className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1A1A1A] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)] focus:border-transparent"
+                                        <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Country</label>
+                                        <CustomDropdown
+                                            value={country}
+                                            onChange={handleCountryChange}
+                                            options={countryOptions}
+                                            searchable
+                                            placeholder="Select Country"
+                                            buttonClassName="w-full px-4 py-3 border-[#E5E7EB]"
                                         />
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-[#1A1A1A] mb-2">State</label>
+                                        <CustomDropdown
+                                            value={stateRegion}
+                                            onChange={handleStateChange}
+                                            options={stateOptions}
+                                            searchable
+                                            disabled={!country || stateOptions.length === 0}
+                                            placeholder="Select State"
+                                            buttonClassName="w-full px-4 py-3 border-[#E5E7EB]"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-[#1A1A1A] mb-2">City</label>
+                                        <CustomDropdown
+                                            value={city}
+                                            onChange={setCity}
+                                            options={cityOptions}
+                                            searchable
+                                            disabled={!stateRegion || cityOptions.length === 0}
+                                            placeholder="Select City"
+                                            buttonClassName="w-full px-4 py-3 border-[#E5E7EB]"
+                                        />
+                                    </div>
+                                </div>
 
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                     {/* Renter Type */}
                                     <div>
+                                        <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Renter Type</label>
                                         <CustomDropdown
                                             value={renterType}
                                             onChange={setRenterType}

@@ -125,7 +125,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 
             visibility: position ? 'visible' : 'hidden',
             maxHeight: `calc(100vh - 16px)`,
           }}
-          className={cn("z-[1000] bg-white rounded-lg shadow-lg border border-gray-200 overflow-auto p-2", popoverClassName)}
+          className={cn("z-[100000] bg-white rounded-lg shadow-lg border border-gray-200 overflow-auto p-2", popoverClassName)}
         >
           <style>{`
             [data-selected-single="true"] {

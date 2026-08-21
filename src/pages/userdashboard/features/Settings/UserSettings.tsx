@@ -28,7 +28,6 @@ const SETTING_CARDS: SettingCardData[] = [
         ),
         links: [
             { label: "Profile", path: "/userdashboard/settings/account/profile" },
-            { label: "My Cards", path: "/userdashboard/settings/account/cards" },
             { label: "Security", path: "/userdashboard/settings/account/security" },
             { label: "Notifications", path: "/userdashboard/settings/account/notifications" },
         ],

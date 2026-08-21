@@ -3,18 +3,16 @@ import { Link, useNavigate } from "react-router-dom";
 
 interface UserAccountSettingsLayoutProps {
     children: React.ReactNode;
-    activeTab: "Profile" | "My Cards" | "Security" | "Notifications";
+    activeTab: "Profile" | "Security" | "Notifications";
 }
 
 const UserAccountSettingsLayout: React.FC<UserAccountSettingsLayoutProps> = ({ children, activeTab }) => {
     const navigate = useNavigate();
-    const tabs = ["Profile", "My Cards", "Security", "Notifications"];
+    const tabs = ["Profile", "Security", "Notifications"];
 
     const handleTabClick = (tab: string) => {
         if (tab === "Profile") {
             navigate("/userdashboard/settings/account/profile");
-        } else if (tab === "My Cards") {
-            navigate("/userdashboard/settings/account/cards");
         } else if (tab === "Security") {
             navigate("/userdashboard/settings/account/security");
         } else if (tab === "Notifications") {
