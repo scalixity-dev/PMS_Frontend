@@ -10,6 +10,26 @@ import { useTeamPermissions } from '../../../../context/TeamPermissionContext';
 import PlanLimitBanner from '../../../../components/common/PlanLimitBanner';
 import type { BackendKey } from '../../../../services/keys.service';
 
+// Map backend key status to display format and badge color
+const statusStyles: Record<string, string> = {
+    AVAILABLE: 'bg-green-100 text-green-700',
+    ISSUED: 'bg-blue-100 text-blue-700',
+    LOST: 'bg-red-100 text-red-700',
+    DAMAGED: 'bg-orange-100 text-orange-700',
+    INACTIVE: 'bg-gray-100 text-gray-600',
+};
+
+const mapKeyStatus = (status: string): string => {
+    const statusMap: Record<string, string> = {
+        AVAILABLE: 'Available',
+        ISSUED: 'Issued',
+        LOST: 'Lost',
+        DAMAGED: 'Damaged',
+        INACTIVE: 'Inactive',
+    };
+    return statusMap[status] || status;
+};
+
 // Map backend key type to display format
 const mapKeyType = (keyType: string): string => {
     const typeMap: Record<string, string> = {
@@ -264,7 +284,7 @@ const KeysLocks = () => {
                     <>
                         <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 hidden md:block">
                             {/* Table Header */}
-                            <div className="bg-[#3A6D6C] text-white px-6 py-4 grid grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center text-sm font-medium">
+                            <div className="bg-[#3A6D6C] text-white px-6 py-4 grid grid-cols-[40px_1fr_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center text-sm font-medium">
                                 <div className="flex items-center justify-center ml-2">
                                     <button onClick={toggleAll} className="flex items-center justify-center">
                                         <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.length === filteredKeys.length && filteredKeys.length > 0 ? 'bg-[#7BD747]' : 'bg-white/20 border border-white/50'}`}>
@@ -274,6 +294,7 @@ const KeysLocks = () => {
                                 </div>
                                 <div>Name</div>
                                 <div>Type</div>
+                                <div>Status</div>
                                 <div>Property</div>
                                 <div>Unit</div>
                                 <div>Assignee</div>
@@ -292,7 +313,7 @@ const KeysLocks = () => {
                                     <div
                                         key={item.id}
                                         onClick={() => navigate(`/dashboard/portfolio/keys-locks/${item.id}`)}
-                                        className="bg-white rounded-2xl px-4 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
+                                        className="bg-white rounded-2xl px-4 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[40px_1fr_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
                                     >
                                         {/* Mobile: Header Row (Checkbox + Name + Actions) */}
                                         <div className="flex md:contents items-center justify-between w-full">
@@ -343,6 +364,12 @@ const KeysLocks = () => {
                                             <div className="flex flex-col md:block">
                                                 <span className="text-xs text-gray-500 md:hidden mb-1">Type</span>
                                                 <span className="text-[#2E6819] text-sm font-semibold">{item.type}</span>
+                                            </div>
+                                            <div className="flex flex-col md:block">
+                                                <span className="text-xs text-gray-500 md:hidden mb-1">Status</span>
+                                                <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${statusStyles[item.status] || 'bg-gray-100 text-gray-600'}`}>
+                                                    {mapKeyStatus(item.status)}
+                                                </span>
                                             </div>
                                             <div className="flex flex-col md:block">
                                                 <span className="text-xs text-gray-500 md:hidden mb-1">Property</span>

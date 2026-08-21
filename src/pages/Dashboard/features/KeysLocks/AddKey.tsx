@@ -7,7 +7,7 @@ import { useGetKey, useCreateKey, useUpdateKey } from '../../../../hooks/useKeys
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
 import { useGetUnitsByProperty } from '../../../../hooks/useUnitQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
-import type { KeyType } from '../../../../services/keys.service';
+import type { KeyType, KeyStatus } from '../../../../services/keys.service';
 import { useDebouncedCallback } from '../../../../hooks/useDebounce';
 import { useToast } from '../../../../components/common/Toast';
 
@@ -59,6 +59,7 @@ const AddKey = () => {
 
     const [keyName, setKeyName] = useState('');
     const [keyType, setKeyType] = useState('');
+    const [status, setStatus] = useState<KeyStatus>('AVAILABLE');
     const [propertyId, setPropertyId] = useState('');
     const [unitId, setUnitId] = useState('');
     const [details, setDetails] = useState('');
@@ -81,6 +82,7 @@ const AddKey = () => {
         if (isEditMode && keyData) {
             setKeyName(keyData.keyName);
             setKeyType(mapKeyTypeToDisplay(keyData.keyType));
+            setStatus(keyData.status || 'AVAILABLE');
             setPropertyId(keyData.propertyId);
             setUnitId((keyData as any).unitId || '');
             setDetails(keyData.description || '');
@@ -204,6 +206,14 @@ const AddKey = () => {
         { value: 'Other', label: 'Other' },
     ];
 
+    const statusOptions = [
+        { value: 'AVAILABLE', label: 'Available' },
+        { value: 'ISSUED', label: 'Issued' },
+        { value: 'LOST', label: 'Lost' },
+        { value: 'DAMAGED', label: 'Damaged' },
+        { value: 'INACTIVE', label: 'Inactive' },
+    ];
+
     const propertyOptions = (properties as any[]).map((prop: any) => ({
         value: prop.propertyId || prop.id,
         label: prop.propertyName,
@@ -235,6 +245,7 @@ const AddKey = () => {
                 unitId: isMultiUnit && unitId ? unitId : undefined,
                 keyName,
                 keyType: mapKeyTypeToBackend(keyType),
+                status,
                 description: details || undefined,
                 keyPhotoUrl: uploadedImageUrl || undefined,
             };
@@ -430,6 +441,24 @@ const AddKey = () => {
                         {errors.keyType && (
                             <p className="mt-1 text-xs text-red-500">{errors.keyType}</p>
                         )}
+                    </div>
+                </div>
+
+                {/* Status Dropdown */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-8">
+                    <div className="w-full">
+                        <CustomDropdown
+                            label="Status"
+                            value={status}
+                            onChange={(val) => {
+                                setStatus(val as KeyStatus);
+                                if (!isInitializingRef.current) setIsDirty(true);
+                            }}
+                            options={statusOptions}
+                            placeholder="Status"
+                            buttonClassName="bg-white border rounded-lg py-3 px-4 h-[46px] shadow-sm border-transparent"
+                            textClassName="font-medium text-sm text-gray-700"
+                        />
                     </div>
                 </div>
 
