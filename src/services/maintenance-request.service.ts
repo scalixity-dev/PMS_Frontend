@@ -52,6 +52,10 @@ export interface CreateMaintenanceRequestInput {
   tenantMeta?: MaintenanceTenantMeta;
   materials?: CreateMaintenanceMaterialInput[];
   chargeTo?: ChargeTo;
+  tenantEstimatedAmount?: number;
+  tenantEstimatedCurrency?: string;
+  managerEstimatedAmount?: number;
+  managerEstimatedCurrency?: string;
   attachments?: CreateMaintenanceAttachmentInput[];
   status?: 'NEW' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 }
@@ -80,6 +84,10 @@ export interface MaintenanceRequestDetail {
   equipmentId?: string | null;
   tenantMeta?: MaintenanceTenantMeta;
   materials?: CreateMaintenanceMaterialInput[];
+  tenantEstimatedAmount?: string | number | null;
+  tenantEstimatedCurrency?: string | null;
+  managerEstimatedAmount?: string | number | null;
+  managerEstimatedCurrency?: string | null;
   attachments?: Array<{
     id: string;
     fileUrl: string;
@@ -88,7 +96,8 @@ export interface MaintenanceRequestDetail {
   }>;
   photos?: Array<{
     id: string;
-    fileUrl: string;
+    photoUrl?: string | null;
+    videoUrl?: string | null;
     description?: string | null;
   }>;
 }

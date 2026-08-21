@@ -223,6 +223,7 @@ export const useNewRequestForm = () => {
         const unitId = freshForm.unitId;
         const dateDue = freshForm.dateDue;
         const chargeTo = freshForm.chargeTo;
+        const amount = freshForm.amount;
 
         if (!selectedCategory || !priority) return false;
 
@@ -257,8 +258,11 @@ export const useNewRequestForm = () => {
                 }
 
                 // Tenant-side: chargeTo defaults to PENDING (manager decides who pays).
-                // amount + materials are manager-only fields — omitted from tenant payload.
+                // materials is a manager-only field — omitted from tenant payload.
+                // The tenant's own cost estimate is sent as tenantEstimatedAmount,
+                // kept separate from managerEstimatedAmount/providerEstimatedAmount.
                 const chargeToApi: ChargeTo = chargeTo === 'TENANT' ? 'TENANT' : 'PENDING';
+                const parsedAmount = amount ? parseFloat(amount) : undefined;
 
                 const apiPayload: CreateMaintenanceRequestInput = {
                     propertyId,
@@ -286,6 +290,8 @@ export const useNewRequestForm = () => {
                             })),
                     },
                     chargeTo: chargeToApi,
+                    tenantEstimatedAmount:
+                        parsedAmount !== undefined && !Number.isNaN(parsedAmount) ? parsedAmount : undefined,
                     attachments: attachmentDtos.length > 0 ? attachmentDtos : undefined,
                 };
 

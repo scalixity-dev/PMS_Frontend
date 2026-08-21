@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import { Upload, Video, X } from 'lucide-react';
-import { useMaintenanceRequestFormStore } from '../store/maintenanceRequestStore';
+import { useMaintenanceRequestFormStore, type MaintenanceExistingMedia } from '../store/maintenanceRequestStore';
 
 export interface AdvancedRequestFormFields {
     category: string;
@@ -20,7 +20,7 @@ export interface AdvancedRequestFormData extends AdvancedRequestFormFields {
 interface AdvancedRequestFormProps {
     onNext: (data: AdvancedRequestFormData) => void;
     onDiscard: () => void;
-    initialData?: Partial<AdvancedRequestFormFields> & { files?: File[] };
+    initialData?: Partial<AdvancedRequestFormFields> & { files?: File[]; existingMedia?: MaintenanceExistingMedia[] };
     aiPrefillData?: Partial<AdvancedRequestFormFields>;
 }
 
@@ -495,6 +495,24 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                     </div>
                 </div>
             </div>
+
+            {/* Previously uploaded media (from the request being edited) */}
+            {initialData?.existingMedia && initialData.existingMedia.length > 0 && (
+                <div className="mb-12">
+                    <p className="text-sm font-bold text-gray-700 mb-3">Previously uploaded</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {initialData.existingMedia.map((media) => (
+                            <div key={media.id} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
+                                {media.kind === 'video' ? (
+                                    <video src={media.url} className="w-full h-full object-cover" controls />
+                                ) : (
+                                    <img src={media.url} alt="Previously uploaded" className="w-full h-full object-cover" />
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* File Previews */}
             {mediaFiles.length > 0 && (

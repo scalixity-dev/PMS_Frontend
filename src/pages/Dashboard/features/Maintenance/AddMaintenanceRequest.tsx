@@ -13,6 +13,7 @@ import AIMaintenanceChat from './components/AIMaintenanceChat';
 import {
     useMaintenanceRequestFormStore,
     type MaintenancePropertyState,
+    type MaintenanceExistingMedia,
 } from './store/maintenanceRequestStore';
 import {
     maintenanceRequestService,
@@ -114,6 +115,19 @@ const AddMaintenanceRequest: React.FC = () => {
     useEffect(() => {
         if (!isEditMode || !existingRequest) return;
 
+        // Already-uploaded media (images + videos) so the edit form can show
+        // what the tenant/manager attached previously, not just new picks.
+        const existingMedia: MaintenanceExistingMedia[] = [
+            ...(existingRequest.photos ?? []).flatMap((p): MaintenanceExistingMedia[] => {
+                if (p.videoUrl) return [{ id: `${p.id}-video`, url: p.videoUrl, kind: 'video' }];
+                if (p.photoUrl) return [{ id: `${p.id}-photo`, url: p.photoUrl, kind: 'image' }];
+                return [];
+            }),
+            ...(existingRequest.attachments ?? [])
+                .filter((a) => (a.fileType ?? '').toString().toUpperCase() === 'IMAGE')
+                .map((a): MaintenanceExistingMedia => ({ id: a.id, url: a.fileUrl, kind: 'image' })),
+        ];
+
         // Advanced section
         setAdvanced({
             category: mapBackendCategoryToUi(existingRequest.category),
@@ -122,8 +136,9 @@ const AddMaintenanceRequest: React.FC = () => {
             subIssue: existingRequest.subissue ?? '',
             title: existingRequest.title ?? '',
             details: existingRequest.problemDetails ?? '',
-            amount: '',
+            amount: existingRequest.managerEstimatedAmount != null ? String(existingRequest.managerEstimatedAmount) : '',
             files: [],
+            existingMedia,
         });
 
         // Property & tenants
@@ -204,6 +219,10 @@ const AddMaintenanceRequest: React.FC = () => {
                     quantity: material.quantity,
                 })),
                 chargeTo: due.chargeTo ?? 'LANDLORD',
+                managerEstimatedAmount: (() => {
+                    const parsed = advanced.amount ? parseFloat(advanced.amount) : undefined;
+                    return parsed !== undefined && !Number.isNaN(parsed) ? parsed : undefined;
+                })(),
             };
             const createdOrUpdated =
                 isEditMode && editRequestId

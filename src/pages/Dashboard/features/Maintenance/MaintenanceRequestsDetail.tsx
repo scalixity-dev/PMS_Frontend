@@ -61,7 +61,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
     const [status, setStatus] = useState('New');
     const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
     const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
-    const [mediaPreview, setMediaPreview] = useState<{ url: string; name: string; kind: 'image' | 'pdf' | 'file' } | null>(null);
+    const [mediaPreview, setMediaPreview] = useState<{ url: string; name: string; kind: 'image' | 'video' | 'pdf' | 'file' } | null>(null);
     const [isAssigningApplicant, setIsAssigningApplicant] = useState(false);
     const [isAddingToContact, setIsAddingToContact] = useState(false);
     const queryClient = useQueryClient();
@@ -338,11 +338,16 @@ const MaintenanceRequestsDetail: React.FC = () => {
         if (!anyRequest) return [];
 
         const rawPhotos = anyRequest.photos ?? anyRequest.maintenancePhotos ?? [];
-        const fromPhotos = rawPhotos
-            .map((p) => p.photoUrl || p.videoUrl || p.fileUrl || '')
-            .filter(Boolean);
+        const fromPhotos: Array<{ url: string; kind: 'image' | 'video' }> = rawPhotos
+            .map((p) => {
+                if (p.videoUrl) return { url: p.videoUrl, kind: 'video' as const };
+                if (p.photoUrl) return { url: p.photoUrl, kind: 'image' as const };
+                if (p.fileUrl) return { url: p.fileUrl, kind: 'image' as const };
+                return null;
+            })
+            .filter((x): x is { url: string; kind: 'image' | 'video' } => x !== null);
 
-        const fromImageAttachments =
+        const fromImageAttachments: Array<{ url: string; kind: 'image' }> =
             anyRequest.attachments
                 ?.filter((a) => {
                     const type = (a.fileType ?? '').toString().toUpperCase();
@@ -351,7 +356,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                     }
                     return type === 'IMAGE';
                 })
-                .map((a) => a.fileUrl) ?? [];
+                .map((a) => ({ url: a.fileUrl, kind: 'image' as const })) ?? [];
 
         return [...fromPhotos, ...fromImageAttachments];
     }, [request]);
@@ -572,22 +577,29 @@ const MaintenanceRequestsDetail: React.FC = () => {
                             <span className="text-sm text-gray-500">No media available.</span>
                         ) : (
                             <>
-                                {mediaUrls.map((url) => (
+                                {mediaUrls.map(({ url, kind }) => (
                                     <button
                                         key={url}
                                         type="button"
-                                        onClick={() => setMediaPreview({ url, name: url.split('/').pop() || 'Media', kind: 'image' })}
-                                        className="w-32 h-32 rounded-xl overflow-hidden bg-white shadow-sm flex-shrink-0 hover:opacity-90 transition-opacity"
+                                        onClick={() => setMediaPreview({ url, name: url.split('/').pop() || 'Media', kind })}
+                                        className="w-32 h-32 rounded-xl overflow-hidden bg-white shadow-sm flex-shrink-0 hover:opacity-90 transition-opacity relative"
                                     >
-                                        <img
-                                            src={url}
-                                            alt="Media"
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).src =
-                                                    'https://placehold.co/200x200?text=No+Image';
-                                            }}
-                                        />
+                                        {kind === 'video' ? (
+                                            <>
+                                                <video src={url} className="w-full h-full object-cover" muted playsInline />
+                                                <span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white text-2xl">▶</span>
+                                            </>
+                                        ) : (
+                                            <img
+                                                src={url}
+                                                alt="Media"
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).src =
+                                                        'https://placehold.co/200x200?text=No+Image';
+                                                }}
+                                            />
+                                        )}
                                     </button>
                                 ))}
                                 {/* PDFs and other attachments */}
@@ -632,6 +644,8 @@ const MaintenanceRequestsDetail: React.FC = () => {
                             <div className="flex-1 bg-gray-100 flex items-center justify-center overflow-auto">
                                 {mediaPreview.kind === 'image' ? (
                                     <img src={mediaPreview.url} alt={mediaPreview.name} className="max-w-full max-h-full object-contain" />
+                                ) : mediaPreview.kind === 'video' ? (
+                                    <video src={mediaPreview.url} controls autoPlay className="max-w-full max-h-full" />
                                 ) : (
                                     <iframe src={mediaPreview.url} title={mediaPreview.name} className="w-full h-full" />
                                 )}
@@ -720,9 +734,11 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                 <div className="bg-white rounded-full px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Estimated amount</span>
                                     <span className="text-gray-800 text-xs font-bold">
-                                        {(request as any)?.managerEstimatedAmount
-                                            ? `${(request as any)?.managerEstimatedCurrency ?? 'USD'} ${(request as any).managerEstimatedAmount}`
-                                            : '-'}
+                                        {request?.managerEstimatedAmount
+                                            ? `${request.managerEstimatedCurrency ?? 'USD'} ${request.managerEstimatedAmount}`
+                                            : request?.tenantEstimatedAmount
+                                                ? `${request.tenantEstimatedCurrency ?? 'USD'} ${request.tenantEstimatedAmount} (tenant estimate)`
+                                                : '-'}
                                     </span>
                                 </div>
                             </div>

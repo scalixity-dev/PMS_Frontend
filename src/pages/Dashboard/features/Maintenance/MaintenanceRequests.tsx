@@ -233,22 +233,6 @@ const Requests: React.FC = () => {
         navigate(`/dashboard/messages?assignee=${encodeURIComponent(assignee)}`);
     };
 
-    const filterOptions: Record<string, FilterOption[]> = {
-        status: [
-            { value: 'new', label: 'New' },
-            { value: 'in_progress', label: 'In Progress' },
-            { value: 'completed', label: 'Completed' },
-        ],
-        assignee: [
-            { value: 'unassignee', label: 'UnAssignee' },
-            { value: 'john_doe', label: 'John Doe' },
-        ],
-        property: [
-            { value: 'property_a', label: 'Property A' },
-            { value: 'property_b', label: 'Property B' },
-        ],
-    };
-
     const filterLabels: Record<string, string> = {
         status: 'Status',
         assignee: 'Assignee',
@@ -302,6 +286,32 @@ const Requests: React.FC = () => {
             };
         });
     }, [backendRequests]);
+
+    const filterOptions: Record<string, FilterOption[]> = useMemo(() => {
+        const assigneeOptions = new Map<string, string>();
+        const propertyOptions = new Map<string, string>();
+        mappedRequests.forEach((req) => {
+            if (req.assignee) {
+                assigneeOptions.set(req.assignee.toLowerCase(), req.assignee);
+            }
+            if (req.propertyName) {
+                propertyOptions.set(req.propertyName.toLowerCase(), req.propertyName);
+            }
+        });
+
+        return {
+            status: [
+                { value: 'new', label: 'New' },
+                { value: 'in_progress', label: 'In Progress' },
+                { value: 'completed', label: 'Completed' },
+            ],
+            assignee: [
+                { value: 'unassignee', label: 'UnAssignee' },
+                ...Array.from(assigneeOptions.values()).map((name) => ({ value: name, label: name })),
+            ],
+            property: Array.from(propertyOptions.values()).map((name) => ({ value: name, label: name })),
+        };
+    }, [mappedRequests]);
 
     const filteredRequests = useMemo(() => {
         return mappedRequests.filter(item => {

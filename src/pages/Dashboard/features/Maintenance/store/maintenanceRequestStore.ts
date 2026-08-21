@@ -1,5 +1,11 @@
 import { create } from 'zustand';
 
+export interface MaintenanceExistingMedia {
+  id: string;
+  url: string;
+  kind: 'image' | 'video';
+}
+
 export interface MaintenanceAdvancedState {
   category: string;
   subCategory: string;
@@ -9,6 +15,9 @@ export interface MaintenanceAdvancedState {
   details: string;
   amount: string;
   files: File[];
+  // Already-uploaded media from the request being edited — display-only,
+  // never sent back to the server as a new upload.
+  existingMedia: MaintenanceExistingMedia[];
 }
 
 export interface MaintenanceDateOption {
@@ -73,6 +82,7 @@ const initialAdvanced: MaintenanceAdvancedState = {
   details: '',
   amount: '',
   files: [],
+  existingMedia: [],
 };
 
 const initialProperty: MaintenancePropertyState = {
