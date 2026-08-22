@@ -286,7 +286,10 @@ const Profile: React.FC = () => {
       navigate('/login');
     } catch (err: any) {
       setIsDeleteModalOpen(false);
-      setSaveError(err?.message || 'Failed to delete account');
+      // The delete-confirmation modal is already closed by this point, so
+      // setSaveError (rendered only inside the Edit modal) would never be
+      // seen - a toast is the only reliably visible place for this error.
+      toast.error(err?.message || 'Failed to delete account');
     }
   };
 
