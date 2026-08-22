@@ -504,7 +504,7 @@ const Messages = () => {
                 pmContact={contacts?.[0]}
               />
             ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-400 bg-gray-50 px-4">
+              <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50 px-4">
                 <MessageSquare className="w-16 h-16 md:w-24 md:h-24 mb-3 md:mb-4 text-gray-300" />
                 <h3 className="text-lg md:text-xl font-semibold text-gray-600 mb-2">No request selected</h3>
                 <p className="text-xs md:text-sm text-gray-500 text-center max-w-md">
