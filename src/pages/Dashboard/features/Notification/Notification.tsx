@@ -67,6 +67,11 @@ const Notification = () => {
             case 'payment':
                 navigate('/dashboard/accounting/payments');
                 break;
+            case 'lease':
+                if (notification.entityId) {
+                    navigate(`/dashboard/leasing/leases/${notification.entityId}`);
+                }
+                break;
             case 'document':
                 navigate('/dashboard/documents/file-manager');
                 break;
