@@ -24,6 +24,7 @@ import { useGetCurrentUser } from "../../hooks/useAuthQueries";
 import { useGetUnreadCount } from "../../hooks/useNotificationQueries";
 import { useGetAllMaintenanceRequests } from "../../hooks/useMaintenanceRequestQueries";
 import { useGetAllApplications } from "../../hooks/useApplicationQueries";
+import AccountSwitcherModal from "../common/AccountSwitcherModal";
 
 interface NavbarProps {
     sidebarOpen: boolean;
@@ -143,6 +144,7 @@ export default function UserDashboardNavbar({ sidebarOpen: _, setSidebarOpen }: 
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isAccountSwitcherOpen, setIsAccountSwitcherOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const mobileMenuRef = useRef<HTMLDivElement>(null);
     const mobileSearchRef = useRef<HTMLInputElement>(null);
@@ -342,7 +344,26 @@ export default function UserDashboardNavbar({ sidebarOpen: _, setSidebarOpen }: 
 
     const handleAddAnotherAccount = () => {
         setIsProfileDropdownOpen(false);
-        navigate("/userdashboard/settings/account/profile");
+        setIsAccountSwitcherOpen(true);
+    };
+
+    const switchToAccount = async (email: string) => {
+        setIsAccountSwitcherOpen(false);
+        try {
+            await authService.logout();
+        } catch { /* continue */ }
+        queryClient.clear();
+        const encoded = encodeURIComponent(email);
+        navigate(`/login?add_account=1&email=${encoded}`, { replace: true });
+    };
+
+    const openFreshLogin = async () => {
+        setIsAccountSwitcherOpen(false);
+        try {
+            await authService.logout();
+        } catch { /* ignore */ }
+        queryClient.clear();
+        navigate("/login?add_account=1", { replace: true });
     };
 
     const handleManageProfile = () => {
@@ -611,6 +632,13 @@ export default function UserDashboardNavbar({ sidebarOpen: _, setSidebarOpen }: 
                     </div>
                 </>
             )}
+
+            <AccountSwitcherModal
+                isOpen={isAccountSwitcherOpen}
+                onClose={() => setIsAccountSwitcherOpen(false)}
+                onSwitch={switchToAccount}
+                onAddNew={openFreshLogin}
+            />
         </header>
     );
 }
