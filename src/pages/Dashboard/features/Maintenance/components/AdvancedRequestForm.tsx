@@ -38,11 +38,32 @@ interface MediaFile {
  */
 const createMediaId = () => `media-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
+// Matches the "Add images and videos (15 sec) of the problem" prompt on the
+// upload card — without this check, nothing stopped a landlord from
+// attaching an arbitrarily long recording (seen in practice: 6+ minutes).
+const MAX_VIDEO_DURATION_SECONDS = 15;
+
+const getVideoDurationSeconds = (file: File): Promise<number> =>
+    new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+            URL.revokeObjectURL(video.src);
+            resolve(video.duration);
+        };
+        video.onerror = () => {
+            URL.revokeObjectURL(video.src);
+            reject(new Error('Could not read video metadata'));
+        };
+        video.src = URL.createObjectURL(file);
+    });
+
 /** Only images and videos open in the viewer; documents have nothing to show. */
 const isPreviewable = (file: File) => file.type.startsWith('image/') || file.type.startsWith('video/');
 
 const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData, aiPrefillData }) => {
     const [errors, setErrors] = useState<Partial<Record<keyof AdvancedRequestFormFields, string>>>({});
+    const [videoError, setVideoError] = useState('');
 
     const [formData, setFormData] = useState<AdvancedRequestFormFields>({
         category: initialData?.category || '',
@@ -100,17 +121,33 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
      * revoked those brand-new URLs, leaving blank tiles.
      */
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            const newMediaFile: MediaFile = {
-                id: createMediaId(),
-                file,
-                previewUrl: URL.createObjectURL(file)
-            };
-            setMediaFiles(prev => [...prev, newMediaFile]);
-            e.target.value = '';
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+
+        if (file.type.startsWith('video/')) {
+            setVideoError('');
+            try {
+                const duration = await getVideoDurationSeconds(file);
+                if (duration > MAX_VIDEO_DURATION_SECONDS) {
+                    setVideoError(
+                        `Video must be ${MAX_VIDEO_DURATION_SECONDS} seconds or shorter (this one is ${Math.round(duration)}s). Please trim it and try again.`,
+                    );
+                    return;
+                }
+            } catch {
+                // Can't read metadata (unsupported format, browser quirk) — let it
+                // through rather than blocking a valid upload over that.
+            }
         }
+
+        const newMediaFile: MediaFile = {
+            id: createMediaId(),
+            file,
+            previewUrl: URL.createObjectURL(file)
+        };
+        setMediaFiles(prev => [...prev, newMediaFile]);
     };
 
     const handleRemoveFile = (id: string) => {
@@ -196,6 +233,17 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             { value: 'not_working', label: 'Not Working' },
             { value: 'dimming', label: 'Dimming' }
         ],
+        circuit_breaker: [
+            { value: 'tripping', label: 'Keeps Tripping' },
+            { value: 'wont_reset', label: "Won't Reset" },
+            { value: 'burning_smell', label: 'Burning Smell' }
+        ],
+        wiring: [
+            { value: 'exposed_wires', label: 'Exposed Wires' },
+            { value: 'sparking', label: 'Sparking' },
+            { value: 'burning_smell', label: 'Burning Smell' },
+            { value: 'static_noise', label: 'Static Noise' }
+        ],
         sink: [
             { value: 'clogged', label: 'Clogged' },
             { value: 'leaking', label: 'Leaking' },
@@ -205,6 +253,21 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             { value: 'clogged', label: 'Clogged' },
             { value: 'running', label: 'Running Continuously' },
             { value: 'leaking', label: 'Leaking' }
+        ],
+        shower: [
+            { value: 'low_pressure', label: 'Low Pressure' },
+            { value: 'leaking', label: 'Leaking' },
+            { value: 'no_hot_water', label: 'No Hot Water' },
+            { value: 'clogged', label: 'Clogged Drain' }
+        ],
+        pipes: [
+            { value: 'leaking', label: 'Leaking' },
+            { value: 'burst', label: 'Burst Pipe' },
+            { value: 'frozen', label: 'Frozen Pipe' },
+            { value: 'noise', label: 'Banging/Noise' }
+        ],
+        general: [
+            { value: 'other_issue', label: 'Other Issue' }
         ]
     };
 
@@ -487,6 +550,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                             />
                         </label>
                     </div>
+                    {videoError && <p className="text-red-500 text-xs mt-1 text-center">{videoError}</p>}
                 </div>
 
                 {/* Attachments Card */}

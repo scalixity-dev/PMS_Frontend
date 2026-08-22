@@ -14,6 +14,26 @@ interface MediaFile {
     previewUrl: string;
 }
 
+// Matches the "Take 15 sec. video of the problem" prompt on the upload card —
+// without this check, nothing stopped a tenant from attaching an arbitrarily
+// long recording (seen in practice: 6+ minutes).
+const MAX_VIDEO_DURATION_SECONDS = 15;
+
+const getVideoDurationSeconds = (file: File): Promise<number> =>
+    new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+            URL.revokeObjectURL(video.src);
+            resolve(video.duration);
+        };
+        video.onerror = () => {
+            URL.revokeObjectURL(video.src);
+            reject(new Error('Could not read video metadata'));
+        };
+        video.src = URL.createObjectURL(file);
+    });
+
 const User__AdvancedRequestForm: React.FC<UserAdvancedRequestFormProps> = ({ onNext, onDiscard, initialData }) => {
     const [formData, setFormData] = useState({
         category: initialData?.category || '',
@@ -90,6 +110,35 @@ const User__AdvancedRequestForm: React.FC<UserAdvancedRequestFormProps> = ({ onN
             setMediaFiles(prev => [...prev, newMediaFile]);
             e.target.value = '';
         }
+    };
+
+    const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+
+        setErrors(prev => ({ ...prev, video: '' }));
+
+        try {
+            const duration = await getVideoDurationSeconds(file);
+            if (duration > MAX_VIDEO_DURATION_SECONDS) {
+                setErrors(prev => ({
+                    ...prev,
+                    video: `Video must be ${MAX_VIDEO_DURATION_SECONDS} seconds or shorter (this one is ${Math.round(duration)}s). Please trim it and try again.`,
+                }));
+                return;
+            }
+        } catch {
+            // Can't read metadata (unsupported format, browser quirk) — let it
+            // through rather than blocking a valid upload over that.
+        }
+
+        const newMediaFile: MediaFile = {
+            id: crypto.randomUUID(),
+            file,
+            previewUrl: URL.createObjectURL(file)
+        };
+        setMediaFiles(prev => [...prev, newMediaFile]);
     };
 
     const handleRemoveFile = (id: string) => {
@@ -380,10 +429,11 @@ const User__AdvancedRequestForm: React.FC<UserAdvancedRequestFormProps> = ({ onN
                                 type="file"
                                 className="hidden"
                                 accept="video/*"
-                                onChange={handleFileSelect}
+                                onChange={handleVideoSelect}
                             />
                         </label>
                     </div>
+                    {errors.video && <p className="text-red-500 text-xs mt-1 text-center">{errors.video}</p>}
                 </div>
             </div>
 

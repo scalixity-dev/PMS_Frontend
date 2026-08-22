@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import UserAccountSettingsLayout from "../../components/layout/UserAccountSettingsLayout";
-import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
+// PrimaryActionButton was only used by the Two Steps Authentication card, now hidden below.
+// import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import { useGet2FAStatus, useSend2FACode, useVerify2FACode } from "../../../../hooks/useTwoFactorQueries";
 import BaseModal from "../../../../components/common/modals/BaseModal";
 
@@ -27,39 +28,40 @@ const Security: React.FC = () => {
     const is2FAEnabled: boolean = statusData?.enabled ?? false;
 
     const [showModal, setShowModal] = useState(false);
-    const [intent, setIntent] = useState<'enable' | 'disable'>('enable');
+    const [intent] = useState<'enable' | 'disable'>('enable');
     const [code, setCode] = useState('');
     const [modalError, setModalError] = useState('');
-    const [codeSent, setCodeSent] = useState(false);
+    const [codeSent] = useState(false);
 
     const sendCode = useSend2FACode();
     const verifyCode = useVerify2FACode();
 
-    const handleToggle = async () => {
-        // Guard: prevent intent mismatch
-        const newIntent: 'enable' | 'disable' = is2FAEnabled ? 'disable' : 'enable';
-        if (newIntent === 'enable' && is2FAEnabled) {
-            setModalError('Two-factor authentication is already enabled.');
-            setShowModal(true);
-            return;
-        }
-        if (newIntent === 'disable' && !is2FAEnabled) {
-            setModalError('Two-factor authentication is already disabled.');
-            setShowModal(true);
-            return;
-        }
-        setIntent(newIntent);
-        setCode('');
-        setModalError('');
-        setCodeSent(false);
-        setShowModal(true);
-        try {
-            await sendCode.mutateAsync();
-            setCodeSent(true);
-        } catch (e: any) {
-            setModalError(e.message || 'Failed to send code');
-        }
-    };
+    // handleToggle only fired from the now-hidden Two Steps Authentication card's button.
+    // const handleToggle = async () => {
+    //     // Guard: prevent intent mismatch
+    //     const newIntent: 'enable' | 'disable' = is2FAEnabled ? 'disable' : 'enable';
+    //     if (newIntent === 'enable' && is2FAEnabled) {
+    //         setModalError('Two-factor authentication is already enabled.');
+    //         setShowModal(true);
+    //         return;
+    //     }
+    //     if (newIntent === 'disable' && !is2FAEnabled) {
+    //         setModalError('Two-factor authentication is already disabled.');
+    //         setShowModal(true);
+    //         return;
+    //     }
+    //     setIntent(newIntent);
+    //     setCode('');
+    //     setModalError('');
+    //     setCodeSent(false);
+    //     setShowModal(true);
+    //     try {
+    //         await sendCode.mutateAsync();
+    //         setCodeSent(true);
+    //     } catch (e: any) {
+    //         setModalError(e.message || 'Failed to send code');
+    //     }
+    // };
 
     const handleVerify = async () => {
         if (!code.trim()) {
@@ -84,7 +86,8 @@ const Security: React.FC = () => {
     return (
         <UserAccountSettingsLayout activeTab="Security">
             <div className="px-3 sm:px-4 md:px-8 py-4 sm:py-5 md:py-6">
-                {/* Two Steps Authentication */}
+                {/* Two Steps Authentication card hidden — the backend never enforced 2FA
+                    at login, so this switch reported a protection the account did not have.
                 <div className="flex flex-col lg:flex-row justify-between items-start gap-4 lg:gap-0 mb-8 sm:mb-10 lg:mb-12 lg:mr-20">
                     <div className="max-w-2xl">
                         <h2 className="text-lg sm:text-xl font-medium text-[#1A1A1A] mb-2">Two Steps Authentication</h2>
@@ -102,6 +105,7 @@ const Security: React.FC = () => {
                         className={`${is2FAEnabled ? 'bg-red-500 hover:bg-red-600' : 'bg-[#3D7475] hover:bg-[#2c5251]'} cursor-pointer !rounded-lg font-medium text-xs sm:text-sm !px-8 sm:!px-10 py-2 shadow-sm text-white w-full lg:w-auto`}
                     />
                 </div>
+                */}
 
                 {/* Login sessions */}
                 <div>
